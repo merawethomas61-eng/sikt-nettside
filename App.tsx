@@ -40,12 +40,13 @@ export const handleLogin = async () => {
 
   // 2. HVIS IKKE LOGGET INN -> KJØR GOOGLE LOGIN
   console.log("Bruker ikke logget inn. Starter OAuth...");
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin + '/srth/'
-    }
-  });
+const { error } = await supabase.auth.signInWithOAuth({
+  provider: 'google',
+  options: {
+    // Vi fjerner '/srth/' slik at den lander på hovedsiden (Vercel eller localhost)
+    redirectTo: window.location.origin 
+  }
+});
 
   if (error) {
     console.error("Supabase Error:", error);
