@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sikt | Moderne SEO</title>
+    
+    <!-- 1. EKSTERNE RESSURSER (Tailwind, Fonter) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Satisfy&display=swap" rel="stylesheet">
+
+    <!-- 2. CSS STYLING (Animations and Global Styles required by App.tsx) -->
+    <style>
+        :root {
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+        }
+        body {
+            font-family: var(--font-main);
+            background-color: #fcfcfd;
+            color: #0f172a;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .font-script { font-family: 'Satisfy', cursive; }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Hero Gradient */
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        /* Premium Cards */
+        .premium-card {
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+        }
+        .premium-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(124, 58, 237, 0.15);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.03), 0 0 30px -5px rgba(124, 58, 237, 0.05);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Scroll Reveal Animations (Used by App.tsx helper) */
+        .reveal {
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-up { transform: translateY(40px); }
+        .reveal-down { transform: translateY(-40px); }
+        .reveal-left { transform: translateX(40px); }
+        .reveal-right { transform: translateX(-40px); }
+        .reveal-scale { transform: scale(0.97); }
+        
+        .reveal.visible {
+            opacity: 1;
+            transform: translate(0) scale(1);
+        }
+
+        /* Background Pattern */
+        .grid-pattern {
+            background-image: radial-gradient(rgba(124, 58, 237, 0.15) 0.5px, transparent 0.5px);
+            background-size: 32px 32px;
+        }
+
+        /* Keyframe Animations */
+        @keyframes float-subtle {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float-subtle { animation: float-subtle 6s ease-in-out infinite; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .animate-subtext-dynamic {
+            background: linear-gradient(90deg, #0f172a, #6366f1, #a855f7, #0f172a);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 8s ease infinite;
+        }
+
+        @keyframes mesh-blob {
+            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+            33% { transform: translate(80px, -100px) scale(1.2) rotate(120deg); }
+            66% { transform: translate(-50px, 50px) scale(0.8) rotate(240deg); }
+            100% { transform: translate(0px, 0px) scale(1) rotate(360deg); }
+        }
+        .animate-mesh { animation: mesh-blob 30s ease-in-out infinite; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes scan-tech {
+            0% { transform: translateY(-50px); }
+            100% { transform: translateY(500px); }
+        }
+        .animate-scan-tech { animation: scan-tech 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            50% { transform: translate(20px, -40px) scale(1.5); opacity: 0.6; }
+        }
+        .animate-float-particle { animation: float-particle 8s ease-in-out infinite; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script type="module" src="index.tsx"></script>
+
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
