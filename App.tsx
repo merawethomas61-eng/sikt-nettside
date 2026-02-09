@@ -1,18 +1,80 @@
+import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
+import { PaymentModal } from './PaymentModal';
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from './supabaseClient'; 
-import { 
-  ArrowRight, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, 
-  MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, 
-  SearchIcon, TrendingDown, Clock, AlertTriangle, MessageCircle, HelpCircle, 
-  Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, 
-  Layers, BarChart3, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, 
-  BrainCircuit, BarChart4, SearchCheck, Database, Server
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { supabase } from './supabaseClient';
+import {
+  ArrowRight, Minus, Calendar, Wand2, Users, Key, Check, Building, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
+  MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool, UserPlus,
+  SearchIcon, TrendingDown, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
+  Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon, Plus, BookOpen,
+  Layers, BarChart3, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
+  BrainCircuit, BarChart4, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2, MousePointerClick, Send,
+  Settings, CreditCard, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
-// --- GLOBAL SMART LOGIN FUNKSJON ---
+
+interface AnalysisResult {
+  performance: number;
+  seoScore: number;
+  accessibility: number;
+  bestPractices: number;
+  fcp: { value: string; score: number };
+  lcp: { value: string; score: number };
+  cls: { value: string; score: number };
+  tbt: { value: string; score: number };
+  seo: {
+    metaDescription: any;
+    documentTitle: any;
+    linkText: any;
+    viewport: any;
+  };
+  opportunities: any[];
+}
+
+const MyComponent = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const isFirstLoad = useRef(true);
+
+  // Ref for å holde styr på om komponenten er montert
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    // Cleanup-funksjon som kjøres når komponenten "dør"
+    return () => { isMounted.current = false; };
+  }, []);
+
+  const enterPortalWithDelay = async () => {
+    // 1. Start loading
+    if (isMounted.current) setIsLoading(true);
+
+    // 2. Vent (Delay)
+    await new Promise(resolve => setTimeout(resolve, 2800));
+
+    // 3. Sjekk om vi fortsatt er "live" før vi oppdaterer state
+    if (!isMounted.current) return; // Stopp her hvis brukeren har dratt
+
+    // 4. Utfør endringene
+    // Merk: React 18+ batcher disse automatisk, så du får kun én re-render
+    setHasAccess(true);
+    setIsLoading(false);
+  };
+
+  return (
+    // ... din JSX
+    <button onClick={enterPortalWithDelay}>Enter Portal</button>
+  );
+};
+
+
+
+// --- GLOBAL SMART LOGIN FUNKSJON (Oppdatert) ---
 export const handleLogin = async () => {
-  console.log("Sjekker status..."); 
-  
+  console.log("Starter innlogging...");
+
   if (!supabase) {
     alert("Supabase mangler oppsett i supabaseClient.ts");
     return;
@@ -22,35 +84,32 @@ export const handleLogin = async () => {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {
-    console.log("Bruker er allerede logget inn. Sender til Priser/Stripe...");
-    
-    // Prøv å finne Pris-seksjonen
+    // Hvis bruker allerede er logget inn i appen, send dem til dashboard/priser
+    console.log("Bruker er allerede logget inn.");
     const pricingSection = document.getElementById('priser');
-    
     if (pricingSection) {
-      // Scroll mykt ned til prisene
       pricingSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // Fallback: Hvis vi ikke finner ID-en, prøv å scrolle til bunnen eller gi beskjed
-      console.log("Fant ikke id='priser'. Scroller til 70% av siden.");
-      window.scrollTo({ top: document.body.scrollHeight * 0.7, behavior: 'smooth' });
     }
-    return; // STOPP HER. Ikke start Google-login på nytt.
+    return;
   }
 
-  // 2. HVIS IKKE LOGGET INN -> KJØR GOOGLE LOGIN
-  console.log("Bruker ikke logget inn. Starter OAuth...");
-const { error } = await supabase.auth.signInWithOAuth({
-  provider: 'google',
-  options: {
-    // Vi fjerner '/srth/' slik at den lander på hovedsiden (Vercel eller localhost)
-    redirectTo: window.location.origin 
-  }
-});
+  // 2. START GOOGLE LOGIN (Med tvungen kontovalg)
+  console.log("Starter OAuth...");
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+      queryParams: {
+        // VIKTIG: Dette tvinger Google til å vise "Velg konto" hver gang!
+        access_type: 'offline',
+        prompt: 'select_account'
+      }
+    }
+  });
 
   if (error) {
     console.error("Supabase Error:", error);
-    alert("Feil: " + error.message);
+    alert("Feil ved innlogging: " + error.message);
   }
 };
 
@@ -72,7 +131,7 @@ const RevealOnScroll: React.FC<RevealProps> = ({ children, delay = 0, direction 
         if (entry.isIntersecting) setIsVisible(true);
       });
     }, { threshold: 0.1 });
-    
+
     if (domRef.current) observer.observe(domRef.current);
     return () => domRef.current && observer.unobserve(domRef.current);
   }, []);
@@ -83,6 +142,88 @@ const RevealOnScroll: React.FC<RevealProps> = ({ children, delay = 0, direction 
     </div>
   );
 };
+
+
+
+
+
+
+const KeywordTracker = ({ currentLevel, onUpgrade }: { currentLevel: number, onUpgrade: () => void }) => {
+  // Simulert Data (Dette ville kommet fra database i fremtiden)
+  const keywords = [
+    { word: "Rørlegger Oslo", pos: 3, change: 1, vol: 2400, diff: "Høy" },
+    { word: "Akutt rørleggerhjelp", pos: 1, change: 0, vol: 800, diff: "Medium" },
+    { word: "Bytte varmtvannstank pris", pos: 12, change: -3, vol: 350, diff: "Lav" },
+    { word: "Rørlegger vakt", pos: 7, change: 2, vol: 1200, diff: "Høy" },
+    { word: "Tette rør tips", pos: 4, change: 5, vol: 600, diff: "Lav" },
+  ];
+
+  // Sorterer: De som faller mest kommer først (slik at vi kan fikse dem)
+  const sortedKeywords = [...keywords].sort((a, b) => a.change - b.change);
+
+  return (
+    <div className="space-y-6">
+
+      {/* 1. Header & Oversikt */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Topp 3 Plasseringer</p>
+          <h3 className="text-3xl font-black text-white mt-2">2 <span className="text-sm text-slate-500 font-normal">søkeord</span></h3>
+        </div>
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Gjennomsnittlig Posisjon</p>
+          <h3 className="text-3xl font-black text-white mt-2">5.4 <span className="text-sm text-emerald-400 font-bold flex inline-flex items-center gap-1"><TrendingUp size={14} /> +1.2</span></h3>
+        </div>
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Est. Månedlig Trafikk</p>
+          <h3 className="text-3xl font-black text-white mt-2">840 <span className="text-sm text-slate-500 font-normal">klikk</span></h3>
+        </div>
+      </div>
+
+      {/* 2. Søkeordslisten */}
+      <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
+        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+          <h3 className="font-bold text-lg text-white">Dine Rangeringer</h3>
+          {currentLevel === 1 && <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">Viser kun topp 5 (Basic)</span>}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-xs font-bold text-slate-500 border-b border-white/5">
+                <th className="p-4 uppercase">Søkeord</th>
+                <th className="p-4 uppercase">Posisjon</th>
+                <th className="p-4 uppercase">Endring</th>
+                <th className="p-4 uppercase hidden md:table-cell">Volum</th>
+                <th className="p-4 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {sortedKeywords.map((k, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-4 font-medium text-white">{k.word}</td>
+                  <td className="p-4">
+                    <span className={`font-bold px-2 py-1 rounded-lg ${k.pos <= 3 ? 'bg-emerald-500/20 text-emerald-400' : k.pos <= 10 ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'}`}>
+                      #{k.pos}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className={`font-bold px-2 py-1 rounded-lg ${k.diff === 'Høy' ? 'bg-rose-500/20 text-rose-400' : k.diff === 'Medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                      {k.diff}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
 
 // --- Decorative Background Elements ---
 const GlobalDecorations = () => {
@@ -97,6 +238,23 @@ const GlobalDecorations = () => {
     </div>
   );
 };
+
+// --- DIN NYE CTA KOMPONENT ---
+const GoogleCTA = () => (
+  <div className="flex justify-center mt-8 sm:mt-12 relative z-30">
+    <button
+      onClick={handleLogin}
+      className="group relative inline-flex items-center gap-3 px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-lg shadow-xl hover:bg-violet-600 hover:shadow-2xl hover:shadow-violet-500/20 transition-all duration-300 transform hover:-translate-y-1"
+    >
+      <span>Ta meg til toppen av Google</span>
+      {/* Vi bruker ikonet du allerede har importert */}
+      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+
+      {/* En liten 'glow' effekt for å gjøre den uimotståelig */}
+      <div className="absolute inset-0 rounded-full ring-2 ring-white/10 group-hover:ring-white/30"></div>
+    </button>
+  </div>
+);
 
 // --- TECHNOLOGY VIEW COMPONENTS ---
 
@@ -144,8 +302,9 @@ const TechnologyHero = () => (
         </div>
       </RevealOnScroll>
     </div>
-    
-    <style dangerouslySetInnerHTML={{ __html: `
+
+    <style dangerouslySetInnerHTML={{
+      __html: `
       @keyframes scan-tech {
         0% { transform: translateY(-50px); }
         100% { transform: translateY(500px); }
@@ -230,7 +389,7 @@ const FeatureMatrix = () => (
         <div className="bg-slate-950 p-8 sm:p-16 rounded-[36px] sm:rounded-[48px] text-white relative overflow-hidden group">
           <div className="absolute inset-0 grid-pattern opacity-10"></div>
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center relative z-10 text-center lg:text-left">
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 sm:mb-8 border border-white/10">
@@ -292,21 +451,21 @@ const DashboardSection = () => (
           </p>
           <div className="space-y-6 sm:space-y-8">
             {[
-              { 
-                title: "Smart Tolkning", 
-                desc: "AI-en oversetter rådata til menneskelig språk.", 
+              {
+                title: "Smart Tolkning",
+                desc: "AI-en oversetter rådata til menneskelig språk.",
                 icon: <MessageCircle className="text-violet-600" />,
                 example: "AI-tips: 'Innholdet om Varmepumper mister terreng. Legg til en seksjon om energisparing.'"
               },
-              { 
-                title: "ROI-Prioritering", 
-                desc: "Vi fokuserer kun på det som faktisk gir deg flere kunder.", 
-                icon: <TrendingUp className="text-violet-600" /> 
+              {
+                title: "ROI-Prioritering",
+                desc: "Vi fokuserer kun på det som faktisk gir deg flere kunder.",
+                icon: <TrendingUp className="text-violet-600" />
               },
-              { 
-                title: "Konkurrent-Radar", 
-                desc: "Vår radar overvåker markedet 24/7 og varsler deg umiddelbart.", 
-                icon: <Activity className="text-violet-600" /> 
+              {
+                title: "Konkurrent-Radar",
+                desc: "Vår radar overvåker markedet 24/7 og varsler deg umiddelbart.",
+                icon: <Activity className="text-violet-600" />
               }
             ].map((item, i) => (
               <div key={i} className="flex gap-4 sm:gap-6 group">
@@ -326,67 +485,67 @@ const DashboardSection = () => (
             ))}
           </div>
         </RevealOnScroll>
-        
+
         <RevealOnScroll direction="scale" className="relative h-full flex items-center justify-center mt-12 lg:mt-0">
           <div className="relative w-full max-w-sm sm:max-w-lg aspect-[4/5] bg-white/40 rounded-[36px] sm:rounded-[48px] border border-white/50 shadow-2xl backdrop-blur-md p-6 sm:p-8 overflow-hidden">
             <div className="flex items-center justify-between mb-8 sm:mb-10">
-               <div className="flex items-center gap-2.5 sm:gap-3">
-                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
-                 <div>
-                   <div className="text-[10px] sm:text-xs font-black text-slate-900 uppercase">AI Strategi-strøm</div>
-                   <div className="text-[8px] sm:text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Aktiv Analyse
-                   </div>
-                 </div>
-               </div>
-               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100"><Search size={12} className="text-slate-400" /></div>
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
+                <div>
+                  <div className="text-[10px] sm:text-xs font-black text-slate-900 uppercase">AI Strategi-strøm</div>
+                  <div className="text-[8px] sm:text-[10px] text-emerald-500 font-bold flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Aktiv Analyse
+                  </div>
+                </div>
+              </div>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100"><Search size={12} className="text-slate-400" /></div>
             </div>
 
             <div className="space-y-4 sm:space-y-6">
-               <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                 <div className="flex gap-3 sm:gap-4 mb-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shrink-0"><Zap size={16} /></div>
-                    <div>
-                      <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Innholds-optimalisering</div>
-                      <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Høy prioritet · +15% ROI</div>
-                    </div>
-                 </div>
-                 <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                   "Oppdater 'Tjenester'-siden med søkeordet <span className="text-violet-600 font-bold">SEO-byrå Oslo</span>."
-                 </p>
-               </div>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="flex gap-3 sm:gap-4 mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shrink-0"><Zap size={16} /></div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Innholds-optimalisering</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Høy prioritet · +15% ROI</div>
+                  </div>
+                </div>
+                <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
+                  "Oppdater 'Tjenester'-siden med søkeordet <span className="text-violet-600 font-bold">SEO-byrå Oslo</span>."
+                </p>
+              </div>
 
-               <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                 <div className="flex gap-3 sm:gap-4 mb-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><Target size={16} /></div>
-                    <div>
-                      <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Markeds-radar</div>
-                      <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Aktiv varsling</div>
-                    </div>
-                 </div>
-                 <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                   "Konkurrent A har lansert en ny bloggserie. Vi har generert 3 mot-strategier."
-                 </p>
-               </div>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <div className="flex gap-3 sm:gap-4 mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><Target size={16} /></div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Markeds-radar</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Aktiv varsling</div>
+                  </div>
+                </div>
+                <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
+                  "Konkurrent A har lansert en ny bloggserie. Vi har generert 3 mot-strategier."
+                </p>
+              </div>
 
-               <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.6s' }}>
-                 <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl"></div>
-                 <div className="flex gap-3 sm:gap-4 mb-3 relative z-10">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-violet-400 shrink-0"><Sparkles size={16} /></div>
-                    <div>
-                      <div className="text-[10px] sm:text-xs font-black text-white mb-1">Neste handling</div>
-                      <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Anbefalt av AI</div>
-                    </div>
-                 </div>
-                 <div className="text-[11px] sm:text-sm text-white font-bold leading-relaxed relative z-10">
-                   "Start optimalisering av produktsider for å øke konvertering."
-                 </div>
-                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-end relative z-10">
-                    <button className="text-[9px] sm:text-[10px] font-black text-violet-400 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
-                      Utfør nå <ArrowRight size={10} />
-                    </button>
-                 </div>
-               </div>
+              <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.6s' }}>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl"></div>
+                <div className="flex gap-3 sm:gap-4 mb-3 relative z-10">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-violet-400 shrink-0"><Sparkles size={16} /></div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-black text-white mb-1">Neste handling</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Anbefalt av AI</div>
+                  </div>
+                </div>
+                <div className="text-[11px] sm:text-sm text-white font-bold leading-relaxed relative z-10">
+                  "Start optimalisering av produktsider for å øke konvertering."
+                </div>
+                <div className="mt-4 pt-4 border-t border-white/10 flex justify-end relative z-10">
+                  <button className="text-[9px] sm:text-[10px] font-black text-violet-400 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
+                    Utfør nå <ArrowRight size={10} />
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-violet-200/40 rounded-full blur-[100px] pointer-events-none"></div>
           </div>
@@ -468,6 +627,106 @@ const ComparisonTable = () => {
   );
 };
 
+
+const ContentStrategy = ({ clientData }: { clientData: any }) => {
+  const [ideas, setIdeas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 1. HENT NØKKELEN FRA MILJØVARIABEL (Sikrere og riktig for Vite)
+  const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
+
+  const industry = clientData?.industry || "din bransje";
+  const audience = clientData?.targetAudience || "kundene dine";
+
+  const generateIdeas = async () => {
+    // --- SLADREHANK START ---
+    console.log("---------------------------------------------------");
+    console.log("Hva står i .env filen?", (import.meta as any).env.VITE_GEMINI_API_KEY);
+    console.log("Hvilken nøkkel bruker jeg?", API_KEY);
+    console.log("---------------------------------------------------");
+    // --- SLADREHANK SLUTT ---
+
+    if (!API_KEY) { alert("Mangler API-nøkkel."); return; }
+    setLoading(true);
+
+    const modelsToTry = ["gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
+    let success = false;
+
+    // Vi bruker en enkel løkke for å teste modellene en etter en
+    for (const modelName of modelsToTry) {
+      if (success) break; // Hvis vi har fått svar, stopp letingen
+      console.log(`Prøver modell: ${modelName}...`);
+
+      try {
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: modelName });
+
+        const prompt = `Lag 3 korte blogg-ideer for ${industry} (JSON format).`;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text().replace(/```json|```/g, '').trim();
+
+        // HVIS VI KOMMER HIT, VIRKET DET!
+        console.log(`Suksess med modell: ${modelName}`);
+        try {
+          const parsed = JSON.parse(text);
+          setIdeas(parsed.ideas || parsed); // Håndterer litt ulike formater
+        } catch {
+          // Fallback hvis JSON feiler men AI virket
+          alert(`AI virket med ${modelName}, men formateringen var feil. Prøv igjen.`);
+        }
+        success = true;
+
+      } catch (error: any) {
+        console.warn(`Modell ${modelName} feilet:`, error.message);
+      }
+    }
+
+    if (!success) {
+      alert("Alle modeller feilet. Sjekk at 'Generative Language API' er aktivert i Google Cloud Console.");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-indigo-950/30 to-slate-950 border border-indigo-500/30 rounded-2xl p-8 relative overflow-hidden mb-8">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl"></div>
+      <div className="relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30"><Lightbulb size={28} /></div>
+            <div><h3 className="text-xl font-bold text-white">AI Redaksjonen (Vår sterkeste AI)</h3><p className="text-slate-400">Beste markedsstrategi for <span className="text-indigo-400 font-bold">{industry}</span>.</p></div>
+          </div>
+          <button onClick={generateIdeas} disabled={loading} className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-500 flex items-center gap-2 whitespace-nowrap disabled:opacity-50 shadow-lg shadow-indigo-900/20 transition-all">
+            {loading ? <><Loader2 className="animate-spin" size={16} /> Analyserer...</> : <><Target size={16} /> Generer Strategi</>}
+          </button>
+        </div>
+
+        {ideas.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4">
+            {ideas.map((idea, i) => (
+              <div key={i} className="bg-slate-900/80 border border-white/5 p-5 rounded-xl hover:border-indigo-500/50 transition-all group">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] uppercase font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded">Søk: {idea.vol}</span>
+                  <span className="text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">Nivå: {idea.difficulty}</span>
+                </div>
+                <h4 className="text-white font-bold text-lg mb-2 group-hover:text-indigo-400 transition-colors">{idea.title}</h4>
+                <p className="text-sm text-slate-400 mb-6 leading-relaxed min-h-[60px]">{idea.reason}</p>
+                <button className="w-full bg-white text-slate-950 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors"><PenTool size={14} /> Skriv utkast</button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-slate-900/30">
+            <p className="text-slate-500 text-sm">Klikk på knappen for å generere unike ideer for din bedrift.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- HOME PAGE COMPONENTS ---
 
 const Hero = () => {
@@ -504,7 +763,7 @@ const Hero = () => {
         <RevealOnScroll direction="scale" delay={400}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-600 hover:scale-105 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-500 flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-slate-200">
-              Begynn nå <ArrowRight size={22} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+              Ta meg til toppen av Google <ArrowRight size={22} className="transition-transform duration-300 group-hover:translate-x-1.5" />
             </a>
           </div>
         </RevealOnScroll>
@@ -518,7 +777,7 @@ const DashboardPreview = () => (
     <RevealOnScroll direction="scale" delay={200}>
       <div className="relative group">
         <div className="bg-white/40 p-1 rounded-[24px] sm:rounded-[32px] border border-white shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] backdrop-blur-md overflow-hidden relative">
-          
+
           {/* Enhanced AI processing background animation - KEEPING AS IS */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40 z-0">
             <div className="absolute inset-0 grid-pattern opacity-10"></div>
@@ -528,7 +787,7 @@ const DashboardPreview = () => (
               <div className="w-[600px] h-[600px] bg-violet-400/5 rounded-full blur-[120px] animate-pulse"></div>
             </div>
             {[...Array(8)].map((_, i) => (
-              <div 
+              <div
                 key={i}
                 className="absolute w-1 h-1 bg-violet-400 rounded-full blur-sm animate-float-particle"
                 style={{
@@ -542,15 +801,15 @@ const DashboardPreview = () => (
           </div>
 
           <div className="bg-white rounded-[20px] sm:rounded-[28px] flex overflow-hidden h-[320px] sm:h-[500px] md:h-[650px] shadow-sm border border-slate-100/50 relative z-10">
-            
+
             {/* 1. New Sidebar for density */}
             <div className="hidden sm:flex flex-col w-12 sm:w-16 border-r border-slate-100 bg-white pt-4 items-center gap-4 shrink-0">
-                <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs mb-4">S</div>
-                {[Home, Activity, Layers, User, Wrench].map((Icon, i) => (
-                    <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-violet-50 text-violet-600' : 'text-slate-300 hover:text-slate-600'}`}>
-                        <Icon size={18} />
-                    </div>
-                ))}
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs mb-4">S</div>
+              {[Home, Activity, Layers, User, Wrench].map((Icon, i) => (
+                <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-violet-50 text-violet-600' : 'text-slate-300 hover:text-slate-600'}`}>
+                  <Icon size={18} />
+                </div>
+              ))}
             </div>
 
             <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden">
@@ -568,83 +827,83 @@ const DashboardPreview = () => (
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="hidden md:flex gap-4 mr-4">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase">Nettside helse</span>
-                            <span className="text-xs font-black text-slate-900">98.5%</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase">Aktive søkeord</span>
-                            <span className="text-xs font-black text-slate-900">2,341</span>
-                        </div>
+                  <div className="hidden md:flex gap-4 mr-4">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">Nettside helse</span>
+                      <span className="text-xs font-black text-slate-900">98.5%</span>
                     </div>
-                    <div className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-400 relative">
-                        <div className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></div>
-                        <MessageCircle size={14} />
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">Aktive søkeord</span>
+                      <span className="text-xs font-black text-slate-900">2,341</span>
                     </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-400 relative">
+                    <div className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></div>
+                    <MessageCircle size={14} />
+                  </div>
                 </div>
               </div>
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-                
+
                 {/* Row 1: KPI Cards (Dense) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                    {[
-                        { l: "Total Trafikk", v: "124.5k", c: "text-violet-600", g: "+12%" },
-                        { l: "Synlighet", v: "89.2%", c: "text-emerald-600", g: "+4.1%" },
-                        { l: "Domene Autoritet", v: "54", c: "text-amber-600", g: "+1" },
-                        { l: "Tekniske Feil", v: "0", c: "text-slate-900", g: "-2" },
-                    ].map((kpi, i) => (
-                        <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-20 sm:h-24">
-                            <div className="flex justify-between items-start">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{kpi.l}</span>
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'}`}>{kpi.g}</span>
-                            </div>
-                            <span className={`text-lg sm:text-2xl font-black ${kpi.c}`}>{kpi.v}</span>
-                            <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
-                                <div className="h-full bg-current opacity-20 w-2/3"></div>
-                            </div>
-                        </div>
-                    ))}
+                  {[
+                    { l: "Total Trafikk", v: "124.5k", c: "text-violet-600", g: "+12%" },
+                    { l: "Synlighet", v: "89.2%", c: "text-emerald-600", g: "+4.1%" },
+                    { l: "Domene Autoritet", v: "54", c: "text-amber-600", g: "+1" },
+                    { l: "Tekniske Feil", v: "0", c: "text-slate-900", g: "-2" },
+                  ].map((kpi, i) => (
+                    <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-20 sm:h-24">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{kpi.l}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'}`}>{kpi.g}</span>
+                      </div>
+                      <span className={`text-lg sm:text-2xl font-black ${kpi.c}`}>{kpi.v}</span>
+                      <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                        <div className="h-full bg-current opacity-20 w-2/3"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Row 2: Main Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  
+
                   {/* Score Card (Detailed) */}
                   <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">SEO Scorecard</h4>
-                        <Wrench size={14} className="text-slate-300" />
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">SEO Scorecard</h4>
+                      <Wrench size={14} className="text-slate-300" />
                     </div>
                     <div className="flex items-center gap-6 mb-6">
-                        <div className="relative">
-                            <svg className="w-20 h-20 transform -rotate-90">
-                                <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-50" />
-                                <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-violet-500" strokeDasharray="200" strokeDashoffset="30" />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-xl font-black text-slate-900">85</span>
+                      <div className="relative">
+                        <svg className="w-20 h-20 transform -rotate-90">
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-50" />
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-violet-500" strokeDasharray="200" strokeDashoffset="30" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-xl font-black text-slate-900">85</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 flex-1">
+                        {["Teknisk", "Innhold", "Lenker"].map((l, i) => (
+                          <div key={i} className="flex flex-col gap-1">
+                            <div className="flex justify-between text-[9px] font-bold text-slate-500">
+                              <span>{l}</span>
+                              <span>{90 - i * 5}%</span>
                             </div>
-                        </div>
-                        <div className="flex flex-col gap-2 flex-1">
-                            {["Teknisk", "Innhold", "Lenker"].map((l, i) => (
-                                <div key={i} className="flex flex-col gap-1">
-                                    <div className="flex justify-between text-[9px] font-bold text-slate-500">
-                                        <span>{l}</span>
-                                        <span>{90 - i*5}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-                                        <div className="h-full bg-slate-800 rounded-full" style={{width: `${90 - i*5}%`}}></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                            <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+                              <div className="h-full bg-slate-800 rounded-full" style={{ width: `${90 - i * 5}%` }}></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div className="mt-auto border-t border-slate-50 pt-3 flex justify-between items-center">
-                        <span className="text-[10px] text-slate-400 font-medium">Neste scan om 2t 14m</span>
-                        <button className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">Scan Nå</button>
+                      <span className="text-[10px] text-slate-400 font-medium">Neste scan om 2t 14m</span>
+                      <button className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">Scan Nå</button>
                     </div>
                   </div>
 
@@ -654,78 +913,78 @@ const DashboardPreview = () => (
                       <div>
                         <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Trafikk Analyse</h4>
                         <div className="flex gap-2 text-[9px] text-slate-400 font-medium mt-0.5">
-                            <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div> Organisk</span>
-                            <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> Direkte</span>
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div> Organisk</span>
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> Direkte</span>
                         </div>
                       </div>
                       <div className="flex gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
                         {["1U", "1M", "3M", "1Å"].map((t, i) => (
-                            <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>{t}</button>
+                          <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>{t}</button>
                         ))}
                       </div>
                     </div>
                     <div className="flex-1 relative min-h-[140px] border-b border-l border-slate-50">
-                       {/* Grid lines */}
-                       <div className="absolute inset-0 grid grid-rows-4 gap-0 pointer-events-none">
-                           {[...Array(4)].map((_, i) => <div key={i} className="border-t border-slate-50 w-full h-full"></div>)}
-                       </div>
-                       <svg className="absolute inset-0 w-full h-full overflow-visible z-10" viewBox="0 0 800 200" preserveAspectRatio="none">
-                         <defs>
-                           <linearGradient id="chartGradientDense" x1="0%" y1="0%" x2="0%" y2="100%">
-                             <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.1" />
-                             <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
-                           </linearGradient>
-                         </defs>
-                         <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 5" stroke="#7c3aed" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                         <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 200 L 0 200 Z" fill="url(#chartGradientDense)" />
-                         
-                         {/* Secondary Line */}
-                         <path d="M0 190 C 80 180, 160 170, 240 180 C 320 190, 400 160, 480 150 C 560 140, 640 130, 720 120 L 800 110" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" fill="none" />
-                       </svg>
-                       {/* Tooltip Simulation */}
-                       <div className="absolute top-[30%] left-[60%] bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl transform -translate-x-1/2 -translate-y-full z-20">
-                           2,451
-                           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
-                       </div>
-                       <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-violet-600 border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 grid grid-rows-4 gap-0 pointer-events-none">
+                        {[...Array(4)].map((_, i) => <div key={i} className="border-t border-slate-50 w-full h-full"></div>)}
+                      </div>
+                      <svg className="absolute inset-0 w-full h-full overflow-visible z-10" viewBox="0 0 800 200" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="chartGradientDense" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.1" />
+                            <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 5" stroke="#7c3aed" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 200 L 0 200 Z" fill="url(#chartGradientDense)" />
+
+                        {/* Secondary Line */}
+                        <path d="M0 190 C 80 180, 160 170, 240 180 C 320 190, 400 160, 480 150 C 560 140, 640 130, 720 120 L 800 110" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" fill="none" />
+                      </svg>
+                      {/* Tooltip Simulation */}
+                      <div className="absolute top-[30%] left-[60%] bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl transform -translate-x-1/2 -translate-y-full z-20">
+                        2,451
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                      </div>
+                      <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-violet-600 border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
                   </div>
                 </div>
 
                 {/* Row 3: Bottom Density (New) */}
                 <div className="grid grid-cols-3 gap-4 h-24 hidden sm:grid">
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
-                        <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Topp Søkeord</h4>
-                        <div className="space-y-1.5">
-                            {[{w:"seo byrå", r:1}, {w:"digital markedsføring", r:3}].map((kw, i) => (
-                                <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-slate-50 pb-1">
-                                    <span className="text-slate-700">{kw.w}</span>
-                                    <span className="text-violet-600 font-bold">#{kw.r}</span>
-                                </div>
-                            ))}
+                  <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Topp Søkeord</h4>
+                    <div className="space-y-1.5">
+                      {[{ w: "seo byrå", r: 1 }, { w: "digital markedsføring", r: 3 }].map((kw, i) => (
+                        <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-slate-50 pb-1">
+                          <span className="text-slate-700">{kw.w}</span>
+                          <span className="text-violet-600 font-bold">#{kw.r}</span>
                         </div>
+                      ))}
                     </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                        <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Core Web Vitals</h4>
-                        <div className="flex items-end gap-2 h-10 mt-2">
-                             {[
-                                 {l:"LCP", v:80, c:"bg-emerald-400"}, 
-                                 {l:"FID", v:95, c:"bg-emerald-400"}, 
-                                 {l:"CLS", v:60, c:"bg-amber-400"}
-                             ].map((m, i) => (
-                                 <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1">
-                                     <div className={`w-full rounded-t-sm ${m.c}`} style={{height: `${m.v}%`}}></div>
-                                     <span className="text-[8px] font-bold text-slate-400">{m.l}</span>
-                                 </div>
-                             ))}
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Core Web Vitals</h4>
+                    <div className="flex items-end gap-2 h-10 mt-2">
+                      {[
+                        { l: "LCP", v: 80, c: "bg-emerald-400" },
+                        { l: "FID", v: 95, c: "bg-emerald-400" },
+                        { l: "CLS", v: 60, c: "bg-amber-400" }
+                      ].map((m, i) => (
+                        <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1">
+                          <div className={`w-full rounded-t-sm ${m.c}`} style={{ height: `${m.v}%` }}></div>
+                          <span className="text-[8px] font-bold text-slate-400">{m.l}</span>
                         </div>
+                      ))}
                     </div>
-                    <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
-                        <div className="absolute inset-0 bg-violet-500/10 animate-pulse"></div>
-                        <Activity size={20} className="text-violet-400 mb-2 relative z-10" />
-                        <span className="text-[9px] font-bold text-slate-400 uppercase relative z-10">AI Agent</span>
-                        <span className="text-[10px] font-black text-white relative z-10">Working...</span>
-                    </div>
+                  </div>
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
+                    <div className="absolute inset-0 bg-violet-500/10 animate-pulse"></div>
+                    <Activity size={20} className="text-violet-400 mb-2 relative z-10" />
+                    <span className="text-[9px] font-bold text-slate-400 uppercase relative z-10">AI Agent</span>
+                    <span className="text-[10px] font-black text-white relative z-10">Working...</span>
+                  </div>
                 </div>
               </div>
 
@@ -734,7 +993,8 @@ const DashboardPreview = () => (
         </div>
       </div>
     </RevealOnScroll>
-    <style dangerouslySetInnerHTML={{ __html: `
+    <style dangerouslySetInnerHTML={{
+      __html: `
       @keyframes float-particle {
         0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
         50% { transform: translate(20px, -40px) scale(1.5); opacity: 0.6; }
@@ -743,6 +1003,113 @@ const DashboardPreview = () => (
     `}} />
   </div>
 );
+
+const BacklinkMonitor = ({ currentLevel }: { currentLevel: number }) => {
+  // Simulert data: Eksisterende lenker (Standard)
+  const links = [
+    { url: "https://www.lokalavisen.no/beste-handverkere", da: 45, status: "Aktiv", date: "12.01.2026" },
+    { url: "https://www.bransjebloggen.no/tips-ror", da: 32, status: "Aktiv", date: "05.01.2026" },
+    { url: "https://www.gulesider.no/bedrift/din-bedrift", da: 65, status: "NoFollow", date: "20.12.2025" },
+    { url: "https://spam-site-russia.ru/links", da: 2, status: "Toxic", date: "15.02.2026" }, // Giftig lenke!
+  ];
+
+  // Simulert data: Muligheter (Premium)
+  const opportunities = [
+    { site: "Hus & Hjem Magasinet", da: 58, reason: "Lenker til 3 av dine konkurrenter." },
+    { site: "Byggstart.no", da: 42, reason: "Du mangler oppføring her." },
+  ];
+
+  return (
+    <div className="space-y-8">
+
+      {/* 1. Header Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Domain Authority (DA)</p>
+          <h3 className="text-3xl font-black text-white mt-2">24 <span className="text-sm text-slate-500 font-normal">/ 100</span></h3>
+        </div>
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Totale Backlinks</p>
+          <h3 className="text-3xl font-black text-white mt-2">142 <span className="text-sm text-emerald-400 font-bold inline-flex items-center gap-1"><TrendingUp size={14} /> +3</span></h3>
+        </div>
+        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
+          <p className="text-slate-400 text-xs font-bold uppercase">Giftige Lenker</p>
+          <h3 className="text-3xl font-black text-rose-400 mt-2">1 <span className="text-sm text-slate-500 font-normal">krever handling</span></h3>
+        </div>
+      </div>
+
+      {/* 2. Link Liste (Standard) */}
+      <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
+        <div className="p-6 border-b border-white/5"><h3 className="font-bold text-lg text-white">Dine Backlinks</h3></div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-xs font-bold text-slate-500 border-b border-white/5">
+                <th className="p-4 uppercase">Kilde (URL)</th>
+                <th className="p-4 uppercase">Autoritet</th>
+                <th className="p-4 uppercase">Status</th>
+                <th className="p-4 uppercase">Dato</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {links.map((link, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-4 font-medium text-blue-400 truncate max-w-[200px] flex items-center gap-2">
+                    <Link2 size={14} className="shrink-0 text-slate-500" /> {link.url}
+                  </td>
+                  <td className="p-4"><span className="bg-slate-800 text-white px-2 py-1 rounded text-xs font-bold">{link.da}</span></td>
+                  <td className="p-4">
+                    {link.status === 'Toxic' ? (
+                      <span className="text-rose-400 font-bold flex items-center gap-1"><AlertOctagon size={12} /> Giftig</span>
+                    ) : (
+                      <span className="text-emerald-400 flex items-center gap-1">{link.status}</span>
+                    )}
+                  </td>
+                  <td className="p-4 text-slate-500">{link.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 3. Premium: AI Link Hunter */}
+      {currentLevel >= 3 ? (
+        <div className="bg-gradient-to-br from-violet-950/30 to-slate-950 border border-violet-500/30 rounded-2xl p-6 relative overflow-hidden">
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="p-3 bg-violet-500/20 text-violet-400 rounded-xl"><UserPlus size={28} /></div>
+            <div>
+              <h4 className="text-white font-bold text-lg mb-2">AI Link Hunter 🎯</h4>
+              <p className="text-slate-400 text-sm mb-4">Vi har analysert konkurrentene dine. Her er nettsider som sannsynligvis vil lenke til deg hvis du spør.</p>
+
+              <div className="space-y-3">
+                {opportunities.map((opp, i) => (
+                  <div key={i} className="bg-slate-900/80 p-4 rounded-xl border border-white/5 flex justify-between items-center hover:border-violet-500/50 transition-colors">
+                    <div>
+                      <h5 className="font-bold text-white">{opp.site} <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ml-2">DA: {opp.da}</span></h5>
+                      <p className="text-xs text-slate-500">{opp.reason}</p>
+                    </div>
+                    <button className="text-xs bg-white text-slate-900 px-3 py-1.5 rounded-lg font-bold hover:bg-violet-50 flex items-center gap-1">
+                      <ExternalLink size={12} /> Kontakt
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5 text-center">
+          <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-full mb-3"><UserPlus size={24} /></div>
+          <h3 className="text-lg font-bold text-white mb-2">Vil du ha flere lenker?</h3>
+          <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto">I Premium-pakken finner AI-en nettsider som er relevante for din bransje og hjelper deg å få lenker fra dem.</p>
+          <button className="text-violet-400 font-bold text-sm hover:underline">Oppgrader til Premium for Link Hunter &rarr;</button>
+        </div>
+      )}
+
+    </div>
+  );
+};
 
 // --- DEEP DIVE (GEO) COMPONENTS ---
 
@@ -800,7 +1167,7 @@ const PainPointData = () => (
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Hvert minutt teller.</h3>
             <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed mb-6 sm:mb-8 font-medium">
-              Mens du leser dette, søker potensielle kunder etter dine tjenester. De finner konkurrentene dine akkurat nå. 
+              Mens du leser dette, søker potensielle kunder etter dine tjenester. De finner konkurrentene dine akkurat nå.
             </p>
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
@@ -854,24 +1221,24 @@ const AiProcessDeepDive = () => (
         <RevealOnScroll direction="right">
           <div className="p-1.5 sm:p-2 bg-slate-950 rounded-[28px] sm:rounded-[40px] shadow-2xl mt-8 md:mt-0">
             <div className="bg-white rounded-[24px] sm:rounded-[34px] p-6 sm:p-8 border border-slate-100">
-               <div className="flex justify-between items-center mb-6 sm:mb-8">
-                 <div className="text-sm sm:text-base font-black text-slate-900 uppercase">AI Prosessering</div>
-                 <div className="text-[8px] sm:text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-bold">Aktiv</div>
-               </div>
-               <div className="space-y-4 sm:space-y-6">
-                 {[
-                   { label: "Søkeordsdybde", val: "98%" },
-                   { label: "Overvåkning", val: "24/7" },
-                   { label: "Innholds-skår", val: "9.2/10" }
-                 ].map((stat, i) => (
-                   <div key={i}>
-                     <div className="flex justify-between text-[9px] sm:text-xs font-bold text-slate-400 mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
-                     <div className="h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-violet-600 animate-draw-line" style={{ width: stat.val, animationDelay: `${i * 200}ms` }}></div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
+              <div className="flex justify-between items-center mb-6 sm:mb-8">
+                <div className="text-sm sm:text-base font-black text-slate-900 uppercase">AI Prosessering</div>
+                <div className="text-[8px] sm:text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-bold">Aktiv</div>
+              </div>
+              <div className="space-y-4 sm:space-y-6">
+                {[
+                  { label: "Søkeordsdybde", val: "98%" },
+                  { label: "Overvåkning", val: "24/7" },
+                  { label: "Innholds-skår", val: "9.2/10" }
+                ].map((stat, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between text-[9px] sm:text-xs font-bold text-slate-400 mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
+                    <div className="h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-violet-600 animate-draw-line" style={{ width: stat.val, animationDelay: `${i * 200}ms` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </RevealOnScroll>
@@ -880,13 +1247,701 @@ const AiProcessDeepDive = () => (
   </section>
 );
 
-// --- SHARED COMPONENTS ---
 
-const Pricing = ({ onSelectPlan }: { onSelectPlan?: (plan: string) => void }) => {
+const BRANSJER = [
+  "Advokat og Juridisk", "Akupunktur og Alternativ behandling", "Anleggsgartner", "Apotek", "Arkitekt", "Asylmottak", "Au pair og Barnepass", "Audiograf",
+  "Bakeri og Konditori", "Bank og Finans", "Barnehage", "Begravelsesbyrå", "Bensin og Servicehandel", "Betong og Mur", "Bibliotek", "Bilbransjen - Forhandler", "Bilbransjen - Verksted", "Bilpleie", "Bioteknologi", "Blomsterdekoratør", "Bokhandel", "Brannvern", "Bryggeri", "Budbil og Transport", "Butikk og Detaljhandel", "Bygg og Anlegg", "Båt og Maritim",
+  "Catering", "Coaching og Mentoring", "Computer og Data", "Consulting", "Containerutleie",
+  "Dagligvare", "Dans og Teater", "Data og IT-drift", "Design og Formgivning", "Dyreklinikk og Veterinær", "Dyrepleie",
+  "E-handel og Nettbutikk", "Eiendom og Bolig", "Eiendomsmegling", "Elektriker", "Elektronikk", "Energi og Kraft", "Entreprenør", "Event og Arrangement",
+  "Film og TV-produksjon", "Fiskeri og Havbruk", "Fjellsprengning", "Flytting og Transport", "Forlag og Publishing", "Forsikring", "Forskning og Utvikling", "Fotograf", "Frisør", "Fysioterapi",
+  "Gartneri", "Gjenvinning og Avfall", "Glassmester", "Grafisk Design", "Grossist", "Gullsmed",
+  "Havnevirksomhet", "Helse og Omsorg", "Helsekost", "Hotell og Overnatting", "Hudpleie og Spa", "Hundesalong", "Hytteutleie", "Håndverker",
+  "Industri og Produksjon", "Ingeniørtjenester", "Interiørdesign", "Internett og Web", "Investering", "Isolasjon", "IT-Konsulent", "IT-Sikkerhet",
+  "Jordbruk og Skogbruk", "Journalistikk",
+  "Kafe og Kaffebar", "Kantinedrift", "Kjemisk Industri", "Klesbutikk", "Kiosk", "Kiropraktor", "Kjemi og Laboratorium", "Konsulenttjenester", "Kontorutstyr", "Kraftlag", "Kunst og Kultur", "Kurs og Konferanse", "Kjøreskole",
+  "Lager og Logistikk", "Landskapsarkitekt", "Lege og Spesialist", "Leketøy", "Luftfart", "Lyd og Lys", "Låsesmed",
+  "Maling og Tapet", "Markedsføring og Reklame", "Maskinentreprenør", "Massasje", "Medier og Kommunikasjon", "Mekansik verksted", "Møbelsnekker", "Møbelbutikk", "Musikk og Lydstudio",
+  "Naprapat", "Naturforvaltning", "Nettverk og Telekom",
+  "Offentlig forvaltning", "Olje og Gass", "Optiker", "Organisasjon og Forening",
+  "Pakking og Emballasje", "Parkering", "Personlig Trener", "Bemanning og Rekruttering", "Pizza og Fastfood", "Planlegging", "Produktdesign", "Psykolog",
+  "Regnskap og Revisjon", "Renhold og Vask", "Reisebyrå", "Reiseliv og Turisme", "Restaurant og Servering", "Rigg og Drift", "Rørlegger",
+  "Salg og Agentur", "Sikkerhet og Vakt", "Skilt og Dekor", "Skipsfart", "Skole og Utdanning", "Skadedyrkontroll", "Smådyrklinikk", "Snekker og Tømrer", "Sosiale Tjenester", "Spedisjon", "Sport og Idrett", "Sportsbutikk", "Stål og Metall", "Sykehjem", "Sykepleie",
+  "Takstmann", "Taktekking", "Tannlege", "Taxi og Persontransport", "Tekstil og Klær", "Telekommunikasjon", "Teater", "Tolk", "Transport og Logistikk", "Treforedling", "Trening og Helse", "Trykkeri", "Turistinformasjon",
+  "Urmaker", "Uteliv og Bar", "Utleie",
+  "Vann og Avløp", "Vaskeri", "Vedlikehold", "Veidrift", "Verksted", "Webutvikling og Design", "Yrkeshygiene", "Økonomi og Administrasjon"
+].sort();
+
+
+const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
+  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    companyName: '', contactPerson: '', email: '', phone: '',
+    websiteUrl: '', industry: '', targetAudience: ''
+  });
+
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const handleSelectIndustry = (industry: string) => {
+    setFormData(prev => ({ ...prev, industry: industry }));
+    setShowSuggestions(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Sjekk om det er bransje-feltet som skrives i
+    if (name === 'industry') {
+      if (value.length > 0) {
+        // HER ER ENDRINGEN: Vi bruker startsWith igjen for å matche første bokstav
+        const filtered = BRANSJER.filter(item =>
+          item.toLowerCase().startsWith(value.toLowerCase())
+        );
+        setSuggestions(filtered);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (!user) {
+      alert("Feil: Ingen bruker funnet. Logg inn på nytt.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log("Starter lagring for User ID:", user.id);
+
+      // 2. CRITICAL FIX: Mapping til Snake_case
+      // Jeg antar databasen din bruker standard SQL-navngiving (snake_case).
+      // Hvis databasen din faktisk bruker camelCase (companyName), kan du bytte tilbake.
+      const dataTilDatabase = {
+        user_id: user.id,
+        onboarding_completed: true,
+
+        // Venstre side = Navn i Supabase (tabellen)
+        // Høyre side = Navn i React (skjemaet)
+        companyName: formData.companyName,
+        contactPerson: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        websiteUrl: formData.websiteUrl,
+        industry: formData.industry,
+        targetAudience: formData.targetAudience
+      };
+
+      const { data, error } = await supabase
+        .from('clients')
+        .upsert(dataTilDatabase, { onConflict: 'user_id' })
+        .select();
+
+      if (error) {
+        console.error("Supabase nektet lagring:", error);
+        throw error;
+      }
+
+      console.log("Suksess! Data lagret:", data);
+      onComplete();
+
+    } catch (error: any) {
+      alert("Kunne ikke lagre: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
+      <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
+        <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input required type="email" name="email" value={formData.email} onChange={handleChange} placeholder="E-post" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          </div>
+          <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+
+          {/* 3. CRITICAL FIX: UI for Bransjeforslag */}
+          <div className="relative">
+            <input
+              required
+              name="industry"
+              value={formData.industry}
+              onChange={handleChange}
+              // Lukk listen hvis brukeren klikker utenfor (enkelt hack: onBlur med delay)
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Bransje (Begynn å skrive...)"
+              className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none"
+            />
+
+            {/* Dette er listen som manglet: */}
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
+                {suggestions.map((suggestion, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleSelectIndustry(suggestion)}
+                    className="p-3 hover:bg-violet-50 cursor-pointer text-slate-700 transition-colors"
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+
+          <button type="submit" disabled={loading} className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg hover:bg-violet-700 transition-all shadow-xl disabled:opacity-50">
+            {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+};
+
+const SmartActionCard = ({ clientData, analysisResult, onRunAnalysis }: { clientData: any, analysisResult: any, onRunAnalysis?: () => void }) => {
+
+  // 1. HER HENTER VI NØKKELEN SLIK AT "API_KEY" IKKE BLIR RØD LENGER
+  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN HER!
+
+  const [status, setStatus] = useState<'idle' | 'generating' | 'done'>('idle');
+  const [suggestion, setSuggestion] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const company = clientData?.companyName || "bedriften din";
+  const industry = clientData?.industry || "bransjen din";
+
+  // --- LOGIKK FOR KORTET ---
+  let cardContent = {
+    color: "violet",
+    icon: Zap,
+    title: `Velkommen til ${company}!`,
+    msg: "Vi er klare til å hjelpe deg med synlighet. Start med å kjøre en analyse for å se hvordan du ligger an.",
+    btn: "Kjør din første analyse",
+    action: onRunAnalysis || (() => { })
+  };
+
+  if (analysisResult) {
+    if (analysisResult.perf < 50) {
+      cardContent = {
+        color: "rose",
+        icon: AlertTriangle,
+        title: "Kritisk: Nettsiden er for treg",
+        msg: `Du scorer kun ${analysisResult.perf}/100 på ytelse. Dette skader både Google-rangering og salg.`,
+        btn: "Se teknisk rapport",
+        action: onRunAnalysis || (() => { })
+      };
+    } else if (analysisResult.seo < 70) {
+      cardContent = {
+        color: "amber",
+        icon: MousePointerClick,
+        title: "Du er nesten usynlig",
+        msg: "Nettsiden fungerer, men Google sliter med å finne innholdet ditt. Du trenger bedre søkeord.",
+        btn: "Fiks SEO-feil",
+        action: onRunAnalysis || (() => { })
+      };
+    } else {
+      cardContent = {
+        color: "emerald",
+        icon: CheckCircle2,
+        title: "Alt ser bra ut! 🚀",
+        msg: "Det tekniske er på plass. Nå bør du fokusere på å skrive nytt innhold for å vokse videre.",
+        btn: "Gå til Analyse",
+        action: () => document.getElementById('tab-content')?.click()
+      };
+    }
+  }
+
+  // --- NY GEMINI LOGIKK ---
+  const handleFix = async () => {
+    // Sjekk om nøkkelen mangler før vi prøver
+    if (!API_KEY) {
+      alert("Mangler API-nøkkel! Sjekk .env.local filen din.");
+      return;
+    }
+
+    setStatus('generating');
+
+    try {
+      // 1. Initialiser Gemini
+      const genAI = new GoogleGenerativeAI(API_KEY);
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      // 2. Definer prompten (instruksen)
+      const prompt = `Skriv en kort, selgende introduksjonstekst (maks 3 setninger) for nettsiden til bedriften "${company}" som opererer i bransjen "${industry}". Tonen skal være profesjonell og inviterende.`;
+
+      // 3. Hent resultat
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setSuggestion(text);
+      setStatus('done');
+
+    } catch (error) {
+      console.error("Feil med Gemini AI:", error);
+      setSuggestion("Beklager, klarte ikke generere tekst akkurat nå. Prøv igjen senere.");
+      setStatus('done');
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(suggestion);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  return (
+    <div className={`relative overflow-hidden rounded-2xl p-1 shadow-2xl mb-8 border transition-all animate-in fade-in slide-in-from-bottom-2
+      ${status !== 'idle' ? 'bg-slate-900 border-violet-500/30' :
+        cardContent.color === 'rose' ? 'bg-rose-950/30 border-rose-500/30' :
+          cardContent.color === 'emerald' ? 'bg-emerald-950/30 border-emerald-500/30' :
+            cardContent.color === 'amber' ? 'bg-amber-950/30 border-amber-500/30' :
+              'bg-slate-900/50 border-violet-500/30'}
+    `}>
+      {/* Bakgrunns-effekt */}
+      <div className={`absolute top-0 left-0 w-full h-1 opacity-50 bg-gradient-to-r 
+          ${cardContent.color === 'rose' ? 'from-rose-500 via-red-500 to-rose-500' :
+          cardContent.color === 'emerald' ? 'from-emerald-500 via-green-500 to-emerald-500' :
+            'from-violet-500 via-fuchsia-500 to-violet-500'}`}>
+      </div>
+
+      <div className="p-6 md:p-8">
+
+        {/* STANDARD VISNING */}
+        {status === 'idle' && (
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex gap-5">
+              <div className={`p-4 rounded-xl border shrink-0 
+                            ${cardContent.color === 'rose' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
+                  cardContent.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                    cardContent.color === 'amber' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                      'bg-violet-500/20 text-violet-400 border-violet-500/30'}
+                          `}>
+                <cardContent.icon size={32} />
+              </div>
+              <div>
+                <h3 className={`text-xl font-bold mb-1 ${cardContent.color === 'rose' ? 'text-rose-400' :
+                  cardContent.color === 'emerald' ? 'text-emerald-400' :
+                    cardContent.color === 'amber' ? 'text-amber-400' : 'text-white'}
+                            `}>
+                  {cardContent.title}
+                </h3>
+                <p className="text-slate-300 max-w-lg leading-relaxed">
+                  {cardContent.msg}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={cardContent.btn === "Fiks SEO-feil" ? handleFix : cardContent.action}
+              className={`whitespace-nowrap px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg 
+                        ${cardContent.color === 'rose' ? 'bg-rose-600 text-white hover:bg-rose-500' :
+                  cardContent.color === 'emerald' ? 'bg-emerald-600 text-white hover:bg-emerald-500' :
+                    'bg-white text-slate-950 hover:bg-violet-50'}
+                    `}>
+              {cardContent.btn === "Fiks SEO-feil" ? <><Sparkles size={16} /> {cardContent.btn}</> : <>{cardContent.btn} <ArrowRight size={16} /></>}
+            </button>
+          </div>
+        )}
+
+        {/* GENERERER (Loading) */}
+        {status === 'generating' && (
+          <div className="py-4 flex flex-col items-center justify-center text-center animate-in fade-in">
+            <Sparkles className="text-violet-400 animate-spin mb-4" size={32} />
+            <p className="text-white font-bold">Gemini jobber...</p>
+            <p className="text-slate-500 text-sm">Analyserer {company} og skriver forslag...</p>
+          </div>
+        )}
+
+        {/* FERDIG (Resultat) */}
+        {status === 'done' && (
+          <div className="animate-in slide-in-from-bottom-4 fade-in">
+            <div className="bg-slate-950 border border-emerald-500/30 rounded-xl p-6 mb-6 relative">
+              <div className="absolute top-3 right-3">
+                <button onClick={handleCopy} className="flex items-center gap-2 text-xs font-bold bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg border border-white/10">
+                  {copied ? <><CheckCircle2 size={14} /> Kopiert!</> : <><Copy size={14} /> Kopier</>}
+                </button>
+              </div>
+              <p className="text-[10px] text-emerald-400 uppercase font-bold mb-2 flex items-center gap-1"><Sparkles size={12} /> Gemini forslag:</p>
+              <p className="text-white text-lg leading-relaxed pr-10">"{suggestion}"</p>
+            </div>
+            <button onClick={() => setStatus('idle')} className="text-xs text-slate-500 hover:text-white underline">Lukk og gå tilbake</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const OnboardingWizard = ({ user, onComplete }: { user: any, onComplete: (data: any) => void }) => {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({ websiteUrl: '', companyName: '', industry: '' });
+
+  const handleNext = async () => {
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      // FERDIG: Lagre data og start appen
+      setLoading(true);
+
+      // Her lagrer vi til Supabase
+      try {
+        const { error } = await supabase
+          .from('clients')
+          .update(data)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Simulerer "Konfigurerer AI..." for wow-effekt
+        setTimeout(() => {
+          onComplete(data); // Send data opp til ClientPortal
+        }, 1500);
+
+      } catch (error) {
+        alert("Noe gikk galt med lagringen. Prøv igjen.");
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 text-white">
+      {/* Bakgrunnseffekter */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]"></div>
+
+      <div className="relative z-10 w-full max-w-md bg-slate-900 border border-white/10 p-8 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+
+        {/* Progress Bar */}
+        <div className="flex gap-2 mb-8">
+          {[1, 2, 3].map(i => (
+            <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i <= step ? 'bg-violet-500' : 'bg-slate-800'}`}></div>
+          ))}
+        </div>
+
+        <h2 className="text-2xl font-black mb-2 text-center">Velkommen til Sikt! 👋</h2>
+        <p className="text-slate-400 text-center mb-8 text-sm">La oss sette opp din AI-rådgiver. Vi trenger litt info for å starte.</p>
+
+        {/* STEG 1: URL */}
+        {step === 1 && (
+          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
+            <label className="block text-xs font-bold uppercase text-slate-500">Hva er nettsiden din?</label>
+            <div className="flex items-center bg-slate-950 border border-white/10 rounded-xl p-3 focus-within:border-violet-500 transition-colors">
+              <Globe className="text-slate-500 mr-3" size={20} />
+              <input
+                className="bg-transparent outline-none w-full text-white placeholder-slate-600"
+                placeholder="https://www.dinbedrift.no"
+                value={data.websiteUrl}
+                onChange={e => setData({ ...data, websiteUrl: e.target.value })}
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
+        {/* STEG 2: Bedriftsnavn */}
+        {step === 2 && (
+          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
+            <label className="block text-xs font-bold uppercase text-slate-500">Hva heter bedriften?</label>
+            <div className="flex items-center bg-slate-950 border border-white/10 rounded-xl p-3 focus-within:border-violet-500 transition-colors">
+              <Building className="text-slate-500 mr-3" size={20} />
+              <input
+                className="bg-transparent outline-none w-full text-white placeholder-slate-600"
+                placeholder="F.eks. Oslo Rørleggerservice AS"
+                value={data.companyName}
+                onChange={e => setData({ ...data, companyName: e.target.value })}
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
+        {/* STEG 3: Bransje */}
+        {step === 3 && (
+          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
+            <label className="block text-xs font-bold uppercase text-slate-500">Hvilken bransje er du i?</label>
+            <div className="bg-slate-950 border border-white/10 rounded-xl p-1">
+              {['Håndverker', 'Nettbutikk', 'Konsulent', 'Helse/Velvære', 'Annet'].map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => setData({ ...data, industry: opt })}
+                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${data.industry === opt ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Knapper */}
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={handleNext}
+            disabled={(step === 1 && !data.websiteUrl) || (step === 2 && !data.companyName) || (step === 3 && !data.industry) || loading}
+            className="bg-white text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-violet-50 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <><Zap className="animate-spin" size={18} /> Setter opp AI...</>
+            ) : (
+              <>{step === 3 ? 'Fullfør oppsett' : 'Neste steg'} <ArrowRight size={18} /></>
+            )}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// --- HER STARTER SetupGuide (som du allerede har) ---
+const SetupGuide = ({ onComplete }: { onComplete: () => void }) => {
+  const [copied, setCopied] = useState(false);
+  const [showWhyOwner, setShowWhyOwner] = useState(false); // Ny state for å vise info
+  const MY_EMAIL = "siktseo@gmail.com";
+
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(MY_EMAIL);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+
+  return (
+    <section className="min-h-screen bg-slate-50 py-12 px-4 flex items-center justify-center relative overflow-y-auto">
+      <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
+
+      <div className="max-w-2xl w-full bg-white rounded-[24px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 my-10 animate-in fade-in zoom-in-95 duration-500">
+
+        {/* HEADER: Fokus på partnerskap, ikke bare "krav" */}
+        <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-violet-500/10 blur-3xl"></div>
+          <div className="relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Siste steg for å aktivere AI-en 🚀</h1>
+            <p className="text-slate-400 font-medium text-sm sm:text-base">
+              For at vi skal kunne analysere dine data, må vi koble oss på Google Search Console.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-10 space-y-8">
+
+          {/* TILLITS-GARANTI (Viktigste endring for trygghet) */}
+          <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-5">
+            <h3 className="flex items-center gap-2 font-bold text-emerald-900 text-sm uppercase tracking-wide mb-3">
+              <ShieldCheck size={18} className="text-emerald-600" />
+              Din Trygghetsgaranti
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex gap-3 items-start">
+                <div className="bg-white p-1.5 rounded-md shadow-sm text-emerald-600"><Monitor size={14} /></div>
+                <p className="text-xs text-emerald-800 leading-relaxed"><strong>Vi endrer ingenting.</strong> Vi bruker kun lesetilgang til å hente statistikk.</p>
+              </div>
+              <div className="flex gap-3 items-start">
+                <div className="bg-white p-1.5 rounded-md shadow-sm text-emerald-600"><LogOut size={14} /></div>
+                <p className="text-xs text-emerald-800 leading-relaxed"><strong>Full kontroll.</strong> Du eier dataene og kan fjerne oss når som helst med ett klikk.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* STEG-FOR-STEG GUIDEN */}
+          <div className="space-y-6 relative">
+            <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 -z-10"></div> {/* Tynn linje som binder stegene sammen */}
+
+            {/* Steg 1 */}
+            <div className="flex gap-4 group bg-white">
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">1</div>
+              <div className="w-full pt-1">
+                <h4 className="font-bold text-slate-900 mb-1">Logg inn i Search Console</h4>
+                <p className="text-sm text-slate-500 mb-3">Klikk knappen under for å gå direkte til brukerinnstillinger.</p>
+                <a href="https://search.google.com/search-console/users" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-white bg-violet-600 px-5 py-2.5 rounded-lg hover:bg-violet-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                  Åpne Innstillinger <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+
+            {/* Steg 2 */}
+            <div className="flex gap-4 group bg-white">
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">2</div>
+              <div className="w-full pt-1">
+                <h4 className="font-bold text-slate-900 mb-1">Legg til vår e-post</h4>
+                <p className="text-sm text-slate-500 mb-3">Trykk "Legg til bruker" og bruk denne e-posten:</p>
+
+                {/* Optimalisert Kopierings-boks */}
+                <div
+                  onClick={handleCopy}
+                  className="relative overflow-hidden flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1 cursor-pointer hover:border-violet-500 hover:ring-2 hover:ring-violet-100 transition-all group/copy"
+                >
+                  <div className="flex items-center gap-3 px-3 py-3">
+                    <Mail size={18} className="text-slate-400 group-hover/copy:text-violet-500 transition-colors" />
+                    <code className="text-sm sm:text-base font-bold text-slate-700 font-mono tracking-tight">{MY_EMAIL}</code>
+                  </div>
+                  <div className={`px-4 py-3 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${copied ? 'bg-green-500 text-white' : 'bg-white border border-slate-200 text-slate-500 group-hover/copy:text-violet-600'}`}>
+                    {copied ? <span className="flex items-center gap-1"><Check size={14} /> Kopiert</span> : 'Kopier'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Steg 3 - Critical Point */}
+            <div className="flex gap-4 group bg-white">
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">3</div>
+              <div className="pt-1 w-full">
+                <h4 className="font-bold text-slate-900 mb-1">Velg rettighet: <span className="text-violet-600 bg-violet-50 px-2 py-0.5 rounded border border-violet-100">Eier</span></h4>
+                <p className="text-sm text-slate-500 leading-relaxed mb-3">
+                  Velg <strong>"Owner"</strong> (Eier) i listen. Dette er nødvendig for at AI-verktøyet skal kunne koble seg til API-et.
+                </p>
+
+                {/* Hvorfor Eier? - Expandable Trust Box */}
+                <button
+                  onClick={() => setShowWhyOwner(!showWhyOwner)}
+                  className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-slate-600 transition-colors"
+                >
+                  <HelpCircle size={12} /> Hvorfor må jeg velge Eier?
+                </button>
+
+                {showWhyOwner && (
+                  <div className="mt-3 text-xs bg-slate-50 p-3 rounded-lg text-slate-600 leading-relaxed border border-slate-100 animate-in slide-in-from-top-2">
+                    Google skiller dessverre ikke mellom "API-tilgang" og "Eier". For at programvare skal kunne hente ut data automatisk, krever Google statusen "Eier". Vi bruker aldri denne tilgangen til annet enn lesing.
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* CTA & Bekreftelse */}
+          <div className="pt-8 border-t border-slate-100">
+            <button
+              onClick={onComplete}
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl hover:shadow-violet-200/50 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 group"
+            >
+              <span>Jeg har gitt tilgang</span>
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            <div className="mt-6 flex items-start justify-center gap-3 opacity-80">
+              <Clock size={16} className="text-slate-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-slate-500 text-center max-w-xs leading-relaxed">
+                Vi varsler deg via e-post eller telefon så snart analysen din er klar – <strong>senest innen 12 timer.</strong>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Nød-knapp hvis de står fast */}
+      <div className="absolute bottom-5 text-center w-full">
+        <a href="mailto:siktseo@gmail.com" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+          Står du fast? Kontakt support
+        </a>
+      </div>
+    </section>
+  );
+};
+
+
+// --- STORYBRAND SEKSJON (Med Animasjon) ---
+const StoryBrandOneLiner = () => {
+  return (
+    <section className="relative py-32 sm:py-48 overflow-hidden bg-[#fcfcfd]">
+
+      {/* Bakgrunn: En rolig, pulserende glød */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-violet-100/50 via-indigo-50/50 to-white rounded-[100%] blur-[80px] animate-[pulse_10s_ease-in-out_infinite] pointer-events-none"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        <div className="flex flex-col gap-16 sm:gap-24">
+
+          {/* DEL 1: PROBLEMET (Venstre side) */}
+          <RevealOnScroll delay={0} className="self-start sm:ml-12 relative">
+            {/* En liten bakgrunns-sirkel for dybde */}
+            <div className="absolute -left-4 -top-4 w-20 h-20 bg-slate-100 rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
+
+            <div className="backdrop-blur-md bg-white/80 border border-slate-200/60 shadow-sm px-8 py-5 rounded-2xl inline-flex items-center gap-4 max-w-lg relative z-10">
+              <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></div>
+              <p className="text-slate-600 font-medium text-lg leading-snug">
+                Mange bedrifter gjetter på hvordan de oppnår <span className="text-slate-900 font-bold border-b-2 border-slate-200">høyere rangering</span> på Google.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+
+          {/* DEL 2: LØSNINGEN (Høyre side) */}
+          <RevealOnScroll delay={200} className="self-end text-left sm:text-right max-w-5xl flex flex-col sm:flex-row-reverse items-center sm:items-start gap-8 sm:gap-12">
+
+            {/* NY MODERNE ILLUSTRASJON (Abstrakt Vekst-Graf) */}
+            <div className="relative shrink-0 w-48 h-48 sm:w-64 sm:h-64 animate-[float_6s_ease-in-out_infinite]">
+              {/* Bakgrunnsglød */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-violet-200 via-indigo-200 to-blue-100 rounded-full blur-2xl opacity-60 animate-pulse"></div>
+
+              {/* Glass-kort med graf */}
+              <div className="absolute inset-4 backdrop-blur-xl bg-white/40 border border-white/60 rounded-3xl shadow-[0_8px_32px_rgba(31,38,135,0.1)] overflow-hidden flex items-end justify-center p-6">
+
+                {/* Graf-stolper */}
+                <div className="flex items-end gap-2 w-full h-32">
+                  <div className="w-1/4 bg-slate-200/50 rounded-t-lg h-[30%] animate-[loading_3s_ease-in-out_infinite_0.2s]"></div>
+                  <div className="w-1/4 bg-slate-300/50 rounded-t-lg h-[50%] animate-[loading_3s_ease-in-out_infinite_0.5s]"></div>
+                  <div className="w-1/4 bg-violet-300/50 rounded-t-lg h-[70%] animate-[loading_3s_ease-in-out_infinite_0.8s]"></div>
+                  {/* Vinner-stolpen */}
+                  <div className="w-1/4 bg-gradient-to-t from-violet-500 to-indigo-500 rounded-t-lg h-[100%] relative shadow-lg animate-[loading_3s_ease-in-out_infinite_1.1s]">
+                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full animate-ping opacity-75"></div>
+                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-violet-500 rounded-full"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Teksten */}
+            <div className="text-left sm:text-right">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 tracking-tight leading-[1.15]">
+                Vi bruker <span className="text-violet-600">AI</span> til å gi deg en <br className="hidden sm:block" />
+                konkret oppskrift på å <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">nå toppen.</span>
+              </h2>
+
+              <p className="mt-8 text-xl sm:text-2xl text-slate-600 font-normal leading-relaxed max-w-2xl sm:ml-auto">
+                Slik at du får trafikken og veksten du fortjener – helt uten gjetting.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+        </div>
+      </div>
+      {/* Nødvendig for flyte-animasjonen */}
+      <style>{`@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }`}</style>
+    </section>
+  );
+};
+
+
+// Legg merke til at vi nå tar imot "handleLogin" her
+const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   const plans = [
-    { 
-      title: "⭐ BASIC", 
-      price: "599", 
+    {
+      title: "⭐ BASIC",
+      price: "599",
       tagline: "Få kontroll på grunnmuren.",
       desc: "Stopp tapet av kunder ved å fikse det tekniske fundamentet.",
       features: [
@@ -896,9 +1951,9 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan?: (plan: string) => void }) =>
         "Månedlig resultatrapport"
       ]
     },
-    { 
-      title: "⭐⭐ STANDARD", 
-      price: "1 499", 
+    {
+      title: "⭐⭐ STANDARD",
+      price: "1 499",
       tagline: "Vekst og innholdsdominans.",
       highlighted: true,
       desc: "For bedrifter som aktivt vil klatre og knuse konkurrentene.",
@@ -910,11 +1965,11 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan?: (plan: string) => void }) =>
         "Ukentlige suksessrapporter"
       ]
     },
-    { 
-      title: "⭐⭐⭐ PREMIUM", 
-      price: "4 999", 
+    {
+      title: "⭐⭐⭐ PREMIUM",
+      price: "4 999",
       tagline: "Full automatisering og ROI.",
-      desc: "Total dominans. We overtar hele SEO-arbeidet for maksimal vekst.",
+      desc: "Total dominans. Vi overtar hele SEO-arbeidet for maksimal vekst.",
       features: [
         "Alt i Standard +",
         "AI-drevet innholdsstrategi",
@@ -926,44 +1981,66 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan?: (plan: string) => void }) =>
   ];
 
   return (
-    <section id="priser" className="py-16 sm:py-32 bg-slate-50 relative text-center">
-      <div className="max-w-6xl mx-auto px-5">
-        <div className="mb-12 sm:mb-20">
-          <RevealOnScroll direction="up">
-            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tight leading-tight">Velg din plan for dominans</h2>
-            <p className="text-sm sm:text-lg text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">Finn den strategien som passer din bedrifts ambisjon om å bli størst i markedet.</p>
-          </RevealOnScroll>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-          {plans.map((p, i) => (
+    <section id="priser" className="py-20 sm:py-32 bg-slate-50 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-5 relative z-10">
+
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-black text-slate-950 mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Ingen skjulte kostnader. Ingen bindingstid.</p>
+          </div>
+        </RevealOnScroll>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+          {plans.map((plan, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 100}>
-              <div className={`premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[44px] flex flex-col h-full bg-white relative overflow-hidden ${p.highlighted ? 'ring-2 sm:ring-4 ring-violet-500 shadow-2xl' : 'shadow-xl'}`}>
-                {p.highlighted && <div className="absolute top-0 right-0 bg-violet-500 text-white text-[9px] sm:text-[10px] font-black py-1.5 px-4 sm:py-2 sm:px-6 rounded-bl-2xl sm:rounded-bl-3xl uppercase tracking-widest">Mest Populær</div>}
-                <div className="mb-6 sm:mb-8 text-center sm:text-left">
-                   <h3 className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2">{p.title}</h3>
-                   <div className="text-4xl sm:text-5xl font-black text-slate-950 tracking-tighter mb-1 sm:mb-2">{p.price},-</div>
-                   <div className="text-[9px] sm:text-xs font-bold text-slate-400 mb-4 sm:mb-6 uppercase">per måned eks. mva</div>
-                   <p className="text-violet-600 font-bold mb-3 sm:mb-4 text-sm sm:text-base">{p.tagline}</p>
-                   <p className="text-slate-500 text-xs sm:text-sm leading-relaxed font-medium">{p.desc}</p>
+              <div className={`relative bg-white rounded-[32px] p-8 sm:p-10 shadow-xl transition-transform duration-300 hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 scale-105 z-10' : 'border-slate-100'}`}>
+
+                <div className="absolute -top-4 -right-4 bg-violet-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12">
+                  70% RABATT 1. MND
                 </div>
-                <div className="flex-1 space-y-3 sm:space-y-4 mb-8 sm:mb-10 text-left">
-                  {p.features.map((f, j) => (
-                    <div key={j} className="flex gap-2.5 sm:gap-3 text-xs sm:text-sm font-bold text-slate-700">
-                      <Check size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </div>
+
+                {plan.highlighted && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg">
+                    Mest valgt
+                  </div>
+                )}
+
+                <h3 className="text-2xl font-bold text-slate-950 mb-2">{plan.title}</h3>
+                <p className="text-violet-600 text-sm font-bold mb-4 uppercase tracking-wider">{plan.tagline}</p>
+
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-4xl font-black text-slate-950">{plan.price},-</span>
+                  <span className="text-slate-500 font-medium">/mnd</span>
+                </div>
+                <p className="text-slate-600 mb-8 leading-relaxed">{plan.desc}</p>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feat, j) => (
+                    <li key={j} className="flex items-start gap-3 text-slate-700">
+                      <div className="mt-1 w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                      <span className="text-sm font-medium">{feat}</span>
+                    </li>
                   ))}
-                </div>
-                <button 
-                  onClick={() => onSelectPlan?.(p.title)}
-                  className={`w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg transition-all active:scale-95 shadow-lg ${p.highlighted ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-100'}`}
+                </ul>
+
+                {/* HER ER RETTELSEN: Vi sender 'plan.title' opp til Appen */}
+                <button
+                  onClick={() => onSelectPlan(plan.title)}
+                  className={`w-full py-4 rounded-xl font-bold transition-all ${plan.highlighted
+                    ? 'bg-slate-950 text-white hover:bg-violet-600 shadow-lg hover:shadow-violet-200'
+                    : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
+                    }`}
                 >
-                  Velg denne planen
+                  Velg {plan.title}
                 </button>
               </div>
             </RevealOnScroll>
           ))}
         </div>
+
       </div>
     </section>
   );
@@ -995,7 +2072,7 @@ const GeoFaq = () => {
         <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, i) => (
             <div key={i} className="border border-slate-100 rounded-[24px] sm:rounded-[32px] overflow-hidden group hover:border-violet-100 transition-all">
-              <button 
+              <button
                 onClick={() => setOpen(open === i ? null : i)}
                 className="w-full p-6 sm:p-8 flex items-center justify-between text-left group-hover:bg-slate-50/50 transition-colors"
               >
@@ -1014,18 +2091,104 @@ const GeoFaq = () => {
     </section>
   );
 };
+// --- SUCCESS PAGE (CLEAN & MODERN) ---
+const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
+  return (
+    <section className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Bakgrunnseffekter */}
+      <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="max-w-xl w-full bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-500">
+
+        {/* Top Decor */}
+        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500"></div>
+
+        <div className="p-8 sm:p-12 text-center">
+
+          {/* Suksess Ikon (Pulsende) */}
+          <div className="mx-auto w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-8 relative">
+            <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-20"></div>
+            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+          </div>
+
+          <h1 className="text-3xl font-black text-slate-900 mb-3">Alt er klart! 🎉</h1>
+          <p className="text-slate-500 text-lg mb-10 leading-relaxed">
+            Vi har mottatt nøklene og AI-motoren har allerede startet analysen av din nettside.
+          </p>
+
+          {/* VISUELL TIDSLINJE (Status) */}
+          <div className="bg-slate-50 rounded-2xl p-6 mb-10 text-left border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">Status akkurat nå:</h3>
+
+            <div className="space-y-6 relative">
+              {/* Linje som binder punktene sammen */}
+              <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-slate-200"></div>
+
+              {/* Punkt 1: Ferdig */}
+              <div className="flex gap-4 items-center relative z-10">
+                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm ring-4 ring-white">
+                  <Check size={14} className="text-white" />
+                </div>
+                <span className="text-sm font-bold text-slate-800 line-through decoration-slate-300 decoration-2 opacity-50">Tilkobling opprettet</span>
+              </div>
+
+              {/* Punkt 2: Jobber (Aktiv) */}
+              <div className="flex gap-4 items-center relative z-10">
+                <div className="w-6 h-6 rounded-full bg-white border-2 border-violet-600 flex items-center justify-center shadow-sm ring-4 ring-white relative">
+                  <div className="w-2 h-2 bg-violet-600 rounded-full animate-pulse"></div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-slate-900">Analyserer søkeord & trafikk</span>
+                  <span className="text-xs text-violet-600 font-medium animate-pulse">Jobber nå...</span>
+                </div>
+              </div>
+
+              {/* Punkt 3: Venter */}
+              <div className="flex gap-4 items-center relative z-10">
+                <div className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center shadow-sm ring-4 ring-white">
+                  <Clock size={12} className="text-slate-400" />
+                </div>
+                <span className="text-sm font-medium text-slate-400">Rapport sendes (ca. 12 timer)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Knapper */}
+          <div className="space-y-3">
+            <button
+              onClick={onBackHome}
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-violet-600 transition-all shadow-xl hover:shadow-violet-200 transform hover:-translate-y-1"
+            >
+              Gå tilbake til Forsiden
+            </button>
+            <p className="text-xs text-slate-400">
+              Du vil motta en e-postbekreftelse straks.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
 
 // --- VIEWS ---
 
-const HomeView = () => (
+const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan: string) => void }) => (
   <>
     <Hero />
     <DashboardPreview />
+    <StoryBrandOneLiner />
     <PainPointsSection />
     <ValuePropositionSection />
-    <StepPlanSection />
+    <StepPlanSection onNavigate={onNavigate} />
     <InsightSection />
-    <Pricing />
+    <TrustSection />
+    {/* Her er endringen: Vi sender onSelectPlan videre til Pricing */}
+    <Pricing onSelectPlan={onSelectPlan} />
     <FAQSection />
   </>
 );
@@ -1036,18 +2199,150 @@ const DeepDiveView = ({ onBack, onSelectPlan }: { onBack: () => void; onSelectPl
     <DeepDiveHero />
     <PainPointData />
     <AiProcessDeepDive />
-    <Pricing onSelectPlan={onSelectPlan} />
+    {/* Her er rettelsen: Vi bruker onSelectPlan i stedet for handleLogin */}
+    <Pricing onSelectPlan={onSelectPlan || (() => { })} />
     <GeoFaq />
   </>
 );
 
-const TechnologyView = () => (
+
+
+
+
+const AIContentGenerator = () => {
+  const [keyword, setKeyword] = useState("");
+  const [description, setDescription] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [result, setResult] = useState<{ title: string, meta: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // --- KONFIGURASJON ---
+  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN HER!
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (API_KEY === "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs") { alert("Mangler Google API Key i koden."); return; }
+
+    setIsGenerating(true);
+    setResult(null);
+
+    try {
+      const prompt = `Du er en SEO-ekspert. Lag en Google Meta Title (maks 60 tegn) og Meta Description (maks 155 tegn).
+                    Søkeord: "${keyword}".
+                    Bedrift/Info: "${description}".
+
+                    VIKTIG: Svar KUN med JSON format slik: {"title": "...", "meta": "..." }`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      let text = data.candidates[0].content.parts[0].text;
+
+      // Rensk opp hvis Google legger til markdown (```json ...)
+      text = text.replace(/```json|```/g, '').trim();
+
+      const parsed = JSON.parse(text);
+      setResult(parsed);
+
+    } catch (error) {
+      console.error(error);
+      alert("Feil ved generering (Google). Prøv igjen.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(`Tittel: ${result.title}\nBeskrivelse: ${result.meta}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-3 bg-violet-600/20 text-violet-400 rounded-xl border border-violet-500/20">
+          <Wand2 size={24} />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-white">AI Meta-Tag Generator</h3>
+          <p className="text-sm text-slate-400">Gratis & Ekte (via Google Gemini)</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleGenerate} className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Fokus Søkeord</label>
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="f.eks. Rørlegger Oslo"
+            className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white focus:border-violet-500 outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Kort om tjenesten</label>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="f.eks. Akutt hjelp 24/7"
+            className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white focus:border-violet-500 outline-none"
+          />
+        </div>
+        <button
+          disabled={isGenerating || !keyword}
+          type="submit"
+          className="w-full bg-violet-600 text-white py-3 rounded-xl font-bold hover:bg-violet-500 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {isGenerating ? <><Sparkles size={18} className="animate-spin" /> Genererer...</> : <><Wand2 size={18} /> Generer med AI</>}
+        </button>
+      </form>
+
+      {result && (
+        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-5 relative overflow-hidden">
+            <div className="flex justify-between items-start mb-4">
+              <h4 className="font-bold text-emerald-400 text-sm flex items-center gap-2"><Sparkles size={14} /> AI Forslag</h4>
+              <button onClick={copyToClipboard} className="text-slate-400 hover:text-white">
+                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Tittel</p>
+                <p className="text-blue-400 text-lg font-medium truncate">{result.title}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Beskrivelse</p>
+                <p className="text-slate-300 text-sm">{result.meta}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
+
+
+const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <>
     <TechnologyHero />
     <FeatureMatrix />
     <DashboardSection />
     <ComparisonTable />
-    <TechCTA />
+    {/* Nå vet den hva onNavigate er, og rød strek forsvinner */}
+    <TechCTA onNavigate={onNavigate} />
   </>
 );
 
@@ -1113,7 +2408,7 @@ const FAQSection = () => {
   return (
     <section className="py-16 sm:py-32 bg-slate-50/30 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-[0.05] pointer-events-none"></div>
-      
+
       <div className="max-w-7xl mx-auto px-5 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20">
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -1136,25 +2431,23 @@ const FAQSection = () => {
             <div className="space-y-3 text-left">
               {faqs.map((faq, i) => (
                 <RevealOnScroll key={i} direction="up" delay={i * 50}>
-                  <div 
-                    className={`group transition-all duration-500 ease-in-out border rounded-[20px] sm:rounded-[24px] overflow-hidden ${
-                      openIndex === i 
-                      ? 'bg-white border-violet-200 shadow-xl shadow-violet-500/5' 
+                  <div
+                    className={`group transition-all duration-500 ease-in-out border rounded-[20px] sm:rounded-[24px] overflow-hidden ${openIndex === i
+                      ? 'bg-white border-violet-200 shadow-xl shadow-violet-500/5'
                       : 'bg-white/60 backdrop-blur-sm border-slate-100 hover:border-violet-100 hover:bg-white'
-                    }`}
+                      }`}
                   >
-                    <button 
+                    <button
                       onClick={() => setOpenIndex(openIndex === i ? null : i)}
                       className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-colors duration-500 ${openIndex === i ? 'bg-violet-50/50' : ''}`}
                     >
                       <span className={`text-sm sm:text-lg font-bold transition-colors duration-300 pr-2 sm:pr-4 ${openIndex === i ? 'text-violet-600' : 'text-slate-800'}`}>
                         {faq.question}
                       </span>
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-all duration-500 ${
-                        openIndex === i 
-                        ? 'bg-violet-600 border-violet-600 text-white shadow-lg' 
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-all duration-500 ${openIndex === i
+                        ? 'bg-violet-600 border-violet-600 text-white shadow-lg'
                         : 'bg-slate-50 border-slate-100 text-slate-400'
-                      }`}>
+                        }`}>
                         <ChevronDown size={16} className={`transition-transform duration-500 ${openIndex === i ? 'rotate-180' : 'rotate-0'}`} />
                       </div>
                     </button>
@@ -1174,6 +2467,33 @@ const FAQSection = () => {
   );
 };
 
+
+const velgPakke = async (pakkeNavn) => {
+  console.log("Bruker valgte:", pakkeNavn);
+
+  // 1. Lagre valget i Supabase (hvis bruker er logget inn)
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase
+      .from('clients')
+      .update({ package_name: pakkeNavn })
+      .eq('user_id', user.id);
+  }
+
+  // 2. Send brukeren til riktig betalingsside (Stripe/Vipps)
+  // DU MÅ BYTTE UT LENKENE UNDER MED DINE EGNE
+  if (pakkeNavn === "Basic Pakke") {
+    window.location.href = 'https://buy.stripe.com/DIN_BASIC_LINK';
+  }
+  else if (pakkeNavn === "Standard Pakke") {
+    window.location.href = 'https://buy.stripe.com/DIN_STANDARD_LINK';
+  }
+  else if (pakkeNavn === "Premium Pakke") {
+    window.location.href = 'https://buy.stripe.com/DIN_PREMIUM_LINK';
+  }
+};
+
 const ValuePropositionSection = () => {
   const benefits = [
     { title: "Høyere rangering", desc: "AI-drevne strategier for Norge.", icon: <TrendingUp className="text-violet-600" />, illu: <BarChart3 className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" /> },
@@ -1186,7 +2506,7 @@ const ValuePropositionSection = () => {
       <div className="absolute inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-20%] left-[-10%] w-[50rem] h-[50rem] bg-violet-200/10 rounded-full blur-[140px] animate-mesh opacity-60"></div>
       </div>
-      
+
       <div className="max-w-6xl mx-auto px-5 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20 items-center">
           <RevealOnScroll direction="left">
@@ -1198,9 +2518,9 @@ const ValuePropositionSection = () => {
                 Forvandle frustrasjon til målbar suksess med banebrytende SEO-løsninger skreddersydd for din bedrift.
               </p>
               <div className="hidden lg:flex gap-4">
-                 <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-400 rotate-6 shadow-sm"><Globe size={32} /></div>
-                 <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Target size={32} /></div>
-                 <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><Sparkles size={32} /></div>
+                <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-400 rotate-6 shadow-sm"><Globe size={32} /></div>
+                <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Target size={32} /></div>
+                <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><Sparkles size={32} /></div>
               </div>
             </div>
           </RevealOnScroll>
@@ -1226,7 +2546,7 @@ const ValuePropositionSection = () => {
   );
 };
 
-const StepPlanSection = () => {
+const StepPlanSection = ({ onNavigate }: { onNavigate: (view: string) => void }) => {
   const steps = [
     { number: "1", title: "Velg plan", desc: "Kom i gang på sekunder.", icon: <MousePointer2 />, illu: <Layers className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
     { number: "2", title: "Legg til URL", desc: "Vi analyserer umiddelbart.", icon: <Globe />, illu: <Globe className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
@@ -1237,30 +2557,61 @@ const StepPlanSection = () => {
     <section id="prosess" className="py-16 sm:py-32 bg-white/40 relative overflow-hidden text-center">
       <div className="absolute inset-0 grid-pattern opacity-[0.06] pointer-events-none"></div>
       <div className="max-w-6xl mx-auto px-5 relative z-10">
+
+        {/* Intro */}
         <RevealOnScroll direction="up">
           <div className="mb-12 sm:mb-24">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 mb-4 sm:mb-8">3 enkle steg</h2>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 mb-4 sm:mb-8">3 trinn til suksess</h2>
             <p className="text-sm sm:text-lg md:text-xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed opacity-90 px-4">
               Vi har forenklet SEO. Slik tar vi din bedrift fra usynlig til markedsleder.
             </p>
           </div>
         </RevealOnScroll>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-16 relative">
+
+        {/* Stegene */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-16 relative mb-16">
           <div className="hidden md:block absolute top-[30%] left-[15%] right-[15%] h-[1px] bg-slate-100 -z-0"></div>
           {steps.map((step, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 150}>
               <div className="relative z-10 flex flex-col items-center group cursor-default">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-8 relative group-hover:-translate-y-2 transition-transform duration-500 overflow-hidden">
+
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-8 relative group-hover:-translate-y-2 transition-transform duration-500 overflow-visible">
+
+                  {/* --- HER ER RABATT-BADGEN --- */}
+                  {step.number === "1" && (
+                    <div className="absolute -top-4 -left-6 bg-violet-600 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform -rotate-12 whitespace-nowrap">
+                      70% RABATT
+                    </div>
+                  )}
+                  {/* --------------------------- */}
+
                   <div className="absolute -top-1 -right-1 w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 text-white rounded-xl flex items-center justify-center text-xs sm:text-sm font-black border-2 border-white relative z-20">0{step.number}</div>
-                  {step.illu}
-                  {React.cloneElement(step.icon as React.ReactElement<any>, { size: 32, className: "text-violet-600 relative z-10" })}
+
+                  {/* Ikoner og illustrasjoner */}
+                  <div className="relative z-10 overflow-hidden w-full h-full rounded-[32px] sm:rounded-[44px] flex items-center justify-center">
+                    {step.illu}
+                    {React.cloneElement(step.icon as React.ReactElement<any>, { size: 32, className: "text-violet-600 relative z-10" })}
+                  </div>
+
                 </div>
+
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-3 group-hover:text-violet-600 transition-colors">{step.title}</h3>
                 <p className="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
               </div>
             </RevealOnScroll>
           ))}
         </div>
+
+        {/* KNAPPEN */}
+        <div className="flex justify-center pt-8">
+          <button
+            onClick={() => onNavigate('login')}
+            className="group flex items-center gap-3 bg-slate-950 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
+          >
+            Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+
       </div>
     </section>
   );
@@ -1271,7 +2622,7 @@ const InsightSection = () => {
     <section className="py-20 sm:py-32 bg-transparent relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          
+
           {/* Venstre side: Kontekst og emosjonell tekst */}
           <div className="lg:col-span-5 space-y-8">
             <RevealOnScroll direction="left">
@@ -1293,18 +2644,13 @@ const InsightSection = () => {
                   Ikke la ineffektiv markedsføring holde deg tilbake; ta grep i dag og se bedriften din blomstre med økt nettstedstrafikk og synlighet.
                 </p>
               </div>
-              
-              <div className="pt-6">
-                <button className="group flex items-center gap-3 bg-slate-950 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95">
-                  Start din suksesshistorie <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
             </RevealOnScroll>
+            {/* HER VAR FEILEN - NÅ ER DEN LUKKET RIKTIG: */}
           </div>
 
           {/* Høyre side: Bento Grid med løsningskort */}
           <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Kort 1: Frustrasjon (Stor) */}
             <RevealOnScroll direction="up" className="md:col-span-2">
               <div className="p-8 sm:p-10 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
@@ -1366,16 +2712,143 @@ const InsightSection = () => {
   );
 };
 
-const TechCTA = () => (
+const TrustSection = () => {
+  return (
+    <section className="py-20 bg-slate-950 text-white relative overflow-hidden">
+      {/* Bakgrunnseffekt */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+        <div className="absolute top-[-50%] left-[-10%] w-[600px] h-[600px] rounded-full bg-violet-900 blur-[120px]"></div>
+        <div className="absolute bottom-[-50%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-900 blur-[100px]"></div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-5 relative z-10 text-center">
+
+        <div className="mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-sm font-bold mb-8">
+            <ShieldCheck size={16} />
+            <span>Null risiko. Full kontroll.</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-5xl font-black mb-6 leading-tight">
+            Vår <span className="text-violet-400">Kvalitetsgaranti</span>
+          </h2>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Vi vet at du har brent deg på byråer før. Derfor har vi fjernet usikkerheten og lagt risikoen på våre skuldre, ikke dine.
+          </p>
+        </div>
+
+        {/* GARANTI-GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+
+          {/* Punkt 1: Økonomi (OPPDATERT MED 70% RABATT) */}
+          <div className="bg-gradient-to-br from-violet-900/40 to-slate-900/40 border border-violet-500/30 p-8 rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
+              ØKONOMISK TRYGGHET
+            </div>
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-violet-900/20">
+              <span className="text-xl font-black">70%</span>
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">70% rabatt start</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Er du usikker på effekten? Vi gir deg 70% rabatt den første måneden. Vi tar den økonomiske risikoen for å bevise at vi leverer verdi før du betaler fullpris. Ingen bindingstid.
+            </p>
+          </div>
+
+          {/* Punkt 2: Sikkerhet */}
+          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+              <ShieldCheck size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Din side er trygg</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Frykt ikke for nettsiden din. Vi tar alltid full backup før arbeid. Ingen endringer publiseres uten din godkjenning. Vi passer på merkevaren din.
+            </p>
+          </div>
+
+          {/* Punkt 3: Kvalitet */}
+          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+              <User size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Ekte eksperter</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Ingen automatiserte søppel-rapporter. En rådgiver analyserer din bedrift manuelt og legger en konkret slagplan for å slå dine konkurrenter.
+            </p>
+          </div>
+
+          {/* Punkt 4: Arbeidsmengde (Med Zap i stedet for Coffee for å unngå feil) */}
+          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 transition-transform">
+              <Zap size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Vi gjør jobben</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Slipp å lære deg SEO. Vi tar det tunge tekniske løftet. Din eneste oppgave er å si "ja" eller "nei" til våre forslag.
+            </p>
+          </div>
+
+          {/* Punkt 5: Fremtiden */}
+          <div className="md:col-span-2 bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-rose-400 shrink-0 group-hover:scale-110 transition-transform">
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold mb-3">Hva skjer på toppen?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                  Når vi når 1. plassen, er ikke jobben over. Da velger du veien videre:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                    <strong className="text-white block text-sm mb-1">A) Forsvar</strong>
+                    <span className="text-xs text-slate-500">Vi overvåker og nøytraliserer konkurrenter som prøver å ta plassen din.</span>
+                  </div>
+                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                    <strong className="text-white block text-sm mb-1">B) Dominans</strong>
+                    <span className="text-xs text-slate-500">Vi bruker tilliten Google nå har til deg for å vinne enda flere lønnsomme søkeord.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Call to Action i bunnen av garantien */}
+        <div className="mt-16">
+          <button
+            onClick={handleLogin}
+            className="bg-white text-slate-950 px-8 py-4 rounded-full font-bold text-lg hover:bg-violet-200 transition-colors shadow-lg shadow-white/10"
+          >
+            Start risikofritt i dag <ArrowRight className="inline ml-2" size={20} />
+          </button>
+          <p className="text-slate-500 text-xs mt-4">Ingen liten skrift. Ingen skjulte gebyrer.</p>
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+
+
+
+// 1. Legg til {onNavigate} her
+const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <section className="py-20 sm:py-32 bg-white relative overflow-hidden text-center">
     <div className="max-w-4xl mx-auto px-5 relative z-10">
       <RevealOnScroll direction="up">
         <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-950 mb-6 sm:mb-8 tracking-tighter">Klar for en teknisk fordel?</h2>
         <p className="text-base sm:text-xl text-slate-600 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
-          Slutt å gjette. Bruk teknologien som faktisk flytter nålen for din bedrift på Google.
+          Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
         </p>
-        <button className="px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-600 hover:scale-105 transition-all shadow-xl">
-          Begynn i dag
+        <button
+          // 2. Legg til onClick her:
+          onClick={() => onNavigate('login')}
+          className="px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-600 hover:scale-105 transition-all shadow-xl"
+        >
+          Ta meg til toppen av Google
         </button>
       </RevealOnScroll>
     </div>
@@ -1392,7 +2865,7 @@ const Footer = () => (
             <span className="text-2xl font-black tracking-tight">Sikt</span>
           </div>
           <p className="text-slate-400 font-medium max-w-sm leading-relaxed mb-8 mx-auto md:mx-0 text-sm">
-            Vi transformerer din digitale tilstedeværelse med neste generasjons AI-drevet SEO. Synlighet er ikke et valg, det er en nødvendighet.
+            Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
           </p>
           <div className="flex items-center justify-center md:justify-start gap-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
             <Mail size={16} className="text-violet-500" />
@@ -1426,10 +2899,10 @@ const Footer = () => (
 );
 
 // --- WRAPPER COMPONENTS ---
-
-const Navbar = ({ onNavigate, currentView, user, onLoginTrigger }: { onNavigate: (view: string) => void, currentView: string, user: any, onLoginTrigger: () => void }) => {
+const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAccess }: any) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);
@@ -1437,251 +2910,1684 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger }: { onNavigate:
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToPricing = () => {
-    const el = document.getElementById('priser');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-      setIsMobileMenuOpen(false);
-    }
-  };
-
-  const handleGetStarted = () => {
-    if (!user) {
-      onLoginTrigger();
-    } else {
-      scrollToPricing();
-    }
-  };
-
-  // Hjelpefunksjon for å finne riktig bilde-URL fra Supabase/Google
-  const getAvatarUrl = (u: any) => {
-    return u?.user_metadata?.avatar_url || u?.user_metadata?.picture || u?.picture;
-  };
-
-  // Hjelpefunksjon for visningsnavn
-  const getName = (u: any) => {
-    return u?.user_metadata?.full_name || u?.user_metadata?.name || u?.email?.split('@')[0] || "Bruker";
-  };
+  const getAvatarUrl = (u: any) => u?.user_metadata?.avatar_url || u?.user_metadata?.picture;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen ? 'glass border-b border-slate-100 py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
-      <div className="max-w-6xl mx-auto px-5 sm:px-6 flex justify-between items-center">
-        <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer" onClick={() => onNavigate('home')}>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 rounded-lg sm:rounded-xl flex items-center justify-center text-white font-bold text-lg transition-all group-hover:bg-violet-600">S</div>
-          <span className="text-lg sm:text-xl font-black tracking-tighter text-slate-900 transition-colors group-hover:text-violet-600">Sikt</span>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-4 shadow-sm' : 'bg-transparent py-8'}`}>
+      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+
+        {/* LOGO */}
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
+          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold group-hover:bg-violet-600 transition-colors">S</div>
+          <span className="text-xl font-black text-slate-900 group-hover:text-violet-600 transition-colors">Sikt</span>
         </div>
-        
+
         {/* DESKTOP MENY */}
-        <div className="hidden md:flex items-center gap-6 text-[13px] font-bold text-slate-500">
-          <button 
-            onClick={() => onNavigate('deepdive')} 
-            className={`transition-all ${currentView === 'deepdive' ? 'text-violet-600 bg-violet-50 px-3 py-1.5 rounded-full' : 'hover:text-slate-900'}`}
-          >
-            Bli synlig på Google
-          </button>
-          <button 
-            onClick={() => onNavigate('technology')}
-            className={`transition-all ${currentView === 'technology' ? 'text-violet-600 bg-violet-50 px-3 py-1.5 rounded-full' : 'hover:text-slate-900'}`}
-          >
-            Teknologien
-          </button>
-          
-          <div className="flex items-center gap-4">
-            {user ? (
-              <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
-                <img 
-                  src={getAvatarUrl(user)} 
-                  alt="profil" 
-                  className="w-9 h-9 rounded-full border-2 border-white shadow-md bg-slate-100 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-                {/* Fallback ikon hvis bilde feiler */}
-                <div className="hidden w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold border-2 border-white shadow-md">
-                   {user.email?.charAt(0).toUpperCase()}
-                </div>
-                
-                <span className="text-sm font-bold text-slate-700 hidden lg:block">
-                  {getName(user)}
-                </span>
-                
-                <button 
-                  onClick={scrollToPricing}
-                  className="bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition-all ml-2"
-                >
-                  Oppgrader
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={handleGetStarted} 
-                className="bg-slate-900 text-white px-7 py-2.5 rounded-full transition-all hover:bg-violet-600 shadow-xl flex items-center gap-2 active:scale-95"
-              >
-                Kom i gang <ArrowRight size={14} />
+        <div className="hidden md:flex items-center gap-8">
+
+          {/* Dashboard-knapp (KUN FOR BETALENDE KUNDER MED TILGANG) */}
+          {user && hasAccess && (
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-all ${currentView === 'dashboard' ? 'bg-violet-100 text-violet-700' : 'text-slate-600 hover:text-violet-600 hover:bg-slate-50'}`}
+            >
+              <BarChart3 size={18} />
+              Dashboard
+            </button>
+          )}
+
+          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold ${currentView === 'deepdive' ? 'text-violet-600' : 'text-slate-500 hover:text-slate-900'}`}>Bli synlig på google</button>
+          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold ${currentView === 'technology' ? 'text-violet-600' : 'text-slate-500 hover:text-slate-900'}`}>Teknologien</button>
+
+          {user ? (
+            <div className="relative">
+              {/* Profilbilde-knapp */}
+              <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 focus:outline-none">
+                <img src={getAvatarUrl(user)} className="w-9 h-9 rounded-full border-2 border-white shadow-sm" alt="" />
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
-          </div>
+
+              {/* DROPDOWN MENYEN */}
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)}></div>
+                  <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 animate-in zoom-in-95 duration-200 z-50 origin-top-right">
+                    <div className="px-4 py-3 border-b border-slate-50 mb-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Innlogget som</p>
+                      <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
+                    </div>
+
+                    {/* Dashboard også i dropdown for enkel tilgang */}
+                    {hasAccess && (
+                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-violet-50 hover:text-violet-600 transition-colors text-left">
+                        <BarChart3 size={16} /> Gå til Dashboard
+                      </button>
+                    )}
+
+                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-colors text-left">
+                      <Settings size={16} /> Innstillinger
+                    </button>
+
+                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-colors text-left">
+                      <CreditCard size={16} /> Abonnement
+                    </button>
+
+                    <div className="my-1 border-b border-slate-50"></div>
+
+                    <button onClick={() => { onLogout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left">
+                      <LogOut size={16} /> Logg ut
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <button onClick={onLoginTrigger} className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-violet-600 transition-all shadow-lg shadow-slate-200">Kom i gang</button>
+          )}
         </div>
-        
-        <button 
-          className="md:hidden text-slate-900 p-2.5 rounded-xl bg-white border border-slate-100 shadow-sm transition-all" 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+
+        {/* MOBIL MENY KNAPP */}
+        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>{isMobileMenuOpen ? <X /> : <Menu />}</button>
       </div>
 
-      {/* MOBIL MENY */}
+      {/* MOBIL MENY (Expandable) */}
       {isMobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-100 px-5 py-10 flex flex-col gap-3 shadow-2xl md:hidden animate-fade-in overflow-hidden h-screen sm:h-auto">
-          <button 
-            onClick={() => {onNavigate('home'); setIsMobileMenuOpen(false);}} 
-            className={`flex items-center gap-4 text-lg font-bold px-4 py-4 rounded-2xl w-full text-left transition-colors ${currentView === 'home' ? 'text-violet-600 bg-violet-50' : 'text-slate-900 hover:bg-slate-50'}`}
-          >
-            <Home size={20} /> Hjem
-          </button>
-          <button 
-            onClick={() => {onNavigate('deepdive'); setIsMobileMenuOpen(false);}} 
-            className={`flex items-center gap-4 text-lg font-bold px-4 py-4 rounded-2xl w-full text-left transition-colors ${currentView === 'deepdive' ? 'text-violet-600 bg-violet-50' : 'text-slate-900 hover:bg-slate-50'}`}
-          >
-            <Target size={20} /> Bli synlig på Google
-          </button>
-          <button 
-            onClick={() => {onNavigate('technology'); setIsMobileMenuOpen(false);}} 
-            className={`flex items-center gap-4 text-lg font-bold px-4 py-4 rounded-2xl w-full text-left transition-colors ${currentView === 'technology' ? 'text-violet-600 bg-violet-50' : 'text-slate-900 hover:bg-slate-50'}`}
-          >
-            <Cpu size={20} /> Teknologien
-          </button>
-          
-          <div className="mt-4 pt-4 border-t border-slate-100">
-             {!user ? (
-               <button 
-                 onClick={handleGetStarted} 
-                 className="bg-slate-950 text-white text-center w-full py-5 rounded-2xl font-bold text-xl shadow-2xl flex items-center justify-center gap-3 active:scale-95"
-               >
-                 Kom i gang <ArrowRight size={20} />
-               </button>
-             ) : (
-               <div className="flex flex-col gap-4">
-                 <div className="flex items-center gap-4 bg-violet-50 p-4 rounded-2xl text-left">
-                   <img 
-                     src={getAvatarUrl(user)} 
-                     alt="profil" 
-                     className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" 
-                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + user.email;
-                     }}
-                   />
-                   <div className="flex flex-col">
-                     <span className="text-base font-black text-slate-950">{getName(user)}</span>
-                     <span className="text-sm font-bold text-slate-500">{user.email}</span>
-                   </div>
-                 </div>
-                 <button 
-                   onClick={handleGetStarted} 
-                   className="bg-slate-950 text-white text-center py-5 rounded-2xl font-bold text-xl shadow-2xl flex items-center justify-center gap-3 active:scale-95"
-                 >
-                   Gå til priser <ArrowRight size={20} />
-                 </button>
-               </div>
-             )}
-          </div>
+        <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5">
+          {user && hasAccess && (
+            <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-violet-700 bg-violet-50 p-3 rounded-xl">
+              <BarChart3 size={20} /> Dashboard
+            </button>
+          )}
+          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2">Bli synlig på google</button>
+          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2">Teknologien</button>
+          {user && (
+            <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-left font-bold text-rose-500 p-2 flex items-center gap-2"><LogOut size={16} /> Logg ut</button>
+          )}
+          {!user && (
+            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-slate-900 text-white py-3 rounded-xl font-bold">Kom i gang</button>
+          )}
         </div>
       )}
     </nav>
   );
 };
 
-// --- MAIN APP ---
+// --- SETTINGS VIEW (INNSTILLINGER) ---
+const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
 
-// --- MAIN APP COMPONENT ---
-// --- MAIN APP COMPONENT ---
-// --- MAIN APP COMPONENT ---
-// --- MAIN APP COMPONENT ---
-const App = () => {
-  const [view, setView] = useState('home');
-  const [user, setUser] = useState<any>(null);
+  // URL LOGIKK
+  const [website, setWebsite] = useState('www.minbedrift.no');
+  const [urlChangeCount, setUrlChangeCount] = useState(0); // 0 = kan endre, 1 = låst
+  const maxUrlChanges = 1;
+  const isUrlLocked = urlChangeCount >= maxUrlChanges;
 
-  // 1. Sjekk brukerstatus
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+  // BRANSJE LOGIKK
+  const [industry, setIndustry] = useState('');
+  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
+  const [industrySearch, setIndustrySearch] = useState('');
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+  const industries = ["Advokat", "Arkitekt", "Bakeri", "Bygg og Anlegg", "Frisør", "IT-Konsulent", "Kafe & Restaurant", "Rørlegger", "Webutvikling", "Annet"];
+  const filteredIndustries = industries.filter(i => i.toLowerCase().startsWith(industrySearch.toLowerCase()));
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // 2. Scroll til toppen ved sidebytte
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [view]);
+  const handleSaveUrl = () => {
+    if (isUrlLocked) return;
+    setUrlChangeCount(prev => prev + 1);
+    alert("Nettadresse oppdatert! Den er nå låst for fremtidige endringer.");
+  };
 
   return (
-    <div className="min-h-screen selection:bg-violet-100 selection:text-violet-900 bg-[#fcfcfd] relative overflow-x-hidden">
-      <GlobalDecorations />
-      
-      <Navbar 
-        currentView={view} 
-        onNavigate={setView} 
-        user={user} 
-        onLoginTrigger={handleLogin} 
-      />
-      
-      <main className="relative z-10">
-        {/* SCENARIO 1: FORSIDEN */}
-        {view === 'home' && (
-          <HomeView 
-            onNavigate={setView} 
-            onSelectPlan={() => handleLogin()} 
-          />
-        )}
+    <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <button onClick={onBack} className="mb-8 text-sm font-bold text-slate-400 hover:text-slate-900 flex items-center gap-2">
+        <ArrowRight className="rotate-180" size={16} /> Tilbake
+      </button>
 
-        {/* SCENARIO 2: TEKNOLOGI */}
-        {view === 'technology' && (
-          <TechnologyView />
-        )}
+      <h1 className="text-3xl font-black mb-10 text-slate-900">Innstillinger</h1>
 
-        {/* SCENARIO 3: ALLE ANDRE SIDER ("Bli synlig på Google", "Dypdykk", osv.) */}
-        {/* Dette sikrer at knappen i menyen din alltid virker, selv om jeg ikke vet nøyaktig hva den heter */}
-        {view !== 'home' && view !== 'technology' && (
-          <DeepDiveView 
-            onBack={() => setView('home')} 
-            onSelectPlan={() => handleLogin()} 
-          />
-        )}
-      </main>
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* MENY SIDEBAR */}
+        <div className="w-full md:w-64 flex flex-col gap-2">
+          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+            <User size={18} /> Profil & Bedrift
+          </button>
+          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'billing' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+            <CreditCard size={18} /> Abonnement
+          </button>
+        </div>
 
-      <Footer onNavigate={setView} />
+        {/* INNHOLD */}
+        <div className="flex-1">
+
+          {/* FANE 1: PROFIL & BEDRIFT */}
+          {activeTab === 'general' && (
+            <div className="space-y-6">
+
+              {/* Nettadresse med Lås */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-900">Nettadresse</h3>
+                  {isUrlLocked && <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-full flex items-center gap-1"><Shield size={10} /> Låst</span>}
+                </div>
+
+                <div className={`flex items-center border rounded-lg p-2 transition-colors ${isUrlLocked ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200 focus-within:ring-2 focus-within:ring-violet-500'}`}>
+                  <Globe size={18} className="text-slate-400 mx-2" />
+                  <input
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    disabled={isUrlLocked}
+                    className={`flex-1 outline-none font-medium ${isUrlLocked ? 'bg-transparent text-slate-500 cursor-not-allowed' : 'text-slate-900'}`}
+                  />
+                  {!isUrlLocked && (
+                    <button onClick={handleSaveUrl} className="bg-slate-900 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-violet-600 transition-colors">
+                      Lagre
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  <span className="font-bold text-slate-500">OBS:</span> Du kan kun endre nettadressen 1 gang.
+                </p>
+              </div>
+
+              {/* Bransje (Søkbar) */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <h3 className="font-bold mb-4 text-slate-900">Bransje</h3>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-3 text-slate-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Søk bransje..."
+                    value={industrySearch}
+                    onFocus={() => setIsIndustryOpen(true)}
+                    onChange={(e) => { setIndustrySearch(e.target.value); setIsIndustryOpen(true); }}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white outline-none font-medium text-slate-900 focus:ring-2 focus:ring-violet-500"
+                  />
+                  {/* Dropdown liste */}
+                  {isIndustryOpen && industrySearch.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl z-20">
+                      {filteredIndustries.map((item) => (
+                        <button key={item} onClick={() => { setIndustry(item); setIndustrySearch(item); setIsIndustryOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-violet-50 hover:text-violet-600 transition-colors">
+                          {item}
+                        </button>
+                      ))}
+                      {filteredIndustries.length === 0 && <div className="p-3 text-sm text-slate-400 italic">Ingen treff...</div>}
+                    </div>
+                  )}
+                </div>
+                {industry && <p className="mt-2 text-sm text-slate-600 font-bold">Valgt: <span className="text-violet-600">{industry}</span></p>}
+              </div>
+
+              {/* Slett Konto */}
+              <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100">
+                <h3 className="text-rose-900 font-bold mb-2">Farlig område</h3>
+                <button onClick={() => alert("Funksjonalitet for sletting kommer.")} className="flex items-center gap-2 text-rose-600 font-bold bg-white px-4 py-2 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors">
+                  <Trash2 size={16} /> Slett min konto
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* FANE 2: ABONNEMENT */}
+          {activeTab === 'billing' && (
+            <div className="space-y-6">
+              <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
+                  <h3 className="text-3xl font-black mb-2">Gratis</h3>
+                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-violet-50 transition-colors mt-4">Endre plan</button>
+                </div>
+                <div className="absolute top-0 right-0 p-32 bg-violet-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <h3 className="font-bold mb-4 text-slate-900">Fakturahistorikk</h3>
+                <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-400 text-sm font-medium">Ingen fakturaer funnet</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-// --- AGGRESSIV LYTTER (Sikrer login-knapper) ---
-if (typeof window !== 'undefined') {
-  window.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    const clickable = target.closest('a, button, div[role="button"]');
 
-    if (clickable && clickable.textContent) {
-      const text = clickable.textContent.toLowerCase();
-      const triggers = ["kom i gang", "begynn nå", "start", "velg denne"];
+// --- LOGIN PAGE (KUN GOOGLE) ---
+const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
-      if (triggers.some(t => text.includes(t))) {
-        const href = clickable.getAttribute('href');
-        // Stopper bare lenker som er "tomme" (#) eller interne anker (#priser)
-        if (href === '#' || href === '#priser') {
-          e.preventDefault();
-        }
-        handleLogin();
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '?payment_success=true', // Sender dem tilbake riktig sted
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      alert('Kunne ikke logge inn med Google: ' + error.message);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#fcfcfd] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+
+      {/* Bakgrunnsdekorasjon */}
+      <div className="absolute inset-0 grid-pattern opacity-[0.04] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-100/40 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
+
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-500">
+
+        {/* Ikon / Header */}
+        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200 rotate-3 hover:rotate-6 transition-transform">
+          <Sparkles className="text-white w-8 h-8" />
+        </div>
+
+        <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Velkommen</h2>
+        <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+          Logg inn for å få tilgang til analysen din. <br /> Vi bruker Google for maksimal sikkerhet.
+        </p>
+
+        {/* GOOGLE KNAPP (Eneste valg) */}
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-violet-200 hover:bg-violet-50 text-slate-700 font-bold py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md group transform active:scale-95"
+        >
+          {/* Google Logo SVG */}
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          <span className="group-hover:text-violet-700 transition-colors">Fortsett med Google</span>
+        </button>
+
+        {/* TILBAKE KNAPP */}
+        <button
+          onClick={onBack}
+          className="mt-8 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center gap-2 mx-auto"
+        >
+          <ArrowLeft size={16} /> Gå tilbake til forsiden
+        </button>
+
+      </div>
+
+      {/* Sikkerhets-footer */}
+      <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-slate-300 uppercase tracking-widest">
+        <span className="flex items-center gap-1"><ShieldCheck size={12} /> Sikker innlogging</span>
+        <span className="flex items-center gap-1"><Key size={12} /> Kryptert</span>
+      </div>
+
+    </div>
+  );
+};
+
+
+
+// --- DASHBOARD VIEW (Looker Studio) ---
+const DashboardView = ({ user, onBack }: { user: any, onBack: () => void }) => {
+  const [loading, setLoading] = useState(true);
+  // URL til din Looker Studio rapport
+  const REPORT_URL = "https://lookerstudio.google.com/embed/reporting/b20556ef-7296-4ce3-b391-2d6acb70dc13/page/4flmF?rm=minimal";
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col h-screen">
+      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">{user?.email?.charAt(0).toUpperCase()}</div>
+          <div><h2 className="font-bold text-slate-800">Ditt SEO Dashboard</h2><p className="text-xs text-slate-500">Live data fra Google</p></div>
+        </div>
+        <button onClick={onBack} className="text-sm font-bold text-slate-600 hover:text-slate-900">Tilbake</button>
+      </div>
+      <div className="flex-grow relative bg-white w-full h-full overflow-hidden">
+        {loading && <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10 text-slate-500">Henter ferske tall...</div>}
+        <iframe src={REPORT_URL} className="w-full h-full border-0" frameBorder="0" allowFullScreen onLoad={() => setLoading(false)} title="SEO Rapport" />
+      </div>
+    </div>
+  );
+};
+
+
+
+// --- HJELPEKOMPONENT: LÅST SEKSJON ---
+const LockedSection = ({
+  title,
+  description,
+  reqPackage,
+  onUpgrade,
+  color = "violet"
+}: {
+  title: string,
+  description: string,
+  reqPackage: string,
+  onUpgrade: () => void,
+  color?: string
+}) => (
+  <div className={`relative w-full rounded-2xl overflow-hidden border border-white/5 bg-slate-900/50 p-8 text-center group hover:border-${color}-500/30 transition-all`}>
+    {/* Glass-effekt bakgrunn */}
+    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-0"></div>
+
+    <div className="relative z-10 flex flex-col items-center">
+      <div className={`w-12 h-12 bg-${color}-500/10 text-${color}-400 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-${color}-900/20 group-hover:scale-110 transition-transform border border-${color}-500/20`}>
+        <Lock size={20} />
+      </div>
+      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+      <p className="text-slate-400 max-w-md mb-6 text-sm">{description}</p>
+      <button onClick={onUpgrade} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:shadow-lg hover:shadow-violet-500/25 transition-all border border-white/10">
+        <Zap size={16} fill="currentColor" /> Lås opp i {reqPackage}
+      </button>
+    </div>
+  </div>
+);
+
+// --- HJELPEKOMPONENT: STATUS KORT (Dashboard) ---
+const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
+  <div className="bg-slate-900/50 backdrop-blur-md p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all shadow-xl shadow-black/20 group relative overflow-hidden">
+    <div className={`absolute -right-10 -top-10 w-20 h-20 bg-${color}-500/10 blur-3xl rounded-full group-hover:bg-${color}-500/20 transition-all`}></div>
+    <div className="flex justify-between items-start mb-4 relative z-10">
+      <div className={`p-3 rounded-xl bg-${color}-500/10 text-${color}-400 border border-${color}-500/10`}>
+        <Icon size={24} />
+      </div>
+      {subtext && <span className={`text-xs font-bold px-2 py-1 rounded-full bg-${color}-500/10 text-${color}-400 border border-${color}-500/10`}>{subtext}</span>}
+    </div>
+    <div className="relative z-10">
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
+      <p className="text-3xl font-black text-white tracking-tight">{value}</p>
+    </div>
+  </div>
+);
+
+
+
+
+const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) => {
+  // --- 1. STATE & VARIABLER ---
+  const [clientData, setClientData] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  // State for redigering av profil
+  const [isEditing, setIsEditing] = useState(false);
+  const [urlUnlockRequested, setUrlUnlockRequested] = useState(false);
+
+  // State for Ekte Google Analyse
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(15); // Nedtelling start
+
+  // --- 2. HJELPEFUNKSJONER (Må ligge her oppe) ---
+  const getPackageLevel = (pkgName: string) => {
+    const name = pkgName?.toLowerCase() || '';
+    if (name.includes('automation') || name.includes('premium')) return 3;
+    if (name.includes('growth') || name.includes('standard')) return 2;
+    return 1;
+  };
+
+  // --- 3. BEREGNEDE VARIABLER ---
+  const currentLevel = clientData ? getPackageLevel(clientData.package_name) : 1;
+  const currentPkgName = clientData?.package_name || 'Basic';
+  const hasExistingUrl = clientData?.websiteUrl && clientData.websiteUrl.length > 0;
+
+  // Sjekker om kunden mangler kritisk info (trigger onboarding)
+  const needsOnboarding = !clientData?.websiteUrl || !clientData?.industry;
+
+  // --- 4. DATA HENTING ---
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (!user?.email) return;
+
+      const { data } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setClientData(data);
+        setFormData({
+          contactPerson: data.contactPerson,
+          companyName: data.companyName,
+          email: data.email,
+          phone: data.phone,
+          websiteUrl: data.websiteUrl,
+          industry: data.industry,
+          targetAudience: data.targetAudience
+        });
+      }
+      setLoading(false);
+    };
+    fetchClientData();
+  }, [user]);
+
+  // Effekt for nedtelling under analyse
+  useEffect(() => {
+    let interval: any;
+    if (isAnalyzing && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (!isAnalyzing) {
+      setTimeLeft(15); // Reset når ferdig
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing, timeLeft]);
+
+  const runRealAnalysis = async () => {
+    const url = clientData?.websiteUrl;
+
+    if (!url) {
+      setError("Ingen URL funnet.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setError(null);
+    setAnalysisResult(null);
+    setTimeLeft(15);
+
+    try {
+      // ENDRING 1: Vi har lagt til '&strategy=desktop' på slutten av URL-en.
+      const response = await fetch(
+        `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES&strategy=desktop`
+      );
+
+      if (!response.ok) {
+        throw new Error('Kunne ikke analysere nettsiden. Sjekk at URL er riktig.');
+      }
+
+      const data = await response.json();
+      const lighthouseResult = data.lighthouseResult;
+      const audits = lighthouseResult.audits;
+
+      // Henter ut tidstyver (Opportunities)
+      const opportunities = Object.values(audits)
+        .filter((audit: any) => audit.details && audit.details.type === 'opportunity' && audit.score < 0.9)
+        .sort((a: any, b: any) => (a.score || 0) - (b.score || 0))
+        .slice(0, 3);
+
+      // ENDRING 2: Vi bygger opp dataene NØYAKTIG slik det nye designet ditt vil ha dem.
+      const analysisData: AnalysisResult = {
+        // Hovedscorene (0-100)
+        performance: Math.round(lighthouseResult.categories.performance.score * 100),
+        seoScore: Math.round(lighthouseResult.categories.seo.score * 100),
+        accessibility: Math.round(lighthouseResult.categories.accessibility.score * 100),
+        bestPractices: Math.round(lighthouseResult.categories['best-practices'].score * 100),
+
+        // Dybdetallene (FCP, LCP, CLS, TBT) - Her henter vi 'displayValue' som er den ferdige teksten (f.eks "1.2 s")
+        fcp: {
+          value: audits['first-contentful-paint'].displayValue,
+          score: audits['first-contentful-paint'].score
+        },
+        lcp: {
+          value: audits['largest-contentful-paint'].displayValue,
+          score: audits['largest-contentful-paint'].score
+        },
+        cls: {
+          value: audits['cumulative-layout-shift'].displayValue,
+          score: audits['cumulative-layout-shift'].score
+        },
+        tbt: {
+          value: audits['total-blocking-time'].displayValue,
+          score: audits['total-blocking-time'].score
+        },
+
+        // SEO-data for de nye boksene (Viktig at denne heter 'seo'!)
+        seo: {
+          metaDescription: audits['meta-description'],
+          documentTitle: audits['document-title'],
+          linkText: audits['link-text'],
+          viewport: audits['viewport']
+        },
+
+        // Tidstyvene
+        opportunities: opportunities
+      };
+
+      setAnalysisResult(analysisData);
+
+    } catch (err) {
+      setError('Noe gikk galt under analysen. Prøv igjen.');
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+  // --- 6. LAGRING AV PROFIL ---
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirm("Er du sikker på at du vil lagre endringene?")) return;
+
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const { error } = await supabase.from('clients').update(formData).eq('user_id', user.id);
+      if (error) throw error;
+
+      setClientData({ ...clientData, ...formData });
+      setSaveMessage('Endringer lagret!');
+      setIsEditing(false);
+      setUrlUnlockRequested(false);
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error(error);
+      setSaveMessage('Feil ved lagring.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleUnlockUrl = () => {
+    if (confirm("VIKTIG ADVARSEL:\n\nÅ endre nettadresse vil nullstille all SEO-historikk.\nEr du sikker?")) {
+      setUrlUnlockRequested(true);
+    }
+  };
+
+  // --- 7. ENDRE ABONNEMENT ---
+  const handleChangePlan = async (newPackageName: string, price: string) => {
+    const action = getPackageLevel(newPackageName) > currentLevel ? "oppgradere" : "nedgradere";
+    if (confirm(`Er du sikker på at du vil ${action} til ${newPackageName} (${price} kr/mnd)?`)) {
+      setSaving(true);
+      try {
+        const { error } = await supabase.from('clients').update({ package_name: newPackageName }).eq('user_id', user.id);
+        if (error) throw error;
+
+        setClientData({ ...clientData, package_name: newPackageName });
+        setSaveMessage(`Abonnement endret til ${newPackageName}!`);
+        setTimeout(() => setSaveMessage(''), 3000);
+      } catch (error) {
+        alert("Klarte ikke bytte plan.");
+      } finally {
+        setSaving(false);
       }
     }
-  }, true);
+  };
+
+  // --- 8. ONBOARDING HÅNDTERING ---
+  const handleOnboardingComplete = (newData: any) => {
+    setClientData({ ...clientData, ...newData });
+    setTimeout(() => alert("Konto konfigurert! 🚀\nDu kan nå kjøre din første analyse."), 500);
+  };
+
+  const handleUpgrade = () => setActiveTab('settings');
+
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'analysis', label: 'Analyse', icon: Activity },
+    { id: 'keywords', label: 'Søkeord', icon: Search },
+    { id: 'content', label: 'Innhold', icon: FileText },
+    { id: 'links', label: 'Lenker', icon: Link2 },
+    { id: 'reports', label: 'Rapporter', icon: FileBarChart },
+    { id: 'settings', label: 'Innstillinger', icon: Settings },
+  ];
+
+  // --- RENDERING STARTER HER ---
+
+  // 1. Loading skjerm
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster portal...</div></div>;
+
+  // 2. Onboarding Wizard (Hvis data mangler)
+  if (clientData && needsOnboarding) {
+    return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
+  }
+
+  // 3. Hoved-applikasjonen
+  return (
+    <div className="flex min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-violet-500/30 selection:text-violet-200">
+
+      {/* BACKGROUND GLOWS */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-900/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]"></div>
+      </div>
+
+      {/* SIDEBAR */}
+      <aside className="w-20 lg:w-64 bg-slate-900/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20 flex flex-col shadow-2xl">
+        <div className="p-6 flex items-center gap-3 justify-center lg:justify-start border-b border-white/5">
+          <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shrink-0 shadow-lg shadow-violet-900/50">S</div>
+          <span className="font-black text-xl tracking-tight hidden lg:block text-white">Sikt.</span>
+        </div>
+
+        <nav className="flex-1 px-3 py-6 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group relative border ${activeTab === item.id
+                ? 'bg-white/10 text-white border-white/10 shadow-inner'
+                : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent'
+                }`}
+            >
+              <item.icon size={20} className={activeTab === item.id ? 'text-violet-400' : 'text-slate-500 group-hover:text-slate-300'} />
+              <span className="hidden lg:block text-sm font-medium">{item.label}</span>
+              <div className="lg:hidden absolute left-14 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap border border-white/10">
+                {item.label}
+              </div>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-white/5 bg-slate-900/50">
+          <div className="hidden lg:block mb-3">
+            <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Ditt Abonnement</p>
+            <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded-lg border border-white/5">
+              <span className="text-xs font-bold text-slate-300 truncate pl-1">{currentPkgName}</span>
+              {currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors">Oppgrader</button>}
+            </div>
+          </div>
+          <button onClick={onLogout} className="w-full flex items-center gap-2 text-slate-500 hover:text-rose-400 text-xs font-bold px-1 transition-colors justify-center lg:justify-start">
+            <LogOut size={16} /> <span className="hidden lg:inline">Logg ut</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 ml-20 lg:ml-64 p-6 lg:p-10 max-w-6xl mx-auto relative z-10">
+
+        <header className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">{menuItems.find(i => i.id === activeTab)?.label}</h1>
+            <p className="text-slate-400 text-sm font-medium mt-1 flex items-center gap-2">
+              <Globe size={14} className="text-slate-500" /> {clientData?.websiteUrl || 'Laster...'}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-violet-400 font-bold shadow-lg ring-4 ring-slate-900/50">
+              {user.email.charAt(0).toUpperCase()}
+            </div>
+          </div>
+        </header>
+
+        {/* --- DASHBOARD TAB --- */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <SmartActionCard clientData={clientData} analysisResult={analysisResult} onRunAnalysis={() => setActiveTab('analysis')} />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatusCard
+                icon={Activity}
+                color={analysisResult ? (analysisResult.seo >= 80 ? "emerald" : "amber") : "slate"}
+                title="Nettside Helse"
+                value={analysisResult ? `${analysisResult.seo}/100` : "Ingen data"}
+                subtext={analysisResult ? "Basert på live analyse" : "Kjør analyse først"}
+              />
+              <StatusCard icon={TrendingUp} color="blue" title="Besøkende (30 d)" value="1,204" subtext="+12%" />
+              <StatusCard
+                icon={AlertTriangle}
+                color="amber"
+                title="Tekniske Feil"
+                value={analysisResult ? (analysisResult.perf < 50 ? "3" : "0") : "0"}
+                subtext="Kritisk"
+              />
+            </div>
+
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-lg text-white">Trafikk & Synlighet</h3>
+                <select className="text-sm bg-slate-950 text-slate-400 border border-white/10 rounded-lg p-1.5 focus:outline-none focus:border-violet-500"><option>Siste 30 dager</option></select>
+              </div>
+              {currentLevel >= 2 ? (
+                <div className="h-64 bg-slate-950/50 rounded-xl flex items-center justify-center text-slate-500 border border-white/5 border-dashed">
+                  <div className="flex flex-col items-center gap-2">
+                    <BarChart3 size={32} className="opacity-50" />
+                    <p className="text-xs">Grafisk fremstilling av data (Chart.js)</p>
+                  </div>
+                </div>
+              ) : (
+                <LockedSection title="Historisk Utvikling" description="Se trender over tid." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- ANALYSE TAB --- */}
+        {activeTab === 'analysis' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-xl">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Teknisk Helsesjekk</h2>
+                  <p className="text-slate-400">Vi analyserer {clientData?.websiteUrl || 'nettsiden din'} mot Google sine nyeste krav.</p>
+                </div>
+                {isAnalyzing ? (
+                  <div className="flex flex-col items-center md:items-end gap-2 animate-in fade-in">
+                    <div className="flex items-center gap-2 text-violet-400 font-bold animate-pulse">
+                      <Activity className="animate-spin" size={18} />
+                      <span>Analyserer nettsiden...</span>
+                    </div>
+                    <div className="w-40 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-violet-500 transition-all duration-1000 ease-linear"
+                        style={{ width: `${Math.min(100, ((15 - timeLeft) / 15) * 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">Dette tar ca {timeLeft} sekunder</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={runRealAnalysis}
+                    className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-violet-900/20 transition-all flex items-center gap-2"
+                  >
+                    <Search size={18} /> Kjør Live Analyse
+                  </button>
+                )}
+              </div>
+
+              {analysisResult && (
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2">
+                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden group">
+                    <div className={`absolute top-0 left-0 w-1 h-full ${analysisResult.seo >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Google Synlighet</p>
+                    <div className={`text-4xl font-black ${analysisResult.seo >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>{analysisResult.seo}/100</div>
+                  </div>
+                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden">
+                    <div className={`absolute top-0 left-0 w-1 h-full ${analysisResult.perf >= 80 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Teknisk Ytelse</p>
+                    <div className={`text-4xl font-black ${analysisResult.perf >= 80 ? 'text-emerald-400' : 'text-rose-400'}`}>{analysisResult.perf}/100</div>
+                  </div>
+                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Lastetid (Mobil)</p>
+                    <div className="text-4xl font-black text-blue-400">{analysisResult.loadTime}</div>
+                  </div>
+                  <DetailedHealthCheck result={analysisResult} />
+                </div>
+              )}
+            </div>
+
+            {analysisResult && (
+              <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-violet-500/30 rounded-2xl p-1 shadow-2xl">
+                <div className="p-6 border-b border-white/5 flex items-center gap-3">
+                  <div className="p-2 bg-violet-500/20 rounded-lg text-violet-400"><BrainCircuit size={24} /></div>
+                  <div><h3 className="text-lg font-bold text-white">AI-Anbefaling</h3><p className="text-xs text-slate-400">Basert på din pakke: <span className="text-violet-400 font-bold uppercase">{currentPkgName}</span></p></div>
+                </div>
+                <div className="p-8 space-y-6">
+                  {analysisResult.perf < 60 && (
+                    <div className="animate-in slide-in-from-bottom-2 fade-in">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 shrink-0"><AlertTriangle size={24} /></div>
+                        <div className="flex-1">
+                          <h4 className="text-rose-400 font-bold mb-2">Nettsiden din er kritisk treg ({analysisResult.perf}/100)</h4>
+                          {currentLevel === 1 ? (
+                            <div className="bg-slate-900 p-4 rounded-xl border border-white/10 mt-2">
+                              <p className="text-slate-300 text-sm mb-4">Vår AI har funnet <strong>3 spesifikke årsaker</strong> til at det går tregt, men rapporten er låst i Basic-pakken.</p>
+                              <button onClick={handleUpgrade} className="w-full bg-white text-slate-900 py-2 rounded-lg font-bold text-sm hover:bg-violet-50 flex items-center justify-center gap-2"><Lock size={14} /> Oppgrader til Standard for å se løsningen</button>
+                            </div>
+                          ) : (
+                            <div className="bg-emerald-900/10 p-5 rounded-xl border border-emerald-500/20 mt-2">
+                              <p className="text-emerald-400 text-sm font-bold mb-2 flex items-center gap-2"><CheckCircle2 size={14} /> Løsning funnet:</p>
+                              <ul className="space-y-3 text-sm text-slate-300">
+                                <li className="flex gap-2"><span className="text-emerald-500">1.</span><span>Bildene på forsiden er ikke komprimert. Bruk formatet <strong>WebP</strong>.</span></li>
+                                <li className="flex gap-2"><span className="text-emerald-500">2.</span><span>Du har "Render-blocking resources". Installer en cache-plugin.</span></li>
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {analysisResult.perf >= 60 && analysisResult.perf < 90 && (
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0"><Activity size={24} /></div>
+                      <div><h4 className="text-amber-400 font-bold mb-1">Rom for forbedring</h4><p className="text-slate-300 text-sm">Siden din er OK, men litt finpuss på bildestørrelser vil hjelpe.</p></div>
+                    </div>
+                  )}
+                  <div className="pt-6 border-t border-white/5 flex items-start gap-4">
+                    <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 shrink-0"><Search size={24} /></div>
+                    <div className="flex-1">
+                      <h4 className="text-blue-400 font-bold mb-2">Synlighet i Google</h4>
+                      {currentLevel === 1 ? (
+                        <p className="text-slate-300 text-sm">Vi ser at du rangerer på noen nøkkelord, men går glipp av trafikk. <button onClick={handleUpgrade} className="text-violet-400 hover:text-violet-300 font-bold ml-1 hover:underline">Se hvilke &rarr;</button></p>
+                      ) : (
+                        <div className="text-sm text-slate-300"><p className="mb-2">Din H1-tittel er bra, men Meta-beskrivelsen din er for kort.</p></div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- SETTINGS TAB --- */}
+        {activeTab === 'settings' && (
+          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden relative">
+              <div className="p-6 border-b border-white/5 bg-slate-950/30 flex justify-between items-center">
+                <div><h3 className="font-bold text-lg text-white">Bedriftsprofil</h3><p className="text-sm text-slate-400">Informasjonen er låst for din sikkerhet.</p></div>
+                <button onClick={() => { setIsEditing(!isEditing); setUrlUnlockRequested(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isEditing ? 'bg-slate-800 text-white border-white/10' : 'bg-violet-600 text-white border-transparent hover:bg-violet-500'}`}>{isEditing ? <><XCircle size={14} /> Avbryt</> : <><Edit2 size={14} /> Rediger Profil</>}</button>
+              </div>
+
+              <form onSubmit={handleSaveSettings} className="p-6 space-y-5 relative">
+                {!isEditing && <div className="absolute inset-0 bg-slate-950/10 z-10 cursor-not-allowed"></div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Kontaktperson</label><input disabled={!isEditing} name="contactPerson" value={formData.contactPerson || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Telefon</label><input disabled={!isEditing} name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                </div>
+                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Bedriftsnavn</label><input disabled={!isEditing} name="companyName" value={formData.companyName || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">E-post</label><input disabled={!isEditing} type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                <div className="relative p-4 rounded-xl border border-white/5 bg-white/5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-center">Nettside URL {hasExistingUrl && !urlUnlockRequested ? <span className="text-emerald-400 flex items-center gap-1 text-[10px]"><ShieldCheck size={12} /> Sikret</span> : urlUnlockRequested ? <span className="text-rose-500 flex items-center gap-1 text-[10px] animate-pulse"><AlertOctagon size={12} /> Redigering tillatt</span> : null}</label>
+                  <div className="relative flex gap-2">
+                    <input disabled={!isEditing || (hasExistingUrl && !urlUnlockRequested)} type="url" name="websiteUrl" value={formData.websiteUrl || ''} onChange={handleChange} className={`w-full p-3 bg-slate-950 border rounded-xl text-white outline-none ${urlUnlockRequested ? 'border-rose-500 ring-1 ring-rose-500/50' : hasExistingUrl ? 'border-white/10 opacity-70 cursor-not-allowed' : 'border-white/10'}`} />
+                    {isEditing && hasExistingUrl && !urlUnlockRequested && (<button type="button" onClick={handleUnlockUrl} className="bg-slate-800 text-slate-400 hover:text-white p-3 rounded-xl border border-white/10"><Lock size={18} /></button>)}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Bransje</label><input disabled={!isEditing} name="industry" value={formData.industry || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Målgruppe</label><input disabled={!isEditing} name="targetAudience" value={formData.targetAudience || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
+                </div>
+                {isEditing && (
+                  <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
+                    <div className="text-emerald-400 font-bold text-sm h-6 flex items-center">{saveMessage && <><CheckCircle2 size={16} className="mr-1" /> {saveMessage}</>}</div>
+                    <button type="submit" disabled={saving} className="bg-white text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-violet-50 transition-colors flex items-center gap-2">{saving ? 'Lagrer...' : <><Save size={18} /> Bekreft & Lagre</>}</button>
+                  </div>
+                )}
+              </form>
+            </div>
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
+              <div className="p-6 border-b border-white/5 bg-slate-950/30"><h3 className="font-bold text-lg text-white">Ditt Abonnement</h3></div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { name: 'Basic', price: '599', level: 1, features: ['Månedlig Rapport', 'Google Data'] },
+                  { name: 'Standard', price: '1499', level: 2, features: ['Rank Tracking', 'AI Innhold', 'Teknisk Analyse'] },
+                  { name: 'Premium', price: '4999', level: 3, features: ['Alt i Standard', 'AI Strategi', 'Konkurrentanalyse'] }
+                ].map((plan) => {
+                  const isCurrent = currentLevel === plan.level;
+                  const isUpgrade = plan.level > currentLevel;
+                  return (
+                    <div key={plan.name} className={`relative p-5 rounded-xl border flex flex-col justify-between transition-all ${isCurrent ? 'bg-violet-500/10 border-violet-500 ring-1 ring-violet-500/50' : 'bg-slate-950 border-white/5 hover:border-white/10'}`}>
+                      {isCurrent && <div className="absolute top-0 right-0 bg-violet-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">AKTIV</div>}
+                      <div><h4 className="font-bold text-white text-lg">{plan.name}</h4><p className="text-slate-400 text-sm mb-4">{plan.price} kr/mnd</p><ul className="space-y-2 mb-6">{plan.features.map(f => (<li key={f} className="text-xs text-slate-300 flex items-center gap-2"><CheckCircle2 size={12} className={isCurrent || isUpgrade ? "text-emerald-400" : "text-slate-600"} /> {f}</li>))}</ul></div>
+                      <button onClick={() => !isCurrent && handleChangePlan(plan.name, plan.price)} disabled={isCurrent || saving} className={`w-full py-2 rounded-lg text-sm font-bold border transition-all ${isCurrent ? 'bg-transparent border-transparent text-violet-400 cursor-default' : isUpgrade ? 'bg-white text-slate-900 hover:bg-violet-50' : 'bg-slate-900 text-slate-400 border-white/10 hover:text-white'}`}>{isCurrent ? 'Din Plan' : isUpgrade ? 'Oppgrader' : 'Nedgrader'}</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="p-6 rounded-2xl border border-rose-500/20 bg-rose-950/10 backdrop-blur-sm flex items-center justify-between">
+              <div><h4 className="font-bold text-rose-400 text-sm flex items-center gap-2"><ShieldCheck size={16} /> Avslutt Abonnement</h4></div>
+              <button className="text-rose-400 text-xs font-bold hover:underline">Gå til utmelding</button>
+            </div>
+          </div>
+        )}
+
+        {/* --- INNHOLD / CONTENT TAB --- */}
+        {activeTab === 'content' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {currentLevel < 2 ? (
+              <LockedSection
+                title="Innholdsverktøy"
+                description="Oppgrader til Standard for å la AI skrive Google-tekstene dine automatisk."
+                reqPackage="Standard"
+                onUpgrade={handleUpgrade}
+                color="violet"
+              />
+            ) : (
+              <>
+                {/* Jeg antar at denne kanskje også trenger data, men lar den stå hvis den ikke klager */}
+                <AIContentGenerator />
+
+                {currentLevel >= 3 ? (
+                  // HER ER FIKSEN: Vi sender med clientData
+                  <ContentStrategy clientData={clientData} />
+                ) : (
+                  <LockedSection
+                    title="AI-Redaksjon & Strategi"
+                    description="I Premium-pakken analyserer AI-en konkurrentene dine."
+                    reqPackage="Premium"
+                    onUpgrade={handleUpgrade}
+                    color="indigo"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* --- LENKER / BACKLINKS TAB --- */}
+        {activeTab === 'links' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {currentLevel < 2 ? (
+              <LockedSection title="Backlink-analyse" description="For å rangere høyt trenger du lenker fra andre nettsteder." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
+            ) : (
+              <BacklinkMonitor currentLevel={currentLevel} />
+            )}
+          </div>
+        )}
+
+        {/* --- SØKEORD / KEYWORDS TAB --- */}
+        {activeTab === 'keywords' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <KeywordTracker currentLevel={currentLevel} onUpgrade={handleUpgrade} />
+          </div>
+        )}
+
+        {/* --- RAPPORTER TAB --- */}
+        {activeTab === 'reports' && (
+          <ReportsModule currentLevel={currentLevel} onUpgrade={handleUpgrade} />
+        )}
+
+      </main>
+
+      {/* CHAT */}
+      <AIChatWidget clientData={clientData} />
+    </div>
+  );
+};
+
+
+
+const ReportsModule = ({ currentLevel, onUpgrade }: { currentLevel: number, onUpgrade: () => void }) => {
+
+  // Her definerer vi rapportene og hvilket nivå som kreves
+  const reports = [
+    {
+      id: 1,
+      title: "Månedsrapport: Januar 2026",
+      type: "Oppsummering",
+      date: "01.02.2026",
+      minLevel: 1, // Alle får denne (Basic)
+      color: "blue"
+    },
+    {
+      id: 2,
+      title: "Teknisk Ukerapport: Uke 5",
+      type: "Teknisk Analyse",
+      date: "04.02.2026",
+      minLevel: 2, // Kun Standard og oppover
+      color: "emerald"
+    },
+    {
+      id: 3,
+      title: "AI-Strategi & Konkurrent-Gap",
+      type: "Strategi",
+      date: "05.02.2026",
+      minLevel: 3, // Kun Premium
+      color: "violet"
+    }
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+
+      {/* Header */}
+      <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5 shadow-xl flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">Dine Rapporter</h2>
+          <p className="text-slate-400">Last ned PDF-rapporter generert av AI-motoren.</p>
+        </div>
+        <div className="p-4 bg-violet-500/10 rounded-full border border-violet-500/20 text-violet-400">
+          <FileText size={32} />
+        </div>
+      </div>
+
+      {/* Rapport Liste */}
+      <div className="grid grid-cols-1 gap-4">
+        {reports.map((report) => {
+          // Sjekk om brukeren har høy nok pakke
+          const isLocked = currentLevel < report.minLevel;
+
+          return (
+            <div key={report.id} className={`p-6 rounded-2xl border flex items-center justify-between transition-all ${isLocked ? 'bg-slate-950/50 border-white/5 opacity-75' : 'bg-slate-900/50 border-white/10 hover:border-violet-500/50'}`}>
+
+              <div className="flex items-center gap-6">
+                {/* Ikon boks */}
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center border font-bold text-xl ${isLocked
+                  ? 'bg-slate-900 border-white/5 text-slate-600'
+                  : `bg-${report.color}-500/10 border-${report.color}-500/20 text-${report.color}-400`
+                  }`}>
+                  {isLocked ? <Lock size={24} /> : "PDF"}
+                </div>
+
+                {/* Info */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${isLocked
+                      ? 'bg-slate-800 border-white/5 text-slate-500'
+                      : `bg-${report.color}-500/10 border-${report.color}-500/20 text-${report.color}-400`
+                      }`}>
+                      {isLocked ? `Krever nivå ${report.minLevel}` : report.type}
+                    </span>
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <Calendar size={12} /> {report.date}
+                    </span>
+                  </div>
+                  <h3 className={`text-lg font-bold ${isLocked ? 'text-slate-500' : 'text-white'}`}>
+                    {report.title}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Handling (Knapp) */}
+              <div>
+                {isLocked ? (
+                  <button
+                    onClick={onUpgrade}
+                    className="px-4 py-2 bg-slate-900 text-slate-400 border border-white/10 rounded-lg text-sm font-bold hover:text-white hover:border-white/30 flex items-center gap-2 transition-colors"
+                  >
+                    <Lock size={14} /> Lås opp
+                  </button>
+                ) : (
+                  <button className="px-6 py-3 bg-white text-slate-950 rounded-xl text-sm font-bold hover:bg-violet-50 shadow-lg shadow-white/5 flex items-center gap-2 transition-colors">
+                    <Download size={16} /> Last ned
+                  </button>
+                )}
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+
+    </div>
+  );
+};
+
+
+
+
+
+
+const AIChatWidget = ({ clientData }: { clientData: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // --- KONFIGURASJON ---
+  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN NØKKELEN DIN HER!
+
+  const firstName = clientData?.contactPerson?.split(' ')[0] || 'Kunde';
+  const company = clientData?.companyName || 'bedriften din';
+
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string }[]>([
+    {
+      role: 'model',
+      content: `Hei ${firstName}! 👋 Jeg er din AI-assistent (drevet av Google Gemini). Jeg har analysert ${company}. Hva lurer du på?`
+    }
+  ]);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isOpen, isTyping]);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    if (API_KEY === "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs") {
+      alert("Du må lime inn Google API-nøkkelen din i koden (AIChatWidget.tsx) først!");
+      return;
+    }
+
+    const userMsg = input;
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setInput("");
+    setIsTyping(true);
+
+    try {
+      // Vi bygger samtaleloggen for Google formatet
+      // Google bruker "user" og "model" som roller
+      const history = messages.map(m => ({
+        role: m.role,
+        parts: [{ text: m.content }]
+      }));
+
+      // Legger til den nye meldingen
+      history.push({ role: "user", parts: [{ text: userMsg }] });
+
+      // System instruks (Hvem er boten?)
+      const systemInstruction = `Du er en ekspert SEO-rådgiver for bedriften ${company}. Vær kort, hyggelig og salgsfokusert. Bruk emojis.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: history,
+          systemInstruction: { parts: [{ text: systemInstruction }] } // Gemini 1.5 støtter system instruksjoner
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error.message);
+
+      const aiResponse = data.candidates[0].content.parts[0].text;
+
+      setMessages(prev => [...prev, { role: 'model', content: aiResponse }]);
+
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [...prev, { role: 'model', content: "Beklager, jeg mistet kontakten med Google-hjernen min." }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
+      {isOpen && (
+        <div className="mb-4 w-[350px] h-[500px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+
+          <div className="p-4 bg-slate-950/50 border-b border-white/5 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center relative shadow-lg shadow-blue-900/50">
+                <Zap size={16} className="text-white" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-slate-900 rounded-full animate-pulse"></span>
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">Sikt AI (Gemini) 🧠</h4>
+                <p className="text-[10px] text-slate-400">Koblet til Google</p>
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white"><XCircle size={20} /></button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/80 scrollbar-thin">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
+                  ? 'bg-violet-600 text-white rounded-br-none'
+                  : 'bg-slate-800 text-slate-200 border border-white/5 rounded-bl-none'
+                  }`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-slate-800 border border-white/5 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center">
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></span>
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form onSubmit={handleSend} className="p-3 bg-slate-950/50 border-t border-white/5 flex gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Spør om noe..."
+              className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-all placeholder-slate-600"
+            />
+            <button type="submit" className="bg-violet-600 hover:bg-violet-500 text-white p-2 rounded-xl transition-colors"><Send size={18} /></button>
+          </form>
+        </div>
+      )}
+
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 border border-white/10 ${isOpen ? 'bg-slate-800 text-slate-400 rotate-90' : 'bg-blue-600 text-white hover:bg-blue-500'
+          }`}
+      >
+        {isOpen ? <XCircle size={28} /> : <MessageCircle size={28} fill="currentColor" />}
+      </button>
+    </div>
+  );
+};
+
+
+
+
+
+
+
+
+
+// --- MAIN APP COMPONENT ---
+function App() {
+  // 1. SJEKK URL FØR VI STARTER (Slik at vi ikke blinker innom Home)
+  const searchParams = new URLSearchParams(window.location.search);
+  const isPaymentSuccess = searchParams.get('payment_success') === 'true';
+
+  // --- STATE ---
+  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
+  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+
+  const [user, setUser] = useState<any>(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+  // Denne funksjonen bruker vi når vi VET at kunden skal inn
+  const enterPortalWithDelay = async () => {
+    setIsLoading(true); // Slå på loading screen
+    await new Promise(resolve => setTimeout(resolve, 2800)); // Vent 2,8 sekunder (for effekt)
+    setHasAccess(true); // Gi tilgang
+    setIsLoading(false); // Slå av loading (vis portal)
+
+  };
+
+
+
+
+  // --- 2. EFFEKTER ---
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
+
+  // Legg denne sammen med de andre variablene øverst i App-komponenten:
+  const isFirstLoad = useRef(true);
+
+  // --- REVIDERT HOVEDSJEKK ---
+  useEffect(() => {
+    let isMounted = true;
+
+    const handleUserRouting = async (user: any, shouldAnimate: boolean) => {
+      if (!user) return;
+
+      const { data: client } = await supabase
+        .from('clients')
+        .select('onboarding_completed')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (client && client.onboarding_completed === true) {
+
+        // HER ER MAGIEN:
+        // Hvis shouldAnimate er true (første gang), kjør showet.
+        // Hvis shouldAnimate er false (fanebytte), bare sett view uten drama.
+        if (shouldAnimate) {
+          console.log("Første load/login -> Kjører animasjon");
+          setView('dashboard');
+          enterPortalWithDelay();
+        } else {
+          // "Stille" oppdatering
+          console.log("Allerede logget inn -> Ingen animasjon");
+          setView('dashboard');
+          setIsLoading(false); // Sørg for at loader er skjult
+        }
+
+      } else {
+        // Ikke ferdig med onboarding
+        console.log("Kunde er ikke ferdig -> Vi lar dem bli på forsiden.");
+      }
+    };
+
+    const checkInitialStatus = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        if (isMounted) {
+          setUser(null);
+          setView('home');
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setUser(user);
+
+        // Sjekk om dette er en retur fra betaling
+        if (new URLSearchParams(window.location.search).get('payment_success') === 'true') {
+          setView('onboarding');
+          return;
+        }
+
+        // FØRSTE LOAD: Her sender vi 'true' for å si "Ja, kjør animasjon"
+        await handleUserRouting(user, true);
+
+        // Nå er vi ferdige med første runde. Sett ref til false.
+        // Da vet resten av koden at vi ikke skal animere mer.
+        isFirstLoad.current = false;
+      }
+    };
+
+    checkInitialStatus();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignorer tokens som oppdateres
+      if (event === 'TOKEN_REFRESHED') return;
+
+      if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setUser(null);
+          setHasAccess(false);
+          setView('home');
+          setIsLoading(false);
+          isFirstLoad.current = true; // Resett til neste gang
+        }
+      }
+      else if (event === 'SIGNED_IN' && session) {
+        if (isMounted) {
+          setUser(session.user);
+
+          // VIKTIGST: 
+          // Vi sjekker isFirstLoad.current.
+          // Er det første gang? Ja -> Animer.
+          // Er det bare et fanebytte (isFirstLoad er false)? Nei -> Ikke animer.
+          const skalAnimere = isFirstLoad.current;
+
+          handleUserRouting(session.user, skalAnimere);
+
+          // Sikre at den er false etterpå uansett
+          isFirstLoad.current = false;
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+  const handleLoginTrigger = () => setView('login');
+  const handleBack = () => setView('home');
+
+  const handlePlanSelect = async (plan: string) => {
+    // 1. Hent bruker FØRST – vi trenger ID-en til Stripe-linken
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setView('login');
+      return;
+    }
+
+    // 2. Finn riktig Stripe-link
+    let stripeBaseUrl = "";
+
+    if (plan.includes('PREMIUM')) {
+      stripeBaseUrl = 'https://buy.stripe.com/test_5kQfZievo3gaeFL84Ads402';
+    }
+    else if (plan.includes('STANDARD')) {
+      stripeBaseUrl = 'https://buy.stripe.com/test_4gMcN63QKbMG55b1Gcds401';
+    }
+    else if (plan.includes('BASIC')) {
+      stripeBaseUrl = 'https://buy.stripe.com/test_eVq5kE870g2WeFL84Ads400';
+    }
+
+    if (!stripeBaseUrl) {
+      alert("Fant ingen betalingslenke for denne pakken.");
+      return;
+    }
+
+    // 3. KONSTRUER URL MED SPORING (Viktig!)
+    // client_reference_id: Dette er feltet Stripe bruker for å vite HVEM som kjøpte.
+    // prefilled_email: Gjør det enklere for kunden (e-posten er ferdig utfylt).
+    const targetUrl = `${stripeBaseUrl}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email || '')}`;
+
+    console.log("Sender bruker til Stripe med ID:", user.id);
+
+    // 4. Send brukeren direkte til betaling
+    // Vi lagrer IKKE i databasen før pengene er på konto.
+    window.location.href = targetUrl;
+  };
+
+  // --- 3. LOGOUT HANDLER (Lim inn denne under useEffect) ---
+  const handleLogout = async () => {
+    try {
+      // 1. Nullstill appen lokalt FØRST
+      setUser(null);
+      setHasAccess(false);
+      setView('home');
+
+      // 2. Fjern KUN Supabase sine nøkler fra minnet
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // 3. Fortell Supabase at vi logger ut
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Logout feil:", error);
+      }
+    } catch (error) {
+      console.error("Logout exception:", error);
+      // Sikring: Logg ut lokalt uansett
+      setUser(null);
+      setHasAccess(false);
+      setView('home');
+    }
+  };
+
+  // HER ER MAGIEN: Når skjemaet er ferdig -> Gå til Setup Guide
+  const handleOnboardingComplete = () => {
+    setView('setup_guide');
+  };
+
+  // --- 4. RENDER (LOGIKK FOR VISNING) ---
+  // 💎 "CONTROL CENTER" LOADING SCREEN (Fullskjerm-aktivitet)
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center overflow-hidden font-sans">
+
+        {/* --- BAKGRUNN: DOT MATRIX (Fyller tomrommet) --- */}
+        {/* Dette lager et svakt mønster av prikker over hele skjermen */}
+        <div className="absolute inset-0 opacity-[0.4]"
+          style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
+        </div>
+
+        {/* Myk lys-vignett i midten for å fremheve sentrum */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(248,250,252,0.8)_70%)] pointer-events-none"></div>
+
+
+        {/* --- PERIFERE ELEMENTER (De svevende kortene rundt) --- */}
+
+        {/* 1. TOPP VENSTRE: Server Status */}
+        <div className="absolute top-[10%] left-[10%] hidden md:block animate-[float_6s_ease-in-out_infinite]">
+          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg w-48">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01" /></svg>
+              </div>
+              <div className="h-2 w-20 bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-400 w-2/3 animate-[loading_2s_ease-in-out_infinite]"></div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-1.5 w-full bg-slate-100 rounded-full"></div>
+              <div className="h-1.5 w-2/3 bg-slate-100 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. TOPP HØYRE: Sikkerhetssjekk */}
+        <div className="absolute top-[15%] right-[12%] hidden md:block animate-[float_7s_ease-in-out_infinite_1s]">
+          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg w-40 flex flex-col items-center">
+            <div className="mb-2 relative">
+              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-20"></div>
+              <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sikkerhet OK</p>
+          </div>
+        </div>
+
+        {/* 3. BUNN VENSTRE: Database Kobling */}
+        <div className="absolute bottom-[15%] left-[12%] hidden md:block animate-[float_8s_ease-in-out_infinite_0.5s]">
+          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg flex gap-3 items-center">
+            <div className="flex space-x-1">
+              <div className="w-1.5 h-6 bg-violet-400 rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
+              <div className="w-1.5 h-4 bg-violet-300 rounded-full animate-[pulse_1s_ease-in-out_infinite_0.2s]"></div>
+              <div className="w-1.5 h-8 bg-violet-500 rounded-full animate-[pulse_1s_ease-in-out_infinite_0.4s]"></div>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-700">Henter data...</p>
+              <p className="text-[10px] text-slate-400">Synkroniserer</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. BUNN HØYRE: Optimalisering */}
+        <div className="absolute bottom-[10%] right-[10%] hidden md:block animate-[float_6s_ease-in-out_infinite_2s]">
+          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-3 rounded-2xl shadow-lg">
+            <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-violet-500 animate-spin"></div>
+          </div>
+        </div>
+
+
+        {/* --- SENTRUM (Hovedfokus) --- */}
+        <div className="relative z-20 scale-125 mb-10">
+          {/* Ytre ring */}
+          <div className="absolute inset-[-30px] rounded-full border border-violet-100/80 animate-[spin_8s_linear_infinite]">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[4px] w-3 h-3 bg-violet-400 rounded-full shadow-[0_0_15px_rgba(167,139,250,0.6)]"></div>
+          </div>
+          {/* Mellomste ring */}
+          <div className="absolute inset-[-15px] rounded-full border border-slate-200 animate-[spin_5s_linear_reverse_infinite]">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[3px] w-2 h-2 bg-indigo-400 rounded-full"></div>
+          </div>
+          {/* KJERNEN (Prismet) */}
+          <div className="relative w-28 h-28 bg-white/40 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(124,58,237,0.2)] border border-white/60 flex items-center justify-center rotate-45 animate-[pulse_3s_ease-in-out_infinite]">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl shadow-inner rotate-[-45deg] flex items-center justify-center">
+              <svg className="w-6 h-6 text-white animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/80 to-transparent rounded-t-3xl pointer-events-none"></div>
+          </div>
+        </div>
+
+        {/* --- TEKST --- */}
+        <div className="relative z-20 flex flex-col items-center space-y-3">
+          <h2 className="text-3xl font-black text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-violet-700 to-slate-900 bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite]">
+            Klargjør Portal
+          </h2>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Verifiserer tilgang</p>
+            <div className="w-64 h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner mt-2">
+              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full animate-[loading_1.5s_ease-in-out_infinite] w-1/3"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- CSS --- */}
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+          }
+          @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+          }
+          @keyframes loading {
+            0% { transform: translateX(-150%); }
+            50% { transform: translateX(0%); }
+            100% { transform: translateX(150%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------
+  // 🚪 DØRVAKT 1: FERDIG KUNDE (VIP)
+  // ---------------------------------------------------------
+  // Hvis brukeren er logget inn OG har betalt (hasAccess),
+  // sendes de rett til ClientPortal. De får IKKE se hjemmesiden.
+  if (user && hasAccess) {
+    return <ClientPortal user={user} onLogout={handleLogout} />;
+  }
+
+  // ---------------------------------------------------------
+  // 🚪 DØRVAKT 2: PROSESS (Registrering)
+  // ---------------------------------------------------------
+  // Hvis brukeren holder på med bestilling, vis kun det steget.
+  // Ingen meny, ingen footer, ingen distraksjoner.
+
+  // 🚪 DØRVAKT 2: PROSESS
+  if (view === 'onboarding') {
+    // 👇 HER MÅ DU LEGGE TIL: user={user}
+    return <OnboardingPage user={user} onComplete={() => setView('setup')} />;
+  }
+
+  if (view === 'setup' || view === 'setup_guide') { // Håndterer begge navnene for sikkerhets skyld
+    return <SetupGuide onComplete={() => { setHasAccess(true); setView('success'); }} />;
+  }
+
+  if (view === 'success') {
+    // Når de trykker "Gå videre" her, vil Dørvakt 1 (øverst) slå inn fordi hasAccess nå er true.
+    return <SuccessPage onBackHome={() => window.location.reload()} />;
+  }
+
+  // ---------------------------------------------------------
+  // 🏠 HOVEDHUSET (For nye besøkende / ikke-kunder)
+  // ---------------------------------------------------------
+  // Hvis ingen av dørvaktene over stoppet oss, viser vi den vanlige nettsiden.
+
+  return (
+    <div className="min-h-screen selection:bg-violet-100 selection:text-violet-900 bg-[#fcfcfd] relative overflow-x-hidden">
+      <GlobalDecorations />
+
+      {/* Navbar for vanlige besøkende */}
+      {view !== 'login' && (
+        <Navbar
+          currentView={view}
+          onNavigate={setView}
+          user={user}
+          onLoginTrigger={handleLoginTrigger}
+          onLogout={handleLogout}
+          hasAccess={hasAccess}
+        />
+      )}
+
+      <main className="relative z-10">
+
+        {view === 'home' && (
+
+          <HomeView onNavigate={setView} onSelectPlan={handlePlanSelect} />
+
+        )}
+
+        {view === 'login' && <LoginPage onBack={() => setView('home')} />}
+
+        {view === 'technology' && <TechnologyView onNavigate={setView} />}
+
+        {(view === 'profile' || view === 'billing') && (
+          <SettingsView
+            user={user}
+            onBack={() => setView('home')}
+            initialTab={view === 'billing' ? 'billing' : 'general'}
+          />
+        )}
+
+        {/* DeepDive vises hvis vi ikke er på en av spesialsidene */}
+        {view === 'deepdive' && (
+          <DeepDiveView
+            onBack={() => setView('home')}
+            onSelectPlan={() => handlePlanSelect('PREMIUM')}
+          />
+        )}
+
+      </main>
+
+      {/* Footer vises kun på vanlige sider */}
+      {view !== 'login' && view !== 'profile' && view !== 'billing' && (
+        <Footer onNavigate={setView} />
+      )}
+    </div>
+  );
 }
 
 export default App;
