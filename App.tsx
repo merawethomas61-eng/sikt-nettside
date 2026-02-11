@@ -3,7 +3,7 @@ import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import {
-  ArrowRight, ArrowDown, Eye, BarChart2, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
+  ArrowRight, ArrowDown, Eye, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
   MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool,
   SearchIcon, TrendingDown, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
   Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
@@ -2770,10 +2770,8 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
   };
 
 
-  // --- FUNKSJON: HENT DATA VIA VERCEL API (Ingen CORS problemer!) ---
   const handleCheckRankings = async () => {
-    // 1. Validering
-    if (currentLevel < 2) { setActiveTab('settings'); return alert("Du må ha Standard pakke."); }
+    if (currentLevel < 2) return alert("Du må ha Standard pakke.");
     if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger.");
 
     let activeKeywords = [...keywordsToTrack];
@@ -2793,8 +2791,7 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
     try {
       const promises = activeKeywords.map(async (keyword) => {
         try {
-          // --- ENDRING HER: Vi ringer til /api/search ---
-          // Dette virker både lokalt (hvis du kjører 'vercel dev') og på nettet
+          // Vi kaller din lokale Vercel API i rotmappen (/api/search.js)
           const response = await fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`);
 
           if (!response.ok) throw new Error("Server feil");
@@ -2803,7 +2800,6 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
 
           if (data.error) throw new Error(data.error);
 
-          // Finn posisjon
           let position = 101;
           let url = '-';
 
@@ -2815,7 +2811,6 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
             }
           }
 
-          // Logikk
           let intent = 'Info';
           const kw = keyword.toLowerCase();
           if (kw.includes('pris') || kw.includes('kjøp')) intent = 'Trans';
@@ -2840,7 +2835,7 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
 
     } catch (error) {
       console.error("Total feil:", error);
-      alert("Noe gikk galt. Sjekk at API-nøkkelen er lagt inn i Vercel.");
+      alert("Sjekk VITE_SERP_API_KEY i Vercel.");
     } finally {
       setRankingLoading(false);
     }
