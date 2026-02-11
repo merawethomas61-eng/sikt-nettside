@@ -2769,42 +2769,41 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
     }
   };
 
-  const handleCheckRankings = async () => {
-    // Validering
-    if (currentLevel < 2) return alert("Krever Standard pakke.");
-    if (!formData.websiteUrl) return alert("Mangler URL i innstillinger.");
 
-    // Auto-add input
+  // --- FUNKSJON: HENT DATA VIA VERCEL API (Ingen CORS problemer!) ---
+  const handleCheckRankings = async () => {
+    // 1. Validering
+    if (currentLevel < 2) { setActiveTab('settings'); return alert("Du må ha Standard pakke."); }
+    if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger.");
+
     let activeKeywords = [...keywordsToTrack];
     if (newKeywordInput.trim()) {
       activeKeywords.push(newKeywordInput.trim());
       setKeywordsToTrack(activeKeywords);
       setNewKeywordInput('');
     }
-    if (activeKeywords.length === 0) return alert("Legg til et søkeord først.");
+    if (activeKeywords.length === 0) return alert("Legg til et søkeord.");
 
     setRankingLoading(true);
     setRealRankings([]);
     setHasSearched(true);
 
-    const apiKey = import.meta.env.VITE_SERP_API_KEY;
     const cleanDomain = formData.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
 
     try {
       const promises = activeKeywords.map(async (keyword) => {
         try {
-          // Proxy løsning (AllOrigins)
-          const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&gl=no&hl=no&api_key=${apiKey}`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+          // --- ENDRING HER: Vi ringer til /api/search ---
+          // Dette virker både lokalt (hvis du kjører 'vercel dev') og på nettet
+          const response = await fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`);
 
-          const response = await fetch(proxyUrl);
-          if (!response.ok) throw new Error("Nettverksfeil");
+          if (!response.ok) throw new Error("Server feil");
 
-          const wrapper = await response.json();
-          const data = JSON.parse(wrapper.contents);
+          const data = await response.json();
 
           if (data.error) throw new Error(data.error);
 
+          // Finn posisjon
           let position = 101;
           let url = '-';
 
@@ -2816,12 +2815,13 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
             }
           }
 
+          // Logikk
           let intent = 'Info';
           const kw = keyword.toLowerCase();
           if (kw.includes('pris') || kw.includes('kjøp')) intent = 'Trans';
           else if (kw.includes('hvor') || kw.includes('nær')) intent = 'Local';
 
-          const advice = position <= 10 ? "Bra! Du er på side 1." : "Jobb mer med innholdet.";
+          const advice = position <= 10 ? "Bra jobba!" : "Du må jobbe med innholdet.";
           const ctr = position === 1 ? 32 : position <= 3 ? 15 : position <= 10 ? 3 : 0;
 
           return { keyword, position, url, intent, ctr, advice, change: 0 };
@@ -2839,8 +2839,8 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
       localStorage.setItem(`keywords_${user.id}`, JSON.stringify(activeKeywords));
 
     } catch (error) {
-      console.error("Feil:", error);
-      alert("Noe gikk galt. Sjekk konsollen.");
+      console.error("Total feil:", error);
+      alert("Noe gikk galt. Sjekk at API-nøkkelen er lagt inn i Vercel.");
     } finally {
       setRankingLoading(false);
     }
