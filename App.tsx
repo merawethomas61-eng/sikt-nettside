@@ -1,40 +1,22 @@
-import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import { PaymentModal } from './PaymentModal';
+import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from './supabaseClient';
 import {
-  ArrowRight, Minus, Calendar, Wand2, Users, Key, Check, Building, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
-  MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool, UserPlus,
+  ArrowRight, ArrowDown, Eye, BarChart2, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
+  MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool,
   SearchIcon, TrendingDown, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
-  Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon, Plus, BookOpen,
-  Layers, BarChart3, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
-  BrainCircuit, BarChart4, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2, MousePointerClick, Send,
-  Settings, CreditCard, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
+  Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
+  Layers, Minus, BarChart3, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
+  BrainCircuit, BarChart4, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
+  Settings, Smartphone, ArrowUp, ArrowUpCircle, ArrowDownCircle, CreditCard, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
 
-interface AnalysisResult {
-  performance: number;
-  seoScore: number;
-  accessibility: number;
-  bestPractices: number;
-  fcp: { value: string; score: number };
-  lcp: { value: string; score: number };
-  cls: { value: string; score: number };
-  tbt: { value: string; score: number };
-  seo: {
-    metaDescription: any;
-    documentTitle: any;
-    linkText: any;
-    viewport: any;
-  };
-  opportunities: any[];
-}
+
 
 const MyComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
   const isFirstLoad = useRef(true);
 
@@ -144,86 +126,49 @@ const RevealOnScroll: React.FC<RevealProps> = ({ children, delay = 0, direction 
 };
 
 
+// --- TYPESCRIPT DEFINISJONER (Lim inn dette øverst i filen) ---
 
+export interface AnalysisResult {
+  // De 4 store
+  performance: number;
+  seo: number;
+  accessibility: number;
+  bestPractices: number;
 
+  // Detaljer
+  seoDetails: {
+    metaDescription: any;
+    documentTitle: any;
+    linkText: any;
+    viewport: any;
+  };
 
+  // Core Web Vitals
+  fcp?: { value: string; score: number };
+  lcp?: { value: string; score: number };
+  cls?: { value: string; score: number };
+  tbt?: { value: string; score: number };
 
-const KeywordTracker = ({ currentLevel, onUpgrade }: { currentLevel: number, onUpgrade: () => void }) => {
-  // Simulert Data (Dette ville kommet fra database i fremtiden)
-  const keywords = [
-    { word: "Rørlegger Oslo", pos: 3, change: 1, vol: 2400, diff: "Høy" },
-    { word: "Akutt rørleggerhjelp", pos: 1, change: 0, vol: 800, diff: "Medium" },
-    { word: "Bytte varmtvannstank pris", pos: 12, change: -3, vol: 350, diff: "Lav" },
-    { word: "Rørlegger vakt", pos: 7, change: 2, vol: 1200, diff: "Høy" },
-    { word: "Tette rør tips", pos: 4, change: 5, vol: 600, diff: "Lav" },
-  ];
+  // Standard Pakke (Tiltak)
+  opportunities?: {
+    title: string;
+    description: string;
+    savings: string
+  }[];
 
-  // Sorterer: De som faller mest kommer først (slik at vi kan fikse dem)
-  const sortedKeywords = [...keywords].sort((a, b) => a.change - b.change);
+  // Premium Pakke (Sjekkliste)
+  diagnostics?: {
+    title: string;
+    passed: boolean
+  }[];
 
-  return (
-    <div className="space-y-6">
-
-      {/* 1. Header & Oversikt */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Topp 3 Plasseringer</p>
-          <h3 className="text-3xl font-black text-white mt-2">2 <span className="text-sm text-slate-500 font-normal">søkeord</span></h3>
-        </div>
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Gjennomsnittlig Posisjon</p>
-          <h3 className="text-3xl font-black text-white mt-2">5.4 <span className="text-sm text-emerald-400 font-bold flex inline-flex items-center gap-1"><TrendingUp size={14} /> +1.2</span></h3>
-        </div>
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Est. Månedlig Trafikk</p>
-          <h3 className="text-3xl font-black text-white mt-2">840 <span className="text-sm text-slate-500 font-normal">klikk</span></h3>
-        </div>
-      </div>
-
-      {/* 2. Søkeordslisten */}
-      <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
-        <div className="p-6 border-b border-white/5 flex justify-between items-center">
-          <h3 className="font-bold text-lg text-white">Dine Rangeringer</h3>
-          {currentLevel === 1 && <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">Viser kun topp 5 (Basic)</span>}
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-xs font-bold text-slate-500 border-b border-white/5">
-                <th className="p-4 uppercase">Søkeord</th>
-                <th className="p-4 uppercase">Posisjon</th>
-                <th className="p-4 uppercase">Endring</th>
-                <th className="p-4 uppercase hidden md:table-cell">Volum</th>
-                <th className="p-4 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {sortedKeywords.map((k, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="p-4 font-medium text-white">{k.word}</td>
-                  <td className="p-4">
-                    <span className={`font-bold px-2 py-1 rounded-lg ${k.pos <= 3 ? 'bg-emerald-500/20 text-emerald-400' : k.pos <= 10 ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'}`}>
-                      #{k.pos}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={`font-bold px-2 py-1 rounded-lg ${k.diff === 'Høy' ? 'bg-rose-500/20 text-rose-400' : k.diff === 'Medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                      {k.diff}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-
+  // NYTT: Ekstra info (Skjermbilde, server-tid osv)
+  extras?: {
+    screenshot: string;
+    serverTime: string;
+    totalWeight: string
+  };
+}
 
 // --- Decorative Background Elements ---
 const GlobalDecorations = () => {
@@ -627,106 +572,6 @@ const ComparisonTable = () => {
   );
 };
 
-
-const ContentStrategy = ({ clientData }: { clientData: any }) => {
-  const [ideas, setIdeas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // 1. HENT NØKKELEN FRA MILJØVARIABEL (Sikrere og riktig for Vite)
-  const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
-
-  const industry = clientData?.industry || "din bransje";
-  const audience = clientData?.targetAudience || "kundene dine";
-
-  const generateIdeas = async () => {
-    // --- SLADREHANK START ---
-    console.log("---------------------------------------------------");
-    console.log("Hva står i .env filen?", (import.meta as any).env.VITE_GEMINI_API_KEY);
-    console.log("Hvilken nøkkel bruker jeg?", API_KEY);
-    console.log("---------------------------------------------------");
-    // --- SLADREHANK SLUTT ---
-
-    if (!API_KEY) { alert("Mangler API-nøkkel."); return; }
-    setLoading(true);
-
-    const modelsToTry = ["gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
-    let success = false;
-
-    // Vi bruker en enkel løkke for å teste modellene en etter en
-    for (const modelName of modelsToTry) {
-      if (success) break; // Hvis vi har fått svar, stopp letingen
-      console.log(`Prøver modell: ${modelName}...`);
-
-      try {
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: modelName });
-
-        const prompt = `Lag 3 korte blogg-ideer for ${industry} (JSON format).`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text().replace(/```json|```/g, '').trim();
-
-        // HVIS VI KOMMER HIT, VIRKET DET!
-        console.log(`Suksess med modell: ${modelName}`);
-        try {
-          const parsed = JSON.parse(text);
-          setIdeas(parsed.ideas || parsed); // Håndterer litt ulike formater
-        } catch {
-          // Fallback hvis JSON feiler men AI virket
-          alert(`AI virket med ${modelName}, men formateringen var feil. Prøv igjen.`);
-        }
-        success = true;
-
-      } catch (error: any) {
-        console.warn(`Modell ${modelName} feilet:`, error.message);
-      }
-    }
-
-    if (!success) {
-      alert("Alle modeller feilet. Sjekk at 'Generative Language API' er aktivert i Google Cloud Console.");
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <div className="bg-gradient-to-br from-indigo-950/30 to-slate-950 border border-indigo-500/30 rounded-2xl p-8 relative overflow-hidden mb-8">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl"></div>
-      <div className="relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30"><Lightbulb size={28} /></div>
-            <div><h3 className="text-xl font-bold text-white">AI Redaksjonen (Vår sterkeste AI)</h3><p className="text-slate-400">Beste markedsstrategi for <span className="text-indigo-400 font-bold">{industry}</span>.</p></div>
-          </div>
-          <button onClick={generateIdeas} disabled={loading} className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-500 flex items-center gap-2 whitespace-nowrap disabled:opacity-50 shadow-lg shadow-indigo-900/20 transition-all">
-            {loading ? <><Loader2 className="animate-spin" size={16} /> Analyserer...</> : <><Target size={16} /> Generer Strategi</>}
-          </button>
-        </div>
-
-        {ideas.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4">
-            {ideas.map((idea, i) => (
-              <div key={i} className="bg-slate-900/80 border border-white/5 p-5 rounded-xl hover:border-indigo-500/50 transition-all group">
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] uppercase font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded">Søk: {idea.vol}</span>
-                  <span className="text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">Nivå: {idea.difficulty}</span>
-                </div>
-                <h4 className="text-white font-bold text-lg mb-2 group-hover:text-indigo-400 transition-colors">{idea.title}</h4>
-                <p className="text-sm text-slate-400 mb-6 leading-relaxed min-h-[60px]">{idea.reason}</p>
-                <button className="w-full bg-white text-slate-950 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors"><PenTool size={14} /> Skriv utkast</button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-slate-900/30">
-            <p className="text-slate-500 text-sm">Klikk på knappen for å generere unike ideer for din bedrift.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 // --- HOME PAGE COMPONENTS ---
 
 const Hero = () => {
@@ -1003,113 +848,6 @@ const DashboardPreview = () => (
     `}} />
   </div>
 );
-
-const BacklinkMonitor = ({ currentLevel }: { currentLevel: number }) => {
-  // Simulert data: Eksisterende lenker (Standard)
-  const links = [
-    { url: "https://www.lokalavisen.no/beste-handverkere", da: 45, status: "Aktiv", date: "12.01.2026" },
-    { url: "https://www.bransjebloggen.no/tips-ror", da: 32, status: "Aktiv", date: "05.01.2026" },
-    { url: "https://www.gulesider.no/bedrift/din-bedrift", da: 65, status: "NoFollow", date: "20.12.2025" },
-    { url: "https://spam-site-russia.ru/links", da: 2, status: "Toxic", date: "15.02.2026" }, // Giftig lenke!
-  ];
-
-  // Simulert data: Muligheter (Premium)
-  const opportunities = [
-    { site: "Hus & Hjem Magasinet", da: 58, reason: "Lenker til 3 av dine konkurrenter." },
-    { site: "Byggstart.no", da: 42, reason: "Du mangler oppføring her." },
-  ];
-
-  return (
-    <div className="space-y-8">
-
-      {/* 1. Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Domain Authority (DA)</p>
-          <h3 className="text-3xl font-black text-white mt-2">24 <span className="text-sm text-slate-500 font-normal">/ 100</span></h3>
-        </div>
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Totale Backlinks</p>
-          <h3 className="text-3xl font-black text-white mt-2">142 <span className="text-sm text-emerald-400 font-bold inline-flex items-center gap-1"><TrendingUp size={14} /> +3</span></h3>
-        </div>
-        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 shadow-xl">
-          <p className="text-slate-400 text-xs font-bold uppercase">Giftige Lenker</p>
-          <h3 className="text-3xl font-black text-rose-400 mt-2">1 <span className="text-sm text-slate-500 font-normal">krever handling</span></h3>
-        </div>
-      </div>
-
-      {/* 2. Link Liste (Standard) */}
-      <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
-        <div className="p-6 border-b border-white/5"><h3 className="font-bold text-lg text-white">Dine Backlinks</h3></div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-xs font-bold text-slate-500 border-b border-white/5">
-                <th className="p-4 uppercase">Kilde (URL)</th>
-                <th className="p-4 uppercase">Autoritet</th>
-                <th className="p-4 uppercase">Status</th>
-                <th className="p-4 uppercase">Dato</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {links.map((link, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="p-4 font-medium text-blue-400 truncate max-w-[200px] flex items-center gap-2">
-                    <Link2 size={14} className="shrink-0 text-slate-500" /> {link.url}
-                  </td>
-                  <td className="p-4"><span className="bg-slate-800 text-white px-2 py-1 rounded text-xs font-bold">{link.da}</span></td>
-                  <td className="p-4">
-                    {link.status === 'Toxic' ? (
-                      <span className="text-rose-400 font-bold flex items-center gap-1"><AlertOctagon size={12} /> Giftig</span>
-                    ) : (
-                      <span className="text-emerald-400 flex items-center gap-1">{link.status}</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-slate-500">{link.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 3. Premium: AI Link Hunter */}
-      {currentLevel >= 3 ? (
-        <div className="bg-gradient-to-br from-violet-950/30 to-slate-950 border border-violet-500/30 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex items-start gap-4 relative z-10">
-            <div className="p-3 bg-violet-500/20 text-violet-400 rounded-xl"><UserPlus size={28} /></div>
-            <div>
-              <h4 className="text-white font-bold text-lg mb-2">AI Link Hunter 🎯</h4>
-              <p className="text-slate-400 text-sm mb-4">Vi har analysert konkurrentene dine. Her er nettsider som sannsynligvis vil lenke til deg hvis du spør.</p>
-
-              <div className="space-y-3">
-                {opportunities.map((opp, i) => (
-                  <div key={i} className="bg-slate-900/80 p-4 rounded-xl border border-white/5 flex justify-between items-center hover:border-violet-500/50 transition-colors">
-                    <div>
-                      <h5 className="font-bold text-white">{opp.site} <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ml-2">DA: {opp.da}</span></h5>
-                      <p className="text-xs text-slate-500">{opp.reason}</p>
-                    </div>
-                    <button className="text-xs bg-white text-slate-900 px-3 py-1.5 rounded-lg font-bold hover:bg-violet-50 flex items-center gap-1">
-                      <ExternalLink size={12} /> Kontakt
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5 text-center">
-          <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-full mb-3"><UserPlus size={24} /></div>
-          <h3 className="text-lg font-bold text-white mb-2">Vil du ha flere lenker?</h3>
-          <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto">I Premium-pakken finner AI-en nettsider som er relevante for din bransje og hjelper deg å få lenker fra dem.</p>
-          <button className="text-violet-400 font-bold text-sm hover:underline">Oppgrader til Premium for Link Hunter &rarr;</button>
-        </div>
-      )}
-
-    </div>
-  );
-};
 
 // --- DEEP DIVE (GEO) COMPONENTS ---
 
@@ -1412,305 +1150,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         </form>
       </div>
     </section>
-  );
-};
-
-const SmartActionCard = ({ clientData, analysisResult, onRunAnalysis }: { clientData: any, analysisResult: any, onRunAnalysis?: () => void }) => {
-
-  // 1. HER HENTER VI NØKKELEN SLIK AT "API_KEY" IKKE BLIR RØD LENGER
-  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN HER!
-
-  const [status, setStatus] = useState<'idle' | 'generating' | 'done'>('idle');
-  const [suggestion, setSuggestion] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  const company = clientData?.companyName || "bedriften din";
-  const industry = clientData?.industry || "bransjen din";
-
-  // --- LOGIKK FOR KORTET ---
-  let cardContent = {
-    color: "violet",
-    icon: Zap,
-    title: `Velkommen til ${company}!`,
-    msg: "Vi er klare til å hjelpe deg med synlighet. Start med å kjøre en analyse for å se hvordan du ligger an.",
-    btn: "Kjør din første analyse",
-    action: onRunAnalysis || (() => { })
-  };
-
-  if (analysisResult) {
-    if (analysisResult.perf < 50) {
-      cardContent = {
-        color: "rose",
-        icon: AlertTriangle,
-        title: "Kritisk: Nettsiden er for treg",
-        msg: `Du scorer kun ${analysisResult.perf}/100 på ytelse. Dette skader både Google-rangering og salg.`,
-        btn: "Se teknisk rapport",
-        action: onRunAnalysis || (() => { })
-      };
-    } else if (analysisResult.seo < 70) {
-      cardContent = {
-        color: "amber",
-        icon: MousePointerClick,
-        title: "Du er nesten usynlig",
-        msg: "Nettsiden fungerer, men Google sliter med å finne innholdet ditt. Du trenger bedre søkeord.",
-        btn: "Fiks SEO-feil",
-        action: onRunAnalysis || (() => { })
-      };
-    } else {
-      cardContent = {
-        color: "emerald",
-        icon: CheckCircle2,
-        title: "Alt ser bra ut! 🚀",
-        msg: "Det tekniske er på plass. Nå bør du fokusere på å skrive nytt innhold for å vokse videre.",
-        btn: "Gå til Analyse",
-        action: () => document.getElementById('tab-content')?.click()
-      };
-    }
-  }
-
-  // --- NY GEMINI LOGIKK ---
-  const handleFix = async () => {
-    // Sjekk om nøkkelen mangler før vi prøver
-    if (!API_KEY) {
-      alert("Mangler API-nøkkel! Sjekk .env.local filen din.");
-      return;
-    }
-
-    setStatus('generating');
-
-    try {
-      // 1. Initialiser Gemini
-      const genAI = new GoogleGenerativeAI(API_KEY);
-
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      // 2. Definer prompten (instruksen)
-      const prompt = `Skriv en kort, selgende introduksjonstekst (maks 3 setninger) for nettsiden til bedriften "${company}" som opererer i bransjen "${industry}". Tonen skal være profesjonell og inviterende.`;
-
-      // 3. Hent resultat
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-
-      setSuggestion(text);
-      setStatus('done');
-
-    } catch (error) {
-      console.error("Feil med Gemini AI:", error);
-      setSuggestion("Beklager, klarte ikke generere tekst akkurat nå. Prøv igjen senere.");
-      setStatus('done');
-    }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(suggestion);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
-
-  return (
-    <div className={`relative overflow-hidden rounded-2xl p-1 shadow-2xl mb-8 border transition-all animate-in fade-in slide-in-from-bottom-2
-      ${status !== 'idle' ? 'bg-slate-900 border-violet-500/30' :
-        cardContent.color === 'rose' ? 'bg-rose-950/30 border-rose-500/30' :
-          cardContent.color === 'emerald' ? 'bg-emerald-950/30 border-emerald-500/30' :
-            cardContent.color === 'amber' ? 'bg-amber-950/30 border-amber-500/30' :
-              'bg-slate-900/50 border-violet-500/30'}
-    `}>
-      {/* Bakgrunns-effekt */}
-      <div className={`absolute top-0 left-0 w-full h-1 opacity-50 bg-gradient-to-r 
-          ${cardContent.color === 'rose' ? 'from-rose-500 via-red-500 to-rose-500' :
-          cardContent.color === 'emerald' ? 'from-emerald-500 via-green-500 to-emerald-500' :
-            'from-violet-500 via-fuchsia-500 to-violet-500'}`}>
-      </div>
-
-      <div className="p-6 md:p-8">
-
-        {/* STANDARD VISNING */}
-        {status === 'idle' && (
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex gap-5">
-              <div className={`p-4 rounded-xl border shrink-0 
-                            ${cardContent.color === 'rose' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-                  cardContent.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                    cardContent.color === 'amber' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                      'bg-violet-500/20 text-violet-400 border-violet-500/30'}
-                          `}>
-                <cardContent.icon size={32} />
-              </div>
-              <div>
-                <h3 className={`text-xl font-bold mb-1 ${cardContent.color === 'rose' ? 'text-rose-400' :
-                  cardContent.color === 'emerald' ? 'text-emerald-400' :
-                    cardContent.color === 'amber' ? 'text-amber-400' : 'text-white'}
-                            `}>
-                  {cardContent.title}
-                </h3>
-                <p className="text-slate-300 max-w-lg leading-relaxed">
-                  {cardContent.msg}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={cardContent.btn === "Fiks SEO-feil" ? handleFix : cardContent.action}
-              className={`whitespace-nowrap px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg 
-                        ${cardContent.color === 'rose' ? 'bg-rose-600 text-white hover:bg-rose-500' :
-                  cardContent.color === 'emerald' ? 'bg-emerald-600 text-white hover:bg-emerald-500' :
-                    'bg-white text-slate-950 hover:bg-violet-50'}
-                    `}>
-              {cardContent.btn === "Fiks SEO-feil" ? <><Sparkles size={16} /> {cardContent.btn}</> : <>{cardContent.btn} <ArrowRight size={16} /></>}
-            </button>
-          </div>
-        )}
-
-        {/* GENERERER (Loading) */}
-        {status === 'generating' && (
-          <div className="py-4 flex flex-col items-center justify-center text-center animate-in fade-in">
-            <Sparkles className="text-violet-400 animate-spin mb-4" size={32} />
-            <p className="text-white font-bold">Gemini jobber...</p>
-            <p className="text-slate-500 text-sm">Analyserer {company} og skriver forslag...</p>
-          </div>
-        )}
-
-        {/* FERDIG (Resultat) */}
-        {status === 'done' && (
-          <div className="animate-in slide-in-from-bottom-4 fade-in">
-            <div className="bg-slate-950 border border-emerald-500/30 rounded-xl p-6 mb-6 relative">
-              <div className="absolute top-3 right-3">
-                <button onClick={handleCopy} className="flex items-center gap-2 text-xs font-bold bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg border border-white/10">
-                  {copied ? <><CheckCircle2 size={14} /> Kopiert!</> : <><Copy size={14} /> Kopier</>}
-                </button>
-              </div>
-              <p className="text-[10px] text-emerald-400 uppercase font-bold mb-2 flex items-center gap-1"><Sparkles size={12} /> Gemini forslag:</p>
-              <p className="text-white text-lg leading-relaxed pr-10">"{suggestion}"</p>
-            </div>
-            <button onClick={() => setStatus('idle')} className="text-xs text-slate-500 hover:text-white underline">Lukk og gå tilbake</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const OnboardingWizard = ({ user, onComplete }: { user: any, onComplete: (data: any) => void }) => {
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState({ websiteUrl: '', companyName: '', industry: '' });
-
-  const handleNext = async () => {
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      // FERDIG: Lagre data og start appen
-      setLoading(true);
-
-      // Her lagrer vi til Supabase
-      try {
-        const { error } = await supabase
-          .from('clients')
-          .update(data)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        // Simulerer "Konfigurerer AI..." for wow-effekt
-        setTimeout(() => {
-          onComplete(data); // Send data opp til ClientPortal
-        }, 1500);
-
-      } catch (error) {
-        alert("Noe gikk galt med lagringen. Prøv igjen.");
-        setLoading(false);
-      }
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 text-white">
-      {/* Bakgrunnseffekter */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]"></div>
-
-      <div className="relative z-10 w-full max-w-md bg-slate-900 border border-white/10 p-8 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
-
-        {/* Progress Bar */}
-        <div className="flex gap-2 mb-8">
-          {[1, 2, 3].map(i => (
-            <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i <= step ? 'bg-violet-500' : 'bg-slate-800'}`}></div>
-          ))}
-        </div>
-
-        <h2 className="text-2xl font-black mb-2 text-center">Velkommen til Sikt! 👋</h2>
-        <p className="text-slate-400 text-center mb-8 text-sm">La oss sette opp din AI-rådgiver. Vi trenger litt info for å starte.</p>
-
-        {/* STEG 1: URL */}
-        {step === 1 && (
-          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
-            <label className="block text-xs font-bold uppercase text-slate-500">Hva er nettsiden din?</label>
-            <div className="flex items-center bg-slate-950 border border-white/10 rounded-xl p-3 focus-within:border-violet-500 transition-colors">
-              <Globe className="text-slate-500 mr-3" size={20} />
-              <input
-                className="bg-transparent outline-none w-full text-white placeholder-slate-600"
-                placeholder="https://www.dinbedrift.no"
-                value={data.websiteUrl}
-                onChange={e => setData({ ...data, websiteUrl: e.target.value })}
-                autoFocus
-              />
-            </div>
-          </div>
-        )}
-
-        {/* STEG 2: Bedriftsnavn */}
-        {step === 2 && (
-          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
-            <label className="block text-xs font-bold uppercase text-slate-500">Hva heter bedriften?</label>
-            <div className="flex items-center bg-slate-950 border border-white/10 rounded-xl p-3 focus-within:border-violet-500 transition-colors">
-              <Building className="text-slate-500 mr-3" size={20} />
-              <input
-                className="bg-transparent outline-none w-full text-white placeholder-slate-600"
-                placeholder="F.eks. Oslo Rørleggerservice AS"
-                value={data.companyName}
-                onChange={e => setData({ ...data, companyName: e.target.value })}
-                autoFocus
-              />
-            </div>
-          </div>
-        )}
-
-        {/* STEG 3: Bransje */}
-        {step === 3 && (
-          <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
-            <label className="block text-xs font-bold uppercase text-slate-500">Hvilken bransje er du i?</label>
-            <div className="bg-slate-950 border border-white/10 rounded-xl p-1">
-              {['Håndverker', 'Nettbutikk', 'Konsulent', 'Helse/Velvære', 'Annet'].map(opt => (
-                <button
-                  key={opt}
-                  onClick={() => setData({ ...data, industry: opt })}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${data.industry === opt ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Knapper */}
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={handleNext}
-            disabled={(step === 1 && !data.websiteUrl) || (step === 2 && !data.companyName) || (step === 3 && !data.industry) || loading}
-            className="bg-white text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-violet-50 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <><Zap className="animate-spin" size={18} /> Setter opp AI...</>
-            ) : (
-              <>{step === 3 ? 'Fullfør oppsett' : 'Neste steg'} <ArrowRight size={18} /></>
-            )}
-          </button>
-        </div>
-
-      </div>
-    </div>
   );
 };
 
@@ -2204,136 +1643,6 @@ const DeepDiveView = ({ onBack, onSelectPlan }: { onBack: () => void; onSelectPl
     <GeoFaq />
   </>
 );
-
-
-
-
-
-const AIContentGenerator = () => {
-  const [keyword, setKeyword] = useState("");
-  const [description, setDescription] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<{ title: string, meta: string } | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // --- KONFIGURASJON ---
-  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN HER!
-
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (API_KEY === "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs") { alert("Mangler Google API Key i koden."); return; }
-
-    setIsGenerating(true);
-    setResult(null);
-
-    try {
-      const prompt = `Du er en SEO-ekspert. Lag en Google Meta Title (maks 60 tegn) og Meta Description (maks 155 tegn).
-                    Søkeord: "${keyword}".
-                    Bedrift/Info: "${description}".
-
-                    VIKTIG: Svar KUN med JSON format slik: {"title": "...", "meta": "..." }`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      const data = await response.json();
-      let text = data.candidates[0].content.parts[0].text;
-
-      // Rensk opp hvis Google legger til markdown (```json ...)
-      text = text.replace(/```json|```/g, '').trim();
-
-      const parsed = JSON.parse(text);
-      setResult(parsed);
-
-    } catch (error) {
-      console.error(error);
-      alert("Feil ved generering (Google). Prøv igjen.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (!result) return;
-    navigator.clipboard.writeText(`Tittel: ${result.title}\nBeskrivelse: ${result.meta}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-violet-600/20 text-violet-400 rounded-xl border border-violet-500/20">
-          <Wand2 size={24} />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-white">AI Meta-Tag Generator</h3>
-          <p className="text-sm text-slate-400">Gratis & Ekte (via Google Gemini)</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleGenerate} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Fokus Søkeord</label>
-          <input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="f.eks. Rørlegger Oslo"
-            className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white focus:border-violet-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Kort om tjenesten</label>
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="f.eks. Akutt hjelp 24/7"
-            className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white focus:border-violet-500 outline-none"
-          />
-        </div>
-        <button
-          disabled={isGenerating || !keyword}
-          type="submit"
-          className="w-full bg-violet-600 text-white py-3 rounded-xl font-bold hover:bg-violet-500 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {isGenerating ? <><Sparkles size={18} className="animate-spin" /> Genererer...</> : <><Wand2 size={18} /> Generer med AI</>}
-        </button>
-      </form>
-
-      {result && (
-        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4">
-          <div className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-5 relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="font-bold text-emerald-400 text-sm flex items-center gap-2"><Sparkles size={14} /> AI Forslag</h4>
-              <button onClick={copyToClipboard} className="text-slate-400 hover:text-white">
-                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Tittel</p>
-                <p className="text-blue-400 text-lg font-medium truncate">{result.title}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Beskrivelse</p>
-                <p className="text-slate-300 text-sm">{result.meta}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-
-
-
 
 const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <>
@@ -2834,7 +2143,7 @@ const TrustSection = () => {
 
 
 
-// 1. Legg til {onNavigate} her
+// 1. Legg til { onNavigate } her
 const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <section className="py-20 sm:py-32 bg-white relative overflow-hidden text-center">
     <div className="max-w-4xl mx-auto px-5 relative z-10">
@@ -3313,11 +2622,10 @@ const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
   </div>
 );
 
-
-
-
+// --- HOVEDKOMPONENT: CLIENT PORTAL ---
 const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) => {
-  // --- 1. STATE & VARIABLER ---
+
+  // 1. STATE & VARIABLER
   const [clientData, setClientData] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -3325,214 +2633,43 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  // State for redigering av profil
+  // Analyse State
+  const [analysisResults, setAnalysisResults] = useState<{ mobile: AnalysisResult; desktop: AnalysisResult } | null>(null);
+  const [activeDevice, setActiveDevice] = useState<'mobile' | 'desktop'>('mobile');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState('Forbereder...');
+
+  // UI State
   const [isEditing, setIsEditing] = useState(false);
   const [urlUnlockRequested, setUrlUnlockRequested] = useState(false);
 
-  // State for Ekte Google Analyse
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(15); // Nedtelling start
+  // SØKEORD STATE (EKTE DATA)
+  const [keywordsToTrack, setKeywordsToTrack] = useState<string[]>([]);
+  const [newKeywordInput, setNewKeywordInput] = useState('');
+  const [realRankings, setRealRankings] = useState<any[]>([]);
+  const [rankingLoading, setRankingLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [filterIntent, setFilterIntent] = useState('All');
+  const [filterPos, setFilterPos] = useState('All');
 
-  // --- 2. HJELPEFUNKSJONER (Må ligge her oppe) ---
+  // --- VIKTIG: VARIABLER & HJELPERE (Må defineres FØR de brukes) ---
   const getPackageLevel = (pkgName: string) => {
     const name = pkgName?.toLowerCase() || '';
-    if (name.includes('automation') || name.includes('premium')) return 3;
-    if (name.includes('growth') || name.includes('standard')) return 2;
+    if (name.includes('premium')) return 3;
+    if (name.includes('standard')) return 2;
     return 1;
   };
 
-  // --- 3. BEREGNEDE VARIABLER ---
   const currentLevel = clientData ? getPackageLevel(clientData.package_name) : 1;
   const currentPkgName = clientData?.package_name || 'Basic';
-  const hasExistingUrl = clientData?.websiteUrl && clientData.websiteUrl.length > 0;
 
-  // Sjekker om kunden mangler kritisk info (trigger onboarding)
-  const needsOnboarding = !clientData?.websiteUrl || !clientData?.industry;
-
-  // --- 4. DATA HENTING ---
-  useEffect(() => {
-    const fetchClientData = async () => {
-      if (!user?.email) return;
-
-      const { data } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        setClientData(data);
-        setFormData({
-          contactPerson: data.contactPerson,
-          companyName: data.companyName,
-          email: data.email,
-          phone: data.phone,
-          websiteUrl: data.websiteUrl,
-          industry: data.industry,
-          targetAudience: data.targetAudience
-        });
-      }
-      setLoading(false);
-    };
-    fetchClientData();
-  }, [user]);
-
-  // Effekt for nedtelling under analyse
-  useEffect(() => {
-    let interval: any;
-    if (isAnalyzing && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (!isAnalyzing) {
-      setTimeLeft(15); // Reset når ferdig
-    }
-    return () => clearInterval(interval);
-  }, [isAnalyzing, timeLeft]);
-
-  const runRealAnalysis = async () => {
-    const url = clientData?.websiteUrl;
-
-    if (!url) {
-      setError("Ingen URL funnet.");
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setError(null);
-    setAnalysisResult(null);
-    setTimeLeft(15);
-
-    try {
-      // ENDRING 1: Vi har lagt til '&strategy=desktop' på slutten av URL-en.
-      const response = await fetch(
-        `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES&strategy=desktop`
-      );
-
-      if (!response.ok) {
-        throw new Error('Kunne ikke analysere nettsiden. Sjekk at URL er riktig.');
-      }
-
-      const data = await response.json();
-      const lighthouseResult = data.lighthouseResult;
-      const audits = lighthouseResult.audits;
-
-      // Henter ut tidstyver (Opportunities)
-      const opportunities = Object.values(audits)
-        .filter((audit: any) => audit.details && audit.details.type === 'opportunity' && audit.score < 0.9)
-        .sort((a: any, b: any) => (a.score || 0) - (b.score || 0))
-        .slice(0, 3);
-
-      // ENDRING 2: Vi bygger opp dataene NØYAKTIG slik det nye designet ditt vil ha dem.
-      const analysisData: AnalysisResult = {
-        // Hovedscorene (0-100)
-        performance: Math.round(lighthouseResult.categories.performance.score * 100),
-        seoScore: Math.round(lighthouseResult.categories.seo.score * 100),
-        accessibility: Math.round(lighthouseResult.categories.accessibility.score * 100),
-        bestPractices: Math.round(lighthouseResult.categories['best-practices'].score * 100),
-
-        // Dybdetallene (FCP, LCP, CLS, TBT) - Her henter vi 'displayValue' som er den ferdige teksten (f.eks "1.2 s")
-        fcp: {
-          value: audits['first-contentful-paint'].displayValue,
-          score: audits['first-contentful-paint'].score
-        },
-        lcp: {
-          value: audits['largest-contentful-paint'].displayValue,
-          score: audits['largest-contentful-paint'].score
-        },
-        cls: {
-          value: audits['cumulative-layout-shift'].displayValue,
-          score: audits['cumulative-layout-shift'].score
-        },
-        tbt: {
-          value: audits['total-blocking-time'].displayValue,
-          score: audits['total-blocking-time'].score
-        },
-
-        // SEO-data for de nye boksene (Viktig at denne heter 'seo'!)
-        seo: {
-          metaDescription: audits['meta-description'],
-          documentTitle: audits['document-title'],
-          linkText: audits['link-text'],
-          viewport: audits['viewport']
-        },
-
-        // Tidstyvene
-        opportunities: opportunities
-      };
-
-      setAnalysisResult(analysisData);
-
-    } catch (err) {
-      setError('Noe gikk galt under analysen. Prøv igjen.');
-      console.error(err);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-  // --- 6. LAGRING AV PROFIL ---
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirm("Er du sikker på at du vil lagre endringene?")) return;
-
-    setSaving(true);
-    setSaveMessage('');
-    try {
-      const { error } = await supabase.from('clients').update(formData).eq('user_id', user.id);
-      if (error) throw error;
-
-      setClientData({ ...clientData, ...formData });
-      setSaveMessage('Endringer lagret!');
-      setIsEditing(false);
-      setUrlUnlockRequested(false);
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      console.error(error);
-      setSaveMessage('Feil ved lagring.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleUnlockUrl = () => {
-    if (confirm("VIKTIG ADVARSEL:\n\nÅ endre nettadresse vil nullstille all SEO-historikk.\nEr du sikker?")) {
-      setUrlUnlockRequested(true);
-    }
-  };
-
-  // --- 7. ENDRE ABONNEMENT ---
-  const handleChangePlan = async (newPackageName: string, price: string) => {
-    const action = getPackageLevel(newPackageName) > currentLevel ? "oppgradere" : "nedgradere";
-    if (confirm(`Er du sikker på at du vil ${action} til ${newPackageName} (${price} kr/mnd)?`)) {
-      setSaving(true);
-      try {
-        const { error } = await supabase.from('clients').update({ package_name: newPackageName }).eq('user_id', user.id);
-        if (error) throw error;
-
-        setClientData({ ...clientData, package_name: newPackageName });
-        setSaveMessage(`Abonnement endret til ${newPackageName}!`);
-        setTimeout(() => setSaveMessage(''), 3000);
-      } catch (error) {
-        alert("Klarte ikke bytte plan.");
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
-
-  // --- 8. ONBOARDING HÅNDTERING ---
-  const handleOnboardingComplete = (newData: any) => {
-    setClientData({ ...clientData, ...newData });
-    setTimeout(() => alert("Konto konfigurert! 🚀\nDu kan nå kjøre din første analyse."), 500);
-  };
-
-  const handleUpgrade = () => setActiveTab('settings');
+  const plans = [
+    { name: 'Basic', level: 1, price: '2 990', color: 'slate', features: ['Dashboard', 'Enkel Analyse', 'Månedlig Rapport'] },
+    { name: 'Standard', level: 2, price: '5 990', color: 'amber', features: ['Alt i Basic', 'Tiltaksliste', 'Søkeordsporing', 'Konkurrentanalyse'] },
+    { name: 'Premium', level: 3, price: '9 990', color: 'violet', features: ['Alt i Standard', 'Teknisk Helse', 'SEO-Garanti', 'Prioritert Support'] }
+  ];
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -3544,623 +2681,600 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
     { id: 'settings', label: 'Innstillinger', icon: Settings },
   ];
 
-  // --- RENDERING STARTER HER ---
+  // 2. DATA FETCHING (Profil)
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (!user?.email) return;
+      const { data } = await supabase.from('clients').select('*').eq('user_id', user.id).maybeSingle();
+      if (data) {
+        setClientData(data);
+        setFormData({
+          contactPerson: data.contactPerson, companyName: data.companyName, email: data.email,
+          phone: data.phone, websiteUrl: data.websiteUrl, industry: data.industry, targetAudience: data.targetAudience
+        });
 
-  // 1. Loading skjerm
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster portal...</div></div>;
+        // Hent lagrede søkeord fra nettleseren
+        const savedKeywords = localStorage.getItem(`keywords_${user.id}`);
+        if (savedKeywords) setKeywordsToTrack(JSON.parse(savedKeywords));
 
-  // 2. Onboarding Wizard (Hvis data mangler)
-  if (clientData && needsOnboarding) {
-    return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
-  }
+        const savedRankings = localStorage.getItem(`rankings_${user.id}`);
+        if (savedRankings) {
+          setRealRankings(JSON.parse(savedRankings));
+          setHasSearched(true);
+        }
+      }
+      setLoading(false);
+    };
+    fetchClientData();
+  }, [user]);
 
-  // 3. Hoved-applikasjonen
+  // 3. ANIMASJON (Analyse)
+  useEffect(() => {
+    let interval: any;
+    if (isAnalyzing) {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 95) return prev;
+          const newProgress = prev + (Math.random() * 2);
+          if (newProgress < 20) setProgressText('Kobler til Google...');
+          else if (newProgress < 40) setProgressText('Laster ned nettsiden...');
+          else if (newProgress < 60) setProgressText('Analyserer kode og bilder...');
+          else if (newProgress < 80) setProgressText('Sjekker mobiltilpasning...');
+          else setProgressText('Genererer enkel rapport...');
+          return newProgress;
+        });
+      }, 200);
+    } else { setProgress(100); }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
+
+  // --- HANDLERS (Generelle) ---
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirm("Vil du lagre endringene?")) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('clients').update(formData).eq('user_id', user.id);
+      if (error) throw error;
+      setClientData({ ...clientData, ...formData });
+      setSaveMessage('Lagret!');
+      setIsEditing(false);
+      setUrlUnlockRequested(false);
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) { console.error(error); setSaveMessage('Feil ved lagring.'); } finally { setSaving(false); }
+  };
+
+  const handleChangePlan = async (newPlanName: string) => {
+    if (!confirm(`Vil du endre pakke til ${newPlanName}?`)) return;
+    setSaving(true);
+    try {
+      await supabase.from('clients').update({ package_name: newPlanName }).eq('user_id', user.id);
+      setClientData({ ...clientData, package_name: newPlanName });
+      alert(`Pakke endret til ${newPlanName}!`);
+    } catch (err) { alert("Kunne ikke endre pakke."); } finally { setSaving(false); }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleUpgrade = () => setActiveTab('settings');
+  const handleUnlockUrl = () => { if (confirm("Endring av URL nullstiller historikk. Sikker?")) setUrlUnlockRequested(true); };
+
+  // --- SØKEORD LOGIKK (Den viktige delen) ---
+  const handleAddKeyword = () => {
+    if (newKeywordInput.trim()) {
+      const updated = [...keywordsToTrack, newKeywordInput.trim()];
+      setKeywordsToTrack(updated);
+      setNewKeywordInput('');
+      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleCheckRankings = async () => {
+    // Validering
+    if (currentLevel < 2) return alert("Krever Standard pakke.");
+    if (!formData.websiteUrl) return alert("Mangler URL i innstillinger.");
+
+    // Auto-add input
+    let activeKeywords = [...keywordsToTrack];
+    if (newKeywordInput.trim()) {
+      activeKeywords.push(newKeywordInput.trim());
+      setKeywordsToTrack(activeKeywords);
+      setNewKeywordInput('');
+    }
+    if (activeKeywords.length === 0) return alert("Legg til et søkeord først.");
+
+    setRankingLoading(true);
+    setRealRankings([]);
+    setHasSearched(true);
+
+    const apiKey = import.meta.env.VITE_SERP_API_KEY;
+    const cleanDomain = formData.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
+
+    try {
+      const promises = activeKeywords.map(async (keyword) => {
+        try {
+          // Proxy løsning (AllOrigins)
+          const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&gl=no&hl=no&api_key=${apiKey}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error("Nettverksfeil");
+
+          const wrapper = await response.json();
+          const data = JSON.parse(wrapper.contents);
+
+          if (data.error) throw new Error(data.error);
+
+          let position = 101;
+          let url = '-';
+
+          if (data.organic_results) {
+            const found = data.organic_results.find((r: any) => r.link && r.link.includes(cleanDomain));
+            if (found) {
+              position = found.position;
+              url = found.link.replace(formData.websiteUrl, '');
+            }
+          }
+
+          let intent = 'Info';
+          const kw = keyword.toLowerCase();
+          if (kw.includes('pris') || kw.includes('kjøp')) intent = 'Trans';
+          else if (kw.includes('hvor') || kw.includes('nær')) intent = 'Local';
+
+          const advice = position <= 10 ? "Bra! Du er på side 1." : "Jobb mer med innholdet.";
+          const ctr = position === 1 ? 32 : position <= 3 ? 15 : position <= 10 ? 3 : 0;
+
+          return { keyword, position, url, intent, ctr, advice, change: 0 };
+
+        } catch (innerError: any) {
+          console.error(`Feil på ordet '${keyword}':`, innerError);
+          return { keyword, position: 0, url: 'FEIL', intent: 'Error', ctr: 0, advice: 'Feil ved henting', change: 0 };
+        }
+      });
+
+      const results = await Promise.all(promises);
+      setRealRankings(results);
+
+      localStorage.setItem(`rankings_${user.id}`, JSON.stringify(results));
+      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(activeKeywords));
+
+    } catch (error) {
+      console.error("Feil:", error);
+      alert("Noe gikk galt. Sjekk konsollen.");
+    } finally {
+      setRankingLoading(false);
+    }
+  };
+
+  const filteredRankings = realRankings.filter(r => {
+    if (filterIntent !== 'All' && r.intent !== filterIntent) return false;
+    if (filterPos === 'Top3' && r.position > 3) return false;
+    if (filterPos === 'Top10' && r.position > 10) return false;
+    return true;
+  });
+
+  // --- ANALYSE LOGIKK (PageSpeed) ---
+  const formatLighthouseData = (data: any): AnalysisResult => {
+    const lh = data.lighthouseResult;
+    const cats = lh.categories;
+    const audits = lh.audits;
+    const field = data.loadingExperience?.metrics;
+
+    const getMetric = (fieldKey: string, labKey: string, unit: 's' | 'ms' | 'unitless') => {
+      if (field && field[fieldKey]) {
+        const val = field[fieldKey].percentile;
+        if (unit === 's') return { value: `${(val / 1000).toFixed(1)}s`, score: field[fieldKey].category === 'FAST' ? 0.9 : 0.5 };
+        if (unit === 'ms') return { value: `${val}ms`, score: field[fieldKey].category === 'FAST' ? 0.9 : 0.5 };
+        if (unit === 'unitless') return { value: (val / 100).toFixed(2), score: field[fieldKey].category === 'FAST' ? 0.9 : 0.5 };
+      }
+      const audit = audits[labKey];
+      if (!audit) return { value: '-', score: 0 };
+      if (unit === 's') return { value: `${(audit.numericValue / 1000).toFixed(1)}s`, score: audit.score };
+      if (unit === 'ms') return { value: `${Math.round(audit.numericValue)}ms`, score: audit.score };
+      return { value: audit.numericValue.toFixed(2), score: audit.score };
+    };
+
+    const fcp = getMetric('FIRST_CONTENTFUL_PAINT_MS', 'first-contentful-paint', 's');
+    const lcp = getMetric('LARGEST_CONTENTFUL_PAINT_MS', 'largest-contentful-paint', 's');
+    const cls = getMetric('CUMULATIVE_LAYOUT_SHIFT_SCORE', 'cumulative-layout-shift', 'unitless');
+    const tbtAudit = audits['total-blocking-time'];
+    const tbt = { value: tbtAudit ? `${Math.round(tbtAudit.numericValue)}ms` : '-', score: tbtAudit ? tbtAudit.score : 0 };
+
+    const opportunities = Object.values(audits)
+      .filter((audit: any) => audit.details && audit.details.type === 'opportunity' && (audit.score !== null && audit.score < 0.9))
+      .sort((a: any, b: any) => (b.details.overallSavingsMs || 0) - (a.details.overallSavingsMs || 0))
+      .slice(0, 5)
+      .map((audit: any) => ({ title: audit.title, description: audit.description.split('[')[0], savings: audit.displayValue || '' }));
+
+    const diagnostics = [
+      { title: "Sikker tilkobling (HTTPS)", passed: audits['is-on-https']?.score === 1 },
+      { title: "Mobilvennlig tekst", passed: audits['font-size']?.score === 1 },
+      { title: "Mobilvennlige knapper", passed: audits['tap-targets']?.score === 1 },
+      { title: "Synlig for Google (SEO)", passed: audits['is-crawlable']?.score === 1 },
+      { title: "Har beskrivelse (Meta)", passed: audits['meta-description']?.score === 1 },
+      { title: "Bilder har tekst (UU)", passed: audits['image-alt']?.score === 1 },
+      { title: "Ingen kodefeil", passed: audits['errors-in-console']?.score === 1 },
+    ];
+
+    const extras = {
+      screenshot: audits['final-screenshot']?.details?.data,
+      serverTime: audits['server-response-time']?.displayValue,
+      totalWeight: audits['total-byte-weight']?.displayValue
+    };
+
+    return {
+      performance: Math.round(cats.performance.score * 100),
+      seo: Math.round(cats.seo.score * 100),
+      accessibility: Math.round(cats.accessibility.score * 100),
+      bestPractices: Math.round(cats['best-practices'].score * 100),
+      seoDetails: { metaDescription: audits['meta-description'], documentTitle: audits['document-title'], linkText: audits['link-text'], viewport: audits['viewport'] },
+      fcp, lcp, cls, tbt,
+      opportunities, diagnostics, extras
+    };
+  };
+
+  const runRealAnalysis = async () => {
+    const url = formData.websiteUrl;
+    if (!url) { setAnalyzeError("Mangler URL."); return; }
+    setIsAnalyzing(true); setAnalyzeError(null); setAnalysisResults(null);
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
+
+    try {
+      const apiKey = import.meta.env.VITE_PAGESPEED_API_KEY;
+      const mobileP = fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(formattedUrl)}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES&strategy=mobile&locale=no&key=${apiKey}`);
+      const desktopP = fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(formattedUrl)}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES&strategy=desktop&locale=no&key=${apiKey}`);
+      const [resM, resD] = await Promise.all([mobileP, desktopP]);
+      if (!resM.ok || !resD.ok) throw new Error("Kunne ikke analysere siden.");
+      setAnalysisResults({ mobile: formatLighthouseData(await resM.json()), desktop: formatLighthouseData(await resD.json()) });
+    } catch (err: any) { setAnalyzeError("Noe gikk galt. Sjekk URLen."); } finally { setIsAnalyzing(false); }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster...</div></div>;
+
   return (
-    <div className="flex min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-violet-500/30 selection:text-violet-200">
+    <div className="flex min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-violet-500/30">
+      {/* Bakgrunn */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0"><div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-900/20 rounded-full blur-[120px]"></div></div>
 
-      {/* BACKGROUND GLOWS */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-900/20 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]"></div>
-      </div>
-
-      {/* SIDEBAR */}
+      {/* Sidebar */}
       <aside className="w-20 lg:w-64 bg-slate-900/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20 flex flex-col shadow-2xl">
-        <div className="p-6 flex items-center gap-3 justify-center lg:justify-start border-b border-white/5">
-          <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shrink-0 shadow-lg shadow-violet-900/50">S</div>
-          <span className="font-black text-xl tracking-tight hidden lg:block text-white">Sikt.</span>
-        </div>
-
-        <nav className="flex-1 px-3 py-6 space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group relative border ${activeTab === item.id
-                ? 'bg-white/10 text-white border-white/10 shadow-inner'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent'
-                }`}
-            >
-              <item.icon size={20} className={activeTab === item.id ? 'text-violet-400' : 'text-slate-500 group-hover:text-slate-300'} />
-              <span className="hidden lg:block text-sm font-medium">{item.label}</span>
-              <div className="lg:hidden absolute left-14 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap border border-white/10">
-                {item.label}
-              </div>
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-white/5 bg-slate-900/50">
-          <div className="hidden lg:block mb-3">
-            <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Ditt Abonnement</p>
-            <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded-lg border border-white/5">
-              <span className="text-xs font-bold text-slate-300 truncate pl-1">{currentPkgName}</span>
-              {currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors">Oppgrader</button>}
-            </div>
-          </div>
-          <button onClick={onLogout} className="w-full flex items-center gap-2 text-slate-500 hover:text-rose-400 text-xs font-bold px-1 transition-colors justify-center lg:justify-start">
-            <LogOut size={16} /> <span className="hidden lg:inline">Logg ut</span>
-          </button>
-        </div>
+        <div className="p-6 flex items-center gap-3 border-b border-white/5"><div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">S</div><span className="font-black text-xl hidden lg:block text-white">Sikt.</span></div>
+        <nav className="flex-1 px-3 py-6 space-y-2">{menuItems.map((item) => (<button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all border ${activeTab === item.id ? 'bg-white/10 text-white border-white/10' : 'text-slate-400 hover:bg-white/5 border-transparent'}`}><item.icon size={20} /><span className="hidden lg:block text-sm font-medium">{item.label}</span></button>))}</nav>
+        <div className="p-4 border-t border-white/5"><p className="text-[10px] font-bold text-slate-500 mb-1 hidden lg:block">ABONNEMENT</p><div className="hidden lg:flex justify-between items-center bg-slate-950/50 p-2 rounded-lg border border-white/5 mb-3"><span className="text-xs font-bold text-slate-300 pl-1">{currentPkgName}</span>{currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-400">Oppgrader</button>}</div><button onClick={onLogout} className="flex items-center gap-2 text-slate-500 hover:text-rose-400 text-xs font-bold"><LogOut size={16} /><span className="hidden lg:inline">Logg ut</span></button></div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* Content */}
       <main className="flex-1 ml-20 lg:ml-64 p-6 lg:p-10 max-w-6xl mx-auto relative z-10">
-
         <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">{menuItems.find(i => i.id === activeTab)?.label}</h1>
-            <p className="text-slate-400 text-sm font-medium mt-1 flex items-center gap-2">
-              <Globe size={14} className="text-slate-500" /> {clientData?.websiteUrl || 'Laster...'}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-violet-400 font-bold shadow-lg ring-4 ring-slate-900/50">
-              {user.email.charAt(0).toUpperCase()}
-            </div>
-          </div>
+          <div><h1 className="text-3xl font-black text-white">{menuItems.find(i => i.id === activeTab)?.label}</h1><p className="text-slate-400 text-sm mt-1 flex gap-2"><Globe size={14} /> {clientData?.websiteUrl || '...'}</p></div>
+          <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-violet-400 font-bold">{user.email.charAt(0).toUpperCase()}</div>
         </header>
 
-        {/* --- DASHBOARD TAB --- */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <SmartActionCard clientData={clientData} analysisResult={analysisResult} onRunAnalysis={() => setActiveTab('analysis')} />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatusCard
-                icon={Activity}
-                color={analysisResult ? (analysisResult.seo >= 80 ? "emerald" : "amber") : "slate"}
-                title="Nettside Helse"
-                value={analysisResult ? `${analysisResult.seo}/100` : "Ingen data"}
-                subtext={analysisResult ? "Basert på live analyse" : "Kjør analyse først"}
-              />
-              <StatusCard icon={TrendingUp} color="blue" title="Besøkende (30 d)" value="1,204" subtext="+12%" />
-              <StatusCard
-                icon={AlertTriangle}
-                color="amber"
-                title="Tekniske Feil"
-                value={analysisResult ? (analysisResult.perf < 50 ? "3" : "0") : "0"}
-                subtext="Kritisk"
-              />
-            </div>
-
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-lg text-white">Trafikk & Synlighet</h3>
-                <select className="text-sm bg-slate-950 text-slate-400 border border-white/10 rounded-lg p-1.5 focus:outline-none focus:border-violet-500"><option>Siste 30 dager</option></select>
-              </div>
-              {currentLevel >= 2 ? (
-                <div className="h-64 bg-slate-950/50 rounded-xl flex items-center justify-center text-slate-500 border border-white/5 border-dashed">
-                  <div className="flex flex-col items-center gap-2">
-                    <BarChart3 size={32} className="opacity-50" />
-                    <p className="text-xs">Grafisk fremstilling av data (Chart.js)</p>
-                  </div>
-                </div>
-              ) : (
-                <LockedSection title="Historisk Utvikling" description="Se trender over tid." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
-              )}
-            </div>
+          <div className="text-center p-20 text-slate-500 bg-slate-900/50 rounded-2xl border border-white/5">
+            <LayoutDashboard size={40} className="mx-auto mb-4 opacity-50" />
+            <h3 className="text-white font-bold">Oversikt</h3>
+            <p>Dashboard innhold kommer her.</p>
           </div>
         )}
 
-        {/* --- ANALYSE TAB --- */}
         {activeTab === 'analysis' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-xl">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Teknisk Helsesjekk</h2>
-                  <p className="text-slate-400">Vi analyserer {clientData?.websiteUrl || 'nettsiden din'} mot Google sine nyeste krav.</p>
-                </div>
-                {isAnalyzing ? (
-                  <div className="flex flex-col items-center md:items-end gap-2 animate-in fade-in">
-                    <div className="flex items-center gap-2 text-violet-400 font-bold animate-pulse">
-                      <Activity className="animate-spin" size={18} />
-                      <span>Analyserer nettsiden...</span>
-                    </div>
-                    <div className="w-40 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-violet-500 transition-all duration-1000 ease-linear"
-                        style={{ width: `${Math.min(100, ((15 - timeLeft) / 15) * 100)}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-medium">Dette tar ca {timeLeft} sekunder</p>
-                  </div>
-                ) : (
-                  <button
-                    onClick={runRealAnalysis}
-                    className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-violet-900/20 transition-all flex items-center gap-2"
-                  >
-                    <Search size={18} /> Kjør Live Analyse
-                  </button>
-                )}
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            {isAnalyzing ? (
+              <div className="flex flex-col items-center justify-center py-24 bg-slate-900/50 rounded-2xl border border-white/5 relative overflow-hidden">
+                <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
+                <Loader2 className="w-16 h-16 text-violet-400 animate-spin mb-8 relative z-10" />
+                <h3 className="text-3xl font-black text-white mb-2">{Math.round(progress)}%</h3>
+                <p className="text-violet-300 font-medium mb-8 text-lg animate-pulse">{progressText}</p>
+                <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5"><div className="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
               </div>
-
-              {analysisResult && (
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2">
-                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden group">
-                    <div className={`absolute top-0 left-0 w-1 h-full ${analysisResult.seo >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Google Synlighet</p>
-                    <div className={`text-4xl font-black ${analysisResult.seo >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>{analysisResult.seo}/100</div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                  <div><h2 className="text-2xl font-bold text-white">Live Analyse</h2><p className="text-slate-400 text-sm">Sjekker: <span className="text-violet-400">{formData.websiteUrl}</span></p></div>
+                  <div className="flex gap-4">
+                    {analysisResults && (<div className="bg-slate-950 p-1 rounded-xl border border-white/10 flex"><button onClick={() => setActiveDevice('mobile')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'mobile' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Smartphone size={16} /> Mobil</button><button onClick={() => setActiveDevice('desktop')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'desktop' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Monitor size={16} /> Desktop</button></div>)}
+                    <button onClick={runRealAnalysis} disabled={!formData.websiteUrl} className="bg-violet-600 text-white px-6 py-3 rounded-xl font-bold flex gap-2 hover:bg-violet-500"><Zap size={18} /> Ny test</button>
                   </div>
-                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden">
-                    <div className={`absolute top-0 left-0 w-1 h-full ${analysisResult.perf >= 80 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Teknisk Ytelse</p>
-                    <div className={`text-4xl font-black ${analysisResult.perf >= 80 ? 'text-emerald-400' : 'text-rose-400'}`}>{analysisResult.perf}/100</div>
-                  </div>
-                  <div className="bg-slate-950/50 p-6 rounded-xl border border-white/10 text-center relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Lastetid (Mobil)</p>
-                    <div className="text-4xl font-black text-blue-400">{analysisResult.loadTime}</div>
-                  </div>
-                  <DetailedHealthCheck result={analysisResult} />
                 </div>
-              )}
-            </div>
-
-            {analysisResult && (
-              <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-violet-500/30 rounded-2xl p-1 shadow-2xl">
-                <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                  <div className="p-2 bg-violet-500/20 rounded-lg text-violet-400"><BrainCircuit size={24} /></div>
-                  <div><h3 className="text-lg font-bold text-white">AI-Anbefaling</h3><p className="text-xs text-slate-400">Basert på din pakke: <span className="text-violet-400 font-bold uppercase">{currentPkgName}</span></p></div>
-                </div>
-                <div className="p-8 space-y-6">
-                  {analysisResult.perf < 60 && (
-                    <div className="animate-in slide-in-from-bottom-2 fade-in">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 shrink-0"><AlertTriangle size={24} /></div>
-                        <div className="flex-1">
-                          <h4 className="text-rose-400 font-bold mb-2">Nettsiden din er kritisk treg ({analysisResult.perf}/100)</h4>
-                          {currentLevel === 1 ? (
-                            <div className="bg-slate-900 p-4 rounded-xl border border-white/10 mt-2">
-                              <p className="text-slate-300 text-sm mb-4">Vår AI har funnet <strong>3 spesifikke årsaker</strong> til at det går tregt, men rapporten er låst i Basic-pakken.</p>
-                              <button onClick={handleUpgrade} className="w-full bg-white text-slate-900 py-2 rounded-lg font-bold text-sm hover:bg-violet-50 flex items-center justify-center gap-2"><Lock size={14} /> Oppgrader til Standard for å se løsningen</button>
-                            </div>
-                          ) : (
-                            <div className="bg-emerald-900/10 p-5 rounded-xl border border-emerald-500/20 mt-2">
-                              <p className="text-emerald-400 text-sm font-bold mb-2 flex items-center gap-2"><CheckCircle2 size={14} /> Løsning funnet:</p>
-                              <ul className="space-y-3 text-sm text-slate-300">
-                                <li className="flex gap-2"><span className="text-emerald-500">1.</span><span>Bildene på forsiden er ikke komprimert. Bruk formatet <strong>WebP</strong>.</span></li>
-                                <li className="flex gap-2"><span className="text-emerald-500">2.</span><span>Du har "Render-blocking resources". Installer en cache-plugin.</span></li>
-                              </ul>
-                            </div>
-                          )}
+                {analyzeError && <div className="p-4 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">{analyzeError}</div>}
+                {analysisResults ? (
+                  <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => (
+                        <div key={idx} className={`p-6 rounded-2xl border flex flex-col items-center justify-center ${i.s >= 90 ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : i.s >= 50 ? 'border-amber-500/30 text-amber-400 bg-amber-500/10' : 'border-rose-500/30 text-rose-400 bg-rose-500/10'}`}>
+                          <div className="text-4xl font-black mb-1">{i.s}</div><div className="text-xs font-bold uppercase opacity-80">{i.l}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                      <div className="md:col-span-1 bg-slate-900/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center h-fit shadow-xl">
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-4 w-full text-center">Slik Google ser siden</p>
+                        {analysisResults[activeDevice].extras?.screenshot ? (<img src={analysisResults[activeDevice].extras?.screenshot} alt="Screenshot" className="rounded-lg border border-white/10 shadow-sm w-full object-cover" />) : <div className="w-full h-48 bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 text-xs">Ingen bilde</div>}
+                      </div>
+                      <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                          <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Server Respons</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.serverTime || '-'}</p>
+                        </div>
+                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                          <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Sidens Vekt</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.totalWeight || '-'}</p>
+                        </div>
+                        <div className="col-span-2 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+                          <DetailedHealthCheck result={analysisResults[activeDevice]} />
                         </div>
                       </div>
                     </div>
-                  )}
-                  {analysisResult.perf >= 60 && analysisResult.perf < 90 && (
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0"><Activity size={24} /></div>
-                      <div><h4 className="text-amber-400 font-bold mb-1">Rom for forbedring</h4><p className="text-slate-300 text-sm">Siden din er OK, men litt finpuss på bildestørrelser vil hjelpe.</p></div>
+                    <div className="mt-4">
+                      {currentLevel >= 2 ? (
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                          <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><Lightbulb className="text-amber-500" /> Tiltak som gir effekt</h3>
+                          <div className="space-y-3">
+                            {analysisResults[activeDevice].opportunities?.map((o, i) => (
+                              <div key={i} className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"><div><p className="font-bold text-sm text-slate-800">{o.title}</p><p className="text-xs text-slate-500">{o.description}</p></div><span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded h-fit">Spar {o.savings}</span></div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : <LockedSection title="Se konkrete tiltak" description="Få listen over hva som må fikses." reqPackage="Standard" onUpgrade={handleUpgrade} color="amber" />}
                     </div>
-                  )}
-                  <div className="pt-6 border-t border-white/5 flex items-start gap-4">
-                    <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 shrink-0"><Search size={24} /></div>
-                    <div className="flex-1">
-                      <h4 className="text-blue-400 font-bold mb-2">Synlighet i Google</h4>
-                      {currentLevel === 1 ? (
-                        <p className="text-slate-300 text-sm">Vi ser at du rangerer på noen nøkkelord, men går glipp av trafikk. <button onClick={handleUpgrade} className="text-violet-400 hover:text-violet-300 font-bold ml-1 hover:underline">Se hvilke &rarr;</button></p>
-                      ) : (
-                        <div className="text-sm text-slate-300"><p className="mb-2">Din H1-tittel er bra, men Meta-beskrivelsen din er for kort.</p></div>
-                      )}
+                    <div className="mt-4">
+                      {currentLevel >= 3 ? (
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                          <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><ShieldCheck className="text-violet-500" /> Teknisk Helsesjekk</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {analysisResults[activeDevice].diagnostics?.map((d, i) => (
+                              <div key={i} className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"><span className="text-sm font-medium text-slate-700">{d.title}</span>{d.passed ? <span className="text-emerald-500 text-xs font-bold flex gap-1"><CheckCircle2 size={14} /> OK</span> : <span className="text-rose-500 text-xs font-bold flex gap-1"><XCircle size={14} /> FEIL</span>}</div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : <LockedSection title="Teknisk Helsesjekk" description="Full sikkerhets- og SEO-gjennomgang." reqPackage="Premium" onUpgrade={handleUpgrade} color="violet" />}
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- SETTINGS TAB --- */}
-        {activeTab === 'settings' && (
-          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden relative">
-              <div className="p-6 border-b border-white/5 bg-slate-950/30 flex justify-between items-center">
-                <div><h3 className="font-bold text-lg text-white">Bedriftsprofil</h3><p className="text-sm text-slate-400">Informasjonen er låst for din sikkerhet.</p></div>
-                <button onClick={() => { setIsEditing(!isEditing); setUrlUnlockRequested(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isEditing ? 'bg-slate-800 text-white border-white/10' : 'bg-violet-600 text-white border-transparent hover:bg-violet-500'}`}>{isEditing ? <><XCircle size={14} /> Avbryt</> : <><Edit2 size={14} /> Rediger Profil</>}</button>
-              </div>
-
-              <form onSubmit={handleSaveSettings} className="p-6 space-y-5 relative">
-                {!isEditing && <div className="absolute inset-0 bg-slate-950/10 z-10 cursor-not-allowed"></div>}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Kontaktperson</label><input disabled={!isEditing} name="contactPerson" value={formData.contactPerson || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Telefon</label><input disabled={!isEditing} name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                </div>
-                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Bedriftsnavn</label><input disabled={!isEditing} name="companyName" value={formData.companyName || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">E-post</label><input disabled={!isEditing} type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                <div className="relative p-4 rounded-xl border border-white/5 bg-white/5">
-                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-center">Nettside URL {hasExistingUrl && !urlUnlockRequested ? <span className="text-emerald-400 flex items-center gap-1 text-[10px]"><ShieldCheck size={12} /> Sikret</span> : urlUnlockRequested ? <span className="text-rose-500 flex items-center gap-1 text-[10px] animate-pulse"><AlertOctagon size={12} /> Redigering tillatt</span> : null}</label>
-                  <div className="relative flex gap-2">
-                    <input disabled={!isEditing || (hasExistingUrl && !urlUnlockRequested)} type="url" name="websiteUrl" value={formData.websiteUrl || ''} onChange={handleChange} className={`w-full p-3 bg-slate-950 border rounded-xl text-white outline-none ${urlUnlockRequested ? 'border-rose-500 ring-1 ring-rose-500/50' : hasExistingUrl ? 'border-white/10 opacity-70 cursor-not-allowed' : 'border-white/10'}`} />
-                    {isEditing && hasExistingUrl && !urlUnlockRequested && (<button type="button" onClick={handleUnlockUrl} className="bg-slate-800 text-slate-400 hover:text-white p-3 rounded-xl border border-white/10"><Lock size={18} /></button>)}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Bransje</label><input disabled={!isEditing} name="industry" value={formData.industry || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Målgruppe</label><input disabled={!isEditing} name="targetAudience" value={formData.targetAudience || ''} onChange={handleChange} className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-white outline-none" /></div>
-                </div>
-                {isEditing && (
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
-                    <div className="text-emerald-400 font-bold text-sm h-6 flex items-center">{saveMessage && <><CheckCircle2 size={16} className="mr-1" /> {saveMessage}</>}</div>
-                    <button type="submit" disabled={saving} className="bg-white text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-violet-50 transition-colors flex items-center gap-2">{saving ? 'Lagrer...' : <><Save size={18} /> Bekreft & Lagre</>}</button>
-                  </div>
-                )}
-              </form>
-            </div>
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-xl overflow-hidden">
-              <div className="p-6 border-b border-white/5 bg-slate-950/30"><h3 className="font-bold text-lg text-white">Ditt Abonnement</h3></div>
-              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { name: 'Basic', price: '599', level: 1, features: ['Månedlig Rapport', 'Google Data'] },
-                  { name: 'Standard', price: '1499', level: 2, features: ['Rank Tracking', 'AI Innhold', 'Teknisk Analyse'] },
-                  { name: 'Premium', price: '4999', level: 3, features: ['Alt i Standard', 'AI Strategi', 'Konkurrentanalyse'] }
-                ].map((plan) => {
-                  const isCurrent = currentLevel === plan.level;
-                  const isUpgrade = plan.level > currentLevel;
-                  return (
-                    <div key={plan.name} className={`relative p-5 rounded-xl border flex flex-col justify-between transition-all ${isCurrent ? 'bg-violet-500/10 border-violet-500 ring-1 ring-violet-500/50' : 'bg-slate-950 border-white/5 hover:border-white/10'}`}>
-                      {isCurrent && <div className="absolute top-0 right-0 bg-violet-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">AKTIV</div>}
-                      <div><h4 className="font-bold text-white text-lg">{plan.name}</h4><p className="text-slate-400 text-sm mb-4">{plan.price} kr/mnd</p><ul className="space-y-2 mb-6">{plan.features.map(f => (<li key={f} className="text-xs text-slate-300 flex items-center gap-2"><CheckCircle2 size={12} className={isCurrent || isUpgrade ? "text-emerald-400" : "text-slate-600"} /> {f}</li>))}</ul></div>
-                      <button onClick={() => !isCurrent && handleChangePlan(plan.name, plan.price)} disabled={isCurrent || saving} className={`w-full py-2 rounded-lg text-sm font-bold border transition-all ${isCurrent ? 'bg-transparent border-transparent text-violet-400 cursor-default' : isUpgrade ? 'bg-white text-slate-900 hover:bg-violet-50' : 'bg-slate-900 text-slate-400 border-white/10 hover:text-white'}`}>{isCurrent ? 'Din Plan' : isUpgrade ? 'Oppgrader' : 'Nedgrader'}</button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="p-6 rounded-2xl border border-rose-500/20 bg-rose-950/10 backdrop-blur-sm flex items-center justify-between">
-              <div><h4 className="font-bold text-rose-400 text-sm flex items-center gap-2"><ShieldCheck size={16} /> Avslutt Abonnement</h4></div>
-              <button className="text-rose-400 text-xs font-bold hover:underline">Gå til utmelding</button>
-            </div>
-          </div>
-        )}
-
-        {/* --- INNHOLD / CONTENT TAB --- */}
-        {activeTab === 'content' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {currentLevel < 2 ? (
-              <LockedSection
-                title="Innholdsverktøy"
-                description="Oppgrader til Standard for å la AI skrive Google-tekstene dine automatisk."
-                reqPackage="Standard"
-                onUpgrade={handleUpgrade}
-                color="violet"
-              />
-            ) : (
-              <>
-                {/* Jeg antar at denne kanskje også trenger data, men lar den stå hvis den ikke klager */}
-                <AIContentGenerator />
-
-                {currentLevel >= 3 ? (
-                  // HER ER FIKSEN: Vi sender med clientData
-                  <ContentStrategy clientData={clientData} />
-                ) : (
-                  <LockedSection
-                    title="AI-Redaksjon & Strategi"
-                    description="I Premium-pakken analyserer AI-en konkurrentene dine."
-                    reqPackage="Premium"
-                    onUpgrade={handleUpgrade}
-                    color="indigo"
-                  />
-                )}
+                ) : <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-white/5 border-dashed"><Activity className="w-10 h-10 text-slate-500 mx-auto mb-4" /><h3 className="text-white font-bold">Klar for test</h3><p className="text-slate-400 text-sm">Vi sjekker både mobil og desktop.</p></div>}
               </>
             )}
           </div>
         )}
 
-        {/* --- LENKER / BACKLINKS TAB --- */}
-        {activeTab === 'links' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {currentLevel < 2 ? (
-              <LockedSection title="Backlink-analyse" description="For å rangere høyt trenger du lenker fra andre nettsteder." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
-            ) : (
-              <BacklinkMonitor currentLevel={currentLevel} />
-            )}
-          </div>
-        )}
-
-        {/* --- SØKEORD / KEYWORDS TAB --- */}
+        {/* --- 10-PUNKTS SØKEORD SIDE --- */}
         {activeTab === 'keywords' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <KeywordTracker currentLevel={currentLevel} onUpgrade={handleUpgrade} />
-          </div>
-        )}
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
 
-        {/* --- RAPPORTER TAB --- */}
-        {activeTab === 'reports' && (
-          <ReportsModule currentLevel={currentLevel} onUpgrade={handleUpgrade} />
-        )}
+            {/* Header og Input */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
+              <div><h1 className="text-3xl font-black text-white">Søkeord</h1><p className="text-slate-400 text-sm">Spor dine rangeringer på Google Norge.</p></div>
+              <div className="flex gap-2 w-full md:w-auto bg-slate-900/80 p-1.5 rounded-xl border border-white/10">
+                <input value={newKeywordInput} onChange={(e) => setNewKeywordInput(e.target.value)} placeholder={currentLevel < 2 ? "Oppgrader for å legge til" : "Nytt søkeord..."} disabled={currentLevel < 2} className="bg-transparent pl-3 text-sm text-white outline-none w-full md:w-48" />
+                <button onClick={handleAddKeyword} disabled={currentLevel < 2} className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+</button>
+                <button
+                  onClick={handleCheckRankings}
+                  disabled={rankingLoading || currentLevel < 2 || (keywordsToTrack.length === 0 && !newKeywordInput)}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${currentLevel < 2 || (keywordsToTrack.length === 0 && !newKeywordInput)
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    : 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-900/20'
+                    }`}
+                >
+                  {rankingLoading ? <Loader2 className="animate-spin" size={14} /> : <Search size={14} />}
+                  {rankingLoading ? 'Henter fra Google...' : 'Oppdater Rangeringer'}
+                </button>
+              </div>
+            </div>
 
-      </main>
+            {/* 1. OVERSIKT (TOP CARDS) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><Layers size={40} className="text-white" /></div>
+                <p className="text-slate-400 text-xs font-bold uppercase">Totalt Funnet</p>
+                <p className="text-3xl font-black text-white mt-1">{hasSearched ? realRankings.filter(r => r.position <= 100).length : '-'}</p>
+                <p className="text-slate-500 text-[10px] mt-1">Av {keywordsToTrack.length} sjekket</p>
+              </div>
+              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><Target size={40} className="text-white" /></div>
+                <p className="text-slate-400 text-xs font-bold uppercase">Topp 10</p>
+                <p className="text-3xl font-black text-white mt-1">{hasSearched ? realRankings.filter(r => r.position <= 10).length : '-'}</p>
+                <p className="text-emerald-400 text-[10px] mt-1 font-bold flex gap-1 items-center"><CheckCircle2 size={10} /> Side 1</p>
+              </div>
+              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={40} className="text-white" /></div>
+                <p className="text-slate-400 text-xs font-bold uppercase">Endring</p>
+                <p className="text-3xl font-black text-white mt-1">
+                  {hasSearched ? (() => {
+                    const netChange = realRankings.reduce((acc, curr) => acc + (curr.change || 0), 0);
+                    return netChange > 0 ? `+${netChange}` : netChange;
+                  })() : '-'}
+                </p>
+                <p className="text-slate-500 text-[10px] mt-1">Siden forrige søk</p>
+              </div>
+              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><Eye size={40} className="text-white" /></div>
+                <p className="text-slate-400 text-xs font-bold uppercase">Trafikkpotensial</p>
+                <p className="text-3xl font-black text-white mt-1">{hasSearched ? Math.round(realRankings.reduce((acc, curr) => acc + curr.ctr, 0)) + '%' : '-'}</p>
+                <p className="text-slate-500 text-[10px] mt-1">Estimert CTR</p>
+              </div>
+            </div>
 
-      {/* CHAT */}
-      <AIChatWidget clientData={clientData} />
-    </div>
-  );
-};
-
-
-
-const ReportsModule = ({ currentLevel, onUpgrade }: { currentLevel: number, onUpgrade: () => void }) => {
-
-  // Her definerer vi rapportene og hvilket nivå som kreves
-  const reports = [
-    {
-      id: 1,
-      title: "Månedsrapport: Januar 2026",
-      type: "Oppsummering",
-      date: "01.02.2026",
-      minLevel: 1, // Alle får denne (Basic)
-      color: "blue"
-    },
-    {
-      id: 2,
-      title: "Teknisk Ukerapport: Uke 5",
-      type: "Teknisk Analyse",
-      date: "04.02.2026",
-      minLevel: 2, // Kun Standard og oppover
-      color: "emerald"
-    },
-    {
-      id: 3,
-      title: "AI-Strategi & Konkurrent-Gap",
-      type: "Strategi",
-      date: "05.02.2026",
-      minLevel: 3, // Kun Premium
-      color: "violet"
-    }
-  ];
-
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-
-      {/* Header */}
-      <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5 shadow-xl flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Dine Rapporter</h2>
-          <p className="text-slate-400">Last ned PDF-rapporter generert av AI-motoren.</p>
-        </div>
-        <div className="p-4 bg-violet-500/10 rounded-full border border-violet-500/20 text-violet-400">
-          <FileText size={32} />
-        </div>
-      </div>
-
-      {/* Rapport Liste */}
-      <div className="grid grid-cols-1 gap-4">
-        {reports.map((report) => {
-          // Sjekk om brukeren har høy nok pakke
-          const isLocked = currentLevel < report.minLevel;
-
-          return (
-            <div key={report.id} className={`p-6 rounded-2xl border flex items-center justify-between transition-all ${isLocked ? 'bg-slate-950/50 border-white/5 opacity-75' : 'bg-slate-900/50 border-white/10 hover:border-violet-500/50'}`}>
-
-              <div className="flex items-center gap-6">
-                {/* Ikon boks */}
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center border font-bold text-xl ${isLocked
-                  ? 'bg-slate-900 border-white/5 text-slate-600'
-                  : `bg-${report.color}-500/10 border-${report.color}-500/20 text-${report.color}-400`
-                  }`}>
-                  {isLocked ? <Lock size={24} /> : "PDF"}
+            {/* 4. HISTORISK GRAF */}
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-white flex items-center gap-2"><BarChart2 size={18} className="text-violet-400" /> Rangeringstrend</h3>
+                {currentLevel < 2 && <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-white/5 flex gap-1 items-center"><Lock size={10} /> Standard</span>}
+              </div>
+              {currentLevel >= 2 ? (
+                <div className="h-40 flex items-end justify-around gap-2 px-4 border-b border-white/5 pb-2">
+                  {['1-3', '4-10', '11-20', '21-50', '50+'].map((label, i) => {
+                    const count = realRankings.filter(r => {
+                      if (i === 0) return r.position <= 3;
+                      if (i === 1) return r.position > 3 && r.position <= 10;
+                      if (i === 2) return r.position > 10 && r.position <= 20;
+                      if (i === 3) return r.position > 20 && r.position <= 50;
+                      return r.position > 50;
+                    }).length;
+                    const height = keywordsToTrack.length > 0 ? (count / keywordsToTrack.length) * 100 : 0;
+                    return (
+                      <div key={label} className="w-full flex flex-col items-center gap-2">
+                        <div className="w-12 bg-violet-500/20 rounded-t-md relative group hover:bg-violet-500/40 transition-all" style={{ height: `${height === 0 ? 5 : height}%`, minHeight: '10px' }}>
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-white opacity-0 group-hover:opacity-100">{count}</div>
+                        </div>
+                        <span className="text-[10px] text-slate-500 uppercase font-bold">{label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+              ) : <LockedSection title="Se historikk" description="Oppgrader for å se utvikling." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />}
+            </div>
 
-                {/* Info */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${isLocked
-                      ? 'bg-slate-800 border-white/5 text-slate-500'
-                      : `bg-${report.color}-500/10 border-${report.color}-500/20 text-${report.color}-400`
-                      }`}>
-                      {isLocked ? `Krever nivå ${report.minLevel}` : report.type}
-                    </span>
-                    <span className="text-xs text-slate-500 flex items-center gap-1">
-                      <Calendar size={12} /> {report.date}
-                    </span>
+            {/* 3. FILTER & 2. HOVEDTABELL */}
+            <div className="bg-slate-900/50 rounded-2xl border border-white/5 overflow-hidden">
+              <div className="p-4 border-b border-white/5 flex gap-2 overflow-x-auto">
+                <button onClick={() => setFilterPos('All')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'All' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Alle</button>
+                <button onClick={() => setFilterPos('Top3')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'Top3' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Topp 3</button>
+                <button onClick={() => setFilterPos('Top10')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'Top10' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Topp 10</button>
+                <div className="w-px h-6 bg-white/10 mx-2"></div>
+                {['Informational', 'Transactional', 'Commercial', 'Local'].map(i => (
+                  <button key={i} onClick={() => setFilterIntent(filterIntent === i ? 'All' : i)} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterIntent === i ? 'bg-violet-500/20 text-violet-300 border-violet-500/30' : 'border-transparent text-slate-400'}`}>{i}</button>
+                ))}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-xs font-bold text-slate-500 uppercase border-b border-white/5 bg-white/5">
+                      <th className="p-4">Søkeord</th>
+                      <th className="p-4">Posisjon</th>
+                      <th className="p-4 hidden sm:table-cell">Endring</th>
+                      {currentLevel >= 2 && <th className="p-4 hidden md:table-cell">Intent</th>}
+                      {currentLevel >= 2 && <th className="p-4 hidden lg:table-cell">CTR Est.</th>}
+                      <th className="p-4 hidden xl:table-cell">URL</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-sm">
+                    {hasSearched ? (
+                      filteredRankings.length > 0 ? filteredRankings.map((k, i) => (
+                        <tr key={i} className="hover:bg-white/5 transition-colors">
+                          <td className="p-4 font-bold text-white">{k.keyword}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${k.position <= 3 ? 'bg-emerald-500/20 text-emerald-400' : k.position <= 10 ? 'bg-blue-500/20 text-blue-400' : k.position > 100 ? 'bg-slate-800 text-slate-500' : 'bg-amber-500/20 text-amber-400'}`}>
+                              {k.position > 100 ? '100+' : `#${k.position}`}
+                            </span>
+                          </td>
+                          <td className="p-4 hidden sm:table-cell">
+                            {k.change !== 0 ? (
+                              <span className={`flex items-center gap-1 text-xs font-bold ${k.change > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {k.change > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />} {Math.abs(k.change)}
+                              </span>
+                            ) : <span className="text-slate-600 text-xs">-</span>}
+                          </td>
+                          {currentLevel >= 2 && (
+                            <td className="p-4 hidden md:table-cell">
+                              <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold border ${k.intent === 'Informational' ? 'text-sky-400 border-sky-500/30' : k.intent === 'Transactional' ? 'text-emerald-400 border-emerald-500/30' : 'text-violet-400 border-violet-500/30'}`}>{k.intent.substring(0, 4)}</span>
+                            </td>
+                          )}
+                          {currentLevel >= 2 && <td className="p-4 hidden lg:table-cell text-slate-400">{k.ctr}%</td>}
+                          <td className="p-4 hidden xl:table-cell text-xs text-slate-500 truncate max-w-[150px]">{k.url}</td>
+                        </tr>
+                      )) : <tr><td colSpan={6} className="p-8 text-center text-slate-500">Ingen treff med dette filteret.</td></tr>
+                    ) : (
+                      <tr><td colSpan={6} className="p-8 text-center text-slate-500">{keywordsToTrack.length > 0 ? 'Klar til å søke.' : 'Legg til ord over.'}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 5. & 8. AI ANALYSE (Standard/Premium) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {currentLevel >= 2 ? (
+                <div className="bg-gradient-to-br from-violet-900/20 to-indigo-900/20 p-6 rounded-2xl border border-violet-500/20 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-30"><BrainCircuit size={60} className="text-violet-500" /></div>
+                  <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Sparkles size={18} className="text-violet-400" /> AI Analyse & Optimalisering</h3>
+                  <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                    {filteredRankings.length > 0 ? filteredRankings.map((r: any, i: number) => (
+                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/10">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-violet-400 font-bold text-xs uppercase">{r.keyword}</span>
+                          <span className="text-slate-500 text-xs">#{r.position}</span>
+                        </div>
+                        <p className="text-sm text-slate-200">{r.advice}</p>
+                      </div>
+                    )) : <p className="text-sm text-slate-400">Ingen data å analysere.</p>}
                   </div>
-                  <h3 className={`text-lg font-bold ${isLocked ? 'text-slate-500' : 'text-white'}`}>
-                    {report.title}
-                  </h3>
                 </div>
-              </div>
+              ) : <LockedSection title="AI Analyse" description="Få konkrete råd for hvert søkeord." reqPackage="Standard" onUpgrade={handleUpgrade} color="violet" />}
 
-              {/* Handling (Knapp) */}
-              <div>
-                {isLocked ? (
-                  <button
-                    onClick={onUpgrade}
-                    className="px-4 py-2 bg-slate-900 text-slate-400 border border-white/10 rounded-lg text-sm font-bold hover:text-white hover:border-white/30 flex items-center gap-2 transition-colors"
-                  >
-                    <Lock size={14} /> Lås opp
-                  </button>
-                ) : (
-                  <button className="px-6 py-3 bg-white text-slate-950 rounded-xl text-sm font-bold hover:bg-violet-50 shadow-lg shadow-white/5 flex items-center gap-2 transition-colors">
-                    <Download size={16} /> Last ned
-                  </button>
-                )}
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
-
-    </div>
-  );
-};
-
-
-
-
-
-
-const AIChatWidget = ({ clientData }: { clientData: any }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-
-  // --- KONFIGURASJON ---
-  const API_KEY = "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs"; // <--- LIM INN NØKKELEN DIN HER!
-
-  const firstName = clientData?.contactPerson?.split(' ')[0] || 'Kunde';
-  const company = clientData?.companyName || 'bedriften din';
-
-  const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string }[]>([
-    {
-      role: 'model',
-      content: `Hei ${firstName}! 👋 Jeg er din AI-assistent (drevet av Google Gemini). Jeg har analysert ${company}. Hva lurer du på?`
-    }
-  ]);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOpen, isTyping]);
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    if (API_KEY === "AIzaSyBPgWpVEMP_KSaL9JW5GeBQLxlL65o8zhs") {
-      alert("Du må lime inn Google API-nøkkelen din i koden (AIChatWidget.tsx) først!");
-      return;
-    }
-
-    const userMsg = input;
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    setInput("");
-    setIsTyping(true);
-
-    try {
-      // Vi bygger samtaleloggen for Google formatet
-      // Google bruker "user" og "model" som roller
-      const history = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }));
-
-      // Legger til den nye meldingen
-      history.push({ role: "user", parts: [{ text: userMsg }] });
-
-      // System instruks (Hvem er boten?)
-      const systemInstruction = `Du er en ekspert SEO-rådgiver for bedriften ${company}. Vær kort, hyggelig og salgsfokusert. Bruk emojis.`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: history,
-          systemInstruction: { parts: [{ text: systemInstruction }] } // Gemini 1.5 støtter system instruksjoner
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.error) throw new Error(data.error.message);
-
-      const aiResponse = data.candidates[0].content.parts[0].text;
-
-      setMessages(prev => [...prev, { role: 'model', content: aiResponse }]);
-
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { role: 'model', content: "Beklager, jeg mistet kontakten med Google-hjernen min." }]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
-      {isOpen && (
-        <div className="mb-4 w-[350px] h-[500px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
-
-          <div className="p-4 bg-slate-950/50 border-b border-white/5 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center relative shadow-lg shadow-blue-900/50">
-                <Zap size={16} className="text-white" />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-slate-900 rounded-full animate-pulse"></span>
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-sm">Sikt AI (Gemini) 🧠</h4>
-                <p className="text-[10px] text-slate-400">Koblet til Google</p>
-              </div>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white"><XCircle size={20} /></button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/80 scrollbar-thin">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
-                  ? 'bg-violet-600 text-white rounded-br-none'
-                  : 'bg-slate-800 text-slate-200 border border-white/5 rounded-bl-none'
-                  }`}>
-                  {msg.content}
+              {/* 6. & 9. STRATEGI (Premium) */}
+              {currentLevel >= 3 ? (
+                <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                  <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Target size={18} className="text-emerald-400" /> Strategi & Muligheter</h3>
+                  <div className="flex flex-col items-center justify-center h-48 text-center bg-slate-950/30 rounded-xl border border-white/5 border-dashed">
+                    <Map size={32} className="text-slate-600 mb-2" />
+                    <p className="text-sm text-slate-400">Koble til Google Search Console for<br />å finne "Money Keywords" du har oversett.</p>
+                    <button className="mt-3 text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg border border-white/10">Koble til GSC</button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-slate-800 border border-white/5 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center">
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></span>
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></span>
+              ) : <LockedSection title="AI Strategi & GSC" description="Vi finner søkeordene du burde rangert på." reqPackage="Premium" onUpgrade={handleUpgrade} color="emerald" />}
+            </div>
+
+            {/* 7. SIDE-TIL-SØKEORD MAPPING (Vises kun hvis vi har data) */}
+            {hasSearched && realRankings.some(r => r.position <= 100) && (
+              <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Map size={18} className="text-blue-400" /> Side-Mapping</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {realRankings.filter(r => r.position <= 10).slice(0, 4).map((r, i) => (
+                    <div key={i} className="p-3 border border-white/5 bg-slate-950/30 rounded-xl flex justify-between items-center">
+                      <div className="truncate pr-4">
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Rangerer på: "{r.keyword}"</p>
+                        <p className="text-sm font-bold text-white truncate">{r.url}</p>
+                      </div>
+                      <span className="text-xs font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">#{r.position}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
+        )}
 
-          <form onSubmit={handleSend} className="p-3 bg-slate-950/50 border-t border-white/5 flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Spør om noe..."
-              className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-all placeholder-slate-600"
-            />
-            <button type="submit" className="bg-violet-600 hover:bg-violet-500 text-white p-2 rounded-xl transition-colors"><Send size={18} /></button>
-          </form>
-        </div>
-      )}
+        {/* SETTINGS m/ Pakkevelger */}
+        {activeTab === 'settings' && (
+          <div className="max-w-4xl space-y-8 animate-in fade-in">
+            {/* PROFILSKJEMA (Forenklet visning for kode-lengde, men full funksjon) */}
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+              <div className="flex justify-between mb-6"><h3 className="font-bold text-white">Profil</h3><button onClick={() => setIsEditing(!isEditing)} className="text-xs bg-slate-800 text-white px-3 py-1 rounded">{isEditing ? 'Avbryt' : 'Rediger'}</button></div>
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <input disabled={!isEditing} name="contactPerson" value={formData.contactPerson} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="Navn" />
+                  <input disabled={!isEditing} name="companyName" value={formData.companyName} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="Firma" />
+                </div>
+                <div className="flex gap-2">
+                  <input disabled={!isEditing} name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="URL" />
+                </div>
+                {isEditing && <button type="submit" className="bg-white text-slate-900 font-bold px-4 py-2 rounded">Lagre</button>}
+              </form>
+            </div>
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 border border-white/10 ${isOpen ? 'bg-slate-800 text-slate-400 rotate-90' : 'bg-blue-600 text-white hover:bg-blue-500'
-          }`}
-      >
-        {isOpen ? <XCircle size={28} /> : <MessageCircle size={28} fill="currentColor" />}
-      </button>
+            {/* PAKKEVELGER */}
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+              <h3 className="font-bold text-white mb-4 flex gap-2"><CreditCard /> Pakker</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {plans.map(p => {
+                  const active = currentLevel === p.level;
+                  return (
+                    <div key={p.name} className={`p-4 rounded-xl border flex flex-col ${active ? 'bg-white/5 border-violet-500' : 'bg-slate-950 border-white/5'}`}>
+                      <h4 className="font-bold text-white">{p.name}</h4>
+                      <p className="text-xl font-black text-slate-300 my-2">{p.price}</p>
+                      <ul className="flex-1 space-y-2 mb-4">{p.features.map(f => <li key={f} className="text-xs text-slate-500 flex gap-2"><Check size={12} /> {f}</li>)}</ul>
+                      <button onClick={() => handleChangePlan(p.name)} disabled={active} className={`py-2 rounded text-xs font-bold ${active ? 'bg-white/10 text-slate-500' : 'bg-violet-600 text-white'}`}>{active ? 'Din plan' : 'Velg'}</button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
-
-
-
-
-
-
-
-
 
 // --- MAIN APP COMPONENT ---
 function App() {
