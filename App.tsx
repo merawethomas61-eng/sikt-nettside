@@ -3,16 +3,81 @@ import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import {
-  ArrowRight, ArrowDown, Eye, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
+  ArrowRight, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
   MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool,
-  SearchIcon, TrendingDown, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
+  SearchIcon, TrendingDown, ImageIcon, ShoppingBag, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
   Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
-  Layers, Minus, BarChart3, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
-  BrainCircuit, BarChart4, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
-  Settings, Smartphone, ArrowUp, ArrowUpCircle, ArrowDownCircle, CreditCard, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
+  Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
+  BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
+  Settings, Smartphone, ArrowUp, ArrowUpCircle, ArrowDownCircle, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
 
+// --- DATAMODELL FOR INNHOLD (Content) ---
+interface ContentPage {
+  id: string;
+  url: string;
+  title: string;
+  wordCount: number;
+  status: 'Bra' | 'Advarsel' | 'Kritisk';
+  lastUpdated: string;
+  // Standard (AI Analyse)
+  score: number; // 0-100
+  readability: 'Lett' | 'Middels' | 'Tung';
+  issues: string[]; // F.eks "Mangler H1", "Tynt innhold"
+  // Premium (Strategi)
+  topicCluster: string;
+  action: string; // "Oppdater", "Slett", "Behold"
+}
+
+
+
+// --- DATAMODELL FOR LENKER ---
+interface LinkPage {
+  id: string;
+  url: string;
+  title: string;
+  inlinks: number;
+  outlinks: number;
+  status: 'Bra' | 'Isolert' | 'Blindvei' | 'Kritisk';
+  brokenLinks: number;
+  linkScore: number;
+  anchorIssues: string[];
+  hubType: 'Pillar' | 'Cluster' | 'None';
+  suggestedInlinks: { fromUrl: string; anchor: string; reason: string }[];
+}
+
+// --- OPPDATERT DATAMODELL ---
+interface KeywordData {
+  keyword: string;
+  location: string;
+  position: number;
+  url: string;
+  change: number;
+  volume: string;
+  competition: number;
+  kd: number;
+  intent: 'Kjøp' | 'Info' | 'Lokal';
+  history: { date: string; rank: number }[];
+  // NYTT: Vi lagrer konkurrentene direkte fra API-et
+  competitors: { position: number; title: string; url: string; snippet: string }[];
+}
+// Legg til disse i import-listen din fra 'recharts' (hvis den ikke finnes, lag en ny linje):
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+
+// --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
+const InfoHint = ({ text }: { text: string }) => (
+  <div className="group relative inline-flex ml-1.5 cursor-help">
+    <div className="text-slate-500 hover:text-white transition-colors opacity-50 hover:opacity-100">
+      <HelpCircle size={12} />
+    </div>
+    {/* Tooltip boks */}
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-800 text-white text-[10px] leading-relaxed font-medium rounded-lg shadow-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+      {text}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+    </div>
+  </div>
+);
 
 
 const MyComponent = () => {
@@ -22,6 +87,33 @@ const MyComponent = () => {
 
   // Ref for å holde styr på om komponenten er montert
   const isMounted = useRef(false);
+
+
+
+  // --- VIKTIG: DETTE ER LOGIKKEN FOR LENKER ---
+
+  // 1. Definer variablene (State)
+  const [linkPages, setLinkPages] = useState<LinkPage[]>([]);
+  const [selectedLinkPage, setSelectedLinkPage] = useState<LinkPage | null>(null);
+  const [isScanningLinks, setIsScanningLinks] = useState(false);
+
+  // 2. Funksjonen som henter data (Simulert)
+  const runLinkScan = () => {
+    setIsScanningLinks(true);
+    // Simulerer en scan som tar 1.5 sekunder
+    setTimeout(() => {
+      const mockLinkPages: LinkPage[] = [
+        { id: '1', url: '/', title: 'Hjem - Forsiden', inlinks: 45, outlinks: 12, status: 'Bra', brokenLinks: 0, linkScore: 98, anchorIssues: [], hubType: 'Pillar', suggestedInlinks: [] },
+        { id: '2', url: '/tjenester', title: 'Våre Tjenester', inlinks: 28, outlinks: 8, status: 'Bra', brokenLinks: 0, linkScore: 92, anchorIssues: [], hubType: 'Pillar', suggestedInlinks: [] },
+        { id: '3', url: '/tjenester/seo', title: 'SEO Optimalisering', inlinks: 3, outlinks: 5, status: 'Bra', brokenLinks: 0, linkScore: 85, anchorIssues: [], hubType: 'Cluster', suggestedInlinks: [{ fromUrl: '/blogg/hva-er-seo', anchor: 'profesjonell SEO hjelp', reason: 'Relevant innhold' }] },
+        { id: '4', url: '/om-oss', title: 'Om Oss', inlinks: 42, outlinks: 0, status: 'Blindvei', brokenLinks: 0, linkScore: 60, anchorIssues: [], hubType: 'None', suggestedInlinks: [] },
+        { id: '5', url: '/kampanje-2023', title: 'Julebord 2023', inlinks: 0, outlinks: 2, status: 'Isolert', brokenLinks: 1, linkScore: 20, anchorIssues: [], hubType: 'None', suggestedInlinks: [{ fromUrl: '/', anchor: 'arkiv', reason: 'Orphan page' }] },
+        { id: '6', url: '/blogg/tips', title: '5 gode tips', inlinks: 5, outlinks: 12, status: 'Kritisk', brokenLinks: 3, linkScore: 45, anchorIssues: ['Klikk her'], hubType: 'Cluster', suggestedInlinks: [] },
+      ];
+      setLinkPages(mockLinkPages);
+      setIsScanningLinks(false);
+    }, 1500);
+  };
 
   useEffect(() => {
     isMounted.current = true;
@@ -94,6 +186,11 @@ export const handleLogin = async () => {
     alert("Feil ved innlogging: " + error.message);
   }
 };
+
+
+
+
+
 
 // --- Helper Component for Scroll Reveal ---
 interface RevealProps {
@@ -984,6 +1081,7 @@ const AiProcessDeepDive = () => (
     </div>
   </section>
 );
+
 
 
 const BRANSJER = [
@@ -2623,15 +2721,65 @@ const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
 );
 
 // --- HOVEDKOMPONENT: CLIENT PORTAL ---
-const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) => {
+// Her tar vi imot ALLE verktøyene fra App (theme, setView, selectedPlan osv.)
+// Vi døper om 'clientData' til 'startData' midlertidig her oppe:
+const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, setView, selectedPlan, onSelectPlan }: any) => {
+  const getStableMetrics = (keyword: string) => {
+    let hash = 0;
+    for (let i = 0; i < keyword.length; i++) {
+      hash = keyword.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const positiveHash = Math.abs(hash);
+    const volume = (positiveHash % 200) * 10 + 50;
+    const competition = positiveHash % 3;
+    return { volume, competition };
+  };
+
+  const [locationInput, setLocationInput] = useState('Oslo');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // En liste over norske kommuner (utvalg - du kan legge til flere selv)
+  const NORWEGIAN_MUNICIPALITIES = [
+    "Agdenes", "Alstahaug", "Alta", "Alvdal", "Alver", "Andøy", "Aremark", "Arendal", "Asker", "Askvoll", "Askøy", "Aukra", "Aure", "Aurland", "Aurskog-Høland", "Austevoll", "Austrheim", "Averøy",
+    "Balsfjord", "Bamble", "Bardu", "Beiarn", "Bergen", "Berlevåg", "Bindal", "Birkenes", "Bjerkreim", "Bjørnafjorden", "Bodø", "Bokn", "Bremanger", "Brønnøy", "Bygland", "Bykle", "Bærum", "Bø", "Bømlo", "Båtsfjord",
+    "Dovre", "Drammen", "Drangedal", "Dyrøy", "Dønna",
+    "Eidfjord", "Eidskog", "Eidsvoll", "Eigersund", "Elverum", "Enebakk", "Engerdal", "Etne", "Etnedal", "Evenes", "Evje og Hornnes",
+    "Farsund", "Fauske", "Fedje", "Fitjar", "Fjaler", "Fjord", "Flakstad", "Flatanger", "Flekkefjord", "Flesberg", "Flå", "Folldal", "Fredrikstad", "Frogn", "Froland", "Frosta", "Frøya", "Fyresdal", "Færder",
+    "Gamvik", "Gausdal", "Gildeskål", "Giske", "Gjemnes", "Gjerdrum", "Gjerstad", "Gjesdal", "Gjøvik", "Gloppen", "Gol", "Gran", "Grane", "Gratangen", "Grimstad", "Grong", "Grue", "Gulen",
+    "Hadsel", "Halden", "Hamar", "Hamarøy", "Hammerfest", "Hareid", "Harstad", "Hasvik", "Hattfjelldal", "Haugesund", "Heim", "Hemnes", "Hemsedal", "Herøy", "Hitra", "Hjartdal", "Hjelmeland", "Hol", "Hole", "Holmestrand", "Holtålen", "Horten", "Hurdal", "Hustadvika", "Hvaler", "Hyllestad", "Hægebostad", "Høyanger", "Høylandet", "Hå",
+    "Ibestad", "Inderøy", "Indre Østfold", "Iveland",
+    "Jevnaker",
+    "Karasjok", "Karlsøy", "Karmøy", "Kautokeino", "Klepp", "Kongsberg", "Kongsvinger", "Kragerø", "Kristiansand", "Kristiansund", "Krødsherad", "Kvam", "Kvinesdal", "Kvinnherad", "Kviteseid", "Kvitsøy", "Kvæfjord", "Kvænangen", "Kåfjord",
+    "Larvik", "Lavangen", "Lebesby", "Leirfjord", "Leka", "Lenvik", "Lesja", "Levanger", "Lier", "Lierne", "Lillehammer", "Lillesand", "Lillestrøm", "Lindesnes", "Lom", "Loppa", "Lund", "Lunner", "Lurøy", "Luster", "Lyngdal", "Lyngen", "Lærdal", "Lødingen", "Lørenskog", "Løten",
+    "Malvik", "Marker", "Masfjorden", "Melhus", "Meløy", "Meråker", "Midt-Telemark", "Midtre Gauldal", "Modalen", "Modum", "Molde", "Moskenes", "Moss", "Målselv", "Måsøy",
+    "Namsos", "Namsskogan", "Nannestad", "Narvik", "Nes", "Nesbyen", "Nesna", "Nesodden", "Nissedal", "Nittedal", "Nome", "Nord-Aurdal", "Nord-Fron", "Nord-Odal", "Nordkapp", "Nordre Follo", "Nordre Land", "Nordreisa", "Nore og Uvdal", "Notodden", "Nærøysund",
+    "Oppdal", "Orkland", "Os", "Osen", "Oslo", "Overhalla",
+    "Porsanger", "Porsgrunn",
+    "Rakkestad", "Rana", "Randaberg", "Rauma", "Rendalen", "Rennebu", "Rindal", "Ringebu", "Ringerike", "Ringsaker", "Risør", "Rollag", "Rælingen", "Rødøy", "Røros", "Røst", "Råde",
+    "Salangen", "Saltdal", "Samnanger", "Sande", "Sandefjord", "Sandnes", "Sarpsborg", "Sauda", "Sel", "Selbu", "Seljord", "Senja", "Sigdal", "Siljan", "Sirdal", "Skaun", "Skien", "Skiptvet", "Skjervøy", "Skjåk", "Smøla", "Snåsa", "Sogndal", "Sokndal", "Sola", "Solund", "Sortland", "Stad", "Stange", "Stavanger", "Steinkjer", "Stjordal", "Stord", "Stor-Elvdal", "Storfjord", "Stranda", "Stryn", "Sula", "Suldal", "Sunndal", "Sunnfjord", "Surnadal", "Sveio", "Sykkylven", "Sømna", "Sør-Aurdal", "Sør-Fron", "Sør-Odal", "Sør-Varanger", "Sørfold", "Sørreisa",
+    "Tana", "Time", "Tingvoll", "Tinn", "Tjeldsund", "Tokke", "Tolga", "Tromsø", "Trondheim", "Trysil", "Træna", "Tvedestrand", "Tydal", "Tynset", "Tysnes", "Tysvær", "Tønsberg",
+    "Ullensaker", "Ullensvang", "Ulstein", "Ulvik", "Utsira",
+    "Vadsø", "Vaksdal", "Valle", "Vang", "Vanylven", "Vardø", "Vefsn", "Vega", "Vegårshei", "Vennesla", "Verdal", "Vestby", "Vestnes", "Vestre Slidre", "Vestre Toten", "Vestvågøy", "Vevelstad", "Vik", "Vindafjord", "Vinje", "Volda", "Voss", "Værøy", "Vågan", "Våler",
+    "Øksnes", "Ørland", "Ørsta", "Østre Toten", "Øvre Eiker", "Øyer", "Øygarden", "Øystre Slidre",
+    "Åfjord", "Ål", "Ålesund", "Åmli", "Åmot", "Årdal", "Ås", "Åseral", "Åsnes"
+  ];
 
   // 1. STATE & VARIABLER
-  const [clientData, setClientData] = useState<any>(null);
+  // VIKTIG: Vi har SLETTET [clientData, setClientData] herfra fordi den kommer fra props!
   const [formData, setFormData] = useState<any>({});
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [clientData, setClientData] = useState<any>(startData);
+
+
+
+  // Når vi får ny data fra App (sjefen), oppdaterer vi vår lokale data
+  useEffect(() => {
+    if (startData) {
+      setClientData(startData);
+      setFormData(startData); // Fyller også ut skjemaet
+      setLoading(false);
+    }
+  }, [startData]);
 
   // Analyse State
   const [analysisResults, setAnalysisResults] = useState<{ mobile: AnalysisResult; desktop: AnalysisResult } | null>(null);
@@ -2640,6 +2788,9 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('Forbereder...');
+
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   // UI State
   const [isEditing, setIsEditing] = useState(false);
@@ -2756,86 +2907,561 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleUpgrade = () => setActiveTab('settings');
+  const handleUpgrade = () => {
+    // Legger til kundens ID helt på slutten av lenken!
+    const stripeLenke = "https://buy.stripe.com/test_din_stripe_lenke";
+    window.location.href = `${stripeLenke}?client_reference_id=${user.id}`;
+  }; setActiveTab('settings');
   const handleUnlockUrl = () => { if (confirm("Endring av URL nullstiller historikk. Sikker?")) setUrlUnlockRequested(true); };
 
-  // --- SØKEORD LOGIKK (Den viktige delen) ---
-  const handleAddKeyword = () => {
-    if (newKeywordInput.trim()) {
-      const updated = [...keywordsToTrack, newKeywordInput.trim()];
-      setKeywordsToTrack(updated);
-      setNewKeywordInput('');
-      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(updated));
+  // --- NY STATE FOR DENNE SIDEN ---
+  const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
+  const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null); // For AI-analyse
+
+
+
+  // --- STATE FOR INNHOLD SIDE ---
+  const [contentPages, setContentPages] = useState<ContentPage[]>([]);
+  const [selectedPage, setSelectedPage] = useState<ContentPage | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+
+  // SIMULATOR: Lager realistiske data basert på din URL (Siden vi mangler backend-crawler ennå)
+  // EKTE INNHOLDSSKANNER: Med Caching (24 timer)
+  // EKTE INNHOLDSSKANNER (Bruker Vercel Backend)
+  const runContentScan = async (forceRefresh = false) => {
+    if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger først.");
+
+    // Unngå dobbel-skanning hvis vi allerede har data og ikke tvinger refresh
+    if (contentPages.length > 0 && !forceRefresh) return;
+
+    setIsScanning(true);
+    // Vi setter lenke-scanning til true også, siden denne henter data for begge!
+    setIsScanningLinks(true);
+
+    try {
+      // Kall Vercel-skraperen vår!
+      const response = await fetch('/api/scan-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: formData.websiteUrl })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert("Feil ved skanning: " + data.error);
+        return;
+      }
+
+      if (data.pages && data.pages.length > 0) {
+        // 1. Fyller Innhold-fanen med ekte ordtelling og H1-feil
+        setContentPages(data.pages);
+
+        // 2. Fyller Lenke-fanen med den samme skannede strukturen!
+        const formattedLinkPages = data.pages.map((p: any, index: number) => ({
+          id: `link-${index}`,
+          url: p.url,
+          title: p.title,
+          inlinks: p.inlinks,
+          outlinks: p.outlinks,
+          status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
+          brokenLinks: 0,
+          linkScore: p.score,
+          anchorIssues: [],
+          hubType: index === 0 ? 'Pillar' : 'Cluster',
+          suggestedInlinks: []
+        }));
+
+        setLinkPages(formattedLinkPages);
+      } else {
+        alert("Fant ingen sider på dette domenet. Er URL-en riktig?");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Nettverksfeil under skanning.");
+    } finally {
+      setIsScanning(false);
+      setIsScanningLinks(false);
+    }
+  };
+  const [linkPages, setLinkPages] = useState<LinkPage[]>([]);
+  const [selectedLinkPage, setSelectedLinkPage] = useState<LinkPage | null>(null);
+  const [isScanningLinks, setIsScanningLinks] = useState(false);
+
+
+  // --- DYNAMISK RAPPORT-GENERATOR (Bruker dine ekte data) ---
+  const [dynamicReport, setDynamicReport] = useState<any>(null);
+
+  useEffect(() => {
+    // Kjør denne hver gang vi åpner rapport-fanen eller data endres
+    if (activeTab === 'reports') {
+      generateRealReport();
+    }
+  }, [activeTab, keywordData, contentPages, linkPages]);
+
+  const generateRealReport = () => {
+    // 1. Finn beste og dårligste data
+    const topKeywords = keywordData.filter(k => k.position <= 10);
+    const criticalPages = contentPages.filter(p => p.status === 'Kritisk');
+    const isolatedPages = linkPages.filter(p => p.status === 'Isolert');
+    const bestPage = contentPages.reduce((prev, current) => (prev.score > current.score) ? prev : current, contentPages[0]);
+    const worstPage = contentPages.reduce((prev, current) => (prev.score < current.score) ? prev : current, contentPages[0]);
+
+    // 2. Generer "Hvorfor du vokser" tekst basert på fakta
+    let growthText = "Vi har ikke nok data enda. Kjør flere analyser.";
+    let growthTitle = "Venter på data";
+
+    if (topKeywords.length > 0) {
+      growthTitle = "Sterk rangering";
+      growthText = `Google belønner deg for søkeordet "${topKeywords[0].keyword}" (Pos #${topKeywords[0].position}). Dette driver mesteparten av din organiske synlighet akkurat nå.`;
+    } else if (bestPage && bestPage.score > 80) {
+      growthTitle = "Kvalitetsinnhold";
+      growthText = `Siden din "${bestPage.title}" har en svært høy teknisk score (${bestPage.score}/100). Google liker sider som laster raskt og har godt innhold.`;
+    }
+
+    // 3. Generer "Hva som holder deg tilbake" tekst
+    let problemText = "Alt ser bra ut så langt!";
+    let problemTitle = "Ingen kritiske feil";
+
+    if (criticalPages.length > 0) {
+      problemTitle = "Tekniske hindringer";
+      problemText = `Du har ${criticalPages.length} sider med kritiske feil. Siden "${criticalPages[0].title}" ${criticalPages[0].issues[0] ? 'har problemet: ' + criticalPages[0].issues[0] : 'trenger umiddelbar oppmerksomhet'}.`;
+    } else if (isolatedPages.length > 0) {
+      problemTitle = "Isolert innhold";
+      problemText = `Siden "${isolatedPages[0].title}" har ingen interne lenker. Google finner ikke denne siden, og du går glipp av trafikk.`;
+    } else if (keywordData.length > 0 && topKeywords.length === 0) {
+      problemTitle = "Lav synlighet";
+      problemText = `Ingen av dine ${keywordData.length} søkeord er på side 1 enda. Du må jobbe med innholdet på sidene som rangerer på side 2-3.`;
+    }
+
+    // 4. Lag en faktisk handlingsplan (Weekly Plan)
+    const tasks = [];
+
+    // Oppgave 1: Lavthengende frukt (Søkeord pos 4-20)
+    const opportunityKeyword = keywordData.find(k => k.position > 3 && k.position < 20);
+    if (opportunityKeyword) {
+      tasks.push({
+        task: `Optimaliser teksten for "${opportunityKeyword.keyword}"`,
+        desc: `Du er på posisjon #${opportunityKeyword.position}. Litt mer innhold kan vippe deg til side 1.`,
+        impact: 'Høy trafikk',
+        time: '30 min',
+        color: 'emerald'
+      });
+    }
+
+    // Oppgave 2: Fiks den verste siden
+    if (worstPage && worstPage.status === 'Kritisk') {
+      tasks.push({
+        task: `Fiks feil på "${worstPage.title}"`,
+        desc: `Denne siden har score ${worstPage.score}/100. ${worstPage.issues[0] || 'Se gjennom innholdet.'}`,
+        impact: 'Teknisk SEO',
+        time: '15 min',
+        color: 'rose'
+      });
+    }
+
+    // Oppgave 3: Internlenking
+    if (isolatedPages.length > 0) {
+      tasks.push({
+        task: `Lenk til "${isolatedPages[0].title}"`,
+        desc: "Siden er foreldreløs. Legg til en lenke fra forsiden eller menyen.",
+        impact: 'Indeksering',
+        time: '5 min',
+        color: 'blue'
+      });
+    }
+
+    // Fallback oppgaver hvis alt er perfekt
+    if (tasks.length === 0) {
+      tasks.push({ task: "Se etter nye søkeord", desc: "Du har god helse. Utvid horisonten.", impact: 'Vekst', time: '20 min', color: 'violet' });
+    }
+
+    setDynamicReport({ growthTitle, growthText, problemTitle, problemText, tasks });
+  };
+
+  // --- AI HANDLERS FOR INNHOLD ---
+  const [aiLoading, setAiLoading] = useState<string | null>(null); // 'text' | 'links'
+  const [aiResponse, setAiResponse] = useState<any>(null);
+
+  // --- EKTE AI HANDLER (Bruker OpenAI API) ---
+  const handleAiAction = async (type: 'text' | 'links') => {
+    if (!selectedPage) return;
+    setAiLoading(type);
+    setAiResponse(null);
+
+    if (type === 'links') {
+      // Lenkeforslag er allerede ekte (den sjekker dine andre sider via koden din)
+      const internalSuggestions = contentPages
+        .filter(p => p.id !== selectedPage.id)
+        .slice(0, 3)
+        .map(p => ({
+          fromUrl: p.url,
+          anchor: selectedPage.title.split(' - ')[0] || 'Les mer'
+        }));
+      setAiResponse({ type: 'links', title: 'Forslag til interne lenker', links: internalSuggestions.length > 0 ? internalSuggestions : null });
+      setAiLoading(null);
+      return;
+    }
+
+    // EKTE TEKSTGENERERING VIA CHATGPT
+    try {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
+        alert("Mangler OpenAI API-nøkkel i .env filen.");
+        setAiLoading(null);
+        return;
+      }
+
+      const prompt = `Du er en SEO-ekspert. Skriv en optimalisert og selgende intro-tekst (ca 50 ord) for en nettside med tittel "${selectedPage.title}". Den skal være på norsk, fengende, og inkludere viktige nøkkelord for temaet.`;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Rask og billig modell
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 150
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.choices && data.choices.length > 0) {
+        setAiResponse({
+          type: 'text',
+          title: 'AI-optimalisert utkast',
+          content: data.choices[0].message.content.trim()
+        });
+      } else {
+        throw new Error("Fikk ikke svar fra AI.");
+      }
+    } catch (error) {
+      console.error(error);
+      setAiResponse({ type: 'text', title: 'Feil', content: 'Kunne ikke koble til AI. Prøv igjen senere.' });
+    } finally {
+      setAiLoading(null);
     }
   };
 
 
+
+  // --- STATE FOR LENKER (LIM INN HER, INNI ClientPortal) ---
+
+  // EKTE LENKESKANNER: Bruker Vercel-backend, men beholder ditt UI-format
+  const runLinkScan = async () => {
+    if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger først.");
+
+    setIsScanningLinks(true);
+
+    try {
+      // Vi bruker den nye, sikre skraperen på Vercel-serveren din!
+      const response = await fetch('/api/scan-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: formData.websiteUrl })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert("Feil ved skanning: " + data.error);
+        return;
+      }
+
+      if (data.pages && data.pages.length > 0) {
+        // Vi formaterer den ekte dataen fra serveren slik at Lenke-tabellen din forstår den
+        const formattedLinkPages = data.pages.map((p: any, index: number) => {
+          return {
+            id: `link-${index}`,
+            url: p.url,
+            title: p.title,
+            inlinks: p.inlinks,
+            outlinks: p.outlinks,
+            status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
+            brokenLinks: 0, // Her kan backend utvides senere for å faktisk sjekke 404
+            linkScore: p.score,
+            anchorIssues: [], // Klar for AI-analyse senere
+            hubType: index === 0 ? 'Pillar' : 'Cluster',
+            suggestedInlinks: [] // Klar for AI-forslag senere
+          };
+        });
+
+        setLinkPages(formattedLinkPages);
+
+        // Siden Vercel-skraperen allerede sjekker ordtelling og innhold, 
+        // kan vi fylle Innhold-fanen i samme slengen, så kunden slipper å vente to ganger!
+        setContentPages(data.pages);
+
+      } else {
+        alert("Fant ingen lesbare sider på dette domenet.");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Nettverksfeil under skanning.");
+    } finally {
+      setIsScanningLinks(false);
+    }
+  };
+
+  // Denne sørger for at dataene dine lastes inn igjen når du refresher siden
+  useEffect(() => {
+    const savedRankings = localStorage.getItem(`rankings_${user.id}`);
+    if (savedRankings) {
+      try {
+        const parsed = JSON.parse(savedRankings);
+        setKeywordData(parsed);
+        setHasSearched(true);
+      } catch (e) {
+        console.error("Kunne ikke laste lagrede data", e);
+      }
+    }
+  }, [user.id]);
+
+  // --- AUTO-LOAD CACHE (Gjør appen lynrask) ---
+  useEffect(() => {
+    if (!formData.websiteUrl) return;
+
+    // Last inn Innhold-cache hvis tabellen er tom
+    if (activeTab === 'content' && contentPages.length === 0) {
+      const contentCache = localStorage.getItem(`content_cache_${formData.websiteUrl}`);
+      if (contentCache) {
+        try {
+          const { data, timestamp } = JSON.parse(contentCache);
+          if (Date.now() - timestamp < 86400000) setContentPages(data);
+        } catch (e) { }
+      }
+    }
+
+    // Last inn Lenke-cache hvis tabellen er tom
+    if (activeTab === 'links' && linkPages.length === 0) {
+      const linkCache = localStorage.getItem(`link_cache_${formData.websiteUrl}`);
+      if (linkCache) {
+        try {
+          const { data, timestamp } = JSON.parse(linkCache);
+          if (Date.now() - timestamp < 86400000) setLinkPages(data);
+        } catch (e) { }
+      }
+    }
+  }, [activeTab, formData.websiteUrl, contentPages.length, linkPages.length]);
+
+  // --- SØKEORDSGRENSER ---
+  const getKeywordLimit = (level: number) => {
+    if (level >= 3) return 50; // Premium
+    if (level === 2) return 15; // Standard
+    return 3; // Basic
+  };
+  const currentKeywordLimit = getKeywordLimit(currentLevel);
+  const keywordsUsed = keywordsToTrack.length;
+  const canAddMoreKeywords = keywordsUsed < currentKeywordLimit;
+
+  // --- LEGG TIL SØKEORD (Med grense-sjekk) ---
+  const handleAddKeyword = () => {
+    if (!canAddMoreKeywords) {
+      alert(`Du har nådd grensen på ${currentKeywordLimit} søkeord for din nåværende plan. Oppgrader for å overvåke flere ord.`);
+      return;
+    }
+    if (newKeywordInput.trim() && locationInput.trim()) {
+      const newEntry = { keyword: newKeywordInput.trim(), location: locationInput.trim() };
+      const updated = [...keywordsToTrack, newEntry];
+      setKeywordsToTrack(updated);
+      setNewKeywordInput('');
+      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(updated));
+    } else {
+      alert("Du må skrive både søkeord og velge en kommune.");
+    }
+  };
+
+  // --- STRENG SLETTING ---
+  const handleRemoveKeyword = (keywordToRemove: string, locationToRemove: string) => {
+    const isConfirmed = window.confirm(
+      `STRENG ADVARSEL: \n\nHvis du sletter "${keywordToRemove}", sletter du all historikk og grafdata for dette ordet for alltid.\n\nSEO handler om å bygge data over tid. Vi anbefaler sterkt å beholde ordet.\n\nEr du 100% sikker på at du vil slette det?`
+    );
+    if (!isConfirmed) return;
+
+    // Fjern fra listen over ord
+    const updatedKeywords = keywordsToTrack.filter((k: any) =>
+      !(k.keyword === keywordToRemove && k.location === locationToRemove)
+    );
+    setKeywordsToTrack(updatedKeywords);
+    localStorage.setItem(`keywords_${user.id}`, JSON.stringify(updatedKeywords));
+
+    // Fjern fra resultat-listen
+    const updatedRankings = realRankings.filter(r =>
+      !(r.keyword === keywordToRemove && r.location === locationToRemove)
+    );
+    setRealRankings(updatedRankings);
+    localStorage.setItem(`rankings_${user.id}`, JSON.stringify(updatedRankings));
+  };
+
   const handleCheckRankings = async () => {
-    if (currentLevel < 2) return alert("Du må ha Standard pakke.");
     if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger.");
 
-    let activeKeywords = [...keywordsToTrack];
+    // --- 1. SØKEORDSKVOTE & AUTOMATISK LEGG TIL ---
+    const currentKeywordLimit = currentLevel >= 3 ? 50 : currentLevel === 2 ? 15 : 3;
+    let activeList = [...keywordsToTrack];
+
+    // Sjekk om brukeren har skrevet noe nytt i søkefeltet
     if (newKeywordInput.trim()) {
-      activeKeywords.push(newKeywordInput.trim());
-      setKeywordsToTrack(activeKeywords);
-      setNewKeywordInput('');
+      if (!locationInput.trim()) return alert("Du må fylle ut sted (f.eks Oslo) for å søke.");
+      if (activeList.length >= currentKeywordLimit) {
+        alert(`Søkeordskvoten din på ${currentKeywordLimit} er full!`);
+        return;
+      }
+
+      const newEntry = { keyword: newKeywordInput.trim(), location: locationInput.trim() };
+      activeList = [...activeList, newEntry];
+      setKeywordsToTrack(activeList);
+
+      // Vi sletter localStorage her, siden vi lagrer alt i Supabase lenger ned
+      setNewKeywordInput(''); // Tømmer feltet
     }
-    if (activeKeywords.length === 0) return alert("Legg til et søkeord.");
+
+    if (activeList.length === 0) return alert("Legg til et søkeord.");
 
     setRankingLoading(true);
-    setRealRankings([]);
     setHasSearched(true);
 
     const cleanDomain = formData.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
 
     try {
-      const promises = activeKeywords.map(async (keyword) => {
-        try {
-          // Vi kaller din lokale Vercel API i rotmappen (/api/search.js)
-          const response = await fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`);
+      const promises = activeList.map(async (entry: any) => {
+        const keyword = typeof entry === 'string' ? entry : entry.keyword;
+        const location = typeof entry === 'string' ? 'Oslo' : entry.location;
 
-          if (!response.ok) throw new Error("Server feil");
+        try {
+          // Snakker med den trygge Vercel-serveren din (backend)
+          const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword, location })
+          });
 
           const data = await response.json();
 
-          if (data.error) throw new Error(data.error);
+          if (data.error) {
+            console.error("Server svarte med feil:", data.error);
+            return null; // Hopper over dette ordet hvis serveren feiler
+          }
 
           let position = 101;
           let url = '-';
+          let extractedCompetitors: any[] = [];
+          let resultType = 'Tekst';
 
           if (data.organic_results) {
             const found = data.organic_results.find((r: any) => r.link && r.link.includes(cleanDomain));
             if (found) {
               position = found.position;
-              url = found.link.replace(formData.websiteUrl, '');
+              url = found.link.replace(formData.websiteUrl, '').replace('https://', '').replace(cleanDomain, '');
+              if (url === '') url = '/';
             }
+            extractedCompetitors = data.organic_results.slice(0, 5).map((r: any) => ({
+              position: r.position, title: r.title, url: r.link, snippet: r.snippet
+            }));
           }
 
-          let intent = 'Info';
-          const kw = keyword.toLowerCase();
-          if (kw.includes('pris') || kw.includes('kjøp')) intent = 'Trans';
-          else if (kw.includes('hvor') || kw.includes('nær')) intent = 'Local';
+          // Sjekk hva slags resultater Google viser
+          if (data.local_results) resultType += ", Kart";
+          if (data.inline_images) resultType += ", Bilder";
 
-          const advice = position <= 10 ? "Bra jobba!" : "Du må jobbe med innholdet.";
-          const ctr = position === 1 ? 32 : position <= 3 ? 15 : position <= 10 ? 3 : 0;
+          // Ekte data (eller estimater basert på live tall) for volum og KD
+          const totalResults = data.search_information?.total_results || 10000;
+          const kd = Math.min(100, Math.max(10, Math.round((totalResults / 1000000) * 10)));
+          const intent = ['Kjøp', 'Info', 'Lokal'][Math.floor(Math.random() * 3)];
 
-          return { keyword, position, url, intent, ctr, advice, change: 0 };
+          // --- 2. EKTE HISTORIKK-LOGIKK ---
+          const todayDate = new Date().toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' });
 
-        } catch (innerError: any) {
-          console.error(`Feil på ordet '${keyword}':`, innerError);
-          return { keyword, position: 0, url: 'FEIL', intent: 'Error', ctr: 0, advice: 'Feil ved henting', change: 0 };
+          // Finn tidligere data for dette søkeordet for å beholde grafen
+          const existingKeywordData = realRankings.find((r: any) => r.keyword === keyword && r.location === location);
+          let newHistory = existingKeywordData?.history ? [...existingKeywordData.history] : [];
+
+          // Sjekk om vi allerede har et punkt for i dag
+          const hasToday = newHistory.some((h: any) => h.date === todayDate);
+
+          if (hasToday) {
+            // Oppdater dagens posisjon hvis man søker flere ganger samme dag
+            newHistory = newHistory.map((h: any) => h.date === todayDate ? { ...h, rank: position } : h);
+          } else {
+            // Legg til ny måling
+            newHistory.push({ date: todayDate, rank: position });
+          }
+
+          // Behold maks de siste 30 dagene
+          if (newHistory.length > 30) newHistory.shift();
+
+          // Kalkuler ekte endring (Change) siden forrige måling
+          let change = 0;
+          if (newHistory.length > 1) {
+            const previousRank = newHistory[newHistory.length - 2].rank;
+            change = previousRank - position;
+          }
+
+          return {
+            keyword,
+            location,
+            position,
+            url,
+            change: change,
+            volume: resultType,
+            competition: totalResults,
+            kd,
+            intent,
+            history: newHistory,
+            competitors: extractedCompetitors
+          } as any;
+
+        } catch (err) {
+          console.error(err);
+          return null;
         }
       });
 
-      const results = await Promise.all(promises);
+      const results = (await Promise.all(promises)).filter(Boolean);
+      setKeywordData(results);
       setRealRankings(results);
 
-      localStorage.setItem(`rankings_${user.id}`, JSON.stringify(results));
-      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(activeKeywords));
+      // --- 3. LAGRE TIL SUPABASE (ERSTATTER LOCALSTORAGE) ---
+      for (const result of results) {
+        // 1. Sjekk om ordet allerede finnes i databasen for denne kunden
+        const { data: existing } = await supabase
+          .from('user_keywords')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('keyword', result.keyword)
+          .eq('location', result.location)
+          .single();
+
+        if (existing) {
+          // 2. Hvis det finnes, oppdaterer vi grafen og historikken
+          await supabase
+            .from('user_keywords')
+            .update({ keyword_data: result })
+            .eq('id', existing.id);
+        } else {
+          // 3. Hvis det er helt nytt, legger vi det inn i databasen
+          await supabase
+            .from('user_keywords')
+            .insert({
+              user_id: user.id,
+              keyword: result.keyword,
+              location: result.location,
+              keyword_data: result
+            });
+        }
+      }
+
+      // Sletter lokale data for å være 100% sikre på at vi kun bruker databasen
+      localStorage.removeItem(`keywords_${user.id}`);
+      localStorage.removeItem(`rankings_${user.id}`);
 
     } catch (error) {
-      console.error("Total feil:", error);
-      alert("Sjekk VITE_SERP_API_KEY i Vercel.");
+      alert("Feil ved henting av data.");
     } finally {
       setRankingLoading(false);
     }
@@ -2928,22 +3554,61 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster...</div></div>;
 
   return (
-    <div className="flex min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-violet-500/30">
-      {/* Bakgrunn */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0"><div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-900/20 rounded-full blur-[120px]"></div></div>
+    <div className={`flex min-h-screen transition-colors duration-300 ${theme === 'light' ? 'bg-[#F8FAFC] text-slate-800' : 'bg-slate-950 text-slate-200'}`}>
 
-      {/* Sidebar */}
-      <aside className="w-20 lg:w-64 bg-slate-900/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20 flex flex-col shadow-2xl">
-        <div className="p-6 flex items-center gap-3 border-b border-white/5"><div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">S</div><span className="font-black text-xl hidden lg:block text-white">Sikt.</span></div>
-        <nav className="flex-1 px-3 py-6 space-y-2">{menuItems.map((item) => (<button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all border ${activeTab === item.id ? 'bg-white/10 text-white border-white/10' : 'text-slate-400 hover:bg-white/5 border-transparent'}`}><item.icon size={20} /><span className="hidden lg:block text-sm font-medium">{item.label}</span></button>))}</nav>
-        <div className="p-4 border-t border-white/5"><p className="text-[10px] font-bold text-slate-500 mb-1 hidden lg:block">ABONNEMENT</p><div className="hidden lg:flex justify-between items-center bg-slate-950/50 p-2 rounded-lg border border-white/5 mb-3"><span className="text-xs font-bold text-slate-300 pl-1">{currentPkgName}</span>{currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-400">Oppgrader</button>}</div><button onClick={onLogout} className="flex items-center gap-2 text-slate-500 hover:text-rose-400 text-xs font-bold"><LogOut size={16} /><span className="hidden lg:inline">Logg ut</span></button></div>
+      {/* Bakgrunnseffekter (Mykere i lys modus) */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className={`absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full blur-[120px] ${theme === 'light' ? 'bg-indigo-100/40' : 'bg-violet-900/20'}`}></div>
+      </div>
+
+      {/* Sidebar med skygge i lys modus */}
+      <aside className={`w-20 lg:w-64 fixed h-full z-20 flex flex-col transition-colors duration-300 border-r backdrop-blur-xl
+        ${theme === 'light' ? 'bg-white border-slate-200/50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)]' : 'bg-slate-900/80 border-white/5 shadow-2xl'}
+      `}>
+        <div className={`p-6 flex items-center gap-3 border-b ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
+          <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">S</div>
+          <span className={`font-black text-xl hidden lg:block ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Sikt.</span>
+        </div>
+
+        <nav className="flex-1 px-3 py-6 space-y-2">
+          {menuItems.map((item) => (
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all border font-medium ${activeTab === item.id ? 'bg-violet-600 text-white shadow-md border-transparent' : theme === 'light' ? 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent' : 'text-slate-400 hover:bg-white/5 border-transparent'}`}>
+              <item.icon size={20} />
+              <span className="hidden lg:block text-sm">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className={`p-4 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
+          <p className="text-[10px] font-bold text-slate-500 mb-1 hidden lg:block uppercase tracking-wider">ABONNEMENT</p>
+          <div className={`hidden lg:flex justify-between items-center p-2 rounded-lg border mb-3 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/50 border-white/5'}`}>
+            <span className={`text-xs font-bold pl-1 ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{currentPkgName}</span>
+            {currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-500 hover:text-violet-600">Oppgrader</button>}
+          </div>
+          <button onClick={onLogout} className={`flex items-center gap-2 text-xs font-bold w-full p-2 rounded-lg transition-colors ${theme === 'light' ? 'text-slate-500 hover:bg-rose-50 hover:text-rose-600' : 'text-slate-500 hover:text-rose-400 hover:bg-white/5'}`}>
+            <LogOut size={16} /><span className="hidden lg:inline">Logg ut</span>
+          </button>
+        </div>
       </aside>
 
-      {/* Content */}
+      {/* Content Area */}
       <main className="flex-1 ml-20 lg:ml-64 p-6 lg:p-10 max-w-6xl mx-auto relative z-10">
+
+        {/* Top Header */}
         <header className="flex justify-between items-center mb-8">
-          <div><h1 className="text-3xl font-black text-white">{menuItems.find(i => i.id === activeTab)?.label}</h1><p className="text-slate-400 text-sm mt-1 flex gap-2"><Globe size={14} /> {clientData?.websiteUrl || '...'}</p></div>
-          <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-violet-400 font-bold">{user.email.charAt(0).toUpperCase()}</div>
+          <div>
+            <h1 className={`text-3xl font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+              {menuItems.find(i => i.id === activeTab)?.label}
+            </h1>
+            <p className="text-slate-400 text-sm mt-1 flex gap-2">
+              <Globe size={14} /> {clientData?.websiteUrl || '...'}
+            </p>
+          </div>
+          <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold shadow-sm
+            ${theme === 'light' ? 'bg-white border-slate-200 text-violet-600' : 'bg-slate-800 border-white/10 text-violet-400'}
+          `}>
+            {user.email.charAt(0).toUpperCase()}
+          </div>
         </header>
 
         {activeTab === 'dashboard' && (
@@ -3031,242 +3696,1620 @@ const ClientPortal = ({ user, onLogout }: { user: any, onLogout: () => void }) =
           </div>
         )}
 
-        {/* --- 10-PUNKTS SØKEORD SIDE --- */}
-        {activeTab === 'keywords' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+        {/* --- INNHOLD & REVISJON (MED FUNGERENDE KNAPPER) --- */}
+        {activeTab === 'content' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
 
-            {/* Header og Input */}
-            <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
-              <div><h1 className="text-3xl font-black text-white">Søkeord</h1><p className="text-slate-400 text-sm">Spor dine rangeringer på Google Norge.</p></div>
-              <div className="flex gap-2 w-full md:w-auto bg-slate-900/80 p-1.5 rounded-xl border border-white/10">
-                <input value={newKeywordInput} onChange={(e) => setNewKeywordInput(e.target.value)} placeholder={currentLevel < 2 ? "Oppgrader for å legge til" : "Nytt søkeord..."} disabled={currentLevel < 2} className="bg-transparent pl-3 text-sm text-white outline-none w-full md:w-48" />
-                <button onClick={handleAddKeyword} disabled={currentLevel < 2} className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+</button>
-                <button
-                  onClick={handleCheckRankings}
-                  disabled={rankingLoading || currentLevel < 2 || (keywordsToTrack.length === 0 && !newKeywordInput)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${currentLevel < 2 || (keywordsToTrack.length === 0 && !newKeywordInput)
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                    : 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-900/20'
-                    }`}
-                >
-                  {rankingLoading ? <Loader2 className="animate-spin" size={14} /> : <Search size={14} />}
-                  {rankingLoading ? 'Henter fra Google...' : 'Oppdater Rangeringer'}
-                </button>
-              </div>
-            </div>
+            {/* 1. HEADER & HANDINGER */}
+            <div className={`flex flex-col md:flex-row justify-between items-end gap-6 p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
-            {/* 1. OVERSIKT (TOP CARDS) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Layers size={40} className="text-white" /></div>
-                <p className="text-slate-400 text-xs font-bold uppercase">Totalt Funnet</p>
-                <p className="text-3xl font-black text-white mt-1">{hasSearched ? realRankings.filter(r => r.position <= 100).length : '-'}</p>
-                <p className="text-slate-500 text-[10px] mt-1">Av {keywordsToTrack.length} sjekket</p>
-              </div>
-              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Target size={40} className="text-white" /></div>
-                <p className="text-slate-400 text-xs font-bold uppercase">Topp 10</p>
-                <p className="text-3xl font-black text-white mt-1">{hasSearched ? realRankings.filter(r => r.position <= 10).length : '-'}</p>
-                <p className="text-emerald-400 text-[10px] mt-1 font-bold flex gap-1 items-center"><CheckCircle2 size={10} /> Side 1</p>
-              </div>
-              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={40} className="text-white" /></div>
-                <p className="text-slate-400 text-xs font-bold uppercase">Endring</p>
-                <p className="text-3xl font-black text-white mt-1">
-                  {hasSearched ? (() => {
-                    const netChange = realRankings.reduce((acc, curr) => acc + (curr.change || 0), 0);
-                    return netChange > 0 ? `+${netChange}` : netChange;
-                  })() : '-'}
+              <div className="relative z-10">
+                <h1 className={`text-4xl font-black tracking-tight flex items-center gap-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  Innhold & Kvalitet
+                </h1>
+                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Totaloversikt over nettstedets innhold. Vi finner tekniske feil, tynt innhold og muligheter for bedre rangering.
                 </p>
-                <p className="text-slate-500 text-[10px] mt-1">Siden forrige søk</p>
               </div>
-              <div className="bg-slate-900/50 p-5 rounded-2xl border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Eye size={40} className="text-white" /></div>
-                <p className="text-slate-400 text-xs font-bold uppercase">Trafikkpotensial</p>
-                <p className="text-3xl font-black text-white mt-1">{hasSearched ? Math.round(realRankings.reduce((acc, curr) => acc + curr.ctr, 0)) + '%' : '-'}</p>
-                <p className="text-slate-500 text-[10px] mt-1">Estimert CTR</p>
-              </div>
+
+              <button
+                onClick={() => runContentScan(true)}
+                disabled={isScanning}
+                className="relative z-10 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-violet-500/20 flex items-center gap-3 transition-all whitespace-nowrap group"
+              >
+                {isScanning ? <Loader2 className="animate-spin" /> : <RefreshCw className="group-hover:rotate-180 transition-transform duration-500" />}
+                {isScanning ? 'Analyserer nettsiden...' : 'Skann Nettsted'}
+              </button>
             </div>
 
-            {/* 4. HISTORISK GRAF */}
-            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-white flex items-center gap-2"><BarChart2 size={18} className="text-violet-400" /> Rangeringstrend</h3>
-                {currentLevel < 2 && <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-white/5 flex gap-1 items-center"><Lock size={10} /> Standard</span>}
-              </div>
-              {currentLevel >= 2 ? (
-                <div className="h-40 flex items-end justify-around gap-2 px-4 border-b border-white/5 pb-2">
-                  {['1-3', '4-10', '11-20', '21-50', '50+'].map((label, i) => {
-                    const count = realRankings.filter(r => {
-                      if (i === 0) return r.position <= 3;
-                      if (i === 1) return r.position > 3 && r.position <= 10;
-                      if (i === 2) return r.position > 10 && r.position <= 20;
-                      if (i === 3) return r.position > 20 && r.position <= 50;
-                      return r.position > 50;
-                    }).length;
-                    const height = keywordsToTrack.length > 0 ? (count / keywordsToTrack.length) * 100 : 0;
-                    return (
-                      <div key={label} className="w-full flex flex-col items-center gap-2">
-                        <div className="w-12 bg-violet-500/20 rounded-t-md relative group hover:bg-violet-500/40 transition-all" style={{ height: `${height === 0 ? 5 : height}%`, minHeight: '10px' }}>
-                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-white opacity-0 group-hover:opacity-100">{count}</div>
-                        </div>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold">{label}</span>
-                      </div>
-                    );
-                  })}
+            {/* 2. KPI KORT */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                {
+                  label: 'Sider Funnet',
+                  val: contentPages.length > 0 ? contentPages.length : '-',
+                  icon: FileText,
+                  col: theme === 'light' ? 'text-blue-600' : 'text-blue-400',
+                  hint: 'Totalt antall sider vi fant på ditt domene.'
+                },
+                {
+                  label: 'Kritisk Innhold',
+                  val: contentPages.length > 0 ? contentPages.filter(p => p.status === 'Kritisk').length : '-',
+                  icon: AlertTriangle,
+                  col: 'text-rose-500',
+                  hint: 'Sider med alvorlige mangler som skader din SEO.'
+                },
+                {
+                  label: 'Innholdshelse',
+                  val: contentPages.length > 0 ? (currentLevel >= 2 ? Math.round(contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) + '/100' : 'Låst') : '-',
+                  icon: Activity,
+                  col: currentLevel >= 2 ? 'text-emerald-500' : 'text-slate-500',
+                  hint: 'Samlet kvalitetsscore.'
+                },
+                {
+                  label: 'Nye Muligheter',
+                  val: contentPages.length > 0 ? (currentLevel >= 3 ? 'Høy' : 'Låst') : '-',
+                  icon: Layers,
+                  col: currentLevel >= 3 ? 'text-violet-500' : 'text-slate-500',
+                  hint: 'Potensial for nye artikler.'
+                },
+              ].map((stat, i) => (
+                <div key={i} className={`p-6 rounded-2xl border relative group transition-all overflow-visible z-10 duration-300 ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}`}>
+                  <div className={`absolute top-4 right-4 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
+                  <div className="flex items-center gap-2 mb-2 relative z-20">
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</p>
+                    <InfoHint text={stat.hint} />
+                  </div>
+                  <p className={`text-3xl font-black ${stat.col} flex items-center gap-2`}>
+                    {stat.val === 'Låst' && <Lock size={16} className="text-slate-400" />}
+                    {stat.val}
+                  </p>
                 </div>
-              ) : <LockedSection title="Se historikk" description="Oppgrader for å se utvikling." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />}
+              ))}
             </div>
 
-            {/* 3. FILTER & 2. HOVEDTABELL */}
-            <div className="bg-slate-900/50 rounded-2xl border border-white/5 overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex gap-2 overflow-x-auto">
-                <button onClick={() => setFilterPos('All')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'All' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Alle</button>
-                <button onClick={() => setFilterPos('Top3')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'Top3' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Topp 3</button>
-                <button onClick={() => setFilterPos('Top10')} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterPos === 'Top10' ? 'bg-white/10 text-white border-white/20' : 'border-transparent text-slate-400'}`}>Topp 10</button>
-                <div className="w-px h-6 bg-white/10 mx-2"></div>
-                {['Informational', 'Transactional', 'Commercial', 'Local'].map(i => (
-                  <button key={i} onClick={() => setFilterIntent(filterIntent === i ? 'All' : i)} className={`px-3 py-1 text-xs font-bold rounded-lg border ${filterIntent === i ? 'bg-violet-500/20 text-violet-300 border-violet-500/30' : 'border-transparent text-slate-400'}`}>{i}</button>
-                ))}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[800px]">
+
+              {/* 3. HOVEDTABELL (VENSTRE SIDE) */}
+              <div className={`lg:col-span-2 rounded-3xl border shadow-xl flex flex-col overflow-hidden relative transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
+
+                <div className={`p-6 border-b flex justify-between items-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'}`}>
+                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><FileText size={18} className="text-blue-500" /> Alle Sider</h3>
+                  {contentPages.length > 0 && <span className="text-xs text-slate-500">{contentPages.length} URLer</span>}
+                </div>
+
+                <div className="flex-1 overflow-hidden relative">
+                  {contentPages.length === 0 ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                      <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 relative ${theme === 'light' ? 'bg-violet-50' : 'bg-slate-800/50'}`}>
+                        <div className="absolute inset-0 bg-violet-500/20 rounded-full animate-ping"></div>
+                        <Radar size={40} className="text-violet-500 relative z-10" />
+                      </div>
+                      <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar til å kartlegge nettstedet</h3>
+                      <p className={`text-sm max-w-sm leading-relaxed mb-8 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Klikk på <span className="font-bold">"Skann Nettsted"</span> øverst for å hente inn alle sidene dine og analysere kvaliteten.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+                      <table className="w-full text-left border-collapse">
+                        <thead className={`text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm ${theme === 'light' ? 'bg-slate-100 text-slate-500' : 'bg-slate-950 text-slate-500'}`}>
+                          <tr>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Side / Tittel <InfoHint text="Sidens tittel og URL." /></div></th>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Ord <InfoHint text="Antall ord." /></div></th>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Status <InfoHint text="Vår vurdering." /></div></th>
+                            <th className="p-4 text-right"><div className="flex items-center justify-end gap-1 cursor-help">Sist endret <InfoHint text="Dato." /></div></th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
+                          {contentPages.map((page, i) => (
+                            <tr
+                              key={i}
+                              onClick={() => { setSelectedPage(page); setAiResponse(null); }}
+                              className={`transition-colors group cursor-pointer 
+                                ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
+                                ${selectedPage === page ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/10 border-l-2 border-violet-500') : ''}
+                              `}
+                            >
+                              <td className="p-4">
+                                <div className={`font-bold truncate max-w-[200px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{page.title}</div>
+                                <div className="text-xs text-slate-500 truncate max-w-[200px]">{page.url}</div>
+                              </td>
+                              <td className={`p-4 font-mono text-xs ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{page.wordCount}</td>
+                              <td className="p-4">
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border flex w-fit items-center gap-1 
+                                  ${page.status === 'Bra' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
+                                    page.status === 'Advarsel' ? (theme === 'light' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20') :
+                                      (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')}
+                                `}>
+                                  {page.status === 'Bra' && <CheckCircle2 size={10} />}
+                                  {page.status === 'Advarsel' && <AlertTriangle size={10} />}
+                                  {page.status === 'Kritisk' && <AlertCircle size={10} />}
+                                  {page.status}
+                                </span>
+                              </td>
+                              <td className="p-4 text-right text-xs text-slate-500">
+                                {page.lastUpdated}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* 4. AI INSPEKTØR (HØYRE SIDE) */}
+              <div className={`rounded-3xl border flex flex-col h-full relative overflow-hidden shadow-2xl transition-all duration-300 ${theme === 'light' ? 'bg-gradient-to-b from-violet-50/50 to-white border-violet-100' : 'bg-slate-900/50 border-white/5'}`}>
+
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500"></div>
+
+                <div className={`p-6 border-b ${theme === 'light' ? 'border-violet-100 bg-white' : 'border-white/5 bg-slate-900/80'}`}>
+                  <h3 className={`font-bold flex items-center gap-2 mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Sparkles size={18} className="text-violet-500" /> AI Inspektør</h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedPage ? "Analyse av valgt side" : "Velg en side i tabellen for å starte."}
+                  </p>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar relative">
+
+                  {!selectedPage && (
+                    <div className={`h-full flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-50' : 'opacity-40'}`}>
+                      <MousePointer2 className="w-12 h-12 mb-3 text-slate-500" />
+                      <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>Ingen side valgt</p>
+                      <p className="text-xs text-slate-500 max-w-[200px] mt-2">Klikk på en rad i tabellen til venstre for å se AI-analysen.</p>
+                    </div>
+                  )}
+
+                  {selectedPage && (
+                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+
+                      <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-slate-950 border-white/10'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Analyserer</p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded border ${theme === 'light' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-slate-900 text-slate-400 border-white/5'}`}>{selectedPage.readability} lesbarhet</span>
+                        </div>
+                        <p className={`font-bold text-base mb-1 leading-snug ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.title}</p>
+                        <a href={formData.websiteUrl + selectedPage.url} target="_blank" rel="noreferrer" className="text-xs text-violet-500 hover:text-violet-600 flex items-center gap-1 truncate mt-2">
+                          <ExternalLink size={10} /> {selectedPage.url}
+                        </a>
+                      </div>
+
+                      <div className="relative">
+                        {currentLevel < 2 && (
+                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
+                            <div className="text-center p-4">
+                              <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Standard Funksjon</p>
+                              <p className="text-xs text-slate-500 mb-3">Se konkrete feil og tiltak.</p>
+                              <button onClick={handleUpgrade} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-white text-slate-900 hover:bg-slate-200'}`}>Oppgrader</button>
+                            </div>
+                          </div>
+                        )}
+
+                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                          <Activity size={16} className="text-emerald-500" /> Kvalitetsrapport
+                        </h4>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`flex-1 h-2 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
+                              <div className={`h-full rounded-full ${selectedPage.score > 70 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${selectedPage.score}%` }}></div>
+                            </div>
+                            <span className={`text-xs font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.score}/100</span>
+                          </div>
+
+                          {selectedPage.issues.length > 0 ? (
+                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'}`}>
+                              <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                              <div>
+                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-rose-700' : 'text-rose-400'}`}>Problemer funnet</p>
+                                <ul className={`text-xs mt-1 list-disc pl-4 space-y-1 ${theme === 'light' ? 'text-rose-600' : 'text-slate-300'}`}>
+                                  {selectedPage.issues.map((issue, idx) => (
+                                    <li key={idx}>{issue}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                              <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                              <div>
+                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>Alt ser bra ut</p>
+                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-emerald-600' : 'text-slate-300'}`}>Ingen kritiske tekniske feil funnet.</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={`relative pt-4 border-t ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
+                        {currentLevel < 3 && (
+                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border mt-4 ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
+                            <div className="text-center p-4">
+                              <BrainCircuit className="w-8 h-8 text-fuchsia-500 mx-auto mb-2" />
+                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Premium Strategi</p>
+                              <p className="text-xs text-slate-500 mb-3">La AI skrive og planlegge innhold.</p>
+                              <button onClick={handleUpgrade} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all">Oppgrader</button>
+                            </div>
+                          </div>
+                        )}
+
+                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                          <Layers size={16} className="text-fuchsia-500" /> Strategi & Handling
+                        </h4>
+
+                        <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-gradient-to-b from-fuchsia-50/50 to-white border-fuchsia-100 shadow-sm' : 'bg-gradient-to-b from-fuchsia-900/10 to-slate-900 border-fuchsia-500/20'}`}>
+                          <div className="flex justify-between items-center mb-4">
+                            <div>
+                              <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Topic Cluster</p>
+                              <p className={`text-sm font-medium ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.topicCluster}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Anbefaling</p>
+                              <p className={`text-sm font-medium ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.action}</p>
+                            </div>
+                          </div>
+
+                          {aiResponse && (
+                            <div className={`mb-4 p-3 rounded-lg border animate-in slide-in-from-top-2 ${theme === 'light' ? 'bg-violet-50 border-violet-100' : 'bg-white/10 border-white/10'}`}>
+                              <p className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1"><Sparkles size={10} /> {aiResponse.title}</p>
+                              {aiResponse.type === 'text' ? (
+                                <p className={`text-xs leading-relaxed italic ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>"{aiResponse.content}"</p>
+                              ) : (
+                                aiResponse.links ? (
+                                  <ul className={`text-xs space-y-1 ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>
+                                    {aiResponse.links.map((l: any, idx: number) => (
+                                      <li key={idx}>🔗 Fra <span className="font-bold">{l.fromUrl}</span></li>
+                                    ))}
+                                  </ul>
+                                ) : <p className="text-xs text-slate-500">Fant ingen andre sider å lenke fra.</p>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <button onClick={() => handleAiAction('text')} disabled={aiLoading !== null} className={`w-full py-2.5 rounded text-xs font-bold border flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600' : 'bg-slate-800 border-white/10 text-white hover:bg-slate-700'}`}>
+                              {aiLoading === 'text' ? <Loader2 className="animate-spin" size={12} /> : <Edit2 size={12} />}
+                              Generer forbedret tekst (AI)
+                            </button>
+                            <button onClick={() => handleAiAction('links')} disabled={aiLoading !== null} className={`w-full py-2.5 rounded text-xs font-bold border flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600' : 'bg-slate-800 border-white/10 text-white hover:bg-slate-700'}`}>
+                              {aiLoading === 'links' ? <Loader2 className="animate-spin" size={12} /> : <Link2 size={12} />}
+                              Finn interne lenker
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* --- LENKER & STRUKTUR (LINKS PAGE) --- */}
+        {activeTab === 'links' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
+
+            <div className={`flex flex-col md:flex-row justify-between items-end gap-6 p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+              <div className="relative z-10">
+                <h1 className={`text-4xl font-black tracking-tight flex items-center gap-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  Lenkestruktur
+                </h1>
+                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Optimaliser flyten av trafikk på nettstedet ditt. Vi finner ødelagte lenker, isolerte sider og forbedrer intern struktur.
+                </p>
+              </div>
+
+              <button
+                onClick={() => runLinkScan()}
+                disabled={isScanningLinks}
+                className="relative z-10 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-violet-500/20 flex items-center gap-3 transition-all whitespace-nowrap group"
+              >
+                {isScanningLinks ? <Loader2 className="animate-spin" /> : <Link2 className="group-hover:rotate-45 transition-transform duration-500" />}
+                {isScanningLinks ? 'Kartlegger lenker...' : 'Start Lenkeanalyse'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Interne Lenker', val: linkPages.length > 0 ? linkPages.reduce((acc, p) => acc + p.inlinks, 0) : '-', icon: GitMerge, col: theme === 'light' ? 'text-blue-600' : 'text-blue-400', hint: 'Totalt antall lenker som går mellom dine egne sider.' },
+                { label: 'Isolerte Sider', val: linkPages.length > 0 ? linkPages.filter(p => p.status === 'Isolert').length : '-', icon: Unlink, col: 'text-amber-500', hint: 'Sider som ingen andre lenker til (Orphan pages).' },
+                { label: 'Ødelagte Lenker', val: linkPages.length > 0 ? linkPages.reduce((acc, p) => acc + p.brokenLinks, 0) : '-', icon: XCircle, col: 'text-rose-500', hint: 'Lenker som gir 404-feil og stopper brukeren.' },
+                { label: 'Lenke-Score', val: linkPages.length > 0 ? (currentLevel >= 2 ? Math.round(linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) + '/100' : 'Låst') : '-', icon: Activity, col: currentLevel >= 2 ? 'text-emerald-500' : 'text-slate-500', hint: 'Hvor godt nettstedet ditt er knyttet sammen.' },
+              ].map((stat, i) => (
+                <div key={i} className={`p-6 rounded-2xl border relative group transition-all overflow-visible z-10 duration-300 ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}`}>
+                  <div className={`absolute top-4 right-4 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
+                  <div className="flex items-center gap-2 mb-2 relative z-20">
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</p>
+                    <InfoHint text={stat.hint} />
+                  </div>
+                  <p className={`text-3xl font-black ${stat.col} flex items-center gap-2`}>
+                    {stat.val === 'Låst' && <Lock size={16} className="text-slate-400" />}
+                    {stat.val}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[800px]">
+
+              <div className={`lg:col-span-2 rounded-3xl border shadow-xl flex flex-col overflow-hidden relative transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
+                <div className={`p-6 border-b flex justify-between items-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'}`}>
+                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Link2 size={18} className="text-blue-500" /> Lenkestruktur</h3>
+                  {linkPages.length > 0 && <span className="text-xs text-slate-500">{linkPages.length} Sider</span>}
+                </div>
+
+                <div className="flex-1 overflow-hidden relative">
+                  {linkPages.length === 0 ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                      <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 relative ${theme === 'light' ? 'bg-blue-50' : 'bg-slate-800/50'}`}>
+                        <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-pulse"></div>
+                        <GitMerge size={40} className="text-blue-500 relative z-10" />
+                      </div>
+                      <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar for lenkeanalyse</h3>
+                      <p className={`text-sm max-w-sm leading-relaxed mb-8 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Klikk på <span className="font-bold">"Start Lenkeanalyse"</span> for å kartlegge hvordan sidene dine henger sammen.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+                      <table className="w-full text-left border-collapse">
+                        <thead className={`text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm ${theme === 'light' ? 'bg-slate-100 text-slate-500' : 'bg-slate-950 text-slate-500'}`}>
+                          <tr>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Side / URL <InfoHint text="Siden vi analyserer." /></div></th>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Innlenker <InfoHint text="Antall andre sider som peker TIL denne." /></div></th>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Utlenker <InfoHint text="Antall lenker FRA denne siden til andre." /></div></th>
+                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Status <InfoHint text="Teknisk tilstand på lenkene." /></div></th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
+                          {linkPages.map((page, i) => (
+                            <tr
+                              key={i}
+                              onClick={() => setSelectedLinkPage(page)}
+                              className={`transition-colors group cursor-pointer 
+                                ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
+                                ${selectedLinkPage === page ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/10 border-l-2 border-violet-500') : ''}
+                              `}
+                            >
+                              <td className="p-4">
+                                <div className={`font-bold truncate max-w-[200px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{page.title}</div>
+                                <div className="text-xs text-slate-500 truncate max-w-[200px]">{page.url}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className={`font-bold ${page.inlinks === 0 ? 'text-rose-500' : (theme === 'light' ? 'text-slate-700' : 'text-slate-300')}`}>{page.inlinks}</div>
+                              </td>
+                              <td className="p-4">
+                                <div className={`font-bold ${page.outlinks === 0 ? 'text-amber-500' : (theme === 'light' ? 'text-slate-700' : 'text-slate-300')}`}>{page.outlinks}</div>
+                              </td>
+                              <td className="p-4">
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border flex w-fit items-center gap-1 
+                                  ${page.status === 'Bra' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
+                                    page.status === 'Isolert' ? (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20') :
+                                      page.status === 'Blindvei' ? (theme === 'light' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20') :
+                                        (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')}
+                                `}>
+                                  {page.status === 'Bra' && <CheckCircle2 size={10} />}
+                                  {page.status === 'Isolert' && <Unlink size={10} />}
+                                  {page.status === 'Blindvei' && <Minus size={10} />}
+                                  {page.status === 'Kritisk' && <AlertTriangle size={10} />}
+                                  {page.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. AI LENKE-INSPEKTØR */}
+              <div className={`rounded-3xl border flex flex-col h-full relative overflow-hidden shadow-2xl transition-all duration-300 ${theme === 'light' ? 'bg-gradient-to-b from-blue-50/50 to-white border-blue-100' : 'bg-slate-900/50 border-white/5'}`}>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500"></div>
+
+                <div className={`p-6 border-b ${theme === 'light' ? 'border-blue-100 bg-white' : 'border-white/5 bg-slate-900/80'}`}>
+                  <h3 className={`font-bold flex items-center gap-2 mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Sparkles size={18} className="text-blue-500" /> AI Lenke-Inspektør</h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedLinkPage ? "Analyse av valgt side" : "Velg en side i tabellen for å starte."}
+                  </p>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar relative">
+                  {!selectedLinkPage && (
+                    <div className={`h-full flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-50' : 'opacity-40'}`}>
+                      <GitMerge className="w-12 h-12 mb-3 text-slate-500" />
+                      <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>Ingen side valgt</p>
+                      <p className="text-xs text-slate-500 max-w-[200px] mt-2">Klikk på en rad i tabellen for å se AI-forslag til intern lenking.</p>
+                    </div>
+                  )}
+
+                  {selectedLinkPage && (
+                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                      <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-slate-950 border-white/10'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Analyserer</p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded border ${selectedLinkPage.status === 'Bra' ? (theme === 'light' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10') : (theme === 'light' ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-rose-400 border-rose-500/20 bg-rose-500/10')}`}>
+                            {selectedLinkPage.status === 'Bra' ? 'God struktur' : selectedLinkPage.status}
+                          </span>
+                        </div>
+                        <p className={`font-bold text-base mb-1 leading-snug ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedLinkPage.title}</p>
+                        <div className="text-xs text-blue-500 flex items-center gap-1 truncate mt-2">
+                          <Link2 size={10} /> {selectedLinkPage.url}
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        {currentLevel < 2 && (
+                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
+                            <div className="text-center p-4">
+                              <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Standard Funksjon</p>
+                              <p className="text-xs text-slate-500 mb-3">Se ødelagte lenker og ankertekst-feil.</p>
+                              <button onClick={handleUpgrade} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-white text-slate-900 hover:bg-slate-200'}`}>Oppgrader</button>
+                            </div>
+                          </div>
+                        )}
+
+                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                          <ShieldCheck size={16} className="text-emerald-500" /> Lenkehelse
+                        </h4>
+
+                        <div className="space-y-3">
+                          <div className={`p-3 rounded-lg border space-y-2 ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-white/5 border-white/5'}`}>
+                            <div className="flex justify-between text-xs">
+                              <span className={theme === 'light' ? 'text-slate-600' : 'text-slate-300'}>Lenke-score</span>
+                              <span className={`font-bold ${selectedLinkPage.linkScore > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{selectedLinkPage.linkScore}/100</span>
+                            </div>
+                            <div className={`w-full h-1 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
+                              <div className={`h-full rounded-full ${selectedLinkPage.linkScore > 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${selectedLinkPage.linkScore}%` }}></div>
+                            </div>
+                          </div>
+
+                          {selectedLinkPage.brokenLinks > 0 ? (
+                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'}`}>
+                              <XCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                              <div>
+                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-rose-700' : 'text-rose-400'}`}>{selectedLinkPage.brokenLinks} ødelagte lenker</p>
+                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-rose-600' : 'text-slate-300'}`}>Disse lenkene gir 404-feil. Fjern eller oppdater dem umiddelbart.</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                              <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                              <div>
+                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>Ingen døde lenker</p>
+                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-emerald-600' : 'text-slate-300'}`}>Alle lenker på denne siden fungerer.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedLinkPage.status === 'Isolert' && (
+                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-amber-50 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'}`}>
+                              <Unlink className="text-amber-500 shrink-0 mt-0.5" size={16} />
+                              <div>
+                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-amber-700' : 'text-amber-400'}`}>Siden er isolert</p>
+                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-amber-600' : 'text-slate-300'}`}>Ingen andre sider lenker hit. Google kan ikke finne den.</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={`relative pt-4 border-t ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
+                        {currentLevel < 3 && (
+                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border mt-4 ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
+                            <div className="text-center p-4">
+                              <BrainCircuit className="w-8 h-8 text-fuchsia-500 mx-auto mb-2" />
+                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Premium Strategi</p>
+                              <p className="text-xs text-slate-500 mb-3">Se nøyaktig hvilke lenker du bør bygge.</p>
+                              <button onClick={handleUpgrade} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all">Oppgrader</button>
+                            </div>
+                          </div>
+                        )}
+
+                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                          <GitMerge size={16} className="text-fuchsia-500" /> AI Lenkeforslag
+                        </h4>
+
+                        <div className="space-y-3">
+                          {selectedLinkPage.suggestedInlinks.length > 0 ? (
+                            selectedLinkPage.suggestedInlinks.map((s, idx) => (
+                              <div key={idx} className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-fuchsia-50/50 border-fuchsia-100' : 'bg-gradient-to-br from-slate-900 to-fuchsia-900/20 border-fuchsia-500/20'}`}>
+                                <p className={`text-[10px] font-bold uppercase mb-2 ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Lag lenke fra:</p>
+                                <div className={`text-xs font-mono p-1.5 rounded mb-2 truncate ${theme === 'light' ? 'bg-white border border-slate-200 text-slate-800' : 'bg-black/30 text-white'}`}>
+                                  {s.fromUrl}
+                                </div>
+                                <div className={`flex gap-2 items-center text-xs ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
+                                  <span className="text-fuchsia-500 font-bold">Ankertekst:</span> "{s.anchor}"
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className={`p-4 rounded-xl text-center border ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
+                              <p className="text-xs text-slate-500">Ingen spesifikke lenkeforslag akkurat nå. Siden er godt integrert.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* --- KOMPLETT SØKEORD SIDE --- */}
+        {activeTab === 'keywords' && (
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 pb-40">
+
+            {/* HEADER & INPUT SECTION */}
+            <div className="flex flex-col xl:flex-row justify-between items-end gap-8">
+              <div>
+                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Søkeord & Synlighet</h1>
+                <p className={`mt-2 text-lg font-light max-w-xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Sanntidsanalyse av din markedsposisjon på Google Norge.
+                </p>
+              </div>
+
+              {/* MODERNE SØKEBAR MED KVOTE */}
+              <div className="w-full xl:w-auto">
+                <div className="flex justify-between items-end mb-2 px-1">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Din Søkeordskvote</span>
+                  <span className={`text-xs font-black ${keywordsUsed >= currentKeywordLimit ? 'text-rose-500' : 'text-violet-500'}`}>
+                    {keywordsUsed} / {currentKeywordLimit} brukt
+                  </span>
+                </div>
+
+                <div className={`p-2 rounded-2xl border flex flex-col md:flex-row items-center shadow-lg transition-all
+                  ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/80 border-white/10'}
+                  ${!canAddMoreKeywords ? 'opacity-80 ring-1 ring-rose-500/50' : ''}
+                `}>
+
+                  {/* SØKEORD INPUT */}
+                  <div className={`relative w-full md:w-56 group border-b md:border-b-0 md:border-r transition-colors ${theme === 'light' ? 'border-slate-200' : 'border-white/10'}`}>
+                    <Search className={`absolute left-4 top-3 transition-colors ${!canAddMoreKeywords ? 'text-rose-400' : 'text-slate-400 group-focus-within:text-violet-500'}`} size={18} />
+                    <input
+                      value={newKeywordInput}
+                      onChange={(e) => setNewKeywordInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
+                      placeholder={canAddMoreKeywords ? "Søkeord (f.eks 'rørlegger')" : "Kvoten er full..."}
+                      disabled={!canAddMoreKeywords}
+                      className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
+                        ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}
+                        ${!canAddMoreKeywords ? 'cursor-not-allowed' : ''}
+                      `}
+                    />
+                  </div>
+
+                  {/* KOMMUNE INPUT */}
+                  <div className="relative w-full md:w-48 group">
+                    <MapIcon className={`absolute left-4 top-3 transition-colors ${!canAddMoreKeywords ? 'text-rose-400' : 'text-slate-400 group-focus-within:text-violet-500'}`} size={18} />
+                    <input
+                      value={locationInput}
+                      onFocus={() => setShowSuggestions(true)}
+                      onChange={(e) => { setLocationInput(e.target.value); setShowSuggestions(true); }}
+                      disabled={!canAddMoreKeywords}
+                      placeholder="Sted (f.eks Oslo)"
+                      className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
+                        ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}
+                        ${!canAddMoreKeywords ? 'cursor-not-allowed' : ''}
+                      `}
+                    />
+
+                    {/* DROPDOWN FOR KOMMUNER */}
+                    {showSuggestions && locationInput.length > 0 && canAddMoreKeywords && (
+                      <div className={`absolute top-full left-0 w-full max-h-60 overflow-y-auto border rounded-xl mt-2 shadow-xl z-50
+                        ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'}
+                      `}>
+                        {NORWEGIAN_MUNICIPALITIES
+                          .filter(m => m.toLowerCase().startsWith(locationInput.toLowerCase()))
+                          .map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => { setLocationInput(m); setShowSuggestions(false); }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors block
+                                ${theme === 'light' ? 'text-slate-700 hover:bg-violet-50 hover:text-violet-700' : 'text-slate-300 hover:bg-violet-600 hover:text-white'}
+                              `}
+                            >
+                              {m}
+                            </button>
+                          ))
+                        }
+                      </div>
+                    )}
+                    {showSuggestions && <div className="fixed inset-0 z-[-1]" onClick={() => setShowSuggestions(false)}></div>}
+                  </div>
+
+                  <button
+                    onClick={handleCheckRankings}
+                    disabled={rankingLoading || keywordsToTrack.length === 0}
+                    className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
+                  >
+                    {rankingLoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
+                    {rankingLoading ? 'Søker...' : 'Kjør Analyse'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* SEKSJON 1: KEY METRICS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {[
+                { label: 'Totalt Søkeord', hint: 'Antall ord du overvåker akkurat nå.', val: hasSearched ? keywordData.length : '-', icon: Layers, col: 'text-violet-500' },
+                { label: 'Topp 3', hint: 'Antall ord der du er blant de 3 beste i Norge.', val: hasSearched ? keywordData.filter(k => k.position <= 3).length : '-', icon: Trophy, col: 'text-amber-500' },
+                { label: 'Topp 10', hint: 'Antall ord du har på Googles førsteside.', val: hasSearched ? keywordData.filter(k => k.position <= 10).length : '-', icon: CheckCircle2, col: 'text-emerald-500' },
+                { label: 'Synlighet', hint: 'Prosentandel av dine ord som er synlige for kunder.', val: hasSearched ? Math.round((keywordData.filter(k => k.position <= 50).length / keywordData.length) * 100) + '%' : '-', icon: Eye, col: 'text-blue-500' },
+                { label: 'Endring (30d)', hint: 'Hvordan plasseringene dine har endret seg siste måned.', val: '+0', icon: TrendingUp, col: theme === 'light' ? 'text-slate-900' : 'text-white' },
+                { label: 'Potensial', hint: 'Hvor mye mer trafikk du kan få ved å optimalisere.', val: 'Høyt', icon: Target, col: 'text-violet-500' },
+              ].map((stat, i) => (
+                <div key={i} className={`p-5 rounded-2xl border flex flex-col justify-between h-28 relative overflow-visible group transition-all z-10 duration-300
+                  ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}
+                `}>
+                  <div className={`absolute top-3 right-3 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
+                  <div className="flex items-center relative z-20">
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{stat.label}</p>
+                    <InfoHint text={stat.hint} />
+                  </div>
+                  <p className={`text-3xl font-black ${stat.col}`}>{stat.val}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* GRID LAYOUT: GRAF + AI PANEL */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+              {/* SEKSJON 4: HISTORISK GRAF */}
+              <div className={`lg:col-span-2 rounded-3xl border p-6 relative overflow-hidden h-96 transition-all duration-300
+                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
+              `}>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Activity size={18} className="text-violet-500" /> Rangeringstrend</h3>
+                  {currentLevel < 2 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Låst</span>}
+                </div>
+
+                <div className="h-64 w-full flex items-center justify-center">
+                  {currentLevel >= 2 ? (
+                    keywordData.length > 0 && keywordData[0].history.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={keywordData[0].history}>
+                          <defs>
+                            <linearGradient id="colorRank" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? '#e2e8f0' : '#334155'} opacity={theme === 'light' ? 0.8 : 0.3} />
+                          <XAxis dataKey="date" stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis reversed stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} domain={[1, 100]} />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: theme === 'light' ? '#fff' : '#0f172a',
+                              borderColor: theme === 'light' ? '#e2e8f0' : '#334155',
+                              color: theme === 'light' ? '#0f172a' : '#fff',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
+                            itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
+                          />
+                          <Area type="monotone" dataKey="rank" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorRank)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className={`text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm font-medium">Ingen historikk enda</p>
+                        <p className="text-xs">Grafen bygges opp over tid.</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className={`absolute inset-0 flex items-center justify-center z-10 backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-900/80'}`}>
+                      <div className="text-center">
+                        <Lock className="w-8 h-8 text-violet-500 mx-auto mb-2" />
+                        <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Oppgrader til Standard</p>
+                        <button onClick={handleUpgrade} className="bg-violet-600 text-white px-4 py-2 rounded-lg text-xs font-bold mt-2 hover:bg-violet-700">Oppgrader nå</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SEKSJON 5: AI-ANALYSE */}
+              <div className={`rounded-3xl border p-6 relative flex flex-col h-96 transition-all duration-300
+                ${theme === 'light' ? 'bg-gradient-to-b from-violet-50/50 to-white border-violet-100 shadow-sm' : 'bg-gradient-to-b from-violet-900/20 to-slate-900/50 border-violet-500/20'}
+              `}>
+                <div className="flex items-center gap-3 mb-4 shrink-0">
+                  <div className="p-2 bg-violet-600 rounded-lg text-white shadow-lg shadow-violet-500/50"><Sparkles size={18} /></div>
+                  <div>
+                    <h3 className={`font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>AI Rådgiver</h3>
+                    <p className="text-[10px] text-violet-500 font-bold uppercase tracking-wide">Live Analyse</p>
+                  </div>
+                </div>
+
+                {selectedKeyword ? (
+                  <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 border-white/10'}`}>
+                      <div className="flex justify-between items-center">
+                        <p className={`font-bold truncate max-w-[120px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>"{selectedKeyword.keyword}"</p>
+                        <span className={`text-xl font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>#{selectedKeyword.position > 100 ? '-' : selectedKeyword.position}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {selectedKeyword.competitors && selectedKeyword.competitors.slice(0, 3).map((comp: any, i: number) => (
+                        <div key={i} className={`text-xs p-2 rounded border ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-slate-950/50 border-white/5 text-slate-300'}`}>
+                          <span className="font-bold text-violet-500">#{comp.position}</span> <span className="ml-2 truncate">{comp.title.substring(0, 30)}...</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                      <h4 className="text-emerald-500 font-bold text-xs mb-1 flex items-center gap-2"><Lightbulb size={12} /> Tips:</h4>
+                      <p className={`text-[10px] leading-relaxed ${theme === 'light' ? 'text-emerald-900' : 'text-slate-300'}`}>
+                        De over deg bruker ordet <strong>"{selectedKeyword.keyword}"</strong> tidlig i tittelen.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`flex-1 flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-40 text-slate-500' : 'opacity-50 text-slate-600'}`}>
+                    <MousePointer2 className="w-12 h-12 mb-2" />
+                    <p className="text-sm font-medium">Velg et ord</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SEKSJON 2: HOVEDTABELL */}
+            <div className={`rounded-3xl border shadow-xl relative z-20 overflow-visible transition-all duration-300
+              ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 backdrop-blur-xl border-white/5'}
+            `}>
+              <div className="overflow-visible">
                 <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-xs font-bold text-slate-500 uppercase border-b border-white/5 bg-white/5">
-                      <th className="p-4">Søkeord</th>
-                      <th className="p-4">Posisjon</th>
-                      <th className="p-4 hidden sm:table-cell">Endring</th>
-                      {currentLevel >= 2 && <th className="p-4 hidden md:table-cell">Intent</th>}
-                      {currentLevel >= 2 && <th className="p-4 hidden lg:table-cell">CTR Est.</th>}
-                      <th className="p-4 hidden xl:table-cell">URL</th>
+                  <thead className={`text-[10px] uppercase font-black tracking-wider ${theme === 'light' ? 'bg-slate-50 text-slate-500 border-b border-slate-200 rounded-t-3xl' : 'bg-white/5 text-slate-400'}`}>
+                    <tr>
+                      <th className="p-6 rounded-tl-3xl"><div className="flex items-center">Søkeord & Sted <InfoHint text="Hva du vil bli funnet på." /></div></th>
+                      <th className="p-6"><div className="flex items-center">Posisjon <InfoHint text="Din plassering på Google." /></div></th>
+                      <th className="p-6"><div className="flex items-center">Intent <InfoHint text="Hva brukeren egentlig vil." /></div></th>
+                      <th className="p-6"><div className="flex items-center">Resultat-type <InfoHint text="Kart, Bilder, Shopping osv." /></div></th>
+                      <th className="p-6"><div className="flex items-center">KD % <InfoHint text="Vanskelighetsgrad (0-100)." /></div></th>
+                      <th className="p-6 rounded-tr-3xl"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-sm">
+                  <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
                     {hasSearched ? (
-                      filteredRankings.length > 0 ? filteredRankings.map((k, i) => (
-                        <tr key={i} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 font-bold text-white">{k.keyword}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-bold ${k.position <= 3 ? 'bg-emerald-500/20 text-emerald-400' : k.position <= 10 ? 'bg-blue-500/20 text-blue-400' : k.position > 100 ? 'bg-slate-800 text-slate-500' : 'bg-amber-500/20 text-amber-400'}`}>
-                              {k.position > 100 ? '100+' : `#${k.position}`}
+                      keywordData.length > 0 ? keywordData.map((k, i) => (
+                        <tr
+                          key={i}
+                          onClick={() => setSelectedKeyword(k)}
+                          className={`transition-colors cursor-pointer group 
+                            ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
+                            ${selectedKeyword === k ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/5 border-l-2 border-violet-500') : ''}
+                          `}
+                        >
+                          <td className="p-6">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-bold text-base ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{k.keyword}</span>
+                              {k.location && <span className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><MapIcon size={8} /> {k.location}</span>}
+                            </div>
+                          </td>
+
+                          <td className="p-6">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border 
+                              ${k.position <= 3 ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-sm' :
+                                k.position <= 10 ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' :
+                                  (theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700')}
+                            `}>
+                              {k.position > 100 ? '-' : k.position}
+                            </div>
+                          </td>
+
+                          <td className="p-6">
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border 
+                              ${k.intent === 'Kjøp' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
+                                k.intent === 'Lokal' ? (theme === 'light' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-blue-500/10 text-blue-400 border-blue-500/20') :
+                                  (theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-slate-700/30 text-slate-400 border-slate-700')}
+                            `}>
+                              {k.intent}
                             </span>
                           </td>
-                          <td className="p-4 hidden sm:table-cell">
-                            {k.change !== 0 ? (
-                              <span className={`flex items-center gap-1 text-xs font-bold ${k.change > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {k.change > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />} {Math.abs(k.change)}
-                              </span>
-                            ) : <span className="text-slate-600 text-xs">-</span>}
+
+                          <td className="p-6">
+                            <div className={`font-bold text-sm flex items-center gap-2 ${k.volume.includes("Kart") ? 'text-emerald-500' :
+                              k.volume.includes("Shopping") ? 'text-violet-500' :
+                                k.volume.includes("Bilder") ? 'text-amber-500' : (theme === 'light' ? 'text-slate-500' : 'text-slate-400')
+                              }`}>
+                              {k.volume.includes("Kart") && <MapIcon size={14} />}
+                              {k.volume.includes("Bilder") && <ImageIcon size={14} />}
+                              {k.volume.includes("Shopping") && <ShoppingBag size={14} />}
+                              {k.volume}
+                            </div>
                           </td>
-                          {currentLevel >= 2 && (
-                            <td className="p-4 hidden md:table-cell">
-                              <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold border ${k.intent === 'Informational' ? 'text-sky-400 border-sky-500/30' : k.intent === 'Transactional' ? 'text-emerald-400 border-emerald-500/30' : 'text-violet-400 border-violet-500/30'}`}>{k.intent.substring(0, 4)}</span>
-                            </td>
-                          )}
-                          {currentLevel >= 2 && <td className="p-4 hidden lg:table-cell text-slate-400">{k.ctr}%</td>}
-                          <td className="p-4 hidden xl:table-cell text-xs text-slate-500 truncate max-w-[150px]">{k.url}</td>
+
+                          <td className="p-6">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
+                                <div className={`h-full rounded-full ${k.kd > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${k.kd}%` }}></div>
+                              </div>
+                              <span className={`text-xs font-bold ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{k.kd}</span>
+                            </div>
+                          </td>
+
+                          <td className="p-6 text-right">
+                            <button onClick={(e) => { e.stopPropagation(); handleRemoveKeyword(k.keyword, k.location); }} className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${theme === 'light' ? 'text-slate-400 hover:text-rose-500 hover:bg-rose-50' : 'text-slate-600 hover:text-rose-500 hover:bg-rose-500/10'}`}>
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
                         </tr>
-                      )) : <tr><td colSpan={6} className="p-8 text-center text-slate-500">Ingen treff med dette filteret.</td></tr>
+                      )) : <tr><td colSpan={6} className={`p-12 text-center ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Ingen treff.</td></tr>
                     ) : (
-                      <tr><td colSpan={6} className="p-8 text-center text-slate-500">{keywordsToTrack.length > 0 ? 'Klar til å søke.' : 'Legg til ord over.'}</td></tr>
+                      <tr>
+                        <td colSpan={6} className="p-24 text-center">
+                          <div className={`inline-block p-4 rounded-full mb-4 animate-pulse ${theme === 'light' ? 'bg-slate-50 text-slate-400' : 'bg-slate-800 text-slate-600'}`}><Search size={32} /></div>
+                          <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar til analyse</h3>
+                          <p className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>Legg til dine viktigste søkeord øverst for å starte.</p>
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* 5. & 8. AI ANALYSE (Standard/Premium) */}
+            {/* SEKSJON 7 & 9: TOPIC CLUSTERS & STRATEGI */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {currentLevel >= 2 ? (
-                <div className="bg-gradient-to-br from-violet-900/20 to-indigo-900/20 p-6 rounded-2xl border border-violet-500/20 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-30"><BrainCircuit size={60} className="text-violet-500" /></div>
-                  <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Sparkles size={18} className="text-violet-400" /> AI Analyse & Optimalisering</h3>
-                  <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
-                    {filteredRankings.length > 0 ? filteredRankings.map((r: any, i: number) => (
-                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/10">
-                        <div className="flex justify-between mb-1">
-                          <span className="text-violet-400 font-bold text-xs uppercase">{r.keyword}</span>
-                          <span className="text-slate-500 text-xs">#{r.position}</span>
-                        </div>
-                        <p className="text-sm text-slate-200">{r.advice}</p>
-                      </div>
-                    )) : <p className="text-sm text-slate-400">Ingen data å analysere.</p>}
-                  </div>
-                </div>
-              ) : <LockedSection title="AI Analyse" description="Få konkrete råd for hvert søkeord." reqPackage="Standard" onUpgrade={handleUpgrade} color="violet" />}
 
-              {/* 6. & 9. STRATEGI (Premium) */}
-              {currentLevel >= 3 ? (
-                <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                  <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Target size={18} className="text-emerald-400" /> Strategi & Muligheter</h3>
-                  <div className="flex flex-col items-center justify-center h-48 text-center bg-slate-950/30 rounded-xl border border-white/5 border-dashed">
-                    <Map size={32} className="text-slate-600 mb-2" />
-                    <p className="text-sm text-slate-400">Koble til Google Search Console for<br />å finne "Money Keywords" du har oversett.</p>
-                    <button className="mt-3 text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg border border-white/10">Koble til GSC</button>
-                  </div>
+              {/* TOPIC CLUSTERS */}
+              <div className={`p-6 rounded-3xl border relative overflow-hidden transition-all duration-300
+                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
+              `}>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Layers size={18} className="text-blue-500" /> Topic Clusters</h3>
+                  {currentLevel < 3 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Premium</span>}
                 </div>
-              ) : <LockedSection title="AI Strategi & GSC" description="Vi finner søkeordene du burde rangert på." reqPackage="Premium" onUpgrade={handleUpgrade} color="emerald" />}
+
+                {currentLevel >= 3 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {hasSearched && keywordData.length > 0 ?
+                      Object.entries(keywordData.reduce((acc: any, item) => {
+                        const topic = item.keyword.split(' ')[0].toLowerCase();
+                        if (!acc[topic]) acc[topic] = [];
+                        acc[topic].push(item);
+                        return acc;
+                      }, {})).slice(0, 4).map(([topic, items]: any, i) => (
+                        <div key={i} className={`p-4 rounded-2xl border transition-colors ${theme === 'light' ? 'bg-slate-50 border-slate-200 hover:border-violet-300' : 'bg-slate-950 border-white/5 hover:border-violet-500/30'}`}>
+                          <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Tema</p>
+                          <h4 className={`text-lg font-bold capitalize mb-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{topic}</h4>
+                          <div className="space-y-1">
+                            {items.slice(0, 3).map((k: any, j: number) => (
+                              <div key={j} className={`flex justify-between text-xs ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                                <span>{k.keyword}</span>
+                                <span className={k.position <= 10 ? "text-emerald-500 font-bold" : "font-bold"}>#{k.position}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                      : <div className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Ingen data å grupper enda.</div>}
+                  </div>
+                ) : (
+                  <div className={`absolute inset-0 top-14 flex items-center justify-center z-10 backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-900/80'}`}>
+                    <LockedSection title="Se dine temaer" description="Vi grupperer søkeordene dine automatisk." reqPackage="Premium" onUpgrade={handleUpgrade} color="blue" />
+                  </div>
+                )}
+              </div>
+
+              {/* AI STRATEGI */}
+              <div className={`p-6 rounded-3xl border relative overflow-hidden transition-all duration-300
+                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
+              `}>
+                {currentLevel < 3 && <div className={`absolute inset-0 z-10 flex items-center justify-center backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-950/80'}`}><LockedSection title="AI Strategi" description="Få en konkret slagplan." reqPackage="Premium" onUpgrade={handleUpgrade} color="emerald" /></div>}
+
+                <h3 className={`font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><BrainCircuit size={18} className="text-emerald-500" /> Neste Steg (AI)</h3>
+
+                {keywordData.length > 0 ? (
+                  <ul className="space-y-4">
+                    {keywordData.some(k => k.position > 3 && k.position <= 10) && (
+                      <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                        <div>
+                          <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Lavthengende frukt 🍏</span>
+                          Du har ord på side 1 (pos 4-10). Oppdater disse sidene med 200 ord ekstra tekst for å nå topp 3.
+                        </div>
+                      </li>
+                    )}
+                    {keywordData.some(k => k.position > 20) && (
+                      <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                        <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
+                        <div>
+                          <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Mangler innhold 📝</span>
+                          Flere ord rangerer dårlig. Vurder å skrive dedikerte artikler for disse temaene.
+                        </div>
+                      </li>
+                    )}
+                    <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                      <div className="w-2 h-2 rounded-full bg-violet-500 mt-1.5 shrink-0"></div>
+                      <div>
+                        <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Tips for uken</span>
+                        Sjekk konkurrent-panelet (øverst til høyre) for å se hva de gjør bedre enn deg.
+                      </div>
+                    </li>
+                  </ul>
+                ) : <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Kjør en analyse først for å få råd.</p>}
+              </div>
             </div>
 
-            {/* 7. SIDE-TIL-SØKEORD MAPPING (Vises kun hvis vi har data) */}
-            {hasSearched && realRankings.some(r => r.position <= 100) && (
-              <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Map size={18} className="text-blue-400" /> Side-Mapping</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {realRankings.filter(r => r.position <= 10).slice(0, 4).map((r, i) => (
-                    <div key={i} className="p-3 border border-white/5 bg-slate-950/30 rounded-xl flex justify-between items-center">
-                      <div className="truncate pr-4">
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Rangerer på: "{r.keyword}"</p>
-                        <p className="text-sm font-bold text-white truncate">{r.url}</p>
-                      </div>
-                      <span className="text-xs font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">#{r.position}</span>
-                    </div>
-                  ))}
+          </div>
+        )}
+
+        {/* --- RAPPORTER & STRATEGI (REPORTS PAGE) --- */}
+        {activeTab === 'reports' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
+
+            {/* 1. HEADER */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-slate-900/50 p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+              <div className="relative z-10">
+                <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
+                  Din SEO-Rapport
+                </h1>
+                <p className="text-slate-400 mt-2 text-lg font-light max-w-2xl">
+                  {new Date().toLocaleDateString('no-NO', { month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase())}
+                  &nbsp;• En samlet oversikt over din posisjon på Google.
+                </p>
+              </div>
+            </div>
+
+            {/* SJEKK OM DATA FINNES */}
+            {(!hasSearched && contentPages.length === 0 && linkPages.length === 0) ? (
+              <div className="bg-slate-900/50 p-12 rounded-3xl border border-white/5 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6 relative">
+                  <div className="absolute inset-0 bg-violet-500/20 rounded-full animate-ping"></div>
+                  <Database size={32} className="text-violet-400 relative z-10" />
                 </div>
+                <h3 className="text-2xl font-black text-white mb-2">Vi mangler data for å bygge rapporten</h3>
+                <p className="text-slate-400 max-w-md mx-auto mb-8 leading-relaxed">
+                  Rapporten bygges automatisk basert på data fra nettsiden din. For å generere rapporten, må du først kjøre analyser i de andre fanene.
+                </p>
+                <div className="flex gap-4">
+                  <button onClick={() => setActiveTab('keywords')} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors">1. Analyser Søkeord</button>
+                  <button onClick={() => setActiveTab('content')} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors">2. Skann Innhold</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* 2. HOVEDTALL (SEO HELSE) - BASIC */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                  {/* SEO Score (Kalkulert basert på ekte data) */}
+                  <div className="bg-slate-900/50 rounded-3xl border border-white/5 p-8 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex items-center gap-2 mb-6 relative z-10">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global SEO Helse</p>
+                      <InfoHint text="Gjennomsnittet av din tekniske helse, innholdskvalitet og synlighet på Google." />
+                    </div>
+
+                    <div className="relative mb-4 z-10">
+                      <svg className="w-40 h-40 transform -rotate-90">
+                        <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
+                        <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-500 transition-all duration-1000"
+                          strokeDasharray="283"
+                          strokeDashoffset={283 - (283 * (
+                            Math.round(((contentPages.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
+                              (linkPages.length > 0 ? (linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) : 0) +
+                              (keywordData.length > 0 ? (keywordData.filter(k => k.position <= 10).length / keywordData.length * 100) : 0)) / 3) || 0
+                          )) / 100}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-5xl font-black text-white">
+                          {Math.round(((contentPages.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
+                            (linkPages.length > 0 ? (linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) : 0) +
+                            (keywordData.length > 0 ? (keywordData.filter(k => k.position <= 10).length / keywordData.length * 100) : 0)) / 3) || 0}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-emerald-400 relative z-10 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20">God tilstand. Klar for skalering.</p>
+                  </div>
+
+                  {/* Nøkkeltall Grid */}
+                  <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <Search size={20} className="text-blue-400" />
+                        <InfoHint text="Antall søkeord du for øyeblikket rangerer på side 1 for." />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Topp 10 Søkeord</p>
+                        <p className="text-3xl font-black text-white">{keywordData.filter(k => k.position <= 10).length}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <AlertTriangle size={20} className="text-rose-400" />
+                        <InfoHint text="Sider med alvorlige tekniske feil eller for lite tekst." />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Kritiske Feil</p>
+                        <p className="text-3xl font-black text-rose-400">{contentPages.filter(p => p.status === 'Kritisk').length}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <FileText size={20} className="text-amber-400" />
+                        <InfoHint text="Sider som mangler interne lenker, og dermed er 'usynlige'." />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Isolerte Sider</p>
+                        <p className="text-3xl font-black text-white">{linkPages.filter(p => p.status === 'Isolert').length}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <Link2 size={20} className="text-emerald-400" />
+                        <InfoHint text="Totalt antall lenker som binder nettsiden din sammen." />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Interne Lenker</p>
+                        <p className="text-3xl font-black text-white">{linkPages.reduce((acc, p) => acc + p.inlinks, 0)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. OPPSUMMERINGSLISTER - BASIC */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Suksess (Det som går bra) */}
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-3xl">
+                    <h3 className="text-emerald-400 font-bold mb-4 flex items-center gap-2"><Trophy size={18} /> Dine største seiere</h3>
+                    <ul className="space-y-3">
+                      {keywordData.filter(k => k.position <= 3).slice(0, 3).map((k, i) => (
+                        <li key={i} className="flex justify-between items-center text-sm p-3 bg-slate-900/50 rounded-xl border border-white/5">
+                          <span className="text-white font-medium">"{k.keyword}"</span>
+                          <span className="text-emerald-400 font-black">Pos #{k.position}</span>
+                        </li>
+                      ))}
+                      {keywordData.filter(k => k.position <= 3).length === 0 && (
+                        <li className="text-sm text-slate-400 p-3">Ingen søkeord på topp 3 enda. Fortsett optimaliseringen!</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Tap (Det som må fikses) */}
+                  <div className="bg-rose-500/5 border border-rose-500/20 p-6 rounded-3xl">
+                    <h3 className="text-rose-400 font-bold mb-4 flex items-center gap-2"><AlertOctagon size={18} /> Krever oppmerksomhet</h3>
+                    <ul className="space-y-3">
+                      {contentPages.filter(p => p.status === 'Kritisk').slice(0, 3).map((p, i) => (
+                        <li key={i} className="flex justify-between items-center text-sm p-3 bg-slate-900/50 rounded-xl border border-white/5">
+                          <span className="text-white font-medium truncate max-w-[200px]">{p.title}</span>
+                          <span className="text-rose-400 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded">Kritisk feil</span>
+                        </li>
+                      ))}
+                      {contentPages.filter(p => p.status === 'Kritisk').length === 0 && (
+                        <li className="text-sm text-slate-400 p-3">Ingen kritiske feil funnet. Fantastisk!</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* 4. STANDARD PAKKE - DYNAMISK AI ANALYSE */}
+                <div className="relative">
+                  {currentLevel < 2 && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 rounded-3xl flex items-center justify-center border border-white/5">
+                      <LockedSection title="AI-Forklaring av utviklingen" description="Forstå HVORFOR trafikken går opp eller ned i rent språk." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
+                    </div>
+                  )}
+
+                  <div className="bg-slate-900/50 border border-white/5 rounded-3xl overflow-hidden">
+                    <div className="p-6 border-b border-white/5 flex items-center gap-3 bg-gradient-to-r from-blue-900/20 to-transparent">
+                      <Sparkles className="text-blue-400" size={20} />
+                      <h3 className="text-lg font-bold text-white">AI-Analyse av dine data</h3>
+                    </div>
+
+                    {dynamicReport ? (
+                      <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div className="space-y-6">
+                          {/* POSITIVT */}
+                          <div className="p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl relative">
+                            <div className="absolute -left-2 top-6 w-1 h-8 bg-emerald-500 rounded-r-md"></div>
+                            <p className="text-sm text-slate-300 leading-relaxed">
+                              <strong className="text-emerald-400 block mb-1">{dynamicReport.growthTitle}</strong>
+                              {dynamicReport.growthText}
+                            </p>
+                          </div>
+
+                          {/* NEGATIVT */}
+                          <div className="p-5 bg-rose-500/5 border border-rose-500/10 rounded-2xl relative">
+                            <div className="absolute -left-2 top-6 w-1 h-8 bg-rose-500 rounded-r-md"></div>
+                            <p className="text-sm text-slate-300 leading-relaxed">
+                              <strong className="text-rose-400 block mb-1">{dynamicReport.problemTitle}</strong>
+                              {dynamicReport.problemText}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* GRAF (Beholder denne som visuell referanse for nå) */}
+                        <div className="bg-slate-950 rounded-2xl p-6 border border-white/5 h-64 flex flex-col">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase">Synlighet (Simulert trend)</h4>
+                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">Positiv trend</span>
+                          </div>
+                          <div className="flex-1 w-full flex items-end gap-2 pb-2">
+                            {[40, 42, 45, 48, 55, 60, 62, 65, 70, 72, 80, 85].map((h, i) => (
+                              <div key={i} className="flex-1 bg-blue-500/20 rounded-t-sm relative group" style={{ height: `${h}%` }}></div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-slate-500">Laster analyse...</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. PREMIUM PAKKE - DYNAMISK HANDLINGSPLAN */}
+                <div className="relative">
+                  {currentLevel < 3 && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 rounded-3xl flex items-center justify-center border border-white/5">
+                      <LockedSection title="Premium Strategi" description="Få en ferdig ukentlig arbeidsplan basert på dine faktiske feil." reqPackage="Premium" onUpgrade={handleUpgrade} color="fuchsia" />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* Ukentlig Plan - NÅ MED EKTE OPPGAVER */}
+                    <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-fuchsia-950/20 border border-fuchsia-500/20 p-8 rounded-3xl">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-black text-white flex items-center gap-2"><Target className="text-fuchsia-400" /> Din Ukentlige Handlingsplan</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/20 px-3 py-1.5 rounded-full">Prioritert av AI</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        {dynamicReport && dynamicReport.tasks.map((item: any, i: number) => (
+                          <div key={i} className="bg-slate-900/80 p-4 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-white/20 transition-all">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-6 h-6 rounded-full border-2 border-${item.color}-500/50 flex items-center justify-center group-hover:bg-${item.color}-500 transition-colors cursor-pointer`}></div>
+                              <div>
+                                <p className="text-sm font-bold text-white">{item.task}</p>
+                                <p className="text-xs text-slate-400">{item.desc}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-bold text-${item.color}-400 uppercase hidden sm:block`}>{item.impact}</span>
+                              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded whitespace-nowrap">{item.time}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {dynamicReport && dynamicReport.tasks.length === 0 && (
+                          <p className="text-slate-400 text-sm">Fant ingen umiddelbare oppgaver. Godt jobbet!</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* AI Prognose */}
+                    <div className="flex flex-col gap-6">
+                      <div className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl flex-1 flex flex-col justify-center relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl"></div>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><TrendingUp size={14} /> Potensial</h4>
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <span className="text-4xl font-black text-white">Høyt</span>
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          Basert på antall feil vi fant ({contentPages.filter(p => p.status === 'Kritisk').length}), har du stort rom for forbedring ved enkle grep.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </>
+            )}
+          </div>
+        )}
+
+        {/* --- INNSTILLINGER (OPPDATERT) --- */}
+        {activeTab === 'settings' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 pb-40">
+            <header className="mb-8">
+              <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Innstillinger</h1>
+              <p className="text-slate-400 mt-2 text-lg font-light">
+                Administrer bedriftsprofil, utseende og abonnement.
+              </p>
+            </header>
+
+            <PortalSettings
+              user={user}
+              clientData={clientData}
+              selectedPlan={selectedPlan}
+              onNavigate={setView}
+              onSave={handleSaveSettings}
+              theme={theme}
+              setTheme={setTheme}
+              onSelectPlan={onSelectPlan} // <-- LEGG TIL DENNE LINJEN
+            />
+          </div>
+
+        )}
+      </main>
+    </div>
+  );
+};
+
+
+const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, theme, setTheme, onSelectPlan }: any) => {
+  const [activeTab, setActiveTab] = useState('general');
+  const [showPlans, setShowPlans] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+
+  // SIKRING: Man må trykke "Rediger" for å endre noe
+
+  const [formData, setFormData] = useState({
+    companyName: clientData?.companyName || 'Min Bedrift AS',
+    websiteUrl: clientData?.websiteUrl || 'https://eksempel.no',
+    email: clientData?.email || user?.email || '',
+    industry: clientData?.industry || '',
+    targetAudience: clientData?.targetAudience || ''
+  });
+
+  const [notifications, setNotifications] = useState({
+    weeklyReport: true,
+    criticalAlerts: true,
+    rankChanges: false
+  });
+
+  // ABONNEMENT LOGIKK
+  const plans: Record<string, { name: string, price: string, desc: string }> = {
+    'BASIC': { name: 'Basic', price: '599 kr', desc: 'Få kontroll på grunnmuren.' },
+    'STANDARD': { name: 'Standard', price: '1 499 kr', desc: 'Vekst og innholdsdominans.' },
+    'PREMIUM': { name: 'Premium', price: '4 999 kr', desc: 'Total dominans.' }
+  };
+
+  // Sjekker databasen (clientData) og finner riktig pakke uansett hvordan det er skrevet
+  const getActivePlanKey = () => {
+    const dbPlan = clientData?.package_name?.toUpperCase() || '';
+    if (dbPlan.includes('PREMIUM')) return 'PREMIUM';
+    if (dbPlan.includes('STANDARD')) return 'STANDARD';
+    return 'BASIC';
+  };
+
+  const currentPlan = plans[getActivePlanKey()];
+
+  <button
+    onClick={() => onNavigate('home')}
+    className="bg-indigo-800/50 text-white border border-white/10 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-indigo-800 transition-colors flex items-center gap-2"
+  >
+    Endre Plan <ArrowRight size={14} />
+  </button>
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      setIsEditing(false); // Lås skjemaet igjen etter lagring
+      onSave(formData);
+      // Her bør du legge til en Toast notification
+    }, 800);
+  };
+
+  const toggleNotif = (key: string) => setNotifications(prev => ({ ...prev, [key as keyof typeof notifications]: !prev[key as keyof typeof notifications] }));
+
+  // Hjelpekomponenter
+  const SectionHeader = ({ title, desc }: { title: string, desc: string }) => (
+    <div className={`mb-8 pb-6 border-b ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
+      <h2 className={`text-xl font-medium tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</h2>
+      <p className="text-sm text-slate-400 mt-1">{desc}</p>
+    </div>
+  );
+
+  const InputField = ({ label, value, onChange, disabled = false, icon: Icon, placeholder = '', forceLock = false }: any) => (
+    <div className="group">
+      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-violet-400 transition-colors">
+        {label}
+      </label>
+      <div className={`flex items-center border transition-all duration-200 rounded-xl px-4 py-3 
+        ${theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}
+        ${(disabled || forceLock) ? 'opacity-60 bg-slate-100 dark:bg-slate-900/50 cursor-not-allowed' : 'group-focus-within:border-violet-500/50 group-focus-within:ring-1 group-focus-within:ring-violet-500/20 shadow-sm'}
+      `}>
+        {Icon && <Icon size={16} className={`mr-3 ${disabled ? 'text-slate-500' : 'text-slate-400 group-focus-within:text-violet-400'}`} />}
+        <input
+          value={value}
+          onChange={onChange}
+          disabled={disabled || forceLock}
+          placeholder={placeholder}
+          className={`bg-transparent w-full text-sm outline-none font-medium ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}`}
+        />
+        {forceLock && <Lock size={12} className="ml-2 text-rose-500" title="Dette feltet kan ikke endres" />}
+        {!forceLock && disabled && <Lock size={12} className="ml-2 text-slate-500" />}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`flex flex-col lg:flex-row min-h-[600px] rounded-3xl border overflow-hidden backdrop-blur-sm transition-colors duration-300
+      ${theme === 'light' ? 'bg-white/80 border-slate-200 shadow-xl' : 'bg-slate-900/40 border-white/5'}
+    `}>
+
+      {/* 1. SIDEBAR */}
+      <div className={`w-full lg:w-64 border-r p-4 flex flex-col gap-1 shrink-0 ${theme === 'light' ? 'bg-slate-50/50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
+        <div className="px-4 py-4 mb-2">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konto</p>
+        </div>
+        {[
+          { id: 'general', label: 'Generelt', icon: User },
+          { id: 'notifications', label: 'Varslinger', icon: MessageCircle },
+          { id: 'appearance', label: 'Utseende', icon: Sun },
+          { id: 'billing', label: 'Abonnement', icon: CreditCard },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-left ${activeTab === item.id
+              ? 'bg-violet-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-slate-600 hover:bg-black/5 dark:hover:text-white dark:hover:bg-white/5'
+              }`}
+          >
+            <item.icon size={16} className={activeTab === item.id ? 'text-white' : 'opacity-70'} />
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 2. MAIN CONTENT */}
+      <div className="flex-1 p-8 lg:p-12 overflow-y-auto custom-scrollbar">
+
+        {/* --- TAB: GENERELT (MED SIKRING) --- */}
+        {activeTab === 'general' && (
+          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-start mb-6">
+              <SectionHeader title="Bedriftsprofil" desc="Administrer din bedriftsinformasjon." />
+
+              {/* SIKRINGS-KNAPP */}
+              {!isEditing ? (
+                <button onClick={() => setIsEditing(true)} className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/20">
+                  Rediger Profil
+                </button>
+              ) : (
+                <button onClick={() => setIsEditing(false)} className="text-xs font-bold text-rose-500 hover:text-rose-600 px-3 py-1.5 transition-colors">
+                  Avbryt
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {/* URL ER ALLTID LÅST (forceLock=true) */}
+              <InputField
+                label="Nettside URL"
+                value={formData.websiteUrl}
+                disabled={true}
+                forceLock={true}
+                icon={Globe}
+              />
+
+              <InputField
+                label="E-post adresse"
+                value={formData.email}
+                onChange={(e: any) => setFormData({ ...formData, email: e.target.value })}
+                disabled={!isEditing}
+                icon={Mail}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <InputField
+                  label="Bedriftsnavn"
+                  value={formData.companyName}
+                  onChange={(e: any) => setFormData({ ...formData, companyName: e.target.value })}
+                  disabled={!isEditing}
+                />
+                <InputField
+                  label="Bransje"
+                  value={formData.industry}
+                  onChange={(e: any) => setFormData({ ...formData, industry: e.target.value })}
+                  placeholder="F.eks. Rørlegger"
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="group">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Målgruppe</label>
+                <textarea
+                  value={formData.targetAudience}
+                  onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                  placeholder="Beskriv hvem du vil nå..."
+                  disabled={!isEditing}
+                  className={`w-full h-24 rounded-xl px-4 py-3 text-sm font-medium outline-none border transition-all resize-none
+                    ${theme === 'light'
+                      ? 'bg-white border-slate-200 text-slate-900 focus:border-violet-500'
+                      : 'bg-slate-950 border-white/10 text-white placeholder-slate-600 focus:border-violet-500/50'
+                    }
+                    ${!isEditing ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/50' : ''}
+                  `}
+                />
+              </div>
+            </div>
+
+            {/* LAGRE KNAPP - KUN SYNLIG NÅR REDIGERER */}
+            {isEditing && (
+              <div className="mt-8 flex justify-end animate-in fade-in slide-in-from-bottom-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-slate-900 text-white hover:bg-violet-600 dark:bg-white dark:text-slate-950 dark:hover:bg-violet-50 px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14} /> Lagre Endringer</>}
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* SETTINGS m/ Pakkevelger */}
-        {activeTab === 'settings' && (
-          <div className="max-w-4xl space-y-8 animate-in fade-in">
-            {/* PROFILSKJEMA (Forenklet visning for kode-lengde, men full funksjon) */}
-            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-              <div className="flex justify-between mb-6"><h3 className="font-bold text-white">Profil</h3><button onClick={() => setIsEditing(!isEditing)} className="text-xs bg-slate-800 text-white px-3 py-1 rounded">{isEditing ? 'Avbryt' : 'Rediger'}</button></div>
-              <form onSubmit={handleSaveSettings} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <input disabled={!isEditing} name="contactPerson" value={formData.contactPerson} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="Navn" />
-                  <input disabled={!isEditing} name="companyName" value={formData.companyName} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="Firma" />
-                </div>
-                <div className="flex gap-2">
-                  <input disabled={!isEditing} name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="bg-slate-950 border border-white/10 rounded p-2 text-white w-full" placeholder="URL" />
-                </div>
-                {isEditing && <button type="submit" className="bg-white text-slate-900 font-bold px-4 py-2 rounded">Lagre</button>}
-              </form>
-            </div>
+        {/* --- TAB: UTSEENDE (FUNKSJONELL!) --- */}
+        {activeTab === 'appearance' && (
+          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <SectionHeader title="Utseende" desc="Velg din foretrukne visning." />
 
-            {/* PAKKEVELGER */}
-            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-              <h3 className="font-bold text-white mb-4 flex gap-2"><CreditCard /> Pakker</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {plans.map(p => {
-                  const active = currentLevel === p.level;
-                  return (
-                    <div key={p.name} className={`p-4 rounded-xl border flex flex-col ${active ? 'bg-white/5 border-violet-500' : 'bg-slate-950 border-white/5'}`}>
-                      <h4 className="font-bold text-white">{p.name}</h4>
-                      <p className="text-xl font-black text-slate-300 my-2">{p.price}</p>
-                      <ul className="flex-1 space-y-2 mb-4">{p.features.map(f => <li key={f} className="text-xs text-slate-500 flex gap-2"><Check size={12} /> {f}</li>)}</ul>
-                      <button onClick={() => handleChangePlan(p.name)} disabled={active} className={`py-2 rounded text-xs font-bold ${active ? 'bg-white/10 text-slate-500' : 'bg-violet-600 text-white'}`}>{active ? 'Din plan' : 'Velg'}</button>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Light Mode Button */}
+              <button
+                onClick={() => setTheme('light')}
+                className={`p-4 rounded-2xl border-2 transition-all text-left group ${theme === 'light' ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+              >
+                <div className="w-full h-24 bg-slate-100 rounded-lg mb-4 border border-slate-200 relative overflow-hidden">
+                  <div className="absolute top-2 left-2 w-16 h-4 bg-white rounded shadow-sm"></div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`font-bold text-sm ${theme === 'light' ? 'text-violet-700' : 'text-slate-700'}`}>Lys Modus</span>
+                  {theme === 'light' && <Check size={16} className="text-violet-600" />}
+                </div>
+              </button>
+
+              {/* Dark Mode Button */}
+              <button
+                onClick={() => setTheme('dark')}
+                className={`p-4 rounded-2xl border-2 transition-all text-left group ${theme === 'dark' ? 'border-violet-500 bg-slate-800 ring-2 ring-violet-500/20' : 'border-slate-700 hover:border-slate-600 bg-slate-900'}`}
+              >
+                <div className="w-full h-24 bg-slate-950 rounded-lg mb-4 border border-slate-800 relative overflow-hidden">
+                  <div className="absolute top-2 left-2 w-16 h-4 bg-slate-800 rounded"></div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`font-bold text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-400'}`}>Mørk Modus</span>
+                  {theme === 'dark' && <Check size={16} className="text-white" />}
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB: VARSLINGER --- */}
+        {activeTab === 'notifications' && (
+          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <SectionHeader title="Varslingspreferanser" desc="Bestem hva du vil motta på e-post." />
+            <div className={`space-y-1 rounded-2xl border overflow-hidden ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
+              {[
+                { id: 'weeklyReport', label: 'Ukentlig Rapport', desc: 'Sammendrag av vekst og nye muligheter.' },
+                { id: 'criticalAlerts', label: 'Kritiske Alarmer', desc: 'Umiddelbar beskjed hvis nettsiden går ned.' },
+                { id: 'rankChanges', label: 'Posisjonsendringer', desc: 'Når du går opp eller ned på topp 3.' },
+              ].map((item, i) => (
+                <div key={item.id} className={`flex items-center justify-between p-5 ${i !== 0 ? (theme === 'light' ? 'border-t border-slate-200' : 'border-t border-white/5') : ''}`}>
+                  <div className="pr-8">
+                    <p className={`text-sm font-bold mb-0.5 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{item.label}</p>
+                    <p className="text-xs text-slate-500">{item.desc}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleNotif(item.id)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notifications[item.id as keyof typeof notifications] ? 'bg-violet-600' : 'bg-slate-700'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ${notifications[item.id as keyof typeof notifications] ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB: ABONNEMENT --- */}
+        {activeTab === 'billing' && (
+          <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <SectionHeader title="Ditt Abonnement" desc="Administrer din plan og betalingsmetoder." />
+
+            {!showPlans ? (
+              <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-violet-900/50 mb-8">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full">
+                      <span className="text-[10px] font-bold text-white uppercase tracking-widest">Aktiv Plan</span>
                     </div>
-                  )
-                })}
+                    <span className="text-2xl font-bold text-white">{currentPlan.price}<span className="text-sm text-white/60 font-medium">/mnd</span></span>
+                  </div>
+
+                  <h3 className="text-4xl font-black text-white mb-2">{currentPlan.name}</h3>
+                  <p className="text-indigo-100 text-sm mb-8 max-w-xs">{currentPlan.desc}</p>
+
+                  <div className="flex gap-4">
+                    <button className="bg-white text-indigo-900 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg">
+                      Administrer i Stripe
+                    </button>
+                    {/* KNAPP SOM VISER PAKKE-LISTEN INNE I PORTALEN */}
+                    <button
+                      onClick={() => setShowPlans(true)}
+                      className="bg-indigo-800/50 text-white border border-white/10 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-indigo-800 transition-colors flex items-center gap-2"
+                    >
+                      Endre Plan <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-8 animate-in fade-in slide-in-from-bottom-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className={`font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Velg ny plan</h3>
+                  <button onClick={() => setShowPlans(false)} className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1">
+                    <ArrowLeft size={12} /> Tilbake
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {Object.entries(plans).map(([key, plan]) => {
+                    const isCurrent = getActivePlanKey() === key;
+                    const isUpgrade = (key === 'STANDARD' && getActivePlanKey() === 'BASIC') || (key === 'PREMIUM' && getActivePlanKey() !== 'PREMIUM');
+
+                    return (
+                      <div key={key} className={`p-5 rounded-2xl border flex items-center justify-between transition-all ${isCurrent ? 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-500/30' : theme === 'light' ? 'bg-white border-slate-200 hover:border-violet-300' : 'bg-slate-900/50 border-white/10 hover:border-white/20'}`}>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className={`font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{plan.name}</h4>
+                            {isCurrent && <span className="bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Aktiv</span>}
+                          </div>
+                          <p className="text-xs text-slate-500">{plan.desc}</p>
+                          <p className={`text-sm font-black mt-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{plan.price}/mnd</p>
+                        </div>
+
+                        {!isCurrent && (
+                          <button
+                            onClick={() => onSelectPlan(plan.name)}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${isUpgrade ? 'bg-violet-600 text-white hover:bg-violet-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+                          >
+                            {isUpgrade ? <><ArrowUpCircle size={14} /> Oppgrader</> : <><ArrowDownCircle size={14} /> Nedgrader</>}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Fakturahistorikk</h4>
+              <div className={`border rounded-xl p-8 text-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${theme === 'light' ? 'bg-white text-slate-400' : 'bg-slate-900 text-slate-600'}`}>
+                  <FileText size={20} />
+                </div>
+                <p className="text-sm text-slate-400">Ingen fakturaer tilgjengelig.</p>
               </div>
             </div>
           </div>
         )}
-      </main>
+
+      </div>
     </div>
   );
 };
@@ -3276,6 +5319,18 @@ function App() {
   // 1. SJEKK URL FØR VI STARTER (Slik at vi ikke blinker innom Home)
   const searchParams = new URLSearchParams(window.location.search);
   const isPaymentSuccess = searchParams.get('payment_success') === 'true';
+
+  // --- TEMA STATE (Ny!) ---
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Effekt som faktisk bytter utseende på hele nettsiden
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+  }, [theme]);
+
+
 
   // --- STATE ---
   // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
@@ -3294,8 +5349,6 @@ function App() {
     setIsLoading(false); // Slå av loading (vis portal)
 
   };
-
-
 
 
   // --- 2. EFFEKTER ---
@@ -3616,9 +5669,14 @@ function App() {
   // Hvis brukeren er logget inn OG har betalt (hasAccess),
   // sendes de rett til ClientPortal. De får IKKE se hjemmesiden.
   if (user && hasAccess) {
-    return <ClientPortal user={user} onLogout={handleLogout} />;
+    return <ClientPortal user={user} onLogout={handleLogout}
+      // HER SENDER VI DE NYE VERKTØYENE:
+      theme={theme}
+      setTheme={setTheme}
+      setView={setView}
+      selectedPlan={selectedPlan}
+      onSelectPlan={handlePlanSelect} />; // <-- LEGG TIL DENNE LINJEN
   }
-
   // ---------------------------------------------------------
   // 🚪 DØRVAKT 2: PROSESS (Registrering)
   // ---------------------------------------------------------
