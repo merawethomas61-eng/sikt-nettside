@@ -2906,12 +2906,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     } catch (err) { alert("Kunne ikke endre pakke."); } finally { setSaving(false); }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleUpgrade = () => {
     // Legger til kundens ID helt på slutten av lenken!
     const stripeLenke = "https://buy.stripe.com/test_din_stripe_lenke";
     window.location.href = `${stripeLenke}?client_reference_id=${user.id}`;
-  }; setActiveTab('settings');
+  };
   const handleUnlockUrl = () => { if (confirm("Endring av URL nullstiller historikk. Sikker?")) setUrlUnlockRequested(true); };
 
   // --- NY STATE FOR DENNE SIDEN ---
@@ -2925,21 +2924,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [selectedPage, setSelectedPage] = useState<ContentPage | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
-  // SIMULATOR: Lager realistiske data basert på din URL (Siden vi mangler backend-crawler ennå)
-  // EKTE INNHOLDSSKANNER: Med Caching (24 timer)
   // EKTE INNHOLDSSKANNER (Bruker Vercel Backend)
   const runContentScan = async (forceRefresh = false) => {
     if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger først.");
 
-    // Unngå dobbel-skanning hvis vi allerede har data og ikke tvinger refresh
     if (contentPages.length > 0 && !forceRefresh) return;
 
     setIsScanning(true);
-    // Vi setter lenke-scanning til true også, siden denne henter data for begge!
     setIsScanningLinks(true);
 
     try {
-      // Kall Vercel-skraperen vår!
       const response = await fetch('/api/scan-website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2954,10 +2948,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
 
       if (data.pages && data.pages.length > 0) {
-        // 1. Fyller Innhold-fanen med ekte ordtelling og H1-feil
         setContentPages(data.pages);
 
-        // 2. Fyller Lenke-fanen med den samme skannede strukturen!
         const formattedLinkPages = data.pages.map((p: any, index: number) => ({
           id: `link-${index}`,
           url: p.url,
@@ -3151,14 +3143,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   // --- STATE FOR LENKER (LIM INN HER, INNI ClientPortal) ---
 
-  // EKTE LENKESKANNER: Bruker Vercel-backend, men beholder ditt UI-format
+  // EKTE LENKESKANNER (Bruker Vercel Backend)
   const runLinkScan = async () => {
     if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger først.");
 
     setIsScanningLinks(true);
 
     try {
-      // Vi bruker den nye, sikre skraperen på Vercel-serveren din!
       const response = await fetch('/api/scan-website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3173,36 +3164,32 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
 
       if (data.pages && data.pages.length > 0) {
-        // Vi formaterer den ekte dataen fra serveren slik at Lenke-tabellen din forstår den
-        const formattedLinkPages = data.pages.map((p: any, index: number) => {
-          return {
-            id: `link-${index}`,
-            url: p.url,
-            title: p.title,
-            inlinks: p.inlinks,
-            outlinks: p.outlinks,
-            status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
-            brokenLinks: 0, // Her kan backend utvides senere for å faktisk sjekke 404
-            linkScore: p.score,
-            anchorIssues: [], // Klar for AI-analyse senere
-            hubType: index === 0 ? 'Pillar' : 'Cluster',
-            suggestedInlinks: [] // Klar for AI-forslag senere
-          };
-        });
+        // Formaterer dataen perfekt for Lenke-tabellen din
+        const formattedLinkPages = data.pages.map((p: any, index: number) => ({
+          id: `link-${index}`,
+          url: p.url,
+          title: p.title,
+          inlinks: p.inlinks,
+          outlinks: p.outlinks,
+          status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
+          brokenLinks: 0,
+          linkScore: p.score,
+          anchorIssues: [],
+          hubType: index === 0 ? 'Pillar' : 'Cluster',
+          suggestedInlinks: []
+        }));
 
         setLinkPages(formattedLinkPages);
 
-        // Siden Vercel-skraperen allerede sjekker ordtelling og innhold, 
-        // kan vi fylle Innhold-fanen i samme slengen, så kunden slipper å vente to ganger!
+        // Bonus: Siden vi allerede hentet all dataen, fyller vi Innholds-fanen samtidig!
         setContentPages(data.pages);
-
       } else {
         alert("Fant ingen lesbare sider på dette domenet.");
       }
 
     } catch (error) {
-      console.error(error);
-      alert("Nettverksfeil under skanning.");
+      console.error("Feil ved lenkeskanning:", error);
+      alert("Nettverksfeil under lenkeskanning.");
     } finally {
       setIsScanningLinks(false);
     }
