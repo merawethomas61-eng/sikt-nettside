@@ -1,84 +1,113 @@
 import * as cheerio from 'cheerio';
+import { createClient } from '@supabase/supabase-js';
+
+const rateLimitWindowMs = 60000;
+const maxRequestsPerWindow = 5;
+const ipTracker = new Map();
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Kun POST tillatt' });
     }
 
+    // --- FARTSDUMP START ---
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'ukjent-ip';
+    const now = Date.now();
+    const requestData = ipTracker.get(ip) || { count: 0, firstRequest: now };
+
+    if (now - requestData.firstRequest > rateLimitWindowMs) {
+        requestData.count = 1;
+        requestData.firstRequest = now;
+    } else {
+        requestData.count++;
+    }
+
+    ipTracker.set(ip, requestData);
+
+    if (requestData.count > maxRequestsPerWindow) {
+        return res.status(429).json({ error: 'For mange skanninger. Vennligst vent ett minutt.' });
+    }
+    // --- FARTSDUMP SLUTT ---
+
+    // --- ID-KORT SJEKK START ---
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Avvist: Du er ikke logget inn' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+        return res.status(401).json({ error: 'Avvist: Ugyldig bruker' });
+    }
+    // --- ID-KORT SJEKK SLUTT ---
+
     let { url } = req.body;
     if (!url) return res.status(400).json({ error: 'Mangler URL' });
 
-    // Sørg for at URLen er gyldig
     if (!url.startsWith('http')) url = 'https://' + url;
 
     try {
         const baseUrl = new URL(url).origin;
-
-        // Vi skanner hovedsiden først
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Nettsiden svarte ikke: ${response.status}`);
         const html = await response.text();
-
         const $ = cheerio.load(html);
 
-        // Finn alle interne lenker på forsiden for å bygge en liste over undersider
         const internalLinks = new Set();
         $('a').each((i, el) => {
             const href = $(el).attr('href');
             if (href && (href.startsWith('/') || href.startsWith(baseUrl))) {
-                // Formater lenken riktig
                 const fullUrl = href.startsWith('/') ? `${baseUrl}${href}` : href;
-                // Ignorer filer, ankerlenker (#) og mailto
-                if (!fullUrl.includes('#') && !fullUrl.includes('mailto:') && !fullUrl.match(/\.(png|jpg|pdf|css|js)$/i)) {
+                if (!fullUrl.includes('#') && !fullUrl.includes('mailto:')) {
                     internalLinks.add(fullUrl);
                 }
             }
         });
 
-        // Begrens til maks 5 undersider for å unngå Vercel timeout (10 sekunder)
-        const urlsToScan = [url, ...Array.from(internalLinks).slice(0, 5)];
+        const pagesToScan = [url, ...Array.from(internalLinks)].slice(0, 15);
         const scannedPages = [];
 
-        // Skann hver side raskt
-        for (const targetUrl of urlsToScan) {
+        for (const targetUrl of pagesToScan) {
             try {
                 const pageRes = await fetch(targetUrl);
+                if (!pageRes.ok) continue;
                 const pageHtml = await pageRes.text();
                 const page$ = cheerio.load(pageHtml);
 
-                const title = page$('title').text() || 'Mangler tittel';
-                // Hent all tekst, fjern ekstra mellomrom for å telle ord
+                const title = page$('title').text() || targetUrl;
                 const textContent = page$('body').text().replace(/\s+/g, ' ').trim();
                 const wordCount = textContent.split(' ').length;
-
-                // SEO sjekk
-                const h1Count = page$('h1').length;
                 const pageLinks = page$('a').length;
 
                 let status = 'Bra';
-                const issues = [];
+                let score = 100;
+                let issues = [];
 
                 if (wordCount < 300) {
                     status = 'Advarsel';
-                    issues.push(`Tynt innhold (${wordCount} ord). Anbefaler minst 300 ord for SEO.`);
+                    score -= 20;
+                    issues.push('Tynt innhold (< 300 ord)');
                 }
-                if (h1Count === 0) {
+                if (!page$('meta[name="description"]').attr('content')) {
                     status = 'Kritisk';
-                    issues.push('Siden mangler H1-overskrift.');
-                } else if (h1Count > 1) {
-                    status = 'Advarsel';
-                    issues.push(`Siden har ${h1Count} H1-overskrifter. Det bør kun være én.`);
+                    score -= 30;
+                    issues.push('Mangler meta description');
                 }
-                if (!title || title.length < 10) {
-                    status = 'Advarsel';
-                    issues.push('Title-tag er for kort eller mangler.');
+                if (page$('h1').length === 0) {
+                    status = 'Kritisk';
+                    score -= 25;
+                    issues.push('Mangler H1-tag');
                 }
 
-                let score = 100;
-                if (status === 'Advarsel') score -= 20;
+                if (status === 'Advarsel') score -= 10;
                 if (status === 'Kritisk') score -= 45;
 
-                // Path for tabellen (f.eks. /om-oss)
                 const path = targetUrl === baseUrl ? '/' : targetUrl.replace(baseUrl, '');
 
                 scannedPages.push({
@@ -89,10 +118,10 @@ export default async function handler(req, res) {
                     status,
                     score,
                     issues,
-                    inlinks: Math.floor(Math.random() * 10) + 1, // Estimert siden vi ikke kan skanne hele internett
+                    inlinks: Math.floor(Math.random() * 10) + 1,
                     outlinks: pageLinks,
                     linkScore: score,
-                    brokenLinks: 0, // Krever tung skanning å verifisere alle utgående lenker
+                    brokenLinks: 0,
                     readability: wordCount > 600 ? 'Middels' : 'Enkel',
                     topicCluster: 'Generell',
                     action: status === 'Bra' ? 'Fungerer optimalt' : 'Krever optimalisering',
@@ -107,6 +136,6 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error("Scraper Error:", error);
-        res.status(500).json({ error: 'Klarte ikke å skanne nettsiden.', details: error.message });
+        res.status(500).json({ error: 'Klarte ikke skanne nettsiden', details: error.message });
     }
 }

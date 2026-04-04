@@ -13,6 +13,48 @@ import {
 } from 'lucide-react';
 
 
+// --- ZERO COGNITIVE LOAD ORDBOK ---
+const seoDictionary: Record<string, any> = {
+  'meta-description': {
+    title: 'Mangler Meta-beskrivelse',
+    what: 'Siden din mangler den lille teksten som vises under den blå lenken på Google.',
+    why: 'Uten denne teksten lar du Google gjette hva siden handler om. En god tekst her fungerer som en reklameplakat som får folk til å klikke.',
+    steps: ['Logg inn på nettsiden din (f.eks. WordPress, Wix).', 'Finn SEO-innstillingene for den spesifikke siden.', 'Skriv en selgende tekst på 150 tegn som forteller nøyaktig hva kunden får her.'],
+    aiPrompt: 'rewrite'
+  },
+  'unused-javascript': {
+    title: 'Fjern ubrukt kode (JavaScript)',
+    what: 'Nettleseren må laste ned og lese kode som egentlig ikke brukes på denne siden.',
+    why: 'Dette gjør at nettsiden din laster tregere på mobil. Trege sider mister kunder og straffes av Google.',
+    steps: ['Finn ut hvilke plugins/utvidelser du ikke bruker, og slett dem.', 'Bruk et optimaliseringsverktøy (som WP Rocket) for å "forsinke" kode.', 'Test siden på nytt for å se at den laster raskere.'],
+    aiPrompt: 'code'
+  },
+  'first-contentful-paint': {
+    title: 'Siden er treg å vise frem (FCP)',
+    what: 'Det tar for lang tid fra kunden klikker, til det første bildet eller teksten dukker opp på skjermen.',
+    why: 'Hvert sekund ekstra ventetid gjør at flere besøkende snur i døren og går til konkurrenten din.',
+    steps: ['Gjør det øverste bildet på siden din mindre (komprimer det).', 'Skru på "caching" (hurtigbuffer) på serveren din.', 'Sørg for at du har et raskt webhotell.'],
+    aiPrompt: 'optimize'
+  },
+  // Standard-fallback hvis problemet ikke ligger i ordboken enda
+  'default': {
+    title: 'Optimaliser teknisk feil',
+    what: 'Vi har funnet et teknisk hinder som gjør at Google ikke forstår siden din optimalt.',
+    why: 'Ved å fikse dette, sender du et sterkt signal til søkemotorene om at siden din er profesjonell og rask.',
+    steps: ['Gjennomgå ressursene som er flagget i analysen.', 'Oppdater innstillingene i ditt publiseringssystem.', 'Trykk på "Ny test" i Sikt for å bekrefte at det er løst.'],
+    aiPrompt: 'optimize'
+  }
+};
+
+const getProblemDetails = (problemId: string, rawTitle: string) => {
+  // Prøver å finne problemet i ordboken, hvis ikke bruker vi standard + den rå tittelen
+  const match = Object.keys(seoDictionary).find(key => problemId.toLowerCase().includes(key) || rawTitle.toLowerCase().includes(key));
+  return match ? seoDictionary[match] : { ...seoDictionary['default'], title: rawTitle };
+};
+
+
+// Husker hvilket hjelpepanel som skal være åpent. Null = lukket.
+
 // --- DATAMODELL FOR INNHOLD (Content) ---
 interface ContentPage {
   id: string;
@@ -2770,6 +2812,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
 
+  // --- HUKOMMELSE FOR "LØS PROBLEMET" - ARBEIDSROMMET ---
+  const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null); // Hvilket problem vi er inni nå
+  const [problemHistory, setProblemHistory] = useState<any[]>([]); // Historikk over løste problemer
+  const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null); // Det man har trykket på i analysen (viser knappen)
+  const [aiIsThinking, setAiIsThinking] = useState(false);
+  const [aiHasSolved, setAiHasSolved] = useState(false);
+
+
 
 
   // Når vi får ny data fra App (sjefen), oppdaterer vi vår lokale data
@@ -2828,7 +2878,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'keywords', label: 'Søkeord', icon: Search },
     { id: 'content', label: 'Innhold', icon: FileText },
     { id: 'links', label: 'Lenker', icon: Link2 },
-    { id: 'reports', label: 'Rapporter', icon: FileBarChart },
+    { id: 'verksted', label: 'Verksted', icon: Wrench },
     { id: 'settings', label: 'Innstillinger', icon: Settings },
   ];
 
@@ -2933,10 +2983,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setIsScanning(true);
     setIsScanningLinks(true);
 
+    const { data: { session } } = await supabase.auth.getSession();
     try {
       const response = await fetch('/api/scan-website', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({ url: formData.websiteUrl })
       });
 
@@ -3149,10 +3203,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     setIsScanningLinks(true);
 
+    const { data: { session } } = await supabase.auth.getSession();
     try {
       const response = await fetch('/api/scan-website', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({ url: formData.websiteUrl })
       });
 
@@ -3285,8 +3343,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     localStorage.setItem(`rankings_${user.id}`, JSON.stringify(updatedRankings));
   };
 
+
   const handleCheckRankings = async () => {
     if (!formData.websiteUrl) return alert("Legg inn URL i innstillinger.");
+
 
     // --- 1. SØKEORDSKVOTE & AUTOMATISK LEGG TIL ---
     const currentKeywordLimit = currentLevel >= 3 ? 50 : currentLevel === 2 ? 15 : 3;
@@ -3320,11 +3380,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         const keyword = typeof entry === 'string' ? entry : entry.keyword;
         const location = typeof entry === 'string' ? 'Oslo' : entry.location;
 
+        const { data: { session } } = await supabase.auth.getSession();
         try {
           // Snakker med den trygge Vercel-serveren din (backend)
           const response = await fetch('/api/search', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`
+            },
             body: JSON.stringify({ keyword, location })
           });
 
@@ -3607,78 +3671,139 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         )}
 
         {activeTab === 'analysis' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-            {isAnalyzing ? (
-              <div className="flex flex-col items-center justify-center py-24 bg-slate-900/50 rounded-2xl border border-white/5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
-                <Loader2 className="w-16 h-16 text-violet-400 animate-spin mb-8 relative z-10" />
-                <h3 className="text-3xl font-black text-white mb-2">{Math.round(progress)}%</h3>
-                <p className="text-violet-300 font-medium mb-8 text-lg animate-pulse">{progressText}</p>
-                <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5"><div className="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
-              </div>
-            ) : (
-              <>
-                <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                  <div><h2 className="text-2xl font-bold text-white">Live Analyse</h2><p className="text-slate-400 text-sm">Sjekker: <span className="text-violet-400">{formData.websiteUrl}</span></p></div>
-                  <div className="flex gap-4">
-                    {analysisResults && (<div className="bg-slate-950 p-1 rounded-xl border border-white/10 flex"><button onClick={() => setActiveDevice('mobile')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'mobile' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Smartphone size={16} /> Mobil</button><button onClick={() => setActiveDevice('desktop')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'desktop' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Monitor size={16} /> Desktop</button></div>)}
-                    <button onClick={runRealAnalysis} disabled={!formData.websiteUrl} className="bg-violet-600 text-white px-6 py-3 rounded-xl font-bold flex gap-2 hover:bg-violet-500"><Zap size={18} /> Ny test</button>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 relative">
+
+            {/* --- 1. Liten popup som dukker opp når man trykker på et kort --- */}
+            {selectedPreviewProblem && !activeSolveProblem && (
+              <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className={`p-4 pl-6 pr-4 rounded-2xl shadow-2xl flex items-center gap-6 border ${theme === 'light' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-white'}`}>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Valgt problem</p>
+                    <p className="font-bold">{selectedPreviewProblem.title}</p>
                   </div>
+                  <button
+                    onClick={() => {
+                      const details = getProblemDetails(selectedPreviewProblem.title, selectedPreviewProblem.title);
+                      setActiveSolveProblem({ raw: selectedPreviewProblem, details });
+                      setSelectedPreviewProblem(null);
+                      setActiveTab('verksted'); // <--- DENNE KASTER DEG TIL VERKSTEDET
+                    }}
+                    className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-violet-600 hover:bg-violet-700 text-white'}`}
+                  >
+                    Gå til dybde <ArrowRight size={16} />
+                  </button>
+                  <button onClick={() => setSelectedPreviewProblem(null)} className="p-2 opacity-50 hover:opacity-100 rounded-full hover:bg-white/10"><X size={16} /></button>
                 </div>
-                {analyzeError && <div className="p-4 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">{analyzeError}</div>}
-                {analysisResults ? (
-                  <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => (
-                        <div key={idx} className={`p-6 rounded-2xl border flex flex-col items-center justify-center ${i.s >= 90 ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : i.s >= 50 ? 'border-amber-500/30 text-amber-400 bg-amber-500/10' : 'border-rose-500/30 text-rose-400 bg-rose-500/10'}`}>
-                          <div className="text-4xl font-black mb-1">{i.s}</div><div className="text-xs font-bold uppercase opacity-80">{i.l}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                      <div className="md:col-span-1 bg-slate-900/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center h-fit shadow-xl">
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-4 w-full text-center">Slik Google ser siden</p>
-                        {analysisResults[activeDevice].extras?.screenshot ? (<img src={analysisResults[activeDevice].extras?.screenshot} alt="Screenshot" className="rounded-lg border border-white/10 shadow-sm w-full object-cover" />) : <div className="w-full h-48 bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 text-xs">Ingen bilde</div>}
-                      </div>
-                      <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                          <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Server Respons</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.serverTime || '-'}</p>
-                        </div>
-                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                          <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Sidens Vekt</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.totalWeight || '-'}</p>
-                        </div>
-                        <div className="col-span-2 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                          <DetailedHealthCheck result={analysisResults[activeDevice]} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      {currentLevel >= 2 ? (
-                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                          <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><Lightbulb className="text-amber-500" /> Tiltak som gir effekt</h3>
-                          <div className="space-y-3">
-                            {analysisResults[activeDevice].opportunities?.map((o, i) => (
-                              <div key={i} className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"><div><p className="font-bold text-sm text-slate-800">{o.title}</p><p className="text-xs text-slate-500">{o.description}</p></div><span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded h-fit">Spar {o.savings}</span></div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : <LockedSection title="Se konkrete tiltak" description="Få listen over hva som må fikses." reqPackage="Standard" onUpgrade={handleUpgrade} color="amber" />}
-                    </div>
-                    <div className="mt-4">
-                      {currentLevel >= 3 ? (
-                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                          <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><ShieldCheck className="text-violet-500" /> Teknisk Helsesjekk</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {analysisResults[activeDevice].diagnostics?.map((d, i) => (
-                              <div key={i} className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"><span className="text-sm font-medium text-slate-700">{d.title}</span>{d.passed ? <span className="text-emerald-500 text-xs font-bold flex gap-1"><CheckCircle2 size={14} /> OK</span> : <span className="text-rose-500 text-xs font-bold flex gap-1"><XCircle size={14} /> FEIL</span>}</div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : <LockedSection title="Teknisk Helsesjekk" description="Full sikkerhets- og SEO-gjennomgang." reqPackage="Premium" onUpgrade={handleUpgrade} color="violet" />}
-                    </div>
+              </div>
+            )}
+
+            {/* --- 3. DEN VANLIGE ANALYSEN (Skjules når arbeidsrommet er åpent) --- */}
+            {!activeSolveProblem && (
+              <div className="space-y-8">
+                {isAnalyzing ? (
+                  <div className="flex flex-col items-center justify-center py-24 bg-slate-900/50 rounded-2xl border border-white/5 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
+                    <Loader2 className="w-16 h-16 text-violet-400 animate-spin mb-8 relative z-10" />
+                    <h3 className="text-3xl font-black text-white mb-2">{Math.round(progress)}%</h3>
+                    <p className="text-violet-300 font-medium mb-8 text-lg animate-pulse">{progressText}</p>
+                    <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5"><div className="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
                   </div>
-                ) : <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-white/5 border-dashed"><Activity className="w-10 h-10 text-slate-500 mx-auto mb-4" /><h3 className="text-white font-bold">Klar for test</h3><p className="text-slate-400 text-sm">Vi sjekker både mobil og desktop.</p></div>}
-              </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                      <div><h2 className="text-2xl font-bold text-white">Live Analyse</h2><p className="text-slate-400 text-sm">Sjekker: <span className="text-violet-400">{formData.websiteUrl}</span></p></div>
+                      <div className="flex gap-4">
+                        {analysisResults && (<div className="bg-slate-950 p-1 rounded-xl border border-white/10 flex"><button onClick={() => setActiveDevice('mobile')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'mobile' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Smartphone size={16} /> Mobil</button><button onClick={() => setActiveDevice('desktop')} className={`flex gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeDevice === 'desktop' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}><Monitor size={16} /> Desktop</button></div>)}
+                        <button onClick={runRealAnalysis} disabled={!formData.websiteUrl} className="bg-violet-600 text-white px-6 py-3 rounded-xl font-bold flex gap-2 hover:bg-violet-500"><Zap size={18} /> Ny test</button>
+                      </div>
+                    </div>
+                    {analyzeError && <div className="p-4 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">{analyzeError}</div>}
+
+                    {analysisResults ? (
+                      <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => (
+                            <div key={idx} className={`p-6 rounded-2xl border flex flex-col items-center justify-center ${i.s >= 90 ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : i.s >= 50 ? 'border-amber-500/30 text-amber-400 bg-amber-500/10' : 'border-rose-500/30 text-rose-400 bg-rose-500/10'}`}>
+                              <div className="text-4xl font-black mb-1">{i.s}</div><div className="text-xs font-bold uppercase opacity-80">{i.l}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                          <div className="md:col-span-1 bg-slate-900/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center h-fit shadow-xl">
+                            <p className="text-xs font-bold text-slate-500 uppercase mb-4 w-full text-center">Slik Google ser siden</p>
+                            {analysisResults[activeDevice].extras?.screenshot ? (<img src={analysisResults[activeDevice].extras?.screenshot} alt="Screenshot" className="rounded-lg border border-white/10 shadow-sm w-full object-cover" />) : <div className="w-full h-48 bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 text-xs">Ingen bilde</div>}
+                          </div>
+                          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                              <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Server Respons</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.serverTime || '-'}</p>
+                            </div>
+                            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
+                              <h4 className="text-slate-400 text-xs font-bold uppercase mb-2">Sidens Vekt</h4><p className="text-2xl font-bold text-white">{analysisResults[activeDevice].extras?.totalWeight || '-'}</p>
+                            </div>
+                            <div className="col-span-2 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+                              <DetailedHealthCheck result={analysisResults[activeDevice]} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* --- TILTAK SOM GIR EFFEKT (NÅ MED LØS-PROBLEM-KNAPP) --- */}
+                        <div className="mt-4">
+                          {currentLevel >= 2 ? (
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                              <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><Lightbulb className="text-amber-500" /> Tiltak som gir effekt</h3>
+                              <div className="space-y-3">
+                                {analysisResults[activeDevice].opportunities?.map((o, i) => (
+                                  <div
+                                    key={i}
+                                    onClick={() => setSelectedPreviewProblem({ raw: o, title: o.title, description: o.description })}
+                                    className="group relative cursor-pointer flex justify-between items-center p-4 bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 hover:border-amber-300 transition-all duration-200 hover:shadow-sm"
+                                  >
+                                    <div>
+                                      <p className="font-bold text-sm text-slate-800 group-hover:text-amber-700 transition-colors">{o.title}</p>
+                                      <p className="text-xs text-slate-500 truncate max-w-[200px] md:max-w-xs">{o.description}</p>
+                                    </div>
+                                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded h-fit">Spar {o.savings}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : <LockedSection title="Se konkrete tiltak" description="Få listen over hva som må fikses." reqPackage="Standard" onUpgrade={handleUpgrade} color="amber" />}
+                        </div>
+
+                        {/* --- TEKNISK HELSESJEKK (NÅ MED LØS-PROBLEM-KNAPP) --- */}
+                        <div className="mt-4">
+                          {currentLevel >= 3 ? (
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                              <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><ShieldCheck className="text-violet-500" /> Teknisk Helsesjekk</h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {analysisResults[activeDevice].diagnostics?.map((d, i) => (
+                                  <div
+                                    key={i}
+                                    onClick={() => !d.passed && setSelectedPreviewProblem({ raw: d, title: d.title, description: 'Teknisk feil funnet.' })}
+                                    className={`group relative flex justify-between items-center p-3 rounded-xl border transition-all duration-200 ${!d.passed ? 'cursor-pointer bg-slate-50 hover:bg-rose-50/50 border-slate-100 hover:border-rose-300' : 'bg-slate-50/50 border-slate-100 opacity-70'}`}
+                                  >
+                                    <span className={`text-sm font-medium ${!d.passed ? 'group-hover:text-rose-700 text-slate-700' : 'text-slate-500'}`}>{d.title}</span>
+                                    {d.passed ?
+                                      <span className="text-emerald-500 text-xs font-bold flex gap-1"><CheckCircle2 size={14} /> OK</span> :
+                                      <span className="text-rose-500 text-xs font-bold flex gap-1"><XCircle size={14} /> FEIL</span>
+                                    }
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : <LockedSection title="Teknisk Helsesjekk" description="Full sikkerhets- og SEO-gjennomgang." reqPackage="Premium" onUpgrade={handleUpgrade} color="violet" />}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-white/5 border-dashed">
+                        <Activity className="w-10 h-10 text-slate-500 mx-auto mb-4" />
+                        <h3 className="text-white font-bold">Klar for test</h3>
+                        <p className="text-slate-400 text-sm">Vi sjekker både mobil og desktop.</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -4297,13 +4422,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     />
 
                     {/* DROPDOWN FOR KOMMUNER */}
-                    {showSuggestions && locationInput.length > 0 && canAddMoreKeywords && (
+                    {showSuggestions && locationInput?.length > 0 && canAddMoreKeywords && (
                       <div className={`absolute top-full left-0 w-full max-h-60 overflow-y-auto border rounded-xl mt-2 shadow-xl z-50
                         ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'}
                       `}>
                         {NORWEGIAN_MUNICIPALITIES
                           .filter(m => m.toLowerCase().startsWith(locationInput.toLowerCase()))
-                          .map((m) => (
+                          ?.map((m) => (
                             <button
                               key={m}
                               onClick={() => { setLocationInput(m); setShowSuggestions(false); }}
@@ -4322,7 +4447,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                   <button
                     onClick={handleCheckRankings}
-                    disabled={rankingLoading || keywordsToTrack.length === 0}
+                    disabled={rankingLoading || keywordsToTrack?.length === 0}
                     className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
                   >
                     {rankingLoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
@@ -4335,13 +4460,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             {/* SEKSJON 1: KEY METRICS */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {[
-                { label: 'Totalt Søkeord', hint: 'Antall ord du overvåker akkurat nå.', val: hasSearched ? keywordData.length : '-', icon: Layers, col: 'text-violet-500' },
-                { label: 'Topp 3', hint: 'Antall ord der du er blant de 3 beste i Norge.', val: hasSearched ? keywordData.filter(k => k.position <= 3).length : '-', icon: Trophy, col: 'text-amber-500' },
-                { label: 'Topp 10', hint: 'Antall ord du har på Googles førsteside.', val: hasSearched ? keywordData.filter(k => k.position <= 10).length : '-', icon: CheckCircle2, col: 'text-emerald-500' },
-                { label: 'Synlighet', hint: 'Prosentandel av dine ord som er synlige for kunder.', val: hasSearched ? Math.round((keywordData.filter(k => k.position <= 50).length / keywordData.length) * 100) + '%' : '-', icon: Eye, col: 'text-blue-500' },
+                { label: 'Totalt Søkeord', hint: 'Antall ord du overvåker akkurat nå.', val: hasSearched ? (keywordData?.length || 0) : '-', icon: Layers, col: 'text-violet-500' },
+                { label: 'Topp 3', hint: 'Antall ord der du er blant de 3 beste i Norge.', val: hasSearched ? (keywordData?.filter(k => k.position <= 3)?.length || 0) : '-', icon: Trophy, col: 'text-amber-500' },
+                { label: 'Topp 10', hint: 'Antall ord du har på Googles førsteside.', val: hasSearched ? (keywordData?.filter(k => k.position <= 10)?.length || 0) : '-', icon: CheckCircle2, col: 'text-emerald-500' },
+                { label: 'Synlighet', hint: 'Prosentandel av dine ord som er synlige for kunder.', val: hasSearched && keywordData?.length > 0 ? Math.round(((keywordData?.filter(k => k.position <= 50)?.length || 0) / keywordData.length) * 100) + '%' : '-', icon: Eye, col: 'text-blue-500' },
                 { label: 'Endring (30d)', hint: 'Hvordan plasseringene dine har endret seg siste måned.', val: '+0', icon: TrendingUp, col: theme === 'light' ? 'text-slate-900' : 'text-white' },
                 { label: 'Potensial', hint: 'Hvor mye mer trafikk du kan få ved å optimalisere.', val: 'Høyt', icon: Target, col: 'text-violet-500' },
-              ].map((stat, i) => (
+              ]?.map((stat, i) => (
                 <div key={i} className={`p-5 rounded-2xl border flex flex-col justify-between h-28 relative overflow-visible group transition-all z-10 duration-300
                   ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}
                 `}>
@@ -4369,7 +4494,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                 <div className="h-64 w-full flex items-center justify-center">
                   {currentLevel >= 2 ? (
-                    keywordData.length > 0 && keywordData[0].history.length > 0 ? (
+                    keywordData?.length > 0 && keywordData[0]?.history?.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={keywordData[0].history}>
                           <defs>
@@ -4435,7 +4560,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </div>
 
                     <div className="space-y-2">
-                      {selectedKeyword.competitors && selectedKeyword.competitors.slice(0, 3).map((comp: any, i: number) => (
+                      {selectedKeyword.competitors && selectedKeyword.competitors.slice(0, 3)?.map((comp: any, i: number) => (
                         <div key={i} className={`text-xs p-2 rounded border ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-slate-950/50 border-white/5 text-slate-300'}`}>
                           <span className="font-bold text-violet-500">#{comp.position}</span> <span className="ml-2 truncate">{comp.title.substring(0, 30)}...</span>
                         </div>
@@ -4476,7 +4601,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </thead>
                   <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
                     {hasSearched ? (
-                      keywordData.length > 0 ? keywordData.map((k, i) => (
+                      keywordData?.length > 0 ? keywordData?.map((k, i) => (
                         <tr
                           key={i}
                           onClick={() => setSelectedKeyword(k)}
@@ -4568,18 +4693,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                 {currentLevel >= 3 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {hasSearched && keywordData.length > 0 ?
-                      Object.entries(keywordData.reduce((acc: any, item) => {
+                    {hasSearched && keywordData?.length > 0 ?
+                      Object.entries(keywordData?.reduce((acc: any, item) => {
                         const topic = item.keyword.split(' ')[0].toLowerCase();
                         if (!acc[topic]) acc[topic] = [];
                         acc[topic].push(item);
                         return acc;
-                      }, {})).slice(0, 4).map(([topic, items]: any, i) => (
+                      }, {}) || {}).slice(0, 4)?.map(([topic, items]: any, i) => (
                         <div key={i} className={`p-4 rounded-2xl border transition-colors ${theme === 'light' ? 'bg-slate-50 border-slate-200 hover:border-violet-300' : 'bg-slate-950 border-white/5 hover:border-violet-500/30'}`}>
                           <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Tema</p>
                           <h4 className={`text-lg font-bold capitalize mb-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{topic}</h4>
                           <div className="space-y-1">
-                            {items.slice(0, 3).map((k: any, j: number) => (
+                            {items?.slice(0, 3)?.map((k: any, j: number) => (
                               <div key={j} className={`flex justify-between text-xs ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
                                 <span>{k.keyword}</span>
                                 <span className={k.position <= 10 ? "text-emerald-500 font-bold" : "font-bold"}>#{k.position}</span>
@@ -4605,9 +4730,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                 <h3 className={`font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><BrainCircuit size={18} className="text-emerald-500" /> Neste Steg (AI)</h3>
 
-                {keywordData.length > 0 ? (
+                {keywordData?.length > 0 ? (
                   <ul className="space-y-4">
-                    {keywordData.some(k => k.position > 3 && k.position <= 10) && (
+                    {keywordData?.some(k => k.position > 3 && k.position <= 10) && (
                       <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
                         <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                         <div>
@@ -4616,7 +4741,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </div>
                       </li>
                     )}
-                    {keywordData.some(k => k.position > 20) && (
+                    {keywordData?.some(k => k.position > 20) && (
                       <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
                         <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
                         <div>
@@ -4660,7 +4785,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             </div>
 
             {/* SJEKK OM DATA FINNES */}
-            {(!hasSearched && contentPages.length === 0 && linkPages.length === 0) ? (
+            {(!hasSearched && contentPages.length === 0 && linkPages?.length === 0) ? (
               <div className="bg-slate-900/50 p-12 rounded-3xl border border-white/5 text-center flex flex-col items-center">
                 <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6 relative">
                   <div className="absolute inset-0 bg-violet-500/20 rounded-full animate-ping"></div>
@@ -4694,7 +4819,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-500 transition-all duration-1000"
                           strokeDasharray="283"
                           strokeDashoffset={283 - (283 * (
-                            Math.round(((contentPages.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
+                            Math.round(((contentPages?.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
                               (linkPages.length > 0 ? (linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) : 0) +
                               (keywordData.length > 0 ? (keywordData.filter(k => k.position <= 10).length / keywordData.length * 100) : 0)) / 3) || 0
                           )) / 100}
@@ -4909,6 +5034,144 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           </div>
         )}
 
+
+        {/* --- Liten popup nederst på skjermen --- */}
+        {selectedPreviewProblem && !activeSolveProblem && (
+          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+            <div className={`p-4 pl-6 pr-4 rounded-2xl shadow-2xl flex items-center gap-6 border ${theme === 'light' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-white'}`}>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Valgt problem</p>
+                <p className="font-bold">{selectedPreviewProblem.title}</p>
+              </div>
+              <button
+                onClick={() => {
+                  const details = getProblemDetails(selectedPreviewProblem.title, selectedPreviewProblem.title);
+                  setActiveSolveProblem({ raw: selectedPreviewProblem, details });
+                  setSelectedPreviewProblem(null);
+                  setActiveTab('verksted'); // Gå automatisk til verkstedet!
+                }}
+                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-violet-600 hover:bg-violet-700 text-white'}`}
+              >
+                Gå til dybde <ArrowRight size={16} />
+              </button>
+              <button onClick={() => setSelectedPreviewProblem(null)} className="p-2 opacity-50 hover:opacity-100 rounded-full hover:bg-white/10"><X size={16} /></button>
+            </div>
+          </div>
+        )}
+
+        {/* --- VERKSTED SIDEN --- */}
+        {activeTab === 'verksted' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 pb-32">
+            {!activeSolveProblem ? (
+              // TOM STAT (Hvis man ikke har valgt et problem enda)
+              <div className="text-center p-20 mt-10 bg-slate-900/30 rounded-3xl border border-white/5 border-dashed">
+                <Wrench className="w-16 h-16 text-slate-500 mx-auto mb-6 opacity-50" />
+                <h2 className="text-2xl font-black text-white mb-3">Velkommen til Verkstedet</h2>
+                <p className="text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Gå til Analyse-fanen og trykk på et problem. AI-en vil da hente det inn hit og generere en skreddersydd løsning for deg.
+                </p>
+                <button onClick={() => setActiveTab('analysis')} className="mt-8 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold transition-colors">
+                  Gå til Analyse for å finne feil
+                </button>
+              </div>
+            ) : (
+              // AKTIVT PROBLEM (Det nye designet med AI-motor)
+              <div className="max-w-6xl mx-auto space-y-6 mt-6">
+
+                {/* Header for problemet */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <button onClick={() => setActiveSolveProblem(null)} className="text-slate-400 hover:text-white flex items-center gap-1 text-sm font-medium transition-colors"><ArrowLeft size={16} /> Lukk oppgave</button>
+                      <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20">Handling kreves</span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-black text-white">{activeSolveProblem.raw?.title || 'Laster problem...'}</h1>
+                  </div>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-6 mt-8">
+
+                  {/* HOVEDKOLONNE (Arbeidsflaten) */}
+                  <div className="flex-1 space-y-6">
+                    {aiIsThinking ? (
+                      // LASTE-ANIMASJON: Slik ser det ut mens OpenAI jobber i bakgrunnen
+                      <div className="p-12 rounded-3xl border border-white/5 bg-slate-900/50 flex flex-col items-center justify-center text-center min-h-[400px] relative overflow-hidden shadow-2xl">
+                        <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
+                        <Loader2 className="w-12 h-12 text-violet-400 animate-spin mb-6 relative z-10" />
+                        <h3 className="text-xl font-bold text-white mb-2 relative z-10">AI analyserer kildekoden...</h3>
+                        <p className="text-slate-400 text-sm relative z-10">Skreddersyr en løsning for nøyaktig denne feilen på din nettside.</p>
+                      </div>
+                    ) : (
+                      // FERDIG RESULTAT FRA AI
+                      <div className="animate-in fade-in duration-500 space-y-6">
+
+                        {/* 1. AI Årsaksforklaring */}
+                        <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
+                          <h3 className="text-sm font-bold text-violet-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Sparkles size={16} /> AI-Analyse av problemet</h3>
+                          <p className="text-lg text-slate-200 leading-relaxed mb-6">
+                            Jeg har sjekket nettsiden din. Feilen oppstår fordi et script blokkerer hovedtråden under lasting. Hvis vi fjerner eller utsetter dette, vil siden laste merkbart raskere.
+                          </p>
+
+                          {/* Kode-boks (Dummy data inntil API er koblet på) */}
+                          <div className="bg-slate-950 p-5 rounded-xl border border-white/5 font-mono text-sm text-slate-300">
+                            <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3">
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Foreslått kodepatch</span>
+                              <button className="text-violet-400 hover:text-violet-300 flex items-center gap-1 text-xs font-bold transition-colors"><Copy size={14} /> Kopier</button>
+                            </div>
+                            <code className="text-emerald-400 block mb-1">+ &lt;script defer src="/assets/tunge-filer.js"&gt;&lt;/script&gt;</code>
+                            <code className="text-rose-400 line-through opacity-50 block">- &lt;script src="/assets/tunge-filer.js"&gt;&lt;/script&gt;</code>
+                          </div>
+                        </div>
+
+                        {/* 2. Manuelle Steg */}
+                        <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
+                          <h3 className="text-xl font-bold text-white mb-6">Slik fikser du det manuelt</h3>
+                          <div className="space-y-4">
+                            {[1, 2, 3].map((step) => (
+                              <div key={step} className="flex gap-4 p-4 rounded-xl bg-slate-950 border border-white/5">
+                                <div className="w-8 h-8 rounded-full bg-violet-600/20 text-violet-400 flex items-center justify-center font-bold shrink-0">{step}</div>
+                                <div>
+                                  <p className="text-slate-200 font-medium">Logg inn og utfør koden (AI vil generere nøyaktige steg her)</p>
+                                  <p className="text-slate-500 text-xs mt-1 font-bold">Estimat: 2 minutter</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SIDEKOLONNE (Verktøy og Premium) */}
+                  <div className="w-full lg:w-80 space-y-6">
+
+                    {/* Verifiserings-knapp */}
+                    <div className="p-6 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Verifisering</h3>
+                      <button className="w-full py-4 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold hover:bg-emerald-500/20 transition-all flex justify-center items-center gap-2 active:scale-95">
+                        <CheckCircle2 size={18} /> Kjør ny test
+                      </button>
+                      <p className="text-xs text-slate-500 text-center mt-4 leading-relaxed">
+                        Trykk her når du har lagt inn koden for å la Sikt bekrefte at problemet faktisk er løst.
+                      </p>
+                    </div>
+
+                    {/* Premium Upsell */}
+                    <div className="p-6 rounded-3xl border border-white/5 bg-slate-900/50 opacity-60 grayscale cursor-not-allowed">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-sm font-bold text-white flex items-center gap-2">1-Klikks Fix <Lock size={14} /></h3>
+                        <span className="text-[10px] uppercase font-bold bg-white text-black px-1.5 py-0.5 rounded">Premium</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-6 leading-relaxed">La AI pushe koden direkte til din server. Spar tid og unngå feil.</p>
+                      <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 text-sm font-bold border border-white/5">Oppgrader</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* --- INNSTILLINGER (OPPDATERT) --- */}
         {activeTab === 'settings' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 pb-40">
@@ -4943,6 +5206,44 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
   const [showPlans, setShowPlans] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+
+  // --- VERKSTED HUKOMMELSE ---
+  const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null);
+  const [problemHistory, setProblemHistory] = useState<any[]>([]);
+  const [pendingProblems, setPendingProblems] = useState<any[]>([]);
+  const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null);
+  const [aiIsThinking, setAiIsThinking] = useState(false);
+  const [aiHasSolved, setAiHasSolved] = useState(false);
+
+  const seoDictionary: Record<string, any> = {
+    'meta-description': {
+      title: 'Mangler Meta-beskrivelse',
+      what: 'Siden din mangler den lille teksten som vises under den blå lenken på Google.',
+      why: 'Uten denne teksten lar du Google gjette hva siden handler om. En god tekst her fungerer som en reklameplakat som får folk til å klikke.',
+      steps: ['Logg inn på nettsiden din sin redigeringsmodus.', 'Finn SEO-innstillingene for den spesifikke siden.', 'Skriv en selgende tekst på 150 tegn som forteller nøyaktig hva kunden får her.'],
+      aiPrompt: 'rewrite'
+    },
+    'unused-javascript': {
+      title: 'Fjern ubrukt kode (JavaScript)',
+      what: 'Nettleseren må laste ned og lese kode som egentlig ikke brukes på denne siden.',
+      why: 'Dette gjør at nettsiden din laster tregere på mobil. Trege sider mister kunder og straffes av Google.',
+      steps: ['Finn ut hvilke plugins/utvidelser du ikke bruker, og slett dem.', 'Bruk et optimaliseringsverktøy for å "forsinke" kode.', 'Test siden på nytt for å se at den laster raskere.'],
+      aiPrompt: 'code'
+    },
+    'default': {
+      title: 'Teknisk feil funnet',
+      what: 'Vi har funnet et teknisk hinder som gjør at Google ikke forstår siden din optimalt.',
+      why: 'Ved å fikse dette, sender du et sterkt signal til søkemotorene om at siden din er profesjonell og rask.',
+      steps: ['Gjennomgå ressursene som er flagget i analysen.', 'Oppdater innstillingene i ditt publiseringssystem.', 'Trykk på "Ny test" for å bekrefte at det er løst.'],
+      aiPrompt: 'optimize'
+    }
+  };
+
+  const getProblemDetails = (problemId: string, rawTitle: string) => {
+    const match = Object.keys(seoDictionary).find(key => problemId.toLowerCase().includes(key) || rawTitle.toLowerCase().includes(key));
+    return match ? seoDictionary[match] : { ...seoDictionary['default'], title: rawTitle };
+  };
 
 
   // SIKRING: Man må trykke "Rediger" for å endre noe
@@ -5342,6 +5643,23 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [view]);
+
+
+  // --- VAKTBIKKJA: HÅNDTERER INNLOGGING OG "SPØKELSER" ---
+  useEffect(() => {
+    // 1. Sjekk umiddelbart om kunden har en gyldig session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // 2. Lytt etter endringer i sanntid (Logg inn, logg ut, eller slettet bruker)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Rydd opp
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Legg denne sammen med de andre variablene øverst i App-komponenten:
   const isFirstLoad = useRef(true);
