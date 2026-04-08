@@ -9,7 +9,7 @@ import {
   Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
-  Settings, Smartphone, ArrowUp, ArrowUpCircle, ArrowDownCircle, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
+  Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
 
@@ -1784,6 +1784,7 @@ const DeepDiveView = ({ onBack, onSelectPlan }: { onBack: () => void; onSelectPl
   </>
 );
 
+
 const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <>
     <TechnologyHero />
@@ -2464,6 +2465,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
 // --- SETTINGS VIEW (INNSTILLINGER) ---
 const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // URL LOGIKK
   const [website, setWebsite] = useState('www.minbedrift.no');
@@ -2818,9 +2820,82 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null); // Det man har trykket på i analysen (viser knappen)
   const [aiIsThinking, setAiIsThinking] = useState(false);
   const [aiHasSolved, setAiHasSolved] = useState(false);
+  const [aiSolution, setAiSolution] = useState<any>(null);
+
+  // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
+  useEffect(() => {
+    const fetchAiSolution = async () => {
+      if (!activeSolveProblem) return;
+
+      setAiIsThinking(true);
+      setAiSolution(null);
+
+      try {
+        const response = await fetch('/api/solve-problem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: 'din-nettside.no',
+            problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
+            problemDetails: activeSolveProblem
+          })
+        });
+
+        if (!response.ok) throw new Error("Klarte ikke å koble til AI");
+
+        const data = await response.json();
+        setAiSolution(data);
+      } catch (error) {
+        console.error(error);
+        setAiSolution({
+          explanation: "Systembeskjed: Klarte ikke å koble til AI-serveren. Sjekk at api/solve-problem.js kjører riktig.",
+          codePatch: null
+        });
+      } finally {
+        setAiIsThinking(false);
+      }
+    };
+
+    fetchAiSolution();
+  }, [activeSolveProblem]);
 
 
+  // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
+  useEffect(() => {
+    const fetchAiSolution = async () => {
+      if (!activeSolveProblem) return;
 
+      setAiIsThinking(true);
+      setAiSolution(null);
+
+      try {
+        const response = await fetch('/api/solve-problem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: 'din-nettside.no',
+            problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
+            problemDetails: activeSolveProblem
+          })
+        });
+
+        if (!response.ok) throw new Error("Klarte ikke å koble til AI");
+
+        const data = await response.json();
+        setAiSolution(data);
+      } catch (error) {
+        console.error(error);
+        setAiSolution({
+          explanation: "Systembeskjed: Klarte ikke å koble til AI-serveren. Sjekk at api/solve-problem.js kjører riktig.",
+          codePatch: null
+        });
+      } finally {
+        setAiIsThinking(false);
+      }
+    };
+
+    fetchAiSolution();
+  }, [activeSolveProblem]);
 
   // Når vi får ny data fra App (sjefen), oppdaterer vi vår lokale data
   useEffect(() => {
@@ -3662,11 +3737,107 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           </div>
         </header>
 
+        {/* --- CRM DASHBOARD (MINIMALISTISK & CLEAN) --- */}
         {activeTab === 'dashboard' && (
-          <div className="text-center p-20 text-slate-500 bg-slate-900/50 rounded-2xl border border-white/5">
-            <LayoutDashboard size={40} className="mx-auto mb-4 opacity-50" />
-            <h3 className="text-white font-bold">Oversikt</h3>
-            <p>Dashboard innhold kommer her.</p>
+          <div className="max-w-5xl mx-auto pt-8 pb-32 animate-in fade-in duration-700">
+
+            {/* Header - Syltynn og ren */}
+            <div className="mb-20">
+              <h1 className="text-2xl font-medium text-slate-900 dark:text-white tracking-tight">Oversikt</h1>
+              <p className="text-sm text-slate-500 mt-1">Ditt domenes helsetilstand akkurat nå.</p>
+            </div>
+
+            {/* Hovedgrid: Asymmetrisk balanse (Venstre tyngde, Høyre lister) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+
+              {/* VENSTRE: Hovedfokus (Massiv typografi, ingen bokser) - 5 kolonner */}
+              <div className="lg:col-span-5 space-y-16">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Systemhelse</p>
+                  <div className="flex items-baseline gap-2">
+                    {/* Ekte minimalisme bruker gigantisk, tynn skrift i stedet for store bokser */}
+                    <span className="text-8xl font-light tracking-tighter text-slate-900 dark:text-white">78</span>
+                    <span className="text-2xl font-light text-slate-400">/ 100</span>
+                  </div>
+                  <p className="text-sm text-emerald-500 mt-4 flex items-center gap-1.5 font-medium">
+                    <TrendingUp size={14} /> +12% siden forrige uke
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-slate-100 dark:border-white/5">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Oppgaver i kø</p>
+                    <span className="text-3xl font-light text-slate-900 dark:text-white">4</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Løst i år</p>
+                    <span className="text-3xl font-light text-slate-900 dark:text-white">12</span>
+                  </div>
+                </div>
+
+                <button onClick={() => setActiveTab('analysis')} className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2 hover:opacity-70 transition-opacity">
+                  <Activity size={16} /> Kjør ny systemanalyse
+                </button>
+              </div>
+
+              {/* HØYRE: Handling og Historikk (Rene linjer) - 7 kolonner */}
+              <div className="lg:col-span-7 space-y-16 mt-4 lg:mt-0">
+
+                {/* Triage / Innboks */}
+                <div>
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Krever handling</p>
+                    <button onClick={() => setActiveTab('verksted')} className="text-xs font-medium text-violet-500 hover:text-violet-600 transition-colors">
+                      Åpne Verksted &rarr;
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    {[
+                      { t: 'Reduser ubrukt JavaScript', src: 'Teknisk', priority: 'Kritisk' },
+                      { t: 'Manglende Meta-beskrivelse', src: 'Innhold', priority: 'Høy' }
+                    ].map((item, i) => (
+                      <div
+                        key={i}
+                        onClick={() => setActiveTab('verksted')}
+                        className="group flex items-center justify-between py-4 hover:px-4 -mx-4 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Minimalistisk indikator i stedet for store fargede knapper */}
+                          <div className={`w-1.5 h-1.5 rounded-full ${item.priority === 'Kritisk' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                          <p className="text-sm text-slate-900 dark:text-slate-200">{item.t}</p>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Gå til løsning
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Logg / Historikk */}
+                <div>
+                  <div className="mb-4 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Siste hendelser</p>
+                  </div>
+                  <div className="space-y-5 pt-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Markerte "Treg LCP" som løst via Verkstedet.</span>
+                      <span className="text-slate-400 text-xs font-mono">I dag</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Kjørte full systemanalyse. Fant 2 nye problemer.</span>
+                      <span className="text-slate-400 text-xs font-mono">2 dager siden</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Organisk trafikk-estimat økte med 4%.</span>
+                      <span className="text-slate-400 text-xs font-mono">1. april</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
         )}
 
@@ -5109,7 +5280,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
                           <h3 className="text-sm font-bold text-violet-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Sparkles size={16} /> AI-Analyse av problemet</h3>
                           <p className="text-lg text-slate-200 leading-relaxed mb-6">
-                            Jeg har sjekket nettsiden din. Feilen oppstår fordi et script blokkerer hovedtråden under lasting. Hvis vi fjerner eller utsetter dette, vil siden laste merkbart raskere.
+                            {aiSolution?.explanation || "AI analyserer kildekoden din nå..."}
                           </p>
 
                           {/* Kode-boks (Dummy data inntil API er koblet på) */}
@@ -5118,8 +5289,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Foreslått kodepatch</span>
                               <button className="text-violet-400 hover:text-violet-300 flex items-center gap-1 text-xs font-bold transition-colors"><Copy size={14} /> Kopier</button>
                             </div>
-                            <code className="text-emerald-400 block mb-1">+ &lt;script defer src="/assets/tunge-filer.js"&gt;&lt;/script&gt;</code>
-                            <code className="text-rose-400 line-through opacity-50 block">- &lt;script src="/assets/tunge-filer.js"&gt;&lt;/script&gt;</code>
+                            {aiSolution?.codePatch?.new && <code className="text-emerald-400 block mb-1">+ {aiSolution.codePatch.new}</code>}
+                            {aiSolution?.codePatch?.old && <code className="text-rose-400 line-through opacity-50 block mt-2">- {aiSolution.codePatch.old}</code>}
                           </div>
                         </div>
 
@@ -5208,6 +5379,9 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
   const [isEditing, setIsEditing] = useState(false);
 
 
+
+
+
   // --- VERKSTED HUKOMMELSE ---
   const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null);
   const [problemHistory, setProblemHistory] = useState<any[]>([]);
@@ -5215,6 +5389,7 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
   const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null);
   const [aiIsThinking, setAiIsThinking] = useState(false);
   const [aiHasSolved, setAiHasSolved] = useState(false);
+
 
   const seoDictionary: Record<string, any> = {
     'meta-description': {
