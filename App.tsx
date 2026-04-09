@@ -3,7 +3,7 @@ import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import {
-  ArrowRight, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
+  ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
   MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool,
   SearchIcon, TrendingDown, ImageIcon, ShoppingBag, Clock, AlertTriangle, MessageCircle, HelpCircle, LayoutDashboard, FileText, Link2,
   Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
@@ -5275,6 +5275,57 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     ) : (
                       // FERDIG RESULTAT FRA AI
                       <div className="animate-in fade-in duration-500 space-y-6">
+
+
+
+
+                        {/* VISUELT DATA-DASHBOARD (Grafer for problemet) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+                          {/* Graf 1: Potensiell tidsbesparelse */}
+                          <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                              <Timer size={64} />
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Tidsbesparelse</h4>
+                            <div className="flex items-baseline gap-2 mb-4">
+                              <span className="text-4xl font-black text-emerald-400">
+                                {activeSolveProblem?.raw?.numericValue
+                                  ? (activeSolveProblem.raw.numericValue / 1000).toFixed(1)
+                                  : "1.2"}
+                              </span>
+                              <span className="text-sm font-bold text-slate-400">sekunder</span>
+                            </div>
+                            <div className="w-full bg-slate-950 rounded-full h-2.5 shadow-inner">
+                              <div className="bg-emerald-400 h-2.5 rounded-full w-[75%] shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-3 font-medium">Beregnet hastighetsøkning ved fiks</p>
+                          </div>
+
+                          {/* Graf 2: Belastning / Wasted Bytes */}
+                          <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                              <Activity size={64} />
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Unødvendig Data</h4>
+                            <div className="flex items-baseline gap-2 mb-4">
+                              <span className="text-4xl font-black text-rose-400">
+                                {activeSolveProblem?.raw?.details?.items?.[0]?.wastedBytes
+                                  ? (activeSolveProblem.raw.details.items[0].wastedBytes / 1024).toFixed(0)
+                                  : "340"}
+                              </span>
+                              <span className="text-sm font-bold text-slate-400">KB</span>
+                            </div>
+                            <div className="w-full flex gap-1 h-2.5">
+                              <div className="bg-rose-500 h-full rounded-l-full w-1/2 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>
+                              <div className="bg-rose-400 h-full w-1/4"></div>
+                              <div className="bg-slate-800 h-full rounded-r-full w-1/4"></div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-3 font-medium">Data som blokkerer hovedtråden</p>
+                          </div>
+                        </div>
+
+
 
                         {/* 1. Steg-for-steg AI-løsning */}
                         <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
