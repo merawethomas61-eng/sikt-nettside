@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
         // 6. Send det perfekte JSON-svaret tilbake til Verksted-knappen din
         return res.status(200).json({
-            explanation: aiResult.explanation,
+            steps: aiResult.explanation,
             codePatch: aiResult.codePatch || null
         });
 
