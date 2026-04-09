@@ -5276,39 +5276,66 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       // FERDIG RESULTAT FRA AI
                       <div className="animate-in fade-in duration-500 space-y-6">
 
-                        {/* 1. AI Årsaksforklaring */}
+                        {/* 1. Steg-for-steg AI-løsning */}
                         <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
-                          <h3 className="text-sm font-bold text-violet-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Sparkles size={16} /> AI-Analyse av problemet</h3>
-                          <p className="text-lg text-slate-200 leading-relaxed mb-6">
-                            {aiSolution?.explanation || "AI analyserer kildekoden din nå..."}
-                          </p>
+                          <h3 className="text-sm font-bold text-violet-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                            <Sparkles size={16} /> Slik fikser du problemet
+                          </h3>
 
-                          {/* Kode-boks (Dummy data inntil API er koblet på) */}
-                          <div className="bg-slate-950 p-5 rounded-xl border border-white/5 font-mono text-sm text-slate-300">
-                            <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3">
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Foreslått kodepatch</span>
-                              <button className="text-violet-400 hover:text-violet-300 flex items-center gap-1 text-xs font-bold transition-colors"><Copy size={14} /> Kopier</button>
-                            </div>
-                            {aiSolution?.codePatch?.new && <code className="text-emerald-400 block mb-1">+ {aiSolution.codePatch.new}</code>}
-                            {aiSolution?.codePatch?.old && <code className="text-rose-400 line-through opacity-50 block mt-2">- {aiSolution.codePatch.old}</code>}
-                          </div>
-                        </div>
+                          {aiSolution?.steps ? (
+                            <div className="space-y-2 relative">
+                              {aiSolution.steps.map((step: any, index: number) => (
+                                <div key={index} className="flex gap-4 relative">
 
-                        {/* 2. Manuelle Steg */}
-                        <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
-                          <h3 className="text-xl font-bold text-white mb-6">Slik fikser du det manuelt</h3>
-                          <div className="space-y-4">
-                            {[1, 2, 3].map((step) => (
-                              <div key={step} className="flex gap-4 p-4 rounded-xl bg-slate-950 border border-white/5">
-                                <div className="w-8 h-8 rounded-full bg-violet-600/20 text-violet-400 flex items-center justify-center font-bold shrink-0">{step}</div>
-                                <div>
-                                  <p className="text-slate-200 font-medium">Logg inn og utfør koden (AI vil generere nøyaktige steg her)</p>
-                                  <p className="text-slate-500 text-xs mt-1 font-bold">Estimat: 2 minutter</p>
+                                  {/* Timeline-strek */}
+                                  {index !== aiSolution.steps.length - 1 && (
+                                    <div className="absolute left-4 top-10 bottom-[-16px] w-0.5 bg-white/5"></div>
+                                  )}
+
+                                  {/* Sirkel med tall */}
+                                  <div className="relative z-10 flex-shrink-0 w-8 h-8 rounded-full bg-violet-600/20 text-violet-400 flex items-center justify-center font-bold text-sm border-2 border-slate-900 shadow-sm">
+                                    {index + 1}
+                                  </div>
+
+                                  {/* Innholdet i steget */}
+                                  <div className="pt-1 pb-6">
+                                    <h4 className="font-bold text-slate-200 text-base">
+                                      {step.title}
+                                    </h4>
+                                    <p className="text-slate-400 mt-1 text-sm leading-relaxed">
+                                      {step.description}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-slate-500">Kunne ikke laste løsningen. Prøv å kjøre analysen på nytt.</p>
+                          )}
                         </div>
+
+                        {/* 2. Eventuell Kode-boks (Vises KUN hvis AI returnerer kode) */}
+                        {aiSolution?.codePatch && (
+                          <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg">
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                <Code2 size={16} /> Foreslått Kodeendring
+                              </h3>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(aiSolution.codePatch)}
+                                className="text-slate-400 hover:text-white flex items-center gap-1 text-xs font-bold transition-colors"
+                              >
+                                <Copy size={14} /> Kopier kode
+                              </button>
+                            </div>
+                            <div className="bg-slate-950 p-5 rounded-xl border border-white/5 font-mono text-sm text-slate-300 overflow-x-auto">
+                              <pre className="text-emerald-400">
+                                <code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code>
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     )}
                   </div>

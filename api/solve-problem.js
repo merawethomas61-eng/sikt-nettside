@@ -30,7 +30,7 @@ export default async function handler(req, res) {
                 messages: [
                     {
                         role: "system",
-                        content: "Du er en sylskarp og teknisk ekspert på webutvikling. Din oppgave er å analysere feilmeldinger fra nettsider og levere nøyaktige løsninger. Du MÅ returnere svaret ditt utelukkende som et gyldig JSON-objekt med to nøkler: 'explanation' (en grundig og hjelpsom forklaring på problemet på norsk) og 'codePatch' (faktisk kode som kunden kan bruke for å løse problemet, eller null hvis kode ikke er relevant)."
+                        content: "Du er en sylskarp teknisk ekspert. Analyser feilen og lever nøyaktige løsninger. Du MÅ returnere et gyldig JSON-objekt med: 'explanation' (en kort, lettlest forklaring på norsk. Bruk avsnitt (\\n\\n) og kulepunkter for å bryte opp teksten. Unngå store vegger av tekst. Gå rett på sak) og 'codePatch' (faktisk kode, eller null)."
                     },
                     {
                         role: "user",
