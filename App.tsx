@@ -5282,7 +5282,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <Sparkles size={16} /> Slik fikser du problemet
                           </h3>
 
-                          {aiSolution?.steps ? (
+                          {/* SIKKERHETSSJEKK: Vi verifiserer at det er en ekte liste før vi looper */}
+                          {Array.isArray(aiSolution?.steps) ? (
                             <div className="space-y-2 relative">
                               {aiSolution.steps.map((step: any, index: number) => (
                                 <div key={index} className="flex gap-4 relative">
@@ -5300,17 +5301,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   {/* Innholdet i steget */}
                                   <div className="pt-1 pb-6">
                                     <h4 className="font-bold text-slate-200 text-base">
-                                      {step.title}
+                                      {step.title || "Steg"}
                                     </h4>
                                     <p className="text-slate-400 mt-1 text-sm leading-relaxed">
-                                      {step.description}
+                                      {step.description || step}
                                     </p>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-slate-500">Kunne ikke laste løsningen. Prøv å kjøre analysen på nytt.</p>
+                            /* FALLBACK: Hvis AI roter til formatet, unngår vi krasj og viser dataene som ren tekst */
+                            <div className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+                              {aiSolution?.steps || aiSolution?.explanation || "Kunne ikke laste løsningen på riktig format. Prøv å kjøre analysen på nytt."}
+                            </div>
                           )}
                         </div>
 
