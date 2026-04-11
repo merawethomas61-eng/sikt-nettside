@@ -5283,6 +5283,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         {activeSolveProblem?.raw && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
+                            {/* DETEKTIVEN: Denne skriver ut dataene i konsollen din (F12) */}
+                            {console.log("RÅDATA FOR DETTE PROBLEMET:", activeSolveProblem.raw)}
+
                             {/* Graf 1: Potensiell tidsbesparelse */}
                             <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
                               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -5291,14 +5294,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Tidsbesparelse</h4>
                               <div className="flex items-baseline gap-2 mb-4">
                                 <span className="text-4xl font-black text-emerald-400">
-                                  {/* Trekker ut ekte millisekunder og gjør om til sekunder. Fallback til 0 hvis feilen ikke påvirker tid. */}
-                                  {activeSolveProblem.raw.numericValue
-                                    ? (activeSolveProblem.raw.numericValue / 1000).toFixed(2)
-                                    : "0.00"}
+                                  {/* Mer aggressiv leting etter millisekunder */}
+                                  {(
+                                    (activeSolveProblem.raw.details?.overallSavingsMs ||
+                                      activeSolveProblem.raw.numericValue ||
+                                      0) / 1000
+                                  ).toFixed(2)}
                                 </span>
                                 <span className="text-sm font-bold text-slate-400">sekunder</span>
                               </div>
-                              {/* Animasjonsbar som fyller seg opp basert på hvor alvorlig Lighthouse mener feilen er */}
                               <div className="w-full bg-slate-950 rounded-full h-2.5 shadow-inner">
                                 <div
                                   className="bg-emerald-400 h-2.5 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-1000"
@@ -5316,16 +5320,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Unødvendig Data</h4>
                               <div className="flex items-baseline gap-2 mb-4">
                                 <span className="text-4xl font-black text-rose-400">
-                                  {/* Graver dypt i Lighthouse-dataene etter nøyaktig mengde bortkastet data i KB */}
-                                  {activeSolveProblem.raw.details?.overallSavingsBytes
-                                    ? (activeSolveProblem.raw.details.overallSavingsBytes / 1024).toFixed(0)
-                                    : activeSolveProblem.raw.details?.items?.reduce((acc: number, item: any) => acc + (item.wastedBytes || 0), 0)
-                                      ? (activeSolveProblem.raw.details.items.reduce((acc: number, item: any) => acc + (item.wastedBytes || 0), 0) / 1024).toFixed(0)
-                                      : "0"}
+                                  {/* Mer aggressiv leting etter bortkastede bytes */}
+                                  {(
+                                    (activeSolveProblem.raw.details?.overallSavingsBytes ||
+                                      activeSolveProblem.raw.details?.items?.reduce((acc: number, item: any) => acc + (item.wastedBytes || 0), 0) ||
+                                      0) / 1024
+                                  ).toFixed(0)}
                                 </span>
                                 <span className="text-sm font-bold text-slate-400">KB</span>
                               </div>
-                              {/* Designbar som representerer datamengden */}
                               <div className="w-full flex gap-1 h-2.5">
                                 <div className="bg-rose-500 h-full rounded-l-full w-2/3 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>
                                 <div className="bg-rose-400 h-full w-1/6"></div>
