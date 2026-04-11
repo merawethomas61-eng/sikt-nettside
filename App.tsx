@@ -5281,56 +5281,55 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* VISUELT DATA-DASHBOARD (Ekte data fra Lighthouse) */}
                         {activeSolveProblem?.raw && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                          <div className={`grid gap-4 mb-6 ${Number(activeSolveProblem.raw.numericValue) > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
 
-                            {/* Graf 1: Potensiell tidsbesparelse */}
-                            <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
-                              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <Timer size={64} />
+                            {/* Graf 1: Potensiell tidsbesparelse (Vises KUN hvis den er større enn 0) */}
+                            {Number(activeSolveProblem.raw.numericValue) > 0 && (
+                              <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                  <Timer size={64} />
+                                </div>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Tidsbesparelse</h4>
+                                <div className="flex items-baseline gap-2 mb-4">
+                                  <span className="text-4xl font-black text-emerald-400">
+                                    {(Number(activeSolveProblem.raw.numericValue) / 1000).toFixed(2)}
+                                  </span>
+                                  <span className="text-sm font-bold text-slate-400">sekunder</span>
+                                </div>
+                                <div className="w-full bg-slate-950 rounded-full h-2.5 shadow-inner">
+                                  <div
+                                    className="bg-emerald-400 h-2.5 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-1000"
+                                    style={{ width: '75%' }}
+                                  ></div>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-3 font-medium">Beregnet hastighetsøkning ved fiks</p>
                               </div>
-                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Tidsbesparelse</h4>
-                              <div className="flex items-baseline gap-2 mb-4">
-                                <span className="text-4xl font-black text-emerald-400">
-                                  {/* Viser ekte tid hvis det finnes, ellers 0.00 */}
-                                  {activeSolveProblem.raw.numericValue
-                                    ? (activeSolveProblem.raw.numericValue / 1000).toFixed(2)
-                                    : "0.00"}
-                                </span>
-                                <span className="text-sm font-bold text-slate-400">sekunder</span>
-                              </div>
-                              <div className="w-full bg-slate-950 rounded-full h-2.5 shadow-inner">
-                                <div
-                                  className="bg-emerald-400 h-2.5 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-1000"
-                                  style={{ width: activeSolveProblem.raw.numericValue ? '75%' : '5%' }}
-                                ></div>
-                              </div>
-                              <p className="text-xs text-slate-500 mt-3 font-medium">Beregnet hastighetsøkning ved fiks</p>
-                            </div>
+                            )}
 
-                            {/* Graf 2: Belastning / Wasted Bytes */}
-                            <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
-                              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <Activity size={64} />
+                            {/* Graf 2: Belastning / Wasted Bytes (Vises alltid hvis det finnes data) */}
+                            {((activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings || "").replace(/\D/g, '') || "0") !== "0" && (
+                              <div className="p-5 rounded-2xl bg-slate-900 border border-white/5 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                  <Activity size={64} />
+                                </div>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Unødvendig Data</h4>
+                                <div className="flex items-baseline gap-2 mb-4">
+                                  <span className="text-4xl font-black text-rose-400">
+                                    {(activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings || "").replace(/\D/g, '')}
+                                  </span>
+                                  <span className="text-sm font-bold text-slate-400">KB</span>
+                                </div>
+                                <div className="w-full flex gap-1 h-2.5">
+                                  <div
+                                    className="bg-rose-500 h-full rounded-l-full shadow-[0_0_10px_rgba(244,63,94,0.5)] transition-all duration-1000"
+                                    style={{ width: '66%' }}
+                                  ></div>
+                                  <div className="bg-rose-400 h-full w-1/6"></div>
+                                  <div className="bg-slate-800 h-full rounded-r-full flex-1"></div>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-3 font-medium">Data som blokkerer hovedtråden</p>
                               </div>
-                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Unødvendig Data</h4>
-                              <div className="flex items-baseline gap-2 mb-4">
-                                <span className="text-4xl font-black text-rose-400">
-                                  {/* MAGIEN: Fjerner alle bokstaver fra strengen "Anslått besparelse på 19 KiB" og beholder kun "19" */}
-                                  {(activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings || "").replace(/\D/g, '') || "0"}
-                                </span>
-                                <span className="text-sm font-bold text-slate-400">KB</span>
-                              </div>
-                              <div className="w-full flex gap-1 h-2.5">
-                                {/* Baren fyller seg opp basert på om det faktisk er data der */}
-                                <div
-                                  className="bg-rose-500 h-full rounded-l-full shadow-[0_0_10px_rgba(244,63,94,0.5)] transition-all duration-1000"
-                                  style={{ width: (activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings) ? '66%' : '5%' }}
-                                ></div>
-                                <div className="bg-rose-400 h-full w-1/6"></div>
-                                <div className="bg-slate-800 h-full rounded-r-full flex-1"></div>
-                              </div>
-                              <p className="text-xs text-slate-500 mt-3 font-medium">Data som blokkerer hovedtråden</p>
-                            </div>
+                            )}
                           </div>
                         )}
 
