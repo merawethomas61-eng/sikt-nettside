@@ -5342,6 +5342,39 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <Sparkles size={16} /> Slik fikser du problemet
                           </h3>
 
+                          {/* 2. KODE-BOKS (Vises KUN hvis AI-en har en spesifikk kodeendring å foreslå) */}
+                          {aiSolution?.codePatch && (
+                            <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/50 shadow-lg mt-6">
+                              <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                  <Code2 size={16} /> Foreslått Kodeendring
+                                </h3>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch))}
+                                  className="text-slate-400 hover:bg-white/5 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-bold transition-all active:scale-95"
+                                >
+                                  <Copy size={14} /> Kopier
+                                </button>
+                              </div>
+
+                              {/* Selve terminal-vinduet */}
+                              <div className="bg-[#0D1117] p-5 rounded-xl border border-white/10 font-mono text-sm text-slate-300 overflow-x-auto relative shadow-inner">
+                                {/* Rød/Gul/Grønn Mac-knapper for estetikk */}
+                                <div className="flex gap-1.5 mb-4 opacity-50">
+                                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+                                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                                </div>
+                                <pre className="text-emerald-400 whitespace-pre-wrap">
+                                  <code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code>
+                                </pre>
+                              </div>
+                              <p className="text-xs text-slate-500 mt-4 leading-relaxed">
+                                Erstatt din nåværende kode med blokken over. Husk å teste siden din etter endringen.
+                              </p>
+                            </div>
+                          )}
+
                           {/* SIKKERHETSSJEKK: Vi verifiserer at det er en ekte liste før vi looper */}
                           {Array.isArray(aiSolution?.steps) ? (
                             <div className="space-y-2 relative">
