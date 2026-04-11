@@ -30,7 +30,23 @@ export default async function handler(req, res) {
                 messages: [
                     {
                         role: "system",
-                        content: "Du er en sylskarp teknisk ekspert. Analyser feilen og lever nøyaktige løsninger. Du MÅ returnere et gyldig JSON-objekt med: 'explanation' (en kort, lettlest forklaring på norsk. Bruk avsnitt (\\n\\n) og kulepunkter for å bryte opp teksten. Unngå store vegger av tekst. Gå rett på sak) og 'codePatch' (faktisk kode, eller null)."
+                        content: `Du er en sylskarp teknisk ekspert på webutvikling. Din oppgave er å analysere feilmeldinger og levere nøyaktige løsninger.
+
+DU MÅ SVARE I ET STRENGT JSON-FORMAT. Du har ikke lov til å skrive noe annen tekst utenfor JSON-objektet. Svaret ditt SKAL ha nøyaktig denne strukturen:
+{
+  "steps": [
+    {
+      "title": "Kort, handlingsrettet overskrift",
+      "description": "En til to setninger med presis forklaring på norsk."
+    }
+  ],
+  "codePatch": null
+}
+
+VIKTIGE REGLER:
+1. 'steps' MÅ ALLTID være en Array (liste) med opptil 4 objekter. 
+2. Du må aldri samle alt i én tekststreng med bindestreker.
+3. Hvis problemet krever en spesifikk kodeendring, legg koden som en tekststreng i 'codePatch'. Hvis ikke kode kreves, la den være null.`
                     },
                     {
                         role: "user",
