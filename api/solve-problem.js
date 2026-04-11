@@ -13,11 +13,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        const response = await fetch('[https://api.openai.com/v1/chat/completions](https://api.openai.com/v1/chat/completions)', {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                // .trim() fjerner eventuelle usynlige mellomrom du kan ha fått med deg
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY.trim()}`
             },
             body: JSON.stringify({
                 model: "gpt-4o-mini",
@@ -36,32 +37,32 @@ export default async function handler(req, res) {
             })
         });
 
+        // DETEKTIVEN: Hvis OpenAI nekter å svare, henter vi ut den nøyaktige grunnen
         if (!response.ok) {
-            throw new Error("Kunne ikke koble til OpenAI sitt API.");
+            const errorData = await response.json();
+            throw new Error(`OpenAI sier: ${errorData.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
         let rawContent = data.choices[0].message.content;
 
-        // SIKKERHET 1: Fjern irriterende markdown-ticks hvis AI-en er ulydig
         rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
 
         const aiResult = JSON.parse(rawContent);
 
-        // SIKKERHET 2: Tving formatet til å være riktig før vi sender det til React
         return res.status(200).json({
             steps: Array.isArray(aiResult.steps) ? aiResult.steps : [{ title: "AI Formateringsfeil", description: "AI-en klarte ikke å formatere listen riktig." }],
             codePatch: aiResult.codePatch || null
         });
 
     } catch (error) {
-        console.error("Kritisk feil:", error);
-        // SIKKERHET 3: Returner feilen som et "steg", så frontenden alltid klarer å tegne sirklene
+        console.error("Feil:", error);
+        // Vi sender den EKTE feilmeldingen fra OpenAI rett til grensesnittet ditt
         return res.status(200).json({
             steps: [
                 {
-                    title: "AI-motoren krasjet",
-                    description: "Det oppstod en teknisk feil på serveren under analysen. Prøv igjen om litt."
+                    title: "Avslørt Feilmelding",
+                    description: error.message
                 }
             ],
             codePatch: null
