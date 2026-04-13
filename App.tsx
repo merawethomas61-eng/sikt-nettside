@@ -6124,52 +6124,57 @@ function App() {
   // ---------------------------------------------------------
   // 🚪 DØRVAKT 1: FERDIG KUNDE (VIP)
   // ---------------------------------------------------------
-  // Hvis brukeren er logget inn OG har betalt (hasAccess),
-  // sendes de rett til ClientPortal. De får IKKE se hjemmesiden.
+  // Hvis brukeren er logget inn OG har fullført oppsettet (hasAccess),
+  // sendes de rett til ClientPortal.
   if (user && hasAccess) {
-    return <ClientPortal user={user} onLogout={handleLogout}
-      // HER SENDER VI DE NYE VERKTØYENE:
-      theme={theme}
-      setTheme={setTheme}
-      setView={setView}
-      selectedPlan={selectedPlan}
-      onSelectPlan={handlePlanSelect} />; // <-- LEGG TIL DENNE LINJEN
+    return (
+      <ClientPortal
+        user={user}
+        onLogout={handleLogout}
+        theme={theme}
+        setTheme={setTheme}
+        setView={setView}
+        selectedPlan={selectedPlan}
+        onSelectPlan={handlePlanSelect}
+      />
+    );
   }
-  // ---------------------------------------------------------
-  // 🚪 DØRVAKT 2: PROSESS (Registrering)
-  // ---------------------------------------------------------
-  // Hvis brukeren holder på med bestilling, vis kun det steget.
-  // Ingen meny, ingen footer, ingen distraksjoner.
 
-  // 🚪 DØRVAKT 2: PROSESS
+  // ---------------------------------------------------------
+  // 🚪 DØRVAKT 2: PROSESS (Registrering & Integrasjon)
+  // ---------------------------------------------------------
+
+  // 1. Skjemaet etter betaling
   if (view === 'onboarding') {
     return <OnboardingPage user={user} onComplete={() => setView('setup')} />;
   }
 
+  // 2. Kildekode-integrasjon (Den nye siden din)
   if (view === 'setup' || view === 'setup_guide') {
     return (
       <CodeIntegrationStep
-        onNext={() => {
-          setHasAccess(true); // Låser opp tilgang til plattformen
-          setView('success'); // 1. Sender kunden til Suksess-siden
-        }}
-        onSkip={() => {
+        onNext={() => setView('success')}
+        onSkip={() => setView('success')}
+      />
+    );
+  }
+
+  // 3. Suksess-side før de går inn i portalen
+  if (view === 'success') {
+    return (
+      <SuccessPage
+        onBackHome={() => {
+          // Når de trykker "Gå videre" her, låser vi opp portalen
           setHasAccess(true);
-          setView('success'); // Gjør det samme selv om de hopper over
+          setView('deepdive');
         }}
       />
     );
   }
 
-  if (view === 'success') {
-    // 2. Når de trykker "Gå videre" på suksess-siden, åpnes Verkstedet
-    return <SuccessPage onBackHome={() => setView('deepdive')} />;
-  }
   // ---------------------------------------------------------
   // 🏠 HOVEDHUSET (For nye besøkende / ikke-kunder)
   // ---------------------------------------------------------
-  // Hvis ingen av dørvaktene over stoppet oss, viser vi den vanlige nettsiden.
-
   return (
     <div className="min-h-screen selection:bg-violet-100 selection:text-violet-900 bg-[#fcfcfd] relative overflow-x-hidden">
       <GlobalDecorations />
@@ -6189,9 +6194,7 @@ function App() {
       <main className="relative z-10">
 
         {view === 'home' && (
-
           <HomeView onNavigate={setView} onSelectPlan={handlePlanSelect} />
-
         )}
 
         {view === 'login' && <LoginPage onBack={() => setView('home')} />}
@@ -6206,7 +6209,7 @@ function App() {
           />
         )}
 
-        {/* DeepDive vises hvis vi ikke er på en av spesialsidene */}
+        {/* DeepDive vises hvis kunden er i portal-modus */}
         {view === 'deepdive' && (
           <DeepDiveView
             onBack={() => setView('home')}
