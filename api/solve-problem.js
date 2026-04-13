@@ -41,12 +41,12 @@ DU MÅ SVARE I ET STRENGT JSON-FORMAT. Svaret ditt SKAL ha nøyaktig denne struk
 
 VIKTIGE REGLER FOR KODE (COPY-PASTE):
 1. Du SKAL nesten alltid levere noe i 'codePatch'. Kundene våre betaler for copy-paste-kode!
-2. Hvis feilen er generell (f.eks. "Ubrukt JavaScript" eller "Ubrukt CSS"), skriv et kode-eksempel på hvordan man utsetter innlasting (Lazy load/Defer) i React/Next.js, ELLER en konfigurasjon for Webpack/Vite, ELLER en standard HTML defer-tag. 
+2. Hvis feilen er generell (f.eks. "Ubrukt JavaScript" eller "Ubrukt CSS"), skriv et kode-eksempel på hvordan man utsetter innlasting i React/Next.js eller en standard HTML defer-tag. 
 3. Koden skal være ren, kommentert på norsk, og klar til å limes rett inn i prosjektet.`
                     },
                     {
                         role: "user",
-                        content: `Problem på nettsiden: ${url}\nTittel: ${problemTitle}\nDetaljer: ${JSON.stringify(problemDetails)}`
+                        content: `Kategori: ${kategori}\nTittel: ${tittel}\nBeskrivelse: ${beskrivelse}`
                     }
                 ],
                 temperature: 0.2

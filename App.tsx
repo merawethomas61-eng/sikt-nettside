@@ -5776,6 +5776,7 @@ function App() {
   // --- STATE ---
   // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
   const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+  const [customerFiles, setCustomerFiles] = useState([]);
 
   const [user, setUser] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState(false);
@@ -6153,7 +6154,10 @@ function App() {
   if (view === 'setup' || view === 'setup_guide') {
     return (
       <CodeIntegrationStep
-        onNext={() => setView('success')}
+        onNext={(files) => {
+          setCustomerFiles(files); // Vi lagrer koden i minnet!
+          setView('success');
+        }}
         onSkip={() => setView('success')}
       />
     );

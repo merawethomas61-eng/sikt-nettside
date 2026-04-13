@@ -3,15 +3,27 @@ import { Github, UploadCloud, Globe, ArrowRight, FileCode, CheckCircle2, Loader2
 
 export const CodeIntegrationStep = ({ onNext, onSkip }) => {
   const [uploading, setUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]); // Nå lagrer vi både filnavn og innholdet!
 
-  // Simulering av filopplasting
+  // DEN NYE MAGISKE OPPLASTINGEN
   const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     setUploading(true);
-    setTimeout(() => {
-      setUploadedFiles([...uploadedFiles, e.target.files[0].name]);
+
+    // FileReader "spretter opp" filen og leser teksten inni
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const textContent = event.target.result;
+      
+      // Vi lagrer filen i minnet med både navn OG selve kildekoden
+      setUploadedFiles([...uploadedFiles, { name: file.name, content: textContent }]);
       setUploading(false);
-    }, 1500);
+    };
+    
+    // Vi ber den lese filen som ren tekst (kode)
+    reader.readAsText(file);
   };
 
   return (
@@ -30,52 +42,48 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
           
-          {/* VENSTRE SIDE: De store plattformene */}
+          {/* VENSTRE SIDE: De store plattformene (Vises som Beta) */}
           <div className="lg:col-span-3 space-y-4">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-2 mb-3">Koble til plattform</h3>
             
-            <div className="grid grid-cols-2 gap-3">
-              {/* GitHub / GitLab */}
-              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/30 transition-all group text-left">
+            <div className="grid grid-cols-2 gap-3 relative group">
+              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 opacity-70 cursor-not-allowed text-left">
                 <Github className="text-white mb-3" size={24} />
                 <h4 className="text-white font-semibold text-sm">GitHub / Repo</h4>
-                <p className="text-xs text-slate-500 mt-1">Gjennomgå kildekode</p>
+                <p className="text-xs text-slate-500 mt-1">Kommer snart</p>
               </button>
 
-              {/* WordPress / CMS */}
-              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/30 transition-all group text-left">
+              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 opacity-70 cursor-not-allowed text-left">
                 <LayoutDashboard className="text-white mb-3" size={24} />
-                <h4 className="text-white font-semibold text-sm">WordPress / CMS</h4>
-                <p className="text-xs text-slate-500 mt-1">Temaer og plugins</p>
+                <h4 className="text-white font-semibold text-sm">WordPress</h4>
+                <p className="text-xs text-slate-500 mt-1">Kommer snart</p>
               </button>
 
-              {/* Shopify / E-com */}
-              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/30 transition-all group text-left">
+              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 opacity-70 cursor-not-allowed text-left">
                 <ShoppingBag className="text-white mb-3" size={24} />
-                <h4 className="text-white font-semibold text-sm">Shopify / E-com</h4>
-                <p className="text-xs text-slate-500 mt-1">Liquid og assets</p>
+                <h4 className="text-white font-semibold text-sm">Shopify</h4>
+                <p className="text-xs text-slate-500 mt-1">Kommer snart</p>
               </button>
 
-              {/* Vercel / Netlify / AWS */}
-              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/30 transition-all group text-left">
+              <button className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 opacity-70 cursor-not-allowed text-left">
                 <Server className="text-white mb-3" size={24} />
-                <h4 className="text-white font-semibold text-sm">Hosting & Cloud</h4>
-                <p className="text-xs text-slate-500 mt-1">Vercel, AWS, cPanel</p>
+                <h4 className="text-white font-semibold text-sm">Vercel / AWS</h4>
+                <p className="text-xs text-slate-500 mt-1">Kommer snart</p>
               </button>
             </div>
           </div>
 
-          {/* HØYRE SIDE: Den universelle opplastingen */}
+          {/* HØYRE SIDE: Den universelle opplastingen (Den som faktisk fungerer nå) */}
           <div className="lg:col-span-2 space-y-4 flex flex-col">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-2 mb-3">Eller last opp fil</h3>
             
             <label className="w-full flex-1 flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-950/50 border-2 border-dashed border-white/10 hover:border-violet-500/50 hover:bg-violet-500/5 cursor-pointer transition-all group relative min-h-[200px]">
-              <input type="file" className="hidden" onChange={handleFileUpload} />
+              <input type="file" className="hidden" onChange={handleFileUpload} accept=".js,.jsx,.ts,.tsx,.css,.html,.php" />
               
               {uploading ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="text-violet-400 animate-spin" size={28} />
-                  <span className="text-xs text-slate-400 font-medium">Laster opp...</span>
+                  <span className="text-xs text-slate-400 font-medium">Laster opp og leser...</span>
                 </div>
               ) : (
                 <>
@@ -97,11 +105,11 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
           <div className="mb-2 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3">
             <CheckCircle2 className="text-emerald-400 shrink-0 mt-0.5" size={18} />
             <div>
-              <h4 className="text-emerald-400 text-sm font-bold mb-1">Filer klar for analyse</h4>
+              <h4 className="text-emerald-400 text-sm font-bold mb-1">Filer klar for AI-analyse</h4>
               <div className="flex flex-wrap gap-2">
                 {uploadedFiles.map((file, i) => (
                   <span key={i} className="text-xs text-emerald-300/80 bg-emerald-500/10 px-2 py-1 rounded-md flex items-center gap-1.5">
-                    <FileCode size={12} /> {file}
+                    <FileCode size={12} /> {file.name}
                   </span>
                 ))}
               </div>
@@ -111,12 +119,13 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
 
         {/* Navigasjon */}
         <div className="flex items-center justify-between pt-6 border-t border-white/10 mt-6">
-          <button onClick={onSkip} className="text-sm font-medium text-slate-500 hover:text-white transition-colors">
+          <button onClick={() => onSkip()} className="text-sm font-medium text-slate-500 hover:text-white transition-colors">
             Hopp over og fullfør senere
           </button>
           
           <button 
-            onClick={onNext}
+            // HER SENDER VI KODEN VIDERE UT AV SKJERMEN:
+            onClick={() => onNext(uploadedFiles)}
             className={`px-8 py-3 rounded-xl font-bold text-sm transition-all ${
               uploadedFiles.length > 0 
                 ? 'bg-violet-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-violet-400' 
