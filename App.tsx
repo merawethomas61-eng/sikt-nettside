@@ -5939,13 +5939,13 @@ function App() {
     let stripeBaseUrl = "";
 
     if (plan.includes('PREMIUM')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_5kQfZievo3gaeFL84Ads402';
+      stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
     }
     else if (plan.includes('STANDARD')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_4gMcN63QKbMG55b1Gcds401';
+      stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
     }
     else if (plan.includes('BASIC')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_eVq5kE870g2WeFL84Ads400';
+      stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
     }
 
     if (!stripeBaseUrl) {
