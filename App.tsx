@@ -1,4 +1,6 @@
 import { PaymentModal } from './PaymentModal';
+import { CodeIntegrationStep } from './CodeIntegrationStep';
+// (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
@@ -1293,153 +1295,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   );
 };
 
-// --- HER STARTER SetupGuide (som du allerede har) ---
-const SetupGuide = ({ onComplete }: { onComplete: () => void }) => {
-  const [copied, setCopied] = useState(false);
-  const [showWhyOwner, setShowWhyOwner] = useState(false); // Ny state for å vise info
-  const MY_EMAIL = "siktseo@gmail.com";
-
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(MY_EMAIL);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-
-  return (
-    <section className="min-h-screen bg-slate-50 py-12 px-4 flex items-center justify-center relative overflow-y-auto">
-      <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
-
-      <div className="max-w-2xl w-full bg-white rounded-[24px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 my-10 animate-in fade-in zoom-in-95 duration-500">
-
-        {/* HEADER: Fokus på partnerskap, ikke bare "krav" */}
-        <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-violet-500/10 blur-3xl"></div>
-          <div className="relative z-10">
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Siste steg for å aktivere AI-en 🚀</h1>
-            <p className="text-slate-400 font-medium text-sm sm:text-base">
-              For at vi skal kunne analysere dine data, må vi koble oss på Google Search Console.
-            </p>
-          </div>
-        </div>
-
-        <div className="p-6 sm:p-10 space-y-8">
-
-          {/* TILLITS-GARANTI (Viktigste endring for trygghet) */}
-          <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-5">
-            <h3 className="flex items-center gap-2 font-bold text-emerald-900 text-sm uppercase tracking-wide mb-3">
-              <ShieldCheck size={18} className="text-emerald-600" />
-              Din Trygghetsgaranti
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex gap-3 items-start">
-                <div className="bg-white p-1.5 rounded-md shadow-sm text-emerald-600"><Monitor size={14} /></div>
-                <p className="text-xs text-emerald-800 leading-relaxed"><strong>Vi endrer ingenting.</strong> Vi bruker kun lesetilgang til å hente statistikk.</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="bg-white p-1.5 rounded-md shadow-sm text-emerald-600"><LogOut size={14} /></div>
-                <p className="text-xs text-emerald-800 leading-relaxed"><strong>Full kontroll.</strong> Du eier dataene og kan fjerne oss når som helst med ett klikk.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* STEG-FOR-STEG GUIDEN */}
-          <div className="space-y-6 relative">
-            <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 -z-10"></div> {/* Tynn linje som binder stegene sammen */}
-
-            {/* Steg 1 */}
-            <div className="flex gap-4 group bg-white">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">1</div>
-              <div className="w-full pt-1">
-                <h4 className="font-bold text-slate-900 mb-1">Logg inn i Search Console</h4>
-                <p className="text-sm text-slate-500 mb-3">Klikk knappen under for å gå direkte til brukerinnstillinger.</p>
-                <a href="https://search.google.com/search-console/users" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-white bg-violet-600 px-5 py-2.5 rounded-lg hover:bg-violet-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                  Åpne Innstillinger <ExternalLink size={14} />
-                </a>
-              </div>
-            </div>
-
-            {/* Steg 2 */}
-            <div className="flex gap-4 group bg-white">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">2</div>
-              <div className="w-full pt-1">
-                <h4 className="font-bold text-slate-900 mb-1">Legg til vår e-post</h4>
-                <p className="text-sm text-slate-500 mb-3">Trykk "Legg til bruker" og bruk denne e-posten:</p>
-
-                {/* Optimalisert Kopierings-boks */}
-                <div
-                  onClick={handleCopy}
-                  className="relative overflow-hidden flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1 cursor-pointer hover:border-violet-500 hover:ring-2 hover:ring-violet-100 transition-all group/copy"
-                >
-                  <div className="flex items-center gap-3 px-3 py-3">
-                    <Mail size={18} className="text-slate-400 group-hover/copy:text-violet-500 transition-colors" />
-                    <code className="text-sm sm:text-base font-bold text-slate-700 font-mono tracking-tight">{MY_EMAIL}</code>
-                  </div>
-                  <div className={`px-4 py-3 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${copied ? 'bg-green-500 text-white' : 'bg-white border border-slate-200 text-slate-500 group-hover/copy:text-violet-600'}`}>
-                    {copied ? <span className="flex items-center gap-1"><Check size={14} /> Kopiert</span> : 'Kopier'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Steg 3 - Critical Point */}
-            <div className="flex gap-4 group bg-white">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 border-4 border-slate-50 shadow-sm z-10">3</div>
-              <div className="pt-1 w-full">
-                <h4 className="font-bold text-slate-900 mb-1">Velg rettighet: <span className="text-violet-600 bg-violet-50 px-2 py-0.5 rounded border border-violet-100">Eier</span></h4>
-                <p className="text-sm text-slate-500 leading-relaxed mb-3">
-                  Velg <strong>"Owner"</strong> (Eier) i listen. Dette er nødvendig for at AI-verktøyet skal kunne koble seg til API-et.
-                </p>
-
-                {/* Hvorfor Eier? - Expandable Trust Box */}
-                <button
-                  onClick={() => setShowWhyOwner(!showWhyOwner)}
-                  className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-slate-600 transition-colors"
-                >
-                  <HelpCircle size={12} /> Hvorfor må jeg velge Eier?
-                </button>
-
-                {showWhyOwner && (
-                  <div className="mt-3 text-xs bg-slate-50 p-3 rounded-lg text-slate-600 leading-relaxed border border-slate-100 animate-in slide-in-from-top-2">
-                    Google skiller dessverre ikke mellom "API-tilgang" og "Eier". For at programvare skal kunne hente ut data automatisk, krever Google statusen "Eier". Vi bruker aldri denne tilgangen til annet enn lesing.
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* CTA & Bekreftelse */}
-          <div className="pt-8 border-t border-slate-100">
-            <button
-              onClick={onComplete}
-              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl hover:shadow-violet-200/50 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 group"
-            >
-              <span>Jeg har gitt tilgang</span>
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <div className="mt-6 flex items-start justify-center gap-3 opacity-80">
-              <Clock size={16} className="text-slate-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-slate-500 text-center max-w-xs leading-relaxed">
-                Vi varsler deg via e-post eller telefon så snart analysen din er klar – <strong>senest innen 12 timer.</strong>
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Nød-knapp hvis de står fast */}
-      <div className="absolute bottom-5 text-center w-full">
-        <a href="mailto:siktseo@gmail.com" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
-          Står du fast? Kontakt support
-        </a>
-      </div>
-    </section>
-  );
-};
 
 
 // --- STORYBRAND SEKSJON (Med Animasjon) ---
@@ -6288,19 +6143,28 @@ function App() {
 
   // 🚪 DØRVAKT 2: PROSESS
   if (view === 'onboarding') {
-    // 👇 HER MÅ DU LEGGE TIL: user={user}
     return <OnboardingPage user={user} onComplete={() => setView('setup')} />;
   }
 
-  if (view === 'setup' || view === 'setup_guide') { // Håndterer begge navnene for sikkerhets skyld
-    return <SetupGuide onComplete={() => { setHasAccess(true); setView('success'); }} />;
+  if (view === 'setup' || view === 'setup_guide') {
+    return (
+      <CodeIntegrationStep
+        onNext={() => {
+          setHasAccess(true); // Låser opp tilgang til plattformen
+          setView('success'); // 1. Sender kunden til Suksess-siden
+        }}
+        onSkip={() => {
+          setHasAccess(true);
+          setView('success'); // Gjør det samme selv om de hopper over
+        }}
+      />
+    );
   }
 
   if (view === 'success') {
-    // Når de trykker "Gå videre" her, vil Dørvakt 1 (øverst) slå inn fordi hasAccess nå er true.
-    return <SuccessPage onBackHome={() => window.location.reload()} />;
+    // 2. Når de trykker "Gå videre" på suksess-siden, åpnes Verkstedet
+    return <SuccessPage onBackHome={() => setView('deepdive')} />;
   }
-
   // ---------------------------------------------------------
   // 🏠 HOVEDHUSET (For nye besøkende / ikke-kunder)
   // ---------------------------------------------------------
