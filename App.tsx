@@ -5772,30 +5772,13 @@ function App() {
   }, [theme]);
 
   // --- STATE ---
-  const [view, setView] = useState(() => {
-    // 1. Trumf-kortet: Kommer de rett fra Stripe-betaling?
-    if (isPaymentSuccess) return 'onboarding';
-
-    // 2. Hvis ikke, sjekk langtidsminnet i nettleseren:
-    return localStorage.getItem('sikt_current_view') || 'home';
-  });
-
-  const [hasAccess, setHasAccess] = useState(() => {
-    // Hent VIP-nøkkelen fra minnet hvis den finnes
-    const saved = localStorage.getItem('sikt_has_access');
-    return saved ? JSON.parse(saved) : false;
-  });
-
+  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
+  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+  const [hasAccess, setHasAccess] = useState(false);
   const [customerFiles, setCustomerFiles] = useState([]);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  // Denne "lytteren" passer på at minnet alltid er oppdatert når kunden bytter skjerm
-  useEffect(() => {
-    localStorage.setItem('sikt_current_view', view);
-    localStorage.setItem('sikt_has_access', JSON.stringify(hasAccess));
-  }, [view, hasAccess]);
 
 
 
