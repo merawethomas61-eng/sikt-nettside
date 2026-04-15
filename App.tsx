@@ -5771,15 +5771,35 @@ function App() {
     root.classList.add(theme);
   }, [theme]);
 
+
+
   // --- STATE ---
-  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
-  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+  const [view, setView] = useState(() => {
+    // 1. Sjekk URL først (Payment Success trumfer alt)
+    if (isPaymentSuccess) return 'onboarding';
+
+    // 2. Hvis ingen URL-trigger, sjekk om denne fanen har et aktivt minne (Session)
+    const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') : null;
+    return savedView || 'home';
+  });
+
   const [hasAccess, setHasAccess] = useState(false);
   const [customerFiles, setCustomerFiles] = useState([]);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
+  // --- FUNNEL PROTECTION ---
+  useEffect(() => {
+    // A. Vask URL-en for å unngå "loop" hvis siden re-laster
+    if (isPaymentSuccess) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
+    // B. Lagre kundens posisjon KUN i denne aktive fanen
+    sessionStorage.setItem('sikt_current_view', view);
+  }, [view, isPaymentSuccess]);
 
 
 
