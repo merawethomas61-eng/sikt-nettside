@@ -2287,8 +2287,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               )}
             </div>
           ) : (
-            <button onClick={onLoginTrigger} className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-violet-600 transition-all shadow-lg shadow-slate-200">Kom i gang</button>
-          )}
+            <button onClick={() => onNavigate('home')} className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-violet-600 transition-all shadow-lg shadow-slate-200">Kom i gang</button>)}
         </div>
 
         {/* MOBIL MENY KNAPP */}
@@ -5996,10 +5995,6 @@ function App() {
     }
   };
 
-  // HER ER MAGIEN: Når skjemaet er ferdig -> Gå til Setup Guide
-  const handleOnboardingComplete = () => {
-    setView('setup_guide');
-  };
 
   // --- 4. RENDER (LOGIKK FOR VISNING) ---
   // 💎 "CONTROL CENTER" LOADING SCREEN (Fullskjerm-aktivitet)
