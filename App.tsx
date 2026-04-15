@@ -6221,7 +6221,7 @@ function App() {
           />
         )}
 
-        {/* DeepDive vises hvis kunden er i portal-modus */}
+        {/* Dashbordet vises her */}
         {view === 'deepdive' && (
           <DeepDiveView
             onBack={() => setView('home')}
@@ -6229,15 +6229,11 @@ function App() {
           />
         )}
 
-        {/* Onboarding / Setup-skjermen vises her */}
+        {/* Onboarding-skjermen (som manglet) vises her */}
         {view === 'onboarding' && (
           <CodeIntegrationStep
-            onNext={(files) => {
-              // 1. Lagre filene
-              setCustomerFiles(files);
-              // 2. Gi VIP-tilgang
+            onNext={() => {
               setHasAccess(true);
-              // 3. Send kunden inn til verktøyet (deepdive er hovedsiden din)
               setView('deepdive');
             }}
             onSkip={() => {
