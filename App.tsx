@@ -5846,15 +5846,26 @@ function App() {
         // HER ER MAGIEN:
         // Hvis shouldAnimate er true (første gang), kjør showet.
         // Hvis shouldAnimate er false (fanebytte), bare sett view uten drama.
-        if (shouldAnimate) {
+        // 1. DØRVAKT-SJEKK: Er kunden aktivt i Onboarding akkurat nå?
+        const isCurrentlyOnboarding = sessionStorage.getItem('sikt_current_view') === 'onboarding';
+
+        if (isCurrentlyOnboarding) {
+          // Hvis de er i Onboarding, la dem være i fred!
+          console.log("Kunde er midt i oppsettet -> Stopp! Ikke send til dashboard.");
+          setView('onboarding');
+          setIsLoading(false);
+
+        } else if (shouldAnimate) {
+          // Hvis de IKKE er i onboarding, kjør normal innlogging
           console.log("Første load/login -> Kjører animasjon");
           setView('dashboard');
           enterPortalWithDelay();
+
         } else {
-          // "Stille" oppdatering
+          // "Stille" oppdatering for returnerende kunder
           console.log("Allerede logget inn -> Ingen animasjon");
           setView('dashboard');
-          setIsLoading(false); // Sørg for at loader er skjult
+          setIsLoading(false);
         }
 
       } else {
