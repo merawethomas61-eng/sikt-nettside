@@ -6213,6 +6213,25 @@ function App() {
           />
         )}
 
+        {/* Onboarding / Setup-skjermen vises her */}
+        {view === 'onboarding' && (
+          <CodeIntegrationStep
+            onNext={(files) => {
+              // 1. Lagre filene i minnet
+              setCustomerFiles(files);
+              // 2. Gi VIP-tilgang (Dørvakt 1)
+              setHasAccess(true);
+              // 3. Send kunden inn til verktøyet! (deepdive/dashboard)
+              setView('deepdive');
+            }}
+            onSkip={() => {
+              // Hvis de hopper over, gi dem fortsatt tilgang til dashbordet
+              setHasAccess(true);
+              setView('deepdive');
+            }}
+          />
+        )}
+
         {/* DeepDive vises hvis kunden er i portal-modus */}
         {view === 'deepdive' && (
           <DeepDiveView
