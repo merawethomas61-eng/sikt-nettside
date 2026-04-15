@@ -6211,6 +6211,15 @@ function App() {
 
         {view === 'login' && <LoginPage onBack={() => setView('home')} />}
 
+
+        {/* FEILSØKING: RØD BOKS */}
+        {view === 'onboarding' && (
+          <div className="h-screen w-full bg-red-600 flex items-center justify-center text-white text-5xl font-black">
+            ONBOARDING ER HER!
+          </div>
+        )}
+
+
         {view === 'technology' && <TechnologyView onNavigate={setView} />}
 
         {(view === 'profile' || view === 'billing') && (
