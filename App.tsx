@@ -15,6 +15,13 @@ import {
 } from 'lucide-react';
 
 
+const [view, setView] = useState(() => {
+  // Henter lagret fane-posisjon slik at den ikke glemmer hvor du er
+  const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') : null;
+  return savedView || 'home';
+});
+
+
 // --- ZERO COGNITIVE LOAD ORDBOK ---
 const seoDictionary: Record<string, any> = {
   'meta-description': {
