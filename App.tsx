@@ -6203,6 +6203,11 @@ function App() {
         />
       )}
 
+      {/* --- DEBUG LYTTEPOST --- */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 bg-yellow-400 text-black px-6 py-2 rounded-b-xl z-[9999] font-black shadow-lg border-2 border-black">
+        AKTIV SKJERM NÅ: "{view}"
+      </div>
+
       <main className="relative z-10">
 
         {view === 'home' && (
