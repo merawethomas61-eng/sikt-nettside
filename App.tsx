@@ -15,12 +15,6 @@ import {
 } from 'lucide-react';
 
 
-const [view, setView] = useState(() => {
-  // Henter lagret fane-posisjon slik at den ikke glemmer hvor du er
-  const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') : null;
-  return savedView || 'home';
-});
-
 
 // --- ZERO COGNITIVE LOAD ORDBOK ---
 const seoDictionary: Record<string, any> = {
@@ -1377,6 +1371,7 @@ const StoryBrandOneLiner = () => {
 };
 
 
+
 // Legg merke til at vi nå tar imot "handleLogin" her
 const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   const plans = [
@@ -1657,6 +1652,8 @@ const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) 
     <TechCTA onNavigate={onNavigate} />
   </>
 );
+
+
 
 // --- OTHER SHARED COMPONENTS ---
 
@@ -2216,6 +2213,8 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll);
@@ -2323,6 +2322,8 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
     </nav>
   );
 };
+
+
 
 // --- SETTINGS VIEW (INNSTILLINGER) ---
 const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
@@ -6236,7 +6237,7 @@ function App() {
               setCustomerFiles(files);
               // 2. Gi VIP-tilgang
               setHasAccess(true);
-              // 3. Send kunden inn til verktøyet!
+              // 3. Send kunden inn til verktøyet (deepdive er hovedsiden din)
               setView('deepdive');
             }}
             onSkip={() => {
