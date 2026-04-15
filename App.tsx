@@ -6236,7 +6236,7 @@ function App() {
         )}
 
         {/* Dashbordet vises her */}
-        {view === 'deepdive' && (
+        {(view === 'deepdive' || view === 'dashboard') && (
           <DeepDiveView
             onBack={() => setView('home')}
             onSelectPlan={() => handlePlanSelect('PREMIUM')}
