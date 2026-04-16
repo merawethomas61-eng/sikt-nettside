@@ -5843,26 +5843,19 @@ function App() {
 
       if (client && client.onboarding_completed === true) {
 
-        // HER ER MAGIEN:
-        // Hvis shouldAnimate er true (første gang), kjør showet.
-        // Hvis shouldAnimate er false (fanebytte), bare sett view uten drama.
-        // 1. DØRVAKT-SJEKK: Er kunden aktivt i Onboarding akkurat nå?
-        const isCurrentlyOnboarding = sessionStorage.getItem('sikt_current_view') === 'onboarding';
+        // Sjekker om hengelåsen er satt på
+        const isOnboardingLocked = localStorage.getItem('sikt_onboarding_lock') === 'true';
 
-        if (isCurrentlyOnboarding) {
-          // Hvis de er i Onboarding, la dem være i fred!
-          console.log("Kunde er midt i oppsettet -> Stopp! Ikke send til dashboard.");
+        if (isOnboardingLocked) {
+          // VIP-UNNTAK: Hengelåsen er på! La kunden være i fred.
+          console.log("Hengelås er PÅ -> Stopper omdirigering");
           setView('onboarding');
           setIsLoading(false);
-
         } else if (shouldAnimate) {
-          // Hvis de IKKE er i onboarding, kjør normal innlogging
           console.log("Første load/login -> Kjører animasjon");
           setView('dashboard');
           enterPortalWithDelay();
-
         } else {
-          // "Stille" oppdatering for returnerende kunder
           console.log("Allerede logget inn -> Ingen animasjon");
           setView('dashboard');
           setIsLoading(false);
@@ -5891,6 +5884,7 @@ function App() {
 
         // Sjekk om dette er en retur fra betaling
         if (new URLSearchParams(window.location.search).get('payment_success') === 'true') {
+          localStorage.setItem('sikt_onboarding_lock', 'true'); // <--- SMEKKER I LÅS!
           setView('onboarding');
           return;
         }
@@ -6254,14 +6248,15 @@ function App() {
           />
         )}
 
-        {/* Onboarding-skjermen (som manglet) vises her */}
         {view === 'onboarding' && (
           <CodeIntegrationStep
             onNext={() => {
+              localStorage.removeItem('sikt_onboarding_lock'); // <--- LÅSER OPP
               setHasAccess(true);
               setView('deepdive');
             }}
             onSkip={() => {
+              localStorage.removeItem('sikt_onboarding_lock'); // <--- LÅSER OPP
               setHasAccess(true);
               setView('deepdive');
             }}
