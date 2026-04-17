@@ -1,39 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Github, UploadCloud, Globe, ArrowRight, FileCode, CheckCircle2, Loader2, GitMerge, ShoppingBag, LayoutDashboard, Server, X } from 'lucide-react';
 
 export const CodeIntegrationStep = ({ onNext, onSkip }) => {
   const [uploading, setUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // NYTT: State for å holde styr på hvilken plattform kunden klikket på
-  const [activePlatform, setActivePlatform] = useState(null);
-  const [integrationInput, setIntegrationInput] = useState('');
+  // 1. SIKKER URL-VASK (Kjører helt i bakgrunnen, rører ikke skjemaet)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
 
-  // Filopplasting (samme som før)
+  // 2. LESE FRA MINNET (Kjører KUN i det millisekundet skjemaet tegnes opp)
+  const [uploadedFiles, setUploadedFiles] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sikt_final_files');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const [activePlatform, setActivePlatform] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sikt_final_platform') || null;
+    }
+    return null;
+  });
+
+  const [integrationInput, setIntegrationInput] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sikt_final_input') || '';
+    }
+    return '';
+  });
+
+  // 3. SKRIVE TIL MINNET (Kjører KUN når du fysisk klikker på noe. Ingen automatikk som kan feile!)
+  const updatePlatform = (platform) => {
+    setActivePlatform(platform);
+    if (platform) localStorage.setItem('sikt_final_platform', platform);
+    else localStorage.removeItem('sikt_final_platform');
+  };
+
+  const updateInput = (text) => {
+    setIntegrationInput(text);
+    localStorage.setItem('sikt_final_input', text);
+  };
+
+  const updateFiles = (newFiles) => {
+    setUploadedFiles(newFiles);
+    localStorage.setItem('sikt_final_files', JSON.stringify(newFiles));
+  };
+
+  // Håndtering av filopplasting (Drag & Drop)
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
     const reader = new FileReader();
     reader.onload = (event) => {
-      setUploadedFiles([...uploadedFiles, { name: file.name, content: event.target.result }]);
+      updateFiles([...uploadedFiles, { name: file.name, content: event.target.result }]);
       setUploading(false);
     };
     reader.readAsText(file);
   };
 
-  // Håndter plattform-tilkobling
+  // Håndtering av GitHub / Plattform tilkobling
   const handleConnectPlatform = (e) => {
     e.preventDefault();
-    // Her simulerer vi tilkoblingen for nå. 
-    // Senere skal denne sende dataene til backend for å hente koden.
     setUploading(true);
     setTimeout(() => {
-      setUploadedFiles([...uploadedFiles, { name: `tilkoblet-fra-${activePlatform}.js`, content: "// Kode hentet automatisk" }]);
+      updateFiles([...uploadedFiles, { name: `tilkoblet-fra-${activePlatform}.js`, content: "// Kode hentet automatisk" }]);
       setUploading(false);
-      setActivePlatform(null); // Lukk vinduet
-      setIntegrationInput('');
+      updatePlatform(null); // Lukk popup
+      updateInput('');      // Tøm tekstfelt
     }, 1500);
+  };
+
+  // Når kunden er ferdig og går til dashbordet
+  const handleFinish = (action) => {
+    // Slett alt minne så skjemaet er tomt neste gang de skal bruke det
+    localStorage.removeItem('sikt_final_files');
+    localStorage.removeItem('sikt_final_platform');
+    localStorage.removeItem('sikt_final_input');
+
+    // Lås opp dørvakten i App.tsx
+    localStorage.removeItem('sikt_onboarding_lock');
+
+    if (action === 'next') onNext(uploadedFiles);
+    else onSkip();
   };
 
   return (
@@ -51,30 +106,30 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
 
-          {/* VENSTRE SIDE: De store plattformene (NÅ AKTIVE) */}
+          {/* VENSTRE SIDE: De store plattformene */}
           <div className="lg:col-span-3 space-y-4">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-2 mb-3">Koble til plattform</h3>
 
             <div className="grid grid-cols-2 gap-3 relative group">
-              <button onClick={() => setActivePlatform('github')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
+              <button onClick={() => updatePlatform('github')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
                 <Github className="text-white mb-3" size={24} />
                 <h4 className="text-white font-semibold text-sm">GitHub / Repo</h4>
                 <p className="text-xs text-slate-500 mt-1">Koble til direkte</p>
               </button>
 
-              <button onClick={() => setActivePlatform('wordpress')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
+              <button onClick={() => updatePlatform('wordpress')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
                 <LayoutDashboard className="text-white mb-3" size={24} />
                 <h4 className="text-white font-semibold text-sm">WordPress</h4>
                 <p className="text-xs text-slate-500 mt-1">Koble til via URL</p>
               </button>
 
-              <button onClick={() => setActivePlatform('shopify')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
+              <button onClick={() => updatePlatform('shopify')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
                 <ShoppingBag className="text-white mb-3" size={24} />
                 <h4 className="text-white font-semibold text-sm">Shopify</h4>
                 <p className="text-xs text-slate-500 mt-1">Koble til butikk</p>
               </button>
 
-              <button onClick={() => setActivePlatform('vercel')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
+              <button onClick={() => updatePlatform('vercel')} className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left">
                 <Server className="text-white mb-3" size={24} />
                 <h4 className="text-white font-semibold text-sm">Vercel / AWS</h4>
                 <p className="text-xs text-slate-500 mt-1">Koble til server</p>
@@ -116,12 +171,12 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
 
         {/* Navigasjon */}
         <div className="flex items-center justify-between pt-6 border-t border-white/10 mt-6">
-          <button onClick={() => onSkip()} className="text-sm font-medium text-slate-500 hover:text-white transition-colors">
+          <button onClick={() => handleFinish('skip')} className="text-sm font-medium text-slate-500 hover:text-white transition-colors">
             Hopp over og fullfør senere
           </button>
 
           <button
-            onClick={() => onNext(uploadedFiles)}
+            onClick={() => handleFinish('next')}
             className={`px-8 py-3 rounded-xl font-bold text-sm transition-all ${uploadedFiles.length > 0
               ? 'bg-violet-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-violet-400'
               : 'bg-white/5 text-slate-400 cursor-not-allowed'
@@ -143,7 +198,7 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
                   {activePlatform === 'vercel' && <Server size={20} />}
                   Koble til {activePlatform}
                 </h3>
-                <button onClick={() => setActivePlatform(null)} className="text-slate-400 hover:text-white">
+                <button onClick={() => updatePlatform(null)} className="text-slate-400 hover:text-white">
                   <X size={20} />
                 </button>
               </div>
@@ -157,7 +212,7 @@ export const CodeIntegrationStep = ({ onNext, onSkip }) => {
                     type="text"
                     required
                     value={integrationInput}
-                    onChange={(e) => setIntegrationInput(e.target.value)}
+                    onChange={(e) => updateInput(e.target.value)}
                     placeholder={activePlatform === 'github' ? "https://github.com/brukernavn/repo" : "https://din-nettside.no"}
                     className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
                   />

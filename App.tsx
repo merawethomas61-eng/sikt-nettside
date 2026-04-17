@@ -5791,6 +5791,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
+
+  // --- DENNE VASKER URL-EN FØR NOE ANNET SKJER ---
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
+      // 1. Sett appen i onboarding-modus
+      setView('onboarding');
+
+      // 2. Slett beviset fra URL-en umiddelbart, slik at App.tsx aldri lar seg lure til å restarte senere!
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
+
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
     setIsLoading(true); // Slå på loading screen
@@ -5800,6 +5813,13 @@ function App() {
 
   };
 
+  useEffect(() => {
+    // Fjerner payment_success fra URL-en umiddelbart så vi ikke hopper tilbake
+    if (window.location.search.includes('payment_success=true')) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   // --- 2. EFFEKTER ---
   useEffect(() => {
@@ -5841,24 +5861,32 @@ function App() {
 
       if (!isMounted) return;
 
+      // --- DØRVAKTEN (VIP-UNNTAK) ---
+      // Vi sjekker fane-minnet for å se om kunden er midt i oppsettet akkurat nå
+      const isCurrentlyOnboarding = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') === 'onboarding' : false;
+
+      if (isCurrentlyOnboarding) {
+        console.log("Kunde er midt i onboarding -> Stopper all omdirigering");
+        setView('onboarding');
+        setIsLoading(false);
+        return; // Return stopper funksjonen her, slik at koden under ikke kjøres!
+      }
+      // -------------------------------
+
       if (client && client.onboarding_completed === true) {
 
-        // Sjekker om hengelåsen er satt på
-        const isOnboardingLocked = localStorage.getItem('sikt_onboarding_lock') === 'true';
-
-        if (isOnboardingLocked) {
-          // VIP-UNNTAK: Hengelåsen er på! La kunden være i fred.
-          console.log("Hengelås er PÅ -> Stopper omdirigering");
-          setView('onboarding');
-          setIsLoading(false);
-        } else if (shouldAnimate) {
+        // HER ER MAGIEN:
+        // Hvis shouldAnimate er true (første gang), kjør showet.
+        // Hvis shouldAnimate er false (fanebytte), bare sett view uten drama.
+        if (shouldAnimate) {
           console.log("Første load/login -> Kjører animasjon");
           setView('dashboard');
           enterPortalWithDelay();
         } else {
+          // "Stille" oppdatering
           console.log("Allerede logget inn -> Ingen animasjon");
           setView('dashboard');
-          setIsLoading(false);
+          setIsLoading(false); // Sørg for at loader er skjult
         }
 
       } else {
@@ -5868,6 +5896,21 @@ function App() {
     };
 
     const checkInitialStatus = async () => {
+      // --- PANSER-LÅSEN ---
+      // Sjekker om kunden er inne i Onboarding-løpet (både fane-minne og statisk minne)
+      const isLocked = typeof window !== 'undefined' &&
+        (sessionStorage.getItem('sikt_current_view') === 'onboarding' ||
+          localStorage.getItem('sikt_onboarding_lock') === 'true');
+
+      if (isLocked) {
+        console.log("Onboarding er aktiv -> Nekter Supabase å refreshe appen!");
+        setView('onboarding');
+        setIsLoading(false);
+        return; // STOPPER koden her. Da rekker den aldri å rive ned skjemaet ditt!
+      }
+      // --------------------
+
+      // Hvis kunden IKKE er i onboarding, kjør normal sjekk:
       const { data: { user }, error } = await supabase.auth.getUser();
 
       if (error || !user) {
@@ -5882,22 +5925,23 @@ function App() {
       if (isMounted) {
         setUser(user);
 
-        // Sjekk om dette er en retur fra betaling
+        // KUNDE KOMMER FRA BETALING
         if (new URLSearchParams(window.location.search).get('payment_success') === 'true') {
-          localStorage.setItem('sikt_onboarding_lock', 'true'); // <--- SMEKKER I LÅS!
+          // Sett på låsen!
+          localStorage.setItem('sikt_onboarding_lock', 'true');
           setView('onboarding');
+
+          // Vask URL-en umiddelbart så Chrome ikke lurer oss senere
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
           return;
         }
 
-        // FØRSTE LOAD: Her sender vi 'true' for å si "Ja, kjør animasjon"
+        // FØRSTE LOAD
         await handleUserRouting(user, true);
-
-        // Nå er vi ferdige med første runde. Sett ref til false.
-        // Da vet resten av koden at vi ikke skal animere mer.
         isFirstLoad.current = false;
       }
     };
-
     checkInitialStatus();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -6221,15 +6265,6 @@ function App() {
 
         {view === 'login' && <LoginPage onBack={() => setView('home')} />}
 
-
-        {/* FEILSØKING: RØD BOKS */}
-        {view === 'onboarding' && (
-          <div className="h-screen w-full bg-red-600 flex items-center justify-center text-white text-5xl font-black">
-            ONBOARDING ER HER!
-          </div>
-        )}
-
-
         {view === 'technology' && <TechnologyView onNavigate={setView} />}
 
         {(view === 'profile' || view === 'billing') && (
@@ -6248,23 +6283,23 @@ function App() {
           />
         )}
 
+        {/* Onboarding-skjermen */}
         {view === 'onboarding' && (
           <CodeIntegrationStep
-            onNext={() => {
-              localStorage.removeItem('sikt_onboarding_lock'); // <--- LÅSER OPP
+            onNext={(files) => {
+              localStorage.removeItem('sikt_onboarding_lock'); // <-- LÅSER OPP!
               setHasAccess(true);
-              setView('deepdive');
+              setView('dashboard');
             }}
             onSkip={() => {
-              localStorage.removeItem('sikt_onboarding_lock'); // <--- LÅSER OPP
+              localStorage.removeItem('sikt_onboarding_lock'); // <-- LÅSER OPP!
               setHasAccess(true);
-              setView('deepdive');
+              setView('dashboard');
             }}
           />
         )}
 
       </main>
-
       {/* Footer vises kun på vanlige sider */}
       {view !== 'login' && view !== 'profile' && view !== 'billing' && (
         <Footer onNavigate={setView} />
