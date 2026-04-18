@@ -4,11 +4,16 @@ import { Github, UploadCloud, Globe, ArrowRight, FileCode, CheckCircle2, Loader2
 export const CodeIntegrationStep = ({ onNext, onSkip }) => {
   const [uploading, setUploading] = useState(false);
 
-  // 1. SIKKER URL-VASK (Kjører helt i bakgrunnen, rører ikke skjemaet)
+  // 1. SIKKER URL-VASK OG AUTOMATISK PANSERLÅS
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+    if (typeof window !== 'undefined') {
+      // Tving på låsen med én gang kunden ser denne skjermen!
+      localStorage.setItem('sikt_onboarding_lock', 'true');
+
+      if (window.location.search.includes('payment_success')) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
     }
   }, []);
 

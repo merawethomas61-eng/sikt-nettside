@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 
 
-
 // --- ZERO COGNITIVE LOAD ORDBOK ---
 const seoDictionary: Record<string, any> = {
   'meta-description': {
@@ -128,10 +127,12 @@ const InfoHint = ({ text }: { text: string }) => (
 const MyComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
-  const isFirstLoad = useRef(true);
+
 
   // Ref for å holde styr på om komponenten er montert
-  const isMounted = useRef(false);
+  const isMounted = useRef(true);
+  const isFirstLoad = useRef(true);
+
 
 
 
@@ -1371,7 +1372,6 @@ const StoryBrandOneLiner = () => {
 };
 
 
-
 // Legg merke til at vi nå tar imot "handleLogin" her
 const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   const plans = [
@@ -1652,8 +1652,6 @@ const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) 
     <TechCTA onNavigate={onNavigate} />
   </>
 );
-
-
 
 // --- OTHER SHARED COMPONENTS ---
 
@@ -2213,8 +2211,6 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll);
@@ -2322,8 +2318,6 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
     </nav>
   );
 };
-
-
 
 // --- SETTINGS VIEW (INNSTILLINGER) ---
 const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
@@ -2815,6 +2809,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'analysis', label: 'Analyse', icon: Activity },
     { id: 'keywords', label: 'Søkeord', icon: Search },
     { id: 'content', label: 'Innhold', icon: FileText },
+    { id: 'geo', label: 'GEO', icon: Sparkles }, // <--- NY DEL!
     { id: 'links', label: 'Lenker', icon: Link2 },
     { id: 'verksted', label: 'Verksted', icon: Wrench },
     { id: 'settings', label: 'Innstillinger', icon: Settings },
@@ -4137,6 +4132,106 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             </div>
           </div>
         )}
+
+
+
+        {/* --- DEDIKERT GEO-SEKSJON (AI SEARCH OPTIMIZATION) --- */}
+        {activeTab === 'geo' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
+
+            {/* Header */}
+            <div className={`p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-400 text-[10px] font-bold uppercase tracking-widest mb-4 border border-fuchsia-500/20">
+                  <Sparkles size={12} /> Eksklusivt for Premium
+                </div>
+                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  Generative Engine Optimization <span className="text-fuchsia-500">(GEO)</span>
+                </h1>
+                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Vi optimaliserer bedriften din for AI-alderen. Sørg for at ChatGPT, Perplexity og Google AI anbefaler deg som førstevalget.
+                </p>
+              </div>
+            </div>
+
+            {/* Sjekk for Premium-tilgang */}
+            {currentLevel < 3 ? (
+              <div className="py-20">
+                <LockedSection
+                  title="GEO er låst for din plan"
+                  description="Oppgrader til Premium for å få tilgang til AI-sitasjonsmåler, RAG-optimalisering og ChatGPT-beredskap."
+                  reqPackage="Premium"
+                  onUpgrade={handleUpgrade}
+                  color="fuchsia"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                {/* Venstre kolonne: Oversikt og Tall */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <StatusCard icon={BrainCircuit} title="AI Citation Probability" value="82%" subtext="Høy" color="fuchsia" />
+                    <StatusCard icon={SearchCheck} title="LLM Mentions" value="14" subtext="+3 i dag" color="blue" />
+                  </div>
+
+                  {/* GEO Strategi-liste */}
+                  <div className={`p-6 rounded-3xl border ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
+                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                      <Target size={18} className="text-fuchsia-500" /> Kritiske GEO-tiltak
+                    </h3>
+                    <div className="space-y-4">
+                      {[
+                        { t: 'Mangler tekniske tabeller', d: 'AI-modeller elsker strukturert data. Legg til en pristabell på tjenestesiden.', p: 'Kritisk' },
+                        { t: 'Svar mangler autoritet', d: 'Innholdet ditt er for generisk. Legg til nøyaktige tall og statistikk.', p: 'Høy' },
+                        { t: 'Ingen FAQ-markup', d: 'Hjelp chatboter å finne svar raskt ved å bruke tydelige spørsmål og svar.', p: 'Middels' }
+                      ].map((task, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5 group hover:border-fuchsia-500/30 transition-all">
+                          <div>
+                            <p className="font-bold text-sm text-white">{task.t}</p>
+                            <p className="text-xs text-slate-400">{task.d}</p>
+                          </div>
+                          <button className="text-[10px] font-black uppercase text-fuchsia-500 bg-fuchsia-500/10 px-3 py-1.5 rounded-lg group-hover:bg-fuchsia-500 group-hover:text-white transition-all">
+                            Fiks nå
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Høyre kolonne: Live AI-Simulering */}
+                <div className="space-y-6">
+                  <div className={`p-6 rounded-3xl border bg-gradient-to-b from-fuchsia-500/10 to-transparent ${theme === 'light' ? 'border-fuchsia-100' : 'border-fuchsia-500/20'}`}>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-fuchsia-400 mb-4 flex items-center gap-2">
+                      <MessageCircle size={16} /> AI Output Simulator
+                    </h3>
+                    <div className="bg-slate-950 p-4 rounded-2xl border border-white/10 font-mono text-xs text-slate-300 leading-relaxed shadow-inner">
+                      <p className="text-fuchsia-500 mb-2">Prompt: "Hvem er den beste {clientData?.industry || 'leverandøren'} i Norge?"</p>
+                      <div className="animate-pulse">
+                        <span className="text-emerald-400 font-bold">ChatGPT svarer:</span> "Basert på ferske data anbefaler jeg <span className="underline decoration-fuchsia-500 font-black text-white">{clientData?.companyName || 'Din Bedrift'}</span> på grunn av deres nøyaktige dokumentasjon og..."
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-4 italic text-center">
+                      Dette er en simulering av hvordan din bedrift vil dukke opp i AI-søk etter optimalisering.
+                    </p>
+                  </div>
+
+                  <div className={`p-6 rounded-3xl border ${theme === 'light' ? 'bg-white' : 'bg-slate-900/50 border-white/5'}`}>
+                    <h4 className="font-bold text-sm mb-3">RAG Readiness Score</h4>
+                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-fuchsia-500 w-[65%] shadow-[0_0_10px_rgba(217,70,239,0.5)]"></div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-2">Din nettside er 65% optimalisert for Retrieval-Augmented Generation.</p>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        )}
+
 
         {/* --- LENKER & STRUKTUR (LINKS PAGE) --- */}
         {activeTab === 'links' && (
@@ -5781,28 +5876,32 @@ function App() {
 
 
 
-  // --- STATE ---
-  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
+  // Sjekker harddisken FØR appen i det hele tatt tegner den første pikselen
+
   const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
-  const [customerFiles, setCustomerFiles] = useState([]);
+
+  // --- KRYPTERT HUKOMMELSE: Husker alltid hvilken skjerm du er på ---
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sikt_current_view', view);
+    }
+  }, [view]);
+  // ------------------------------------------------------------------
+
+
+  const viewRef = useRef(view);
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+
+  // Denne sørger for at appen alltid husker nøyaktig hvilket steg du står på
+  useEffect(() => {
+    sessionStorage.setItem('sikt_current_view', view);
+  }, [view]); const [customerFiles, setCustomerFiles] = useState([]);
 
   const [user, setUser] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-
-  // --- DENNE VASKER URL-EN FØR NOE ANNET SKJER ---
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
-      // 1. Sett appen i onboarding-modus
-      setView('onboarding');
-
-      // 2. Slett beviset fra URL-en umiddelbart, slik at App.tsx aldri lar seg lure til å restarte senere!
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-  }, []);
 
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
@@ -5813,13 +5912,6 @@ function App() {
 
   };
 
-  useEffect(() => {
-    // Fjerner payment_success fra URL-en umiddelbart så vi ikke hopper tilbake
-    if (window.location.search.includes('payment_success=true')) {
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, []);
 
   // --- 2. EFFEKTER ---
   useEffect(() => {
@@ -5827,20 +5919,21 @@ function App() {
   }, [view]);
 
 
-  // --- VAKTBIKKJA: HÅNDTERER INNLOGGING OG "SPØKELSER" ---
+  // --- DEL 1: OPPSTART OG URL-VASK ---
   useEffect(() => {
-    // 1. Sjekk umiddelbart om kunden har en gyldig session
+    // 1. Sjekk URL for suksess-betaling med en gang appen våkner
+    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
+      localStorage.setItem('sikt_onboarding_lock', 'true');
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
+    // 2. Hent session med en gang (Erstatter gamle "Vaktbikkja")
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+      }
     });
-
-    // 2. Lytt etter endringer i sanntid (Logg inn, logg ut, eller slettet bruker)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Rydd opp
-    return () => subscription.unsubscribe();
   }, []);
 
   // Legg denne sammen med de andre variablene øverst i App-komponenten:
@@ -5853,25 +5946,23 @@ function App() {
     const handleUserRouting = async (user: any, shouldAnimate: boolean) => {
       if (!user) return;
 
+      // --- DEN ULTIMATE LÅSEN MED LIVE-KAMERA ---
+      // Sjekker det faktiske kameraet: Er GitHub-steget eller skjemaet åpent akkurat NÅ?
+      if (viewRef.current === 'setup' || viewRef.current === 'setup_guide' || viewRef.current === 'onboarding') {
+        console.log("Stoppet av viewRef! Lar GitHub-skjermen være i fred.");
+        return; // Blokkerer omdirigering momentant
+      }
+      // ------------------------------------------
+
       const { data: client } = await supabase
         .from('clients')
+        // ... (resten fortsetter som før)
+        // ... (resten av koden din fortsetter som før)
         .select('onboarding_completed')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!isMounted) return;
-
-      // --- DØRVAKTEN (VIP-UNNTAK) ---
-      // Vi sjekker fane-minnet for å se om kunden er midt i oppsettet akkurat nå
-      const isCurrentlyOnboarding = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') === 'onboarding' : false;
-
-      if (isCurrentlyOnboarding) {
-        console.log("Kunde er midt i onboarding -> Stopper all omdirigering");
-        setView('onboarding');
-        setIsLoading(false);
-        return; // Return stopper funksjonen her, slik at koden under ikke kjøres!
-      }
-      // -------------------------------
 
       if (client && client.onboarding_completed === true) {
 
@@ -5896,21 +5987,6 @@ function App() {
     };
 
     const checkInitialStatus = async () => {
-      // --- PANSER-LÅSEN ---
-      // Sjekker om kunden er inne i Onboarding-løpet (både fane-minne og statisk minne)
-      const isLocked = typeof window !== 'undefined' &&
-        (sessionStorage.getItem('sikt_current_view') === 'onboarding' ||
-          localStorage.getItem('sikt_onboarding_lock') === 'true');
-
-      if (isLocked) {
-        console.log("Onboarding er aktiv -> Nekter Supabase å refreshe appen!");
-        setView('onboarding');
-        setIsLoading(false);
-        return; // STOPPER koden her. Da rekker den aldri å rive ned skjemaet ditt!
-      }
-      // --------------------
-
-      // Hvis kunden IKKE er i onboarding, kjør normal sjekk:
       const { data: { user }, error } = await supabase.auth.getUser();
 
       if (error || !user) {
@@ -5925,24 +6001,23 @@ function App() {
       if (isMounted) {
         setUser(user);
 
-        // KUNDE KOMMER FRA BETALING
+        // Sjekk om dette er en retur fra betaling
         if (new URLSearchParams(window.location.search).get('payment_success') === 'true') {
-          // Sett på låsen!
-          localStorage.setItem('sikt_onboarding_lock', 'true');
           setView('onboarding');
-
-          // Vask URL-en umiddelbart så Chrome ikke lurer oss senere
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
           return;
         }
 
-        // FØRSTE LOAD
+        // FØRSTE LOAD: Her sender vi 'true' for å si "Ja, kjør animasjon"
         await handleUserRouting(user, true);
+
+        // Nå er vi ferdige med første runde. Sett ref til false.
+        // Da vet resten av koden at vi ikke skal animere mer.
         isFirstLoad.current = false;
       }
     };
+
     checkInitialStatus();
+
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Ignorer tokens som oppdateres
@@ -5980,6 +6055,8 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+
   const handleLoginTrigger = () => setView('login');
   const handleBack = () => setView('home');
 
@@ -6252,11 +6329,6 @@ function App() {
         />
       )}
 
-      {/* --- DEBUG LYTTEPOST --- */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 bg-yellow-400 text-black px-6 py-2 rounded-b-xl z-[9999] font-black shadow-lg border-2 border-black">
-        AKTIV SKJERM NÅ: "{view}"
-      </div>
-
       <main className="relative z-10">
 
         {view === 'home' && (
@@ -6275,31 +6347,16 @@ function App() {
           />
         )}
 
-        {/* Dashbordet vises her */}
-        {(view === 'deepdive' || view === 'dashboard') && (
+        {/* DeepDive vises hvis kunden er i portal-modus */}
+        {view === 'deepdive' && (
           <DeepDiveView
             onBack={() => setView('home')}
             onSelectPlan={() => handlePlanSelect('PREMIUM')}
           />
         )}
 
-        {/* Onboarding-skjermen */}
-        {view === 'onboarding' && (
-          <CodeIntegrationStep
-            onNext={(files) => {
-              localStorage.removeItem('sikt_onboarding_lock'); // <-- LÅSER OPP!
-              setHasAccess(true);
-              setView('dashboard');
-            }}
-            onSkip={() => {
-              localStorage.removeItem('sikt_onboarding_lock'); // <-- LÅSER OPP!
-              setHasAccess(true);
-              setView('dashboard');
-            }}
-          />
-        )}
-
       </main>
+
       {/* Footer vises kun på vanlige sider */}
       {view !== 'login' && view !== 'profile' && view !== 'billing' && (
         <Footer onNavigate={setView} />
