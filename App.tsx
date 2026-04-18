@@ -5827,13 +5827,37 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
-      // PANSERLÅS: Ikke kast ut folk som er midt i onboarding/setup
+      // --- 1. SYNKRONISER PAKKEVALG ---
+      // Henter pakken fra "huskelappen" i nettleseren
+      const savedPlan = localStorage.getItem('sikt_pending_plan');
+
+      if (savedPlan) {
+        console.log("Synkroniserer lagret pakke til Supabase:", savedPlan);
+
+        // Oppdaterer 'clients'-tabellen. 
+        // VIKTIG: Pass på at kolonnen i Supabase heter 'plan'.
+        const { error: updateError } = await supabase
+          .from('clients')
+          .update({ plan: savedPlan })
+          .eq('user_id', user.id);
+
+        if (!updateError) {
+          setSelectedPlan(savedPlan);
+          localStorage.removeItem('sikt_pending_plan'); // Sletter lappen
+          console.log("Pakkevalg lagret i databasen!");
+        } else {
+          console.error("Kunne ikke lagre pakke i DB:", updateError.message);
+        }
+      }
+
+      // --- 2. PANSERLÅS ---
       const currentView = sessionStorage.getItem('sikt_current_view');
       if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
         setIsLoading(false);
         return;
       }
 
+      // --- 3. SJEKK ONBOARDING STATUS ---
       const { data: client } = await supabase
         .from('clients')
         .select('onboarding_completed')
@@ -5848,7 +5872,6 @@ function App() {
           setView('dashboard');
           if (typeof enterPortalWithDelay === 'function') enterPortalWithDelay();
         } else {
-          // Ved auto-pålogging (refresh): Bli på home, men la navbar oppdatere seg
           setView('home');
           setIsLoading(false);
         }
@@ -5857,7 +5880,7 @@ function App() {
         setView('home');
         setIsLoading(false);
 
-        // Skroll KUN hvis kunden aktivt logget inn (ikke ved auto-refresh)
+        // Skroll skjer kun ved aktiv innlogging
         if (isExplicitAction) {
           setTimeout(() => {
             const el = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
@@ -5901,42 +5924,37 @@ function App() {
   const handleBack = () => setView('home');
 
   const handlePlanSelect = async (plan: string) => {
-    // 1. Hent bruker FØRST – vi trenger ID-en til Stripe-linken
+    // 1. Lagre valget i "huskelappen" med en gang (før alt annet!)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sikt_pending_plan', plan);
+      console.log("Plan midlertidig lagret:", plan);
+    }
+
+    setSelectedPlan(plan);
+
+    // 2. Sjekk om vi har en bruker
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      // Ingen bruker? Send dem til login. Valget ligger nå trygt i localStorage.
       setView('login');
       return;
     }
 
-    // 2. Finn riktig Stripe-link
+    // 3. Hvis bruker finnes, finn Stripe-linken
     let stripeBaseUrl = "";
-
-    if (plan.includes('PREMIUM')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
-    }
-    else if (plan.includes('STANDARD')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
-    }
-    else if (plan.includes('BASIC')) {
-      stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
-    }
+    if (plan.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
+    else if (plan.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
+    else if (plan.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
 
     if (!stripeBaseUrl) {
       alert("Fant ingen betalingslenke for denne pakken.");
       return;
     }
 
-    // 3. KONSTRUER URL MED SPORING (Viktig!)
-    // client_reference_id: Dette er feltet Stripe bruker for å vite HVEM som kjøpte.
-    // prefilled_email: Gjør det enklere for kunden (e-posten er ferdig utfylt).
-    const targetUrl = `${stripeBaseUrl}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email || '')}`;
-
-    console.log("Sender bruker til Stripe med ID:", user.id);
-
-    // 4. Send brukeren direkte til betaling
-    // Vi lagrer IKKE i databasen før pengene er på konto.
-    window.location.href = targetUrl;
+    // Send kunden til Stripe (inkluderer brukerens e-post for enklere betaling)
+    const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(user.email || '')}`;
+    window.location.href = checkoutUrl;
   };
 
   // --- 3. LOGOUT HANDLER (Lim inn denne under useEffect) ---
