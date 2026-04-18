@@ -127,12 +127,10 @@ const InfoHint = ({ text }: { text: string }) => (
 const MyComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
-
-
-  // Ref for å holde styr på om komponenten er montert
-  const isMounted = useRef(true);
   const isFirstLoad = useRef(true);
 
+  // Ref for å holde styr på om komponenten er montert
+  const isMounted = useRef(false);
 
 
 
@@ -2679,6 +2677,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [aiHasSolved, setAiHasSolved] = useState(false);
   const [aiSolution, setAiSolution] = useState<any>(null);
 
+
+
   // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
   useEffect(() => {
     const fetchAiSolution = async () => {
@@ -2715,6 +2715,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     fetchAiSolution();
   }, [activeSolveProblem]);
+
 
 
   // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
@@ -2809,7 +2810,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'analysis', label: 'Analyse', icon: Activity },
     { id: 'keywords', label: 'Søkeord', icon: Search },
     { id: 'content', label: 'Innhold', icon: FileText },
-    { id: 'geo', label: 'GEO', icon: Sparkles }, // <--- NY DEL!
     { id: 'links', label: 'Lenker', icon: Link2 },
     { id: 'verksted', label: 'Verksted', icon: Wrench },
     { id: 'settings', label: 'Innstillinger', icon: Settings },
@@ -4132,106 +4132,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             </div>
           </div>
         )}
-
-
-
-        {/* --- DEDIKERT GEO-SEKSJON (AI SEARCH OPTIMIZATION) --- */}
-        {activeTab === 'geo' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
-
-            {/* Header */}
-            <div className={`p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-400 text-[10px] font-bold uppercase tracking-widest mb-4 border border-fuchsia-500/20">
-                  <Sparkles size={12} /> Eksklusivt for Premium
-                </div>
-                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  Generative Engine Optimization <span className="text-fuchsia-500">(GEO)</span>
-                </h1>
-                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Vi optimaliserer bedriften din for AI-alderen. Sørg for at ChatGPT, Perplexity og Google AI anbefaler deg som førstevalget.
-                </p>
-              </div>
-            </div>
-
-            {/* Sjekk for Premium-tilgang */}
-            {currentLevel < 3 ? (
-              <div className="py-20">
-                <LockedSection
-                  title="GEO er låst for din plan"
-                  description="Oppgrader til Premium for å få tilgang til AI-sitasjonsmåler, RAG-optimalisering og ChatGPT-beredskap."
-                  reqPackage="Premium"
-                  onUpgrade={handleUpgrade}
-                  color="fuchsia"
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {/* Venstre kolonne: Oversikt og Tall */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <StatusCard icon={BrainCircuit} title="AI Citation Probability" value="82%" subtext="Høy" color="fuchsia" />
-                    <StatusCard icon={SearchCheck} title="LLM Mentions" value="14" subtext="+3 i dag" color="blue" />
-                  </div>
-
-                  {/* GEO Strategi-liste */}
-                  <div className={`p-6 rounded-3xl border ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                      <Target size={18} className="text-fuchsia-500" /> Kritiske GEO-tiltak
-                    </h3>
-                    <div className="space-y-4">
-                      {[
-                        { t: 'Mangler tekniske tabeller', d: 'AI-modeller elsker strukturert data. Legg til en pristabell på tjenestesiden.', p: 'Kritisk' },
-                        { t: 'Svar mangler autoritet', d: 'Innholdet ditt er for generisk. Legg til nøyaktige tall og statistikk.', p: 'Høy' },
-                        { t: 'Ingen FAQ-markup', d: 'Hjelp chatboter å finne svar raskt ved å bruke tydelige spørsmål og svar.', p: 'Middels' }
-                      ].map((task, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5 group hover:border-fuchsia-500/30 transition-all">
-                          <div>
-                            <p className="font-bold text-sm text-white">{task.t}</p>
-                            <p className="text-xs text-slate-400">{task.d}</p>
-                          </div>
-                          <button className="text-[10px] font-black uppercase text-fuchsia-500 bg-fuchsia-500/10 px-3 py-1.5 rounded-lg group-hover:bg-fuchsia-500 group-hover:text-white transition-all">
-                            Fiks nå
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Høyre kolonne: Live AI-Simulering */}
-                <div className="space-y-6">
-                  <div className={`p-6 rounded-3xl border bg-gradient-to-b from-fuchsia-500/10 to-transparent ${theme === 'light' ? 'border-fuchsia-100' : 'border-fuchsia-500/20'}`}>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-fuchsia-400 mb-4 flex items-center gap-2">
-                      <MessageCircle size={16} /> AI Output Simulator
-                    </h3>
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-white/10 font-mono text-xs text-slate-300 leading-relaxed shadow-inner">
-                      <p className="text-fuchsia-500 mb-2">Prompt: "Hvem er den beste {clientData?.industry || 'leverandøren'} i Norge?"</p>
-                      <div className="animate-pulse">
-                        <span className="text-emerald-400 font-bold">ChatGPT svarer:</span> "Basert på ferske data anbefaler jeg <span className="underline decoration-fuchsia-500 font-black text-white">{clientData?.companyName || 'Din Bedrift'}</span> på grunn av deres nøyaktige dokumentasjon og..."
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-4 italic text-center">
-                      Dette er en simulering av hvordan din bedrift vil dukke opp i AI-søk etter optimalisering.
-                    </p>
-                  </div>
-
-                  <div className={`p-6 rounded-3xl border ${theme === 'light' ? 'bg-white' : 'bg-slate-900/50 border-white/5'}`}>
-                    <h4 className="font-bold text-sm mb-3">RAG Readiness Score</h4>
-                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-fuchsia-500 w-[65%] shadow-[0_0_10px_rgba(217,70,239,0.5)]"></div>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">Din nettside er 65% optimalisert for Retrieval-Augmented Generation.</p>
-                  </div>
-                </div>
-
-              </div>
-            )}
-          </div>
-        )}
-
 
         {/* --- LENKER & STRUKTUR (LINKS PAGE) --- */}
         {activeTab === 'links' && (
@@ -5876,27 +5776,22 @@ function App() {
 
 
 
-  // Sjekker harddisken FØR appen i det hele tatt tegner den første pikselen
+  // --- STATE ---
+  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
+  const [view, setView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('sikt_current_view');
+      // Hvis vi er i en viktig prosess, start der vi slapp
+      if (saved === 'onboarding' || saved === 'setup' || saved === 'setup_guide') return saved;
+    }
+    return isPaymentSuccess ? 'onboarding' : 'home';
+  }); const [customerFiles, setCustomerFiles] = useState([]);
 
-  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
-
-  // --- KRYPTERT HUKOMMELSE: Husker alltid hvilken skjerm du er på ---
   useEffect(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('sikt_current_view', view);
     }
   }, [view]);
-  // ------------------------------------------------------------------
-
-
-  const viewRef = useRef(view);
-  useEffect(() => { viewRef.current = view; }, [view]);
-
-
-  // Denne sørger for at appen alltid husker nøyaktig hvilket steg du står på
-  useEffect(() => {
-    sessionStorage.setItem('sikt_current_view', view);
-  }, [view]); const [customerFiles, setCustomerFiles] = useState([]);
 
   const [user, setUser] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState(false);
@@ -5919,21 +5814,20 @@ function App() {
   }, [view]);
 
 
-  // --- DEL 1: OPPSTART OG URL-VASK ---
+  // --- VAKTBIKKJA: HÅNDTERER INNLOGGING OG "SPØKELSER" ---
   useEffect(() => {
-    // 1. Sjekk URL for suksess-betaling med en gang appen våkner
-    if (typeof window !== 'undefined' && window.location.search.includes('payment_success')) {
-      localStorage.setItem('sikt_onboarding_lock', 'true');
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-
-    // 2. Hent session med en gang (Erstatter gamle "Vaktbikkja")
+    // 1. Sjekk umiddelbart om kunden har en gyldig session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-      }
+      setUser(session?.user ?? null);
     });
+
+    // 2. Lytt etter endringer i sanntid (Logg inn, logg ut, eller slettet bruker)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Rydd opp
+    return () => subscription.unsubscribe();
   }, []);
 
   // Legg denne sammen med de andre variablene øverst i App-komponenten:
@@ -5946,18 +5840,19 @@ function App() {
     const handleUserRouting = async (user: any, shouldAnimate: boolean) => {
       if (!user) return;
 
-      // --- DEN ULTIMATE LÅSEN MED LIVE-KAMERA ---
-      // Sjekker det faktiske kameraet: Er GitHub-steget eller skjemaet åpent akkurat NÅ?
-      if (viewRef.current === 'setup' || viewRef.current === 'setup_guide' || viewRef.current === 'onboarding') {
-        console.log("Stoppet av viewRef! Lar GitHub-skjermen være i fred.");
-        return; // Blokkerer omdirigering momentant
+      // --- PANSERLÅS ---
+      // Hvis kunden er midt i integrasjonen, nekt systemet å sende dem vekk!
+      const currentView = sessionStorage.getItem('sikt_current_view');
+      if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
+        console.log("Panserlås aktiv: Beholder onboarding-visning.");
+        setIsLoading(false);
+        return; // Stopper omdirigeringen her!
       }
-      // ------------------------------------------
+      // -----------------
 
       const { data: client } = await supabase
         .from('clients')
-        // ... (resten fortsetter som før)
-        // ... (resten av koden din fortsetter som før)
+        // ... resten av koden din fortsetter her
         .select('onboarding_completed')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -6018,7 +5913,6 @@ function App() {
 
     checkInitialStatus();
 
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Ignorer tokens som oppdateres
       if (event === 'TOKEN_REFRESHED') return;
@@ -6055,8 +5949,6 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
-
-
   const handleLoginTrigger = () => setView('login');
   const handleBack = () => setView('home');
 
