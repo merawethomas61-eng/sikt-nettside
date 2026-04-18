@@ -2463,16 +2463,20 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
   const handleGoogleLogin = async () => {
     try {
+      // Henter kun den rene hovedadressen (f.eks. https://sikt-nettside.vercel.app)
+      const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '?payment_success=true', // Sender dem tilbake riktig sted
+          redirectTo: cleanUrl, // <-- HER ER MAGIEN! Ingen payment_success her.
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
           },
         },
       });
+
       if (error) throw error;
     } catch (error: any) {
       alert('Kunne ikke logge inn med Google: ' + error.message);
