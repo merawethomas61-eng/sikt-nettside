@@ -5841,17 +5841,20 @@ function App() {
   // Legg denne sammen med de andre variablene øverst i App-komponenten:
   const isFirstLoad = useRef(true);
 
-  // --- REVIDERT HOVEDSJEKK ---
+  // --- REVIDERT HOVEDSJEKK (Versjon: Ingen sletting + Ingen auto-login) ---
   useEffect(() => {
     let isMounted = true;
+    let initialCheckDone = false; // Hindrer auto-login ved første sjekk
 
-    const handleUserRouting = async (user: any, isManual: boolean) => {
-      if (!user) return;
+    const handleUserRouting = async (user: any, isManualAction: boolean) => {
+      if (!user || !isMounted) return;
 
-      // --- PANSERLÅS ---
-      // Hvis kunden allerede står på integrasjons-skjermen, ikke rør dem!
-      const currentView = sessionStorage.getItem('sikt_current_view');
-      if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
+      // 1. PANSERLÅS (Beholder deg der du er hvis du er i en prosess)
+      const currentView = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') : null;
+      const isIntegrating = currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide';
+
+      if (isIntegrating) {
+        console.log("Panserlås: Beholder integrasjonsskjermen.");
         setIsLoading(false);
         return;
       }
@@ -5865,84 +5868,64 @@ function App() {
       if (!isMounted) return;
 
       if (client?.onboarding_completed) {
-        // FERDIG KUNDE: Send til Dashboard
-        setView('dashboard');
-        if (isManual) enterPortalWithDelay(); // Bare animer hvis det er manuelt
-      } else {
-        // UFERDIG KUNDE: Behold på Home
-        setView('home');
-        setIsLoading(false);
-
-        // --- SKROLL-LOGIKK: Bare hvis kunden aktivt har logget inn ---
-        if (isManual) {
-          console.log("Manuell innlogging -> Skroller til pakker");
-          setTimeout(() => {
-            const prisSeksjon = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
-            if (prisSeksjon) {
-              prisSeksjon.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 500);
+        // --- FERDIG KUNDE ---
+        if (isManualAction) {
+          setView('dashboard');
+          if (typeof enterPortalWithDelay === 'function') enterPortalWithDelay();
         } else {
-          console.log("Sesjon gjenopprettet -> Blir stående på toppen");
-        }
-      }
-    };
-
-    const checkInitialStatus = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        if (isMounted) {
-          setUser(null);
+          // AUTO-REFRESH: Vi logger deg inn i bakgrunnen (Navbar endres), 
+          // men vi beholder deg på Home-visningen.
+          console.log("Bakgrunns-auth fullført: Beholder Home.");
           setView('home');
           setIsLoading(false);
         }
-        return;
-      }
+      } else {
+        // --- UFERDIG KUNDE ---
+        setView('home');
+        setIsLoading(false);
 
-      if (isMounted) {
-        setUser(user);
-
-        // Sjekk om dette er en retur fra betaling
-        if (new URLSearchParams(window.location.search).get('payment_success') === 'true') {
-          setView('onboarding');
-          return;
+        // Skroll skjer KUN hvis du trykket på logg inn-knappen selv
+        if (isManualAction) {
+          console.log("Aktiv innlogging: Skroller til pakker.");
+          setTimeout(() => {
+            const el = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 500);
         }
-
-        // FØRSTE LOAD: Her sender vi 'true' for å si "Ja, kjør animasjon"
-        await handleUserRouting(user, true);
-
-        // Nå er vi ferdige med første runde. Sett ref til false.
-        // Da vet resten av koden at vi ikke skal animere mer.
-        isFirstLoad.current = false;
       }
     };
-
-    checkInitialStatus();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_OUT') {
+        // HER SLETTER VI INGENTING - Vi bare nullstiller bruker-staten
+        console.log("Bruker logget ut. Beholder lokal hukommelse.");
         if (isMounted) {
           setUser(null);
           setView('home');
           setIsLoading(false);
-          isInitialAuthCheck.current = false; // Nullstill ved utlogging
+          initialCheckDone = true; // Neste innlogging regnes nå som manuell
         }
       }
-      else if (event === 'SIGNED_IN' && session) {
+      else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         if (isMounted) {
           setUser(session.user);
 
-          // Her skjer magien:
-          // Hvis det er første sjekk etter refresh = isManual er false.
-          // Hvis kunden logger inn aktivt = isManual er true.
-          const isManual = !isInitialAuthCheck.current;
+          // Magien: initialCheckDone er false kun ved første automatiske sjekk
+          const isManual = initialCheckDone;
+          await handleUserRouting(session.user, isManual);
 
-          handleUserRouting(session.user, isManual);
-          isInitialAuthCheck.current = false; // Marker at første sjekk er gjort
+          initialCheckDone = true;
         }
+      }
+    });
+
+    // Fallback hvis det ikke er noen aktiv sesjon i det hele tatt
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session && isMounted) {
+        setIsLoading(false);
+        initialCheckDone = true;
       }
     });
 
@@ -5951,6 +5934,8 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+
   const handleLoginTrigger = () => setView('login');
   const handleBack = () => setView('home');
 
