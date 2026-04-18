@@ -5778,14 +5778,18 @@ function App() {
 
   // --- STATE ---
   // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
-  const [view, setView] = useState(() => {
+  // 1. Sett opp view (Denne bruker automatisk din eksisterende isPaymentSuccess fra høyere oppe)
+  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+
+  // 2. Synkroniser visningen med sessionStorage (Dette er selve magien for fanebyttet)
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('sikt_current_view');
-      // Hvis vi er i en viktig prosess, start der vi slapp
-      if (saved === 'onboarding' || saved === 'setup' || saved === 'setup_guide') return saved;
+      sessionStorage.setItem('sikt_current_view', view);
     }
-    return isPaymentSuccess ? 'onboarding' : 'home';
-  }); const [customerFiles, setCustomerFiles] = useState([]);
+  }, [view]);
+
+  // 3. Resten av variablene dine fortsetter herfra
+  const [customerFiles, setCustomerFiles] = useState([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
