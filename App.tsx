@@ -5761,49 +5761,42 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
 
 // --- MAIN APP COMPONENT ---
 function App() {
-  // 1. SJEKK URL FØR VI STARTER (Slik at vi ikke blinker innom Home)
-  const searchParams = new URLSearchParams(window.location.search);
-  const isPaymentSuccess = searchParams.get('payment_success') === 'true';
+  // 1. SJEKK URL FØR VI STARTER
+  const isPaymentSuccess = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment_success') === 'true';
 
-  // --- TEMA STATE (Ny!) ---
+  // 2. VASK URL-EN: Fjerner parameteret umiddelbart for å unngå spøkelser
+  useEffect(() => {
+    if (isPaymentSuccess && typeof window !== 'undefined') {
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+      console.log("URL vasket: Betalings-parameter fjernet.");
+    }
+  }, [isPaymentSuccess]);
+
+  // --- TEMA STATE ---
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  // Effekt som faktisk bytter utseende på hele nettsiden
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
   }, [theme]);
 
-  const isInitialAuthCheck = useRef(true);
-
-
-
-
-  // --- STATE ---
-  // Hvis URL sier payment_success, starter vi DIREKTE på 'onboarding'!
-  // 1. Sett opp view (Denne bruker automatisk din eksisterende isPaymentSuccess fra høyere oppe)
+  // --- VISNING & KAMERA (Holder styr på hvor kunden er) ---
   const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
-
-  // --- KAMERAET ---
   const viewRef = useRef(view);
+
   useEffect(() => {
     viewRef.current = view;
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('sikt_current_view', view);
     }
   }, [view]);
-  // ----------------
 
-  // 3. Resten av variablene dine fortsetter herfra
+  // --- STANDARD VARIABLER ---
+  const isInitialAuthCheck = useRef(true);
+  const isFirstLoad = useRef(true);
   const [customerFiles, setCustomerFiles] = useState([]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('sikt_current_view', view);
-    }
-  }, [view]);
-
   const [user, setUser] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -5811,48 +5804,28 @@ function App() {
 
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
-    setIsLoading(true); // Slå på loading screen
-    await new Promise(resolve => setTimeout(resolve, 2800)); // Vent 2,8 sekunder (for effekt)
-    setHasAccess(true); // Gi tilgang
-    setIsLoading(false); // Slå av loading (vis portal)
-
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 2800));
+    setHasAccess(true);
+    setIsLoading(false);
   };
 
-
-  // --- 2. EFFEKTER ---
+  // --- EFFEKTER ---
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [view]);
 
-
-  // --- VAKTBIKKJA: HÅNDTERER INNLOGGING OG "SPØKELSER" ---
-  useEffect(() => {
-    // 1. Sjekk umiddelbart om kunden har en gyldig session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // 2. Lytt etter endringer i sanntid (Logg inn, logg ut, eller slettet bruker)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Rydd opp
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Legg denne sammen med de andre variablene øverst i App-komponenten:
-  const isFirstLoad = useRef(true);
-
-  // --- DEN ENDELIGE HOVEDSJEKKEN ---
+  // --- DEN ENESTE OG ENDELIGE HOVEDSJEKKEN ---
   useEffect(() => {
     let isMounted = true;
+    let hasInitialized = false;
 
-    const handleUserRouting = async (user: any, isManualLogin: boolean) => {
+    const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
-      // 1. PANSERLÅS (Bruker live-kameraet i stedet for lagret minne)
-      if (viewRef.current === 'onboarding' || viewRef.current === 'setup' || viewRef.current === 'setup_guide') {
+      // PANSERLÅS: Ikke kast ut folk som er midt i onboarding/setup
+      const currentView = sessionStorage.getItem('sikt_current_view');
+      if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
         setIsLoading(false);
         return;
       }
@@ -5866,24 +5839,22 @@ function App() {
       if (!isMounted) return;
 
       if (client?.onboarding_completed) {
-        // --- FERDIG KUNDE ---
-        if (isManualLogin) {
+        // FERDIG KUNDE:
+        if (isExplicitAction) {
           setView('dashboard');
           if (typeof enterPortalWithDelay === 'function') enterPortalWithDelay();
         } else {
-          // Auto-login: La kunden bli på forsiden hvis de startet der
-          if (viewRef.current === 'home') setView('home');
-          else setView('dashboard');
+          // Ved auto-pålogging (refresh): Bli på home, men la navbar oppdatere seg
+          setView('home');
           setIsLoading(false);
         }
       } else {
-        // --- UFERDIG KUNDE ---
+        // UFERDIG KUNDE:
         setView('home');
         setIsLoading(false);
 
-        // Skroll KUN hvis kunden fysisk sto på logg-inn skjermen
-        if (isManualLogin) {
-          console.log("Manuell innlogging bekreftet! Skroller til pakker...");
+        // Skroll KUN hvis kunden aktivt logget inn (ikke ved auto-refresh)
+        if (isExplicitAction) {
           setTimeout(() => {
             const el = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5892,29 +5863,27 @@ function App() {
       }
     };
 
-    // Vi bruker KUN Supabase sin egen lytter for å unngå kollisjoner
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
       if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_OUT') {
-        // Her sletter vi absolutt ingenting av hukommelse, slik du ba om!
         setUser(null);
         setView('home');
         setIsLoading(false);
+        hasInitialized = true; // Etter utlogging vil neste innlogging være "Explicit"
       }
       else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         setUser(session.user);
 
-        // --- SØLVKULEN ---
-        // Hvis skjermen kunden ser på er "login" når innloggingen skjer, 
-        // vet vi 100% sikkert at de nettopp trykket på logg-inn knappen.
-        const isManualLogin = viewRef.current === 'login';
+        // Hvis eventet er SIGNED_IN og hasInitialized er true, er det et aktivt valg
+        const isExplicit = (event === 'SIGNED_IN' && hasInitialized);
 
-        await handleUserRouting(session.user, isManualLogin);
-      }
-      else if (event === 'INITIAL_SESSION' && !session) {
+        await handleUserRouting(session.user, isExplicit);
+        hasInitialized = true;
+      } else {
         setIsLoading(false);
+        hasInitialized = true;
       }
     });
 
@@ -5923,7 +5892,6 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
-
 
   const handleLoginTrigger = () => setView('login');
   const handleBack = () => setView('home');
