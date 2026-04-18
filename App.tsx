@@ -5925,37 +5925,51 @@ function App() {
   const handleBack = () => setView('home');
 
   const handlePlanSelect = async (plan: string) => {
-    // 1. Lagre valget i "huskelappen" med en gang (før alt annet!)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sikt_pending_plan', plan);
-      console.log("Plan midlertidig lagret:", plan);
+    try {
+      console.log("1. Knapp trykket for pakke:", plan);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sikt_pending_plan', plan);
+        console.log("2. Plan midlertidig lagret i husk:", plan);
+      }
+
+      setSelectedPlan(plan);
+      console.log("3. Sjekker om bruker er logget inn...");
+
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.log("4a. Feil ved sjekk av bruker:", error.message);
+      }
+
+      if (!data?.user) {
+        console.log("4b. INGEN bruker logget inn. Tvinger skjerm til toppen og bytter til 'login'.");
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Tvinger skjermen til toppen
+        setView('login'); // SJEKK HER: Heter innloggingen din 'login', eller noe annet?
+        return;
+      }
+
+      console.log("4c. Bruker ER logget inn:", data.user.email);
+      console.log("5. Finner riktig Stripe-lenke...");
+
+      let stripeBaseUrl = "";
+      if (plan.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
+      else if (plan.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
+      else if (plan.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
+
+      if (!stripeBaseUrl) {
+        alert("Fant ingen betalingslenke for denne pakken.");
+        return;
+      }
+
+      console.log("6. Sender til Stripe nå...");
+      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(data.user.email || '')}`;
+      window.location.href = checkoutUrl;
+
+    } catch (err: any) {
+      console.error("KRITISK FEIL i handlePlanSelect:", err.message);
+      alert("Feil: " + err.message);
     }
-
-    setSelectedPlan(plan);
-
-    // 2. Sjekk om vi har en bruker
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      // Ingen bruker? Send dem til login. Valget ligger nå trygt i localStorage.
-      setView('login');
-      return;
-    }
-
-    // 3. Hvis bruker finnes, finn Stripe-linken
-    let stripeBaseUrl = "";
-    if (plan.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
-    else if (plan.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
-    else if (plan.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
-
-    if (!stripeBaseUrl) {
-      alert("Fant ingen betalingslenke for denne pakken.");
-      return;
-    }
-
-    // Send kunden til Stripe (inkluderer brukerens e-post for enklere betaling)
-    const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(user.email || '')}`;
-    window.location.href = checkoutUrl;
   };
 
   // --- 3. LOGOUT HANDLER (Lim inn denne under useEffect) ---
