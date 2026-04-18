@@ -14,7 +14,6 @@ import {
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
-const isInitialAuthCheck = useRef(true);
 
 
 // --- ZERO COGNITIVE LOAD ORDBOK ---
@@ -5775,6 +5774,9 @@ function App() {
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
   }, [theme]);
+
+  const isInitialAuthCheck = useRef(true);
+
 
 
 
