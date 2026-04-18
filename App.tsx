@@ -14,6 +14,8 @@ import {
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
+const isInitialAuthCheck = useRef(true);
+
 
 // --- ZERO COGNITIVE LOAD ORDBOK ---
 const seoDictionary: Record<string, any> = {
@@ -5841,63 +5843,48 @@ function App() {
   useEffect(() => {
     let isMounted = true;
 
-    const handleUserRouting = async (user: any, shouldAnimate: boolean) => {
+    const handleUserRouting = async (user: any, isManual: boolean) => {
       if (!user) return;
 
       // --- PANSERLÅS ---
-      // Hvis kunden er midt i integrasjonen, nekt systemet å sende dem vekk!
+      // Hvis kunden allerede står på integrasjons-skjermen, ikke rør dem!
       const currentView = sessionStorage.getItem('sikt_current_view');
       if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
-        console.log("Panserlås aktiv: Beholder onboarding-visning.");
         setIsLoading(false);
-        return; // Stopper omdirigeringen her!
+        return;
       }
-      // -----------------
 
       const { data: client } = await supabase
         .from('clients')
-        // ... resten av koden din fortsetter her
         .select('onboarding_completed')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!isMounted) return;
 
-      if (client && client.onboarding_completed === true) {
-
-        // HER ER MAGIEN:
-        // Hvis shouldAnimate er true (første gang), kjør showet.
-        // Hvis shouldAnimate er false (fanebytte), bare sett view uten drama.
-        if (shouldAnimate) {
-          console.log("Første load/login -> Kjører animasjon");
-          setView('dashboard');
-          enterPortalWithDelay();
-        } else {
-          // "Stille" oppdatering
-          console.log("Allerede logget inn -> Ingen animasjon");
-          setView('dashboard');
-          setIsLoading(false); // Sørg for at loader er skjult
-        }
-
+      if (client?.onboarding_completed) {
+        // FERDIG KUNDE: Send til Dashboard
+        setView('dashboard');
+        if (isManual) enterPortalWithDelay(); // Bare animer hvis det er manuelt
       } else {
-        // --- NY LOGIKK FOR UFERDIGE KUNDER ---
-        console.log("Kunde er ikke ferdig -> Sender dem til pakkeseksjonen.");
+        // UFERDIG KUNDE: Behold på Home
         setView('home');
         setIsLoading(false);
 
-        // Venter et halvt sekund for å la forsiden tegne seg, så ruller vi ned
-        setTimeout(() => {
-          const prisSeksjon = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
-
-          if (prisSeksjon) {
-            prisSeksjon.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else {
-            console.log("Tips: Legg til id='priser' på pris-seksjonen i HomeView.tsx for nøyaktig auto-scroll!");
-            window.scrollTo({ top: 1500, behavior: 'smooth' });
-          }
-        }, 500);
+        // --- SKROLL-LOGIKK: Bare hvis kunden aktivt har logget inn ---
+        if (isManual) {
+          console.log("Manuell innlogging -> Skroller til pakker");
+          setTimeout(() => {
+            const prisSeksjon = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
+            if (prisSeksjon) {
+              prisSeksjon.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 500);
+        } else {
+          console.log("Sesjon gjenopprettet -> Blir stående på toppen");
+        }
       }
-    }; // <--- DENNE ER LIVSVIKTIG! Den lukker hele handleUserRouting-funksjonen.
+    };
 
     const checkInitialStatus = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -5932,32 +5919,27 @@ function App() {
     checkInitialStatus();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Ignorer tokens som oppdateres
       if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_OUT') {
         if (isMounted) {
           setUser(null);
-          setHasAccess(false);
           setView('home');
           setIsLoading(false);
-          isFirstLoad.current = true; // Resett til neste gang
+          isInitialAuthCheck.current = false; // Nullstill ved utlogging
         }
       }
       else if (event === 'SIGNED_IN' && session) {
         if (isMounted) {
           setUser(session.user);
 
-          // VIKTIGST: 
-          // Vi sjekker isFirstLoad.current.
-          // Er det første gang? Ja -> Animer.
-          // Er det bare et fanebytte (isFirstLoad er false)? Nei -> Ikke animer.
-          const skalAnimere = isFirstLoad.current;
+          // Her skjer magien:
+          // Hvis det er første sjekk etter refresh = isManual er false.
+          // Hvis kunden logger inn aktivt = isManual er true.
+          const isManual = !isInitialAuthCheck.current;
 
-          handleUserRouting(session.user, skalAnimere);
-
-          // Sikre at den er false etterpå uansett
-          isFirstLoad.current = false;
+          handleUserRouting(session.user, isManual);
+          isInitialAuthCheck.current = false; // Marker at første sjekk er gjort
         }
       }
     });
