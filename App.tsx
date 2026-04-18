@@ -5827,15 +5827,14 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
-      // --- 1. SYNKRONISER PAKKEVALG ---
-      // Henter pakken fra "huskelappen" i nettleseren
+      // --- 1. SYNKRONISER PAKKEVALG (Fikset kappløp) ---
       const savedPlan = localStorage.getItem('sikt_pending_plan');
 
       if (savedPlan) {
-        console.log("Synkroniserer lagret pakke til Supabase:", savedPlan);
+        // NAPP LAPPEN UMIDDELBART! Dette forhindrer at Supabase dobbelt-fyrer.
+        localStorage.removeItem('sikt_pending_plan');
+        console.log("Lapp fjernet fra minnet, synkroniserer til Supabase:", savedPlan);
 
-        // Oppdaterer 'clients'-tabellen. 
-        // VIKTIG: Pass på at kolonnen i Supabase heter 'plan'.
         const { error: updateError } = await supabase
           .from('clients')
           .update({ plan: savedPlan })
@@ -5843,14 +5842,16 @@ function App() {
 
         if (!updateError) {
           setSelectedPlan(savedPlan);
-          localStorage.removeItem('sikt_pending_plan'); // Sletter lappen
           console.log("Pakkevalg lagret i databasen!");
         } else {
+          // Hvis det faktisk feiler av en annen grunn, limer vi lappen tilbake
+          localStorage.setItem('sikt_pending_plan', savedPlan);
           console.error("Kunne ikke lagre pakke i DB:", updateError.message);
         }
       }
 
       // --- 2. PANSERLÅS ---
+      // (Resten av funksjonen din fortsetter nøyaktig som før herfra...)
       const currentView = sessionStorage.getItem('sikt_current_view');
       if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
         setIsLoading(false);
