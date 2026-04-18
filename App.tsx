@@ -5880,10 +5880,24 @@ function App() {
         }
 
       } else {
-        // Ikke ferdig med onboarding
-        console.log("Kunde er ikke ferdig -> Vi lar dem bli på forsiden.");
+        // --- NY LOGIKK FOR UFERDIGE KUNDER ---
+        console.log("Kunde er ikke ferdig -> Sender dem til pakkeseksjonen.");
+        setView('home');
+        setIsLoading(false);
+
+        // Venter et halvt sekund for å la forsiden tegne seg, så ruller vi ned
+        setTimeout(() => {
+          const prisSeksjon = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
+
+          if (prisSeksjon) {
+            prisSeksjon.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            console.log("Tips: Legg til id='priser' på pris-seksjonen i HomeView.tsx for nøyaktig auto-scroll!");
+            window.scrollTo({ top: 1500, behavior: 'smooth' });
+          }
+        }, 500);
       }
-    };
+    }; // <--- DENNE ER LIVSVIKTIG! Den lukker hele handleUserRouting-funksjonen.
 
     const checkInitialStatus = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
