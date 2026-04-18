@@ -5785,12 +5785,15 @@ function App() {
   // 1. Sett opp view (Denne bruker automatisk din eksisterende isPaymentSuccess fra høyere oppe)
   const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
 
-  // 2. Synkroniser visningen med sessionStorage (Dette er selve magien for fanebyttet)
+  // --- KAMERAET ---
+  const viewRef = useRef(view);
   useEffect(() => {
+    viewRef.current = view;
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('sikt_current_view', view);
     }
   }, [view]);
+  // ----------------
 
   // 3. Resten av variablene dine fortsetter herfra
   const [customerFiles, setCustomerFiles] = useState([]);
@@ -5841,20 +5844,15 @@ function App() {
   // Legg denne sammen med de andre variablene øverst i App-komponenten:
   const isFirstLoad = useRef(true);
 
-  // --- REVIDERT HOVEDSJEKK (Versjon: Ingen sletting + Ingen auto-login) ---
+  // --- DEN ENDELIGE HOVEDSJEKKEN ---
   useEffect(() => {
     let isMounted = true;
-    let initialCheckDone = false; // Hindrer auto-login ved første sjekk
 
-    const handleUserRouting = async (user: any, isManualAction: boolean) => {
+    const handleUserRouting = async (user: any, isManualLogin: boolean) => {
       if (!user || !isMounted) return;
 
-      // 1. PANSERLÅS (Beholder deg der du er hvis du er i en prosess)
-      const currentView = typeof window !== 'undefined' ? sessionStorage.getItem('sikt_current_view') : null;
-      const isIntegrating = currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide';
-
-      if (isIntegrating) {
-        console.log("Panserlås: Beholder integrasjonsskjermen.");
+      // 1. PANSERLÅS (Bruker live-kameraet i stedet for lagret minne)
+      if (viewRef.current === 'onboarding' || viewRef.current === 'setup' || viewRef.current === 'setup_guide') {
         setIsLoading(false);
         return;
       }
@@ -5869,14 +5867,13 @@ function App() {
 
       if (client?.onboarding_completed) {
         // --- FERDIG KUNDE ---
-        if (isManualAction) {
+        if (isManualLogin) {
           setView('dashboard');
           if (typeof enterPortalWithDelay === 'function') enterPortalWithDelay();
         } else {
-          // AUTO-REFRESH: Vi logger deg inn i bakgrunnen (Navbar endres), 
-          // men vi beholder deg på Home-visningen.
-          console.log("Bakgrunns-auth fullført: Beholder Home.");
-          setView('home');
+          // Auto-login: La kunden bli på forsiden hvis de startet der
+          if (viewRef.current === 'home') setView('home');
+          else setView('dashboard');
           setIsLoading(false);
         }
       } else {
@@ -5884,9 +5881,9 @@ function App() {
         setView('home');
         setIsLoading(false);
 
-        // Skroll skjer KUN hvis du trykket på logg inn-knappen selv
-        if (isManualAction) {
-          console.log("Aktiv innlogging: Skroller til pakker.");
+        // Skroll KUN hvis kunden fysisk sto på logg-inn skjermen
+        if (isManualLogin) {
+          console.log("Manuell innlogging bekreftet! Skroller til pakker...");
           setTimeout(() => {
             const el = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5895,37 +5892,29 @@ function App() {
       }
     };
 
+    // Vi bruker KUN Supabase sin egen lytter for å unngå kollisjoner
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
       if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_OUT') {
-        // HER SLETTER VI INGENTING - Vi bare nullstiller bruker-staten
-        console.log("Bruker logget ut. Beholder lokal hukommelse.");
-        if (isMounted) {
-          setUser(null);
-          setView('home');
-          setIsLoading(false);
-          initialCheckDone = true; // Neste innlogging regnes nå som manuell
-        }
+        // Her sletter vi absolutt ingenting av hukommelse, slik du ba om!
+        setUser(null);
+        setView('home');
+        setIsLoading(false);
       }
       else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-        if (isMounted) {
-          setUser(session.user);
+        setUser(session.user);
 
-          // Magien: initialCheckDone er false kun ved første automatiske sjekk
-          const isManual = initialCheckDone;
-          await handleUserRouting(session.user, isManual);
+        // --- SØLVKULEN ---
+        // Hvis skjermen kunden ser på er "login" når innloggingen skjer, 
+        // vet vi 100% sikkert at de nettopp trykket på logg-inn knappen.
+        const isManualLogin = viewRef.current === 'login';
 
-          initialCheckDone = true;
-        }
+        await handleUserRouting(session.user, isManualLogin);
       }
-    });
-
-    // Fallback hvis det ikke er noen aktiv sesjon i det hele tatt
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session && isMounted) {
+      else if (event === 'INITIAL_SESSION' && !session) {
         setIsLoading(false);
-        initialCheckDone = true;
       }
     });
 
