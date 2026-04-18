@@ -1200,10 +1200,8 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
 
     try {
-      console.log("Starter lagring for User ID:", user.id);
+      console.log("1. Starter lagring for User ID:", user.id);
 
-      // --- RIKTIG MAPPING TIL SUPABASE ---
-      // Venstre side må være nøyaktig slik kolonnen heter i Supabase (med understrek)
       const dataTilDatabase = {
         user_id: user.id,
         onboarding_completed: true,
@@ -1216,28 +1214,30 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      const { data, error } = await supabase
+      console.log("2. Sender data til Supabase...");
+
+      // Vi fjerner .select() for å unngå RLS-lesefeil!
+      const { error } = await supabase
         .from('clients')
-        .upsert(dataTilDatabase, { onConflict: 'user_id' })
-        .select();
+        .upsert(dataTilDatabase, { onConflict: 'user_id' });
 
       if (error) {
-        console.error("Supabase nektet lagring detaljer:", error);
+        console.error("3a. Supabase returnerte en feil:", error);
+        alert("Supabase nektet lagring: " + error.message);
         throw error;
       }
 
-      console.log("Suksess! Data lagret:", data);
+      console.log("3b. Suksess! Data trygt lagret i Supabase.");
 
-      // Send kunden videre til dashboardet!
       if (typeof onComplete === 'function') {
         onComplete();
       }
 
     } catch (error: any) {
       console.error("Kritisk feil ved lagring:", error.message);
-      alert("Lagring feilet: " + error.message);
     } finally {
-      setLoading(false); // Skrur alltid av hjulet uansett hva som skjer!
+      console.log("4. Skrur av lastehjul uansett utfall.");
+      setLoading(false);
     }
   };
   return (
