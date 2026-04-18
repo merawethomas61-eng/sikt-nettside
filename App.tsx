@@ -1202,22 +1202,18 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     try {
       console.log("Starter lagring for User ID:", user.id);
 
-      // 2. CRITICAL FIX: Mapping til Snake_case
-      // Jeg antar databasen din bruker standard SQL-navngiving (snake_case).
-      // Hvis databasen din faktisk bruker camelCase (companyName), kan du bytte tilbake.
+      // --- RIKTIG MAPPING TIL SUPABASE ---
+      // Venstre side må være nøyaktig slik kolonnen heter i Supabase (med understrek)
       const dataTilDatabase = {
         user_id: user.id,
         onboarding_completed: true,
-
-        // Venstre side = Navn i Supabase (tabellen)
-        // Høyre side = Navn i React (skjemaet)
-        companyName: formData.companyName,
-        contactPerson: formData.contactPerson,
+        company_name: formData.companyName,
+        contact_person: formData.contactPerson,
         email: formData.email,
         phone: formData.phone,
-        websiteUrl: formData.websiteUrl,
+        website_url: formData.websiteUrl,
         industry: formData.industry,
-        targetAudience: formData.targetAudience
+        target_audience: formData.targetAudience
       };
 
       const { data, error } = await supabase
@@ -1226,20 +1222,24 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         .select();
 
       if (error) {
-        console.error("Supabase nektet lagring:", error);
+        console.error("Supabase nektet lagring detaljer:", error);
         throw error;
       }
 
       console.log("Suksess! Data lagret:", data);
-      onComplete();
+
+      // Send kunden videre til dashboardet!
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
 
     } catch (error: any) {
-      alert("Kunne ikke lagre: " + error.message);
+      console.error("Kritisk feil ved lagring:", error.message);
+      alert("Lagring feilet: " + error.message);
     } finally {
-      setLoading(false);
+      setLoading(false); // Skrur alltid av hjulet uansett hva som skjer!
     }
   };
-
   return (
     <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
