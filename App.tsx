@@ -5823,6 +5823,17 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
+  // --- NÅ OG FOR ALLTID: KREVER NY INNLOGGING VED HVERT BESØK ---
+  useEffect(() => {
+    // Sjekker at vi ikke akkurat nå blir sendt tilbake fra Google-innloggingen med gyldig nøkkel
+    if (typeof window !== 'undefined' && !window.location.hash.includes('access_token')) {
+      supabase.auth.signOut();
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-')) localStorage.removeItem(key);
+      });
+    }
+  }, []);
+
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
     setIsLoading(true);
@@ -5844,67 +5855,50 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
-      // --- 1. SYNKRONISER PAKKEVALG (Fikset kappløp) ---
+      // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
       const savedPlan = localStorage.getItem('sikt_pending_plan');
-
       if (savedPlan) {
-        // NAPP LAPPEN UMIDDELBART! Dette forhindrer at Supabase dobbelt-fyrer.
         localStorage.removeItem('sikt_pending_plan');
-        console.log("Lapp fjernet fra minnet, synkroniserer til Supabase:", savedPlan);
-
-        const { error: updateError } = await supabase
-          .from('clients')
-          .update({ plan: savedPlan })
-          .eq('user_id', user.id);
-
-        if (!updateError) {
-          setSelectedPlan(savedPlan);
-          console.log("Pakkevalg lagret i databasen!");
-        } else {
-          // Hvis det faktisk feiler av en annen grunn, limer vi lappen tilbake
-          localStorage.setItem('sikt_pending_plan', savedPlan);
-          console.error("Kunne ikke lagre pakke i DB:", updateError.message);
-        }
+        await supabase.from('clients').update({ package_name: savedPlan }).eq('user_id', user.id);
+        setSelectedPlan(savedPlan);
       }
 
-      // --- 2. PANSERLÅS ---
-      // (Resten av funksjonen din fortsetter nøyaktig som før herfra...)
-      const currentView = sessionStorage.getItem('sikt_current_view');
-      if (currentView === 'onboarding' || currentView === 'setup' || currentView === 'setup_guide') {
-        setIsLoading(false);
-        return;
-      }
-
-      // --- 3. SJEKK ONBOARDING STATUS ---
+      // 2. Hent fasiten fra databasen
       const { data: client } = await supabase
         .from('clients')
-        .select('onboarding_completed')
+        .select('onboarding_completed, package_name')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!isMounted) return;
 
-      if (client?.onboarding_completed) {
-        // FERDIG KUNDE:
-        if (isExplicitAction) {
-          setView('dashboard');
-          if (typeof enterPortalWithDelay === 'function') enterPortalWithDelay();
-        } else {
-          setView('home');
-          setIsLoading(false);
-        }
-      } else {
-        // UFERDIG KUNDE:
+      // 3. Sett opp reglene dine
+      const harBetalt = !!client?.package_name; // True hvis kunden har fått en pakke
+      const harFyltUtSkjema = !!client?.onboarding_completed; // True hvis kunden er ferdig med skjema
+
+      // --- DEN PERMANENTE RUTINGEN DIN ---
+
+      if (!harBetalt) {
+        // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
         setView('home');
         setIsLoading(false);
-
-        // Skroll skjer kun ved aktiv innlogging
+        // Liten bonus: Scroller til priser kun hvis de akkurat trykket "Logg inn"
         if (isExplicitAction) {
           setTimeout(() => {
-            const el = document.getElementById('priser') || document.getElementById('pricing') || document.getElementById('pakker');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 500);
         }
+      }
+      else if (harBetalt && !harFyltUtSkjema) {
+        // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
+        setView('onboarding');
+        setIsLoading(false);
+      }
+      else if (harBetalt && harFyltUtSkjema) {
+        // REGEL 3: Betalt og skjema levert -> Rett inn i dashboardet!
+        setHasAccess(true); // Låser opp portalen
+        setView('dashboard');
+        setIsLoading(false);
       }
     };
 
