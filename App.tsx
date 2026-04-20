@@ -1484,6 +1484,64 @@ const StoryBrandOneLiner = () => {
 
 
 // ---------------------------------------------------------
+// INDUSTRIES SECTION — "Er dette for min bransje?"
+// Psykologi: Self-identification. Når en rørlegger ser "Håndverker",
+//   skjer det en instant match. Fjerner tvilen om passform.
+// ---------------------------------------------------------
+const IndustriesSection = () => {
+  const industries = [
+    { icon: <Wrench size={24} />, name: "Håndverker", example: "Rørlegger, elektriker, snekker" },
+    { icon: <HeartHandshake size={24} />, name: "Klinikk & Helse", example: "Tannlege, fysioterapeut, kiropraktor" },
+    { icon: <ShoppingBag size={24} />, name: "Nettbutikk", example: "Alt fra klær til spesialprodukter" },
+    { icon: <Coffee size={24} />, name: "Restaurant & Kafé", example: "Spisested, bakeri, catering" },
+    { icon: <Briefcase size={24} />, name: "Byrå & Konsulent", example: "Advokat, regnskap, rådgivning" },
+    { icon: <Home size={24} />, name: "Eiendom & Bolig", example: "Megler, utleie, boligbyggere" }
+  ];
+
+  return (
+    <section className="py-16 sm:py-24 bg-transparent relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-5 sm:px-6">
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[10px] font-bold uppercase tracking-widest mb-5 border border-violet-100">
+              <Users size={11} />
+              <span>Er dette for meg</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-950 mb-4 tracking-tight leading-tight">
+              Sikt hjelper <span className="text-violet-600">bedrifter som dere.</span>
+            </h2>
+            <p className="text-base sm:text-lg text-slate-500 font-medium max-w-2xl mx-auto">
+              Hvis kundene dine søker etter deg på Google — så fungerer Sikt for deg. Her er noen eksempler.
+            </p>
+          </div>
+        </RevealOnScroll>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          {industries.map((industry, i) => (
+            <RevealOnScroll key={i} direction="up" delay={i * 50}>
+              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-2xl sm:rounded-3xl hover:border-violet-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 h-full">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
+                  {industry.icon}
+                </div>
+                <h3 className="text-sm sm:text-base font-black text-slate-900 mb-1">{industry.name}</h3>
+                <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed">{industry.example}</p>
+              </div>
+            </RevealOnScroll>
+          ))}
+        </div>
+
+        <RevealOnScroll direction="up" delay={300}>
+          <p className="text-center text-xs sm:text-sm text-slate-400 font-medium mt-8 italic">
+            Driver du noe annet? Sikt fungerer for alle bransjer der Google er kilden til kunder.
+          </p>
+        </RevealOnScroll>
+      </div>
+    </section>
+  );
+};
+
+
+// ---------------------------------------------------------
 // GEO SHIFT SECTION — Presenterer GEO (AI-søk-synlighet) for kunden
 // Design-prinsipp: ZERO COGNITIVE LOAD
 //   - Én overskrift, én visuell kontrast, én handling
@@ -1891,6 +1949,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <StoryBrandOneLiner />
     <PainPointsSection />
     <ValuePropositionSection />
+    {/* "Er dette for min bransje?" — self-identification etter "Hvorfor Sikt" */}
+    <IndustriesSection />
     {/* Her er endringen: Vi sender onSelectPlan videre til StepPlanSection også */}
     <StepPlanSection onNavigate={onNavigate} onSelectPlan={onSelectPlan} />
     <InsightSection />
@@ -1899,6 +1959,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <GeoShiftSection onSelectPlan={onSelectPlan as (plan: string) => void} />
     <Pricing onSelectPlan={onSelectPlan} />
     <FAQSection />
+    {/* Final CTA: fanger opp besøkere som scrollet helt ned */}
+    <FinalCTASection onSelectPlan={onSelectPlan} />
   </>
 );
 
@@ -2046,6 +2108,71 @@ const FAQSection = () => {
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+};
+
+
+// ---------------------------------------------------------
+// FINAL CTA — siste sjanse før bruker forlater siden
+// Psykologi: Besøkere som scroller helt ned har høy kjøpsintensjon.
+//   Én stor, tydelig handling. Ingen distraksjoner.
+// ---------------------------------------------------------
+const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => void }) => {
+  const scrollToPricing = () => {
+    document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <section className="relative py-24 sm:py-36 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
+      {/* Dekorative glød-effekter */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 text-center">
+        <RevealOnScroll direction="up">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-bold mb-8 uppercase tracking-widest">
+            <Sparkles size={13} />
+            <span>Klar til å komme i gang?</span>
+          </div>
+
+          <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+            Gi Sikt en måned.
+            <br />
+            <span className="text-violet-200">Du kan alltid si opp.</span>
+          </h2>
+
+          <p className="text-lg sm:text-xl text-violet-100 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
+            Ingen bindingstid. 70% rabatt første måned. Start med Basic for 499 kr — oppgrader når du er klar.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={scrollToPricing}
+              className="group w-full sm:w-auto px-10 py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 shadow-2xl"
+            >
+              Se pakkene
+              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+            </button>
+          </div>
+
+          {/* Trygghet-punkter under CTA */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-10 text-xs sm:text-sm font-bold text-violet-100">
+            <span className="flex items-center gap-2">
+              <Check size={16} className="text-violet-300" /> Ingen bindingstid
+            </span>
+            <span className="flex items-center gap-2">
+              <Check size={16} className="text-violet-300" /> Si opp når som helst
+            </span>
+            <span className="flex items-center gap-2">
+              <Check size={16} className="text-violet-300" /> Plain norsk garantert
+            </span>
+          </div>
+        </RevealOnScroll>
       </div>
     </section>
   );
@@ -2467,7 +2594,224 @@ const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   </section>
 );
 
-const Footer = () => (
+// ---------------------------------------------------------
+// LEGAL PAGES — Personvern & Vilkår
+// Delt layout-komponent så de to sidene ser like ut
+// ---------------------------------------------------------
+const LegalPage = ({ title, lastUpdated, onBack, children }: {
+  title: string;
+  lastUpdated: string;
+  onBack: () => void;
+  children: React.ReactNode;
+}) => (
+  <section className="min-h-screen bg-white pt-32 pb-24 sm:pt-40 sm:pb-32">
+    <div className="max-w-3xl mx-auto px-5 sm:px-6">
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-violet-600 transition-colors mb-10"
+      >
+        <ArrowLeft size={16} />
+        Tilbake til forsiden
+      </button>
+
+      <div className="mb-12">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-950 tracking-tight mb-4 leading-tight">
+          {title}
+        </h1>
+        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">
+          Sist oppdatert: {lastUpdated}
+        </p>
+      </div>
+
+      <div className="prose-legal space-y-8 text-slate-700 leading-relaxed">
+        {children}
+      </div>
+
+      <div className="mt-16 pt-10 border-t border-slate-100 text-sm text-slate-500">
+        <p className="mb-2">
+          Har du spørsmål? Kontakt oss på{" "}
+          <a href="mailto:siktseo@gmail.com" className="text-violet-600 font-bold hover:underline">
+            siktseo@gmail.com
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <style dangerouslySetInnerHTML={{ __html: `
+      .prose-legal h2 {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: rgb(2 6 23);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        letter-spacing: -0.025em;
+      }
+      .prose-legal h3 {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: rgb(15 23 42);
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .prose-legal p { margin-bottom: 1rem; font-size: 0.95rem; }
+      .prose-legal ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+      .prose-legal ul li { margin-bottom: 0.5rem; font-size: 0.95rem; }
+      .prose-legal strong { color: rgb(15 23 42); font-weight: 700; }
+      .prose-legal a { color: rgb(124 58 237); font-weight: 600; }
+      .prose-legal a:hover { text-decoration: underline; }
+    `}} />
+  </section>
+);
+
+
+const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
+  <LegalPage title="Personvern" lastUpdated="20. april 2026" onBack={onBack}>
+    <p>
+      Sikt Technologies AS ("vi", "oss", "Sikt") respekterer personvernet ditt. Denne erklæringen forklarer på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har.
+    </p>
+
+    <h2>1. Hvem er behandlingsansvarlig?</h2>
+    <p>
+      Sikt Technologies AS er behandlingsansvarlig for personopplysningene vi samler inn om deg.
+      Kontakt: <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a>
+    </p>
+
+    <h2>2. Hvilke opplysninger samler vi inn?</h2>
+
+    <h3>Opplysninger du gir oss</h3>
+    <ul>
+      <li><strong>Konto-informasjon:</strong> navn, e-post og passord når du registrerer deg.</li>
+      <li><strong>Bedriftsinformasjon:</strong> nettsideadresse, bransje og informasjon du oppgir i onboarding-skjemaet.</li>
+      <li><strong>Betalingsinformasjon:</strong> håndteres av Stripe — vi lagrer aldri kortdetaljer selv.</li>
+    </ul>
+
+    <h3>Opplysninger vi henter automatisk</h3>
+    <ul>
+      <li><strong>Google Search Console-data:</strong> hvis du kobler til kontoen din, henter vi søkestatistikk om nettsiden din (søkeord, klikk, visninger).</li>
+      <li><strong>Google Analytics-data:</strong> trafikk- og besøkendedata fra din egen nettside (ikke fra siktseo.no).</li>
+      <li><strong>Teknisk data:</strong> IP-adresse, nettleser, og tidspunkt for besøk — brukes til sikkerhet og feilsøking.</li>
+    </ul>
+
+    <h2>3. Hvorfor behandler vi opplysningene?</h2>
+    <ul>
+      <li>For å levere tjenesten du har betalt for (analyser, rapporter, anbefalinger).</li>
+      <li>For å sende viktige meldinger om kontoen og tjenesten din.</li>
+      <li>For å forbedre produktet (anonymisert statistikk).</li>
+      <li>For å oppfylle rettslige krav (regnskap, skatt).</li>
+    </ul>
+
+    <h2>4. Hvem deler vi data med?</h2>
+    <p>Vi selger aldri data. Vi deler kun med tredjeparter som er nødvendige for å drive tjenesten:</p>
+    <ul>
+      <li><strong>Supabase</strong> — lagring av konto og data (servere i EU).</li>
+      <li><strong>Stripe</strong> — betalingshåndtering.</li>
+      <li><strong>Google</strong> — gjennom deres offisielle API-er (Search Console, Analytics, PageSpeed).</li>
+      <li><strong>OpenAI / Google AI</strong> — AI-analyser og Sikt AI-funksjoner. Data sendes anonymisert så langt det er mulig.</li>
+    </ul>
+
+    <h2>5. Hvor lenge lagrer vi data?</h2>
+    <p>
+      Vi lagrer kontodata så lenge du er aktiv kunde. Hvis du sier opp, sletter vi konto og data innen 90 dager — med unntak av det vi må oppbevare etter norsk regnskapslov (typisk 5 år for fakturaer).
+    </p>
+
+    <h2>6. Dine rettigheter (GDPR)</h2>
+    <p>Du har rett til å:</p>
+    <ul>
+      <li>Få innsyn i hvilke opplysninger vi har om deg.</li>
+      <li>Få korrigert feil informasjon.</li>
+      <li>Få slettet opplysningene dine ("retten til å bli glemt").</li>
+      <li>Få utlevert en kopi av dine data (dataportabilitet).</li>
+      <li>Klage til <a href="https://www.datatilsynet.no" target="_blank" rel="noopener">Datatilsynet</a> hvis du mener vi behandler data feil.</li>
+    </ul>
+    <p>
+      Send oss en e-post på <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a> så ordner vi det innen 30 dager.
+    </p>
+
+    <h2>7. Sikkerhet</h2>
+    <p>
+      Vi bruker kryptering (HTTPS/TLS) for all dataoverføring. Passord lagres som hash (aldri i klartekst). Tilgang til databasen er begrenset til sertifisert personell, og vi har rutiner for varsling ved sikkerhetshendelser.
+    </p>
+
+    <h2>8. Cookies</h2>
+    <p>
+      Vi bruker kun nødvendige cookies for innlogging og økthåndtering. Vi bruker ikke sporings-cookies for reklame. Du kan deaktivere cookies i nettleseren din, men da kan du ikke logge inn på tjenesten.
+    </p>
+
+    <h2>9. Endringer</h2>
+    <p>
+      Vi oppdaterer denne erklæringen når tjenesten endrer seg. Vesentlige endringer varsles på e-post minst 30 dager i forveien.
+    </p>
+  </LegalPage>
+);
+
+
+const TermsPage = ({ onBack }: { onBack: () => void }) => (
+  <LegalPage title="Vilkår for bruk" lastUpdated="20. april 2026" onBack={onBack}>
+    <p>
+      Disse vilkårene gjelder mellom deg som kunde ("du") og Sikt Technologies AS ("Sikt", "vi"). Ved å registrere deg og betale for tjenesten, godtar du vilkårene.
+    </p>
+
+    <h2>1. Tjenesten</h2>
+    <p>
+      Sikt leverer SEO-analyser, AI-drevne anbefalinger og rapporter for din nettside. Tjenesten leveres som et abonnement med tre pakker: Basic, Standard og Premium. Innholdet i hver pakke er beskrevet på <a href="/">siktseo.no</a> og kan endres med 30 dagers forhåndsvarsel.
+    </p>
+
+    <h2>2. Konto og ansvar</h2>
+    <ul>
+      <li>Du må oppgi korrekte opplysninger ved registrering.</li>
+      <li>Du er selv ansvarlig for å holde passordet ditt hemmelig.</li>
+      <li>Du kan ikke bruke tjenesten til ulovlige formål eller til å skade andres nettsider.</li>
+      <li>Du må eie eller ha tillatelse til å analysere den nettsiden du legger inn.</li>
+    </ul>
+
+    <h2>3. Priser og betaling</h2>
+    <ul>
+      <li>Alle priser er oppgitt i norske kroner (NOK) og eksklusive MVA.</li>
+      <li>Betaling skjer månedlig via Stripe. Kort belastes automatisk den samme datoen hver måned.</li>
+      <li>Første måned gis med 70% rabatt som introduksjonstilbud.</li>
+      <li>Vi kan justere priser med 30 dagers varsel. Du kan alltid si opp før en prisjustering trer i kraft.</li>
+    </ul>
+
+    <h2>4. Oppsigelse og refusjon</h2>
+    <ul>
+      <li><strong>Ingen bindingstid.</strong> Du kan si opp når som helst fra dashbordet.</li>
+      <li>Oppsigelsen gjelder fra neste betalingsperiode — du beholder tilgang ut den måneden du har betalt for.</li>
+      <li>Vi refunderer ikke allerede betalte måneder, men du kan bruke tjenesten ut perioden.</li>
+      <li>Ved tekniske feil på vår side som gjør tjenesten uten verdi en hel måned, refunderer vi den måneden.</li>
+    </ul>
+
+    <h2>5. Immaterielle rettigheter</h2>
+    <p>
+      Rapporter, analyser og anbefalinger vi lager for deg tilhører deg — du kan bruke dem fritt til å forbedre din egen nettside. Sikt beholder eierskapet til selve plattformen, AI-modellene og tilknyttet teknologi.
+    </p>
+
+    <h2>6. Ansvarsbegrensning</h2>
+    <p>
+      Sikt leverer analyse, anbefalinger og verktøy — vi kan ikke garantere spesifikke resultater på Google. Rangering avhenger av mange faktorer utenfor vår kontroll (konkurranse, algoritmeendringer, din egen implementering).
+    </p>
+    <p>
+      Vårt totale erstatningsansvar begrenses til det du har betalt i de siste 12 måneder. Vi er ikke ansvarlige for indirekte tap, tapt omsetning eller følgeskader.
+    </p>
+
+    <h2>7. Endringer i vilkårene</h2>
+    <p>
+      Vi kan oppdatere disse vilkårene. Vesentlige endringer varsles på e-post minst 30 dager i forveien. Hvis du ikke godtar endringene, kan du si opp før de trer i kraft.
+    </p>
+
+    <h2>8. Tvisteløsning og lovvalg</h2>
+    <p>
+      Disse vilkårene er underlagt norsk lov. Hvis vi ikke klarer å løse en uenighet minnelig, skal saken avgjøres av Oslo tingrett som verneting.
+    </p>
+
+    <h2>9. Kontakt</h2>
+    <p>
+      Spørsmål om vilkårene? Send en e-post til <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a>.
+    </p>
+  </LegalPage>
+);
+
+
+const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
   <footer className="bg-slate-950 text-white py-16 sm:py-20 border-t border-slate-900 overflow-hidden relative text-center">
     <div className="max-w-6xl mx-auto px-5 relative z-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10 sm:gap-12 mb-16 sm:mb-20">
@@ -2500,10 +2844,28 @@ const Footer = () => (
         </div>
       </div>
       <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-600 text-center">
-        <p>© 2024 SIKT TECHNOLOGIES AS. NORSK DESIGN.</p>
+        <p>© 2026 SIKT TECHNOLOGIES AS. NORSK DESIGN.</p>
         <div className="flex gap-6 sm:gap-10">
-          <a href="#" className="hover:text-white transition-colors">Personvern</a>
-          <a href="#" className="hover:text-white transition-colors">Vilkår</a>
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate?.('privacy');
+              window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+            }}
+            className="hover:text-white transition-colors uppercase tracking-widest"
+          >
+            Personvern
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate?.('terms');
+              window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+            }}
+            className="hover:text-white transition-colors uppercase tracking-widest"
+          >
+            Vilkår
+          </button>
         </div>
       </div>
     </div>
@@ -6615,6 +6977,10 @@ function App() {
             onSelectPlan={() => handlePlanSelect('PREMIUM')}
           />
         )}
+
+        {/* Legal sider */}
+        {view === 'privacy' && <PrivacyPage onBack={() => setView('home')} />}
+        {view === 'terms' && <TermsPage onBack={() => setView('home')} />}
 
       </main>
 
