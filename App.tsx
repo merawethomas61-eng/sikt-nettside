@@ -5825,21 +5825,28 @@ function App() {
 
   // --- NÅ OG FOR ALLTID: KREVER NY INNLOGGING VED HVERT BESØK ---
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // 1. Kommer kunden akkurat nå fra Google-innlogging?
-      const isFromGoogle = window.location.hash.includes('access_token');
+    const handleInitialAuth = async () => {
+      if (typeof window !== 'undefined') {
+        const url = window.location.href;
 
-      // 2. Kommer kunden akkurat nå fra Stripe-betaling?
-      const isFromStripe = window.location.search.includes('payment_success');
+        // Vi sjekker om brukeren kommer fra en "godkjent" retur (Google eller Stripe)
+        const isRedirect = url.includes('access_token') ||
+          url.includes('payment_success') ||
+          url.includes('code=');
 
-      // Hvis de IKKE kommer fra noen av disse, kast dem ut!
-      if (!isFromGoogle && !isFromStripe) {
-        supabase.auth.signOut();
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('sb-')) localStorage.removeItem(key);
-        });
+        // Hvis det er en helt vanlig sidevisning uten disse tegnene, logger vi ut.
+        if (!isRedirect) {
+          console.log("Normal visning: Sletter gammel sesjon.");
+          await supabase.auth.signOut();
+          // Vi sletter kun Supabase-nøklene så vi ikke ødelegger andre ting
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith('sb-')) localStorage.removeItem(key);
+          });
+        }
       }
-    }
+    };
+
+    handleInitialAuth();
   }, []);
 
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
@@ -5863,10 +5870,14 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
+      // NYTT: Sjekk om kunden akkurat kom fra kassa med kvittering i hånda
+      const justPaid = typeof window !== 'undefined' && window.location.search.includes('payment_success');
+
       // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
       const savedPlan = localStorage.getItem('sikt_pending_plan');
       if (savedPlan) {
         localStorage.removeItem('sikt_pending_plan');
+        // Oppdaterer databasen lokalt umiddelbart
         await supabase.from('clients').update({ package_name: savedPlan }).eq('user_id', user.id);
         setSelectedPlan(savedPlan);
       }
@@ -5880,36 +5891,38 @@ function App() {
 
       if (!isMounted) return;
 
-      // 3. Sett opp reglene dine
-      const harBetalt = !!client?.package_name; // True hvis kunden har fått en pakke
-      const harFyltUtSkjema = !!client?.onboarding_completed; // True hvis kunden er ferdig med skjema
+      // 3. Sett opp reglene
+      const harBetalt = !!client?.package_name || justPaid;
+      const harFyltUtSkjema = !!client?.onboarding_completed;
 
       // --- DEN PERMANENTE RUTINGEN DIN ---
 
-      if (!harBetalt) {
+      if (justPaid || (harBetalt && !harFyltUtSkjema)) {
+        // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
+        setView('onboarding');
+        setIsLoading(false);
+      }
+      else if (!harBetalt) {
         // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
         setView('home');
         setIsLoading(false);
-        // Liten bonus: Scroller til priser kun hvis de akkurat trykket "Logg inn"
+        // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
         if (isExplicitAction) {
           setTimeout(() => {
             document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 500);
         }
       }
-      else if (harBetalt && !harFyltUtSkjema) {
-        // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
-        setView('onboarding');
-        setIsLoading(false);
-      }
       else if (harBetalt && harFyltUtSkjema) {
         // REGEL 3: Betalt og skjema levert -> Rett inn i dashboardet!
-        setHasAccess(true); // Låser opp portalen
+        setHasAccess(true);
         setView('dashboard');
         setIsLoading(false);
       }
     };
 
+    // --- VIKTIG: Resten av koden i useEffect-en din (f.eks supabase.auth.onAuthStateChange) 
+    // skal ligge urørt rett under her! ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
       if (event === 'TOKEN_REFRESHED') return;
