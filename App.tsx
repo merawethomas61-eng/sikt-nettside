@@ -816,17 +816,17 @@ const Hero = () => {
         <RevealOnScroll direction="down" delay={100}>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-md text-violet-600 text-[9px] sm:text-[10px] font-bold mb-6 sm:mb-10 border border-violet-100/50 uppercase tracking-widest shadow-sm">
             <Sparkles size={11} className="fill-current" />
-            <span>SEO uten jargon</span>
+            <span>AI-drevet SEO for vekst</span>
           </div>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={200}>
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-slate-950 mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
-            Flere kunder fra Google — <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
+            Ranger høyere på Google <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
           </h1>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={300}>
           <p className="text-sm sm:text-lg md:text-xl mb-10 sm:mb-14 max-w-2xl mx-auto leading-relaxed font-semibold tracking-tight animate-subtext-dynamic px-2 opacity-90">
-            Vi tar det tekniske. Du får en rapport på norsk som faktisk gir mening — og flere kunder som finner deg.
+            For bedrifter som vil bli mer synlige og få flere kunder gjennom Google.
           </p>
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
@@ -1508,16 +1508,16 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
           <div className="text-center mb-16 sm:mb-24">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-600/10 backdrop-blur-md border border-violet-400/30 text-violet-300 text-[10px] sm:text-xs font-bold mb-8 uppercase tracking-widest">
               <BrainCircuit size={13} />
-              <span>Neste generasjon søk</span>
+              <span>Både Google og AI</span>
             </div>
 
             <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
-              Kundene dine slutter å <span className="line-through text-slate-500 decoration-violet-500/50">google.</span>
+              Google er ikke <span className="text-violet-400">alene</span> lenger.
               <br />
-              <span className="text-violet-400">De spør ChatGPT.</span>
+              Kundene spør også ChatGPT.
             </h2>
             <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
-              Hvis AI ikke nevner deg, eksisterer du ikke for morgendagens kunder.
+              For å vinne i dag må du være synlig begge steder. Sikt jobber for begge.
             </p>
           </div>
         </RevealOnScroll>
@@ -1525,14 +1525,17 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         {/* --- VISUELL KONTRAST: Google (før) vs ChatGPT (nå) --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-16 sm:mb-24 max-w-5xl mx-auto">
 
-          {/* FØR: Google */}
+          {/* GOOGLE — Fortsatt viktig */}
           <RevealOnScroll direction="left" delay={100}>
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 h-full">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-9 h-9 rounded-full bg-slate-700/70 flex items-center justify-center">
-                  <SearchIcon size={16} className="text-slate-300" />
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-700/70 flex items-center justify-center">
+                    <SearchIcon size={16} className="text-slate-300" />
+                  </div>
+                  <span className="text-xs uppercase tracking-widest text-slate-300 font-bold">Google</span>
                 </div>
-                <span className="text-xs uppercase tracking-widest text-slate-400 font-bold">Før</span>
+                <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-black bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-400/30">Fortsatt viktig</span>
               </div>
 
               <div className="bg-white/10 rounded-xl p-4 mb-5 border border-white/5">
@@ -1559,23 +1562,26 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 mt-6 italic">10 blå lenker. Kunden velger én.</p>
+              <p className="text-xs text-slate-400 mt-6 italic">Sikt løfter deg til topps her. Det er grunnmuren.</p>
             </div>
           </RevealOnScroll>
 
-          {/* NÅ: ChatGPT */}
+          {/* AI — Det nye laget */}
           <RevealOnScroll direction="right" delay={200}>
             <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-violet-400/30 rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
-              {/* "Nå"-indikator */}
+              {/* "Nytt"-indikator */}
               <div className="absolute -top-3 -right-3 bg-violet-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                2026
+                Nytt
               </div>
 
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
-                  <Sparkles size={16} className="text-white" />
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
+                    <Sparkles size={16} className="text-white" />
+                  </div>
+                  <span className="text-xs uppercase tracking-widest text-violet-200 font-bold">ChatGPT</span>
                 </div>
-                <span className="text-xs uppercase tracking-widest text-violet-300 font-bold">Nå</span>
+                <span className="text-[9px] uppercase tracking-wider text-violet-200 font-black bg-violet-500/20 px-2 py-0.5 rounded-full border border-violet-400/40">I tillegg</span>
               </div>
 
               <div className="bg-white/10 rounded-xl p-4 mb-5 border border-violet-400/20">
@@ -1597,7 +1603,7 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
                 </div>
               </div>
 
-              <p className="text-xs text-violet-200 mt-6 italic">Ett svar. Én anbefaling. Er det deg?</p>
+              <p className="text-xs text-violet-200 mt-6 italic">Sikt sørger for at AI-en anbefaler deg også.</p>
             </div>
           </RevealOnScroll>
         </div>
@@ -1606,12 +1612,12 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         <RevealOnScroll direction="up" delay={300}>
           <div className="max-w-3xl mx-auto text-center">
             <h3 className="text-2xl sm:text-3xl font-black mb-4 leading-tight">
-              Sikt GEO gjør at <span className="text-violet-400">AI snakker om deg.</span>
+              Sikt jobber for <span className="text-violet-400">begge deler.</span>
             </h3>
             <p className="text-slate-400 text-base sm:text-lg mb-10 leading-relaxed">
-              Vi strukturerer nettsiden din så ChatGPT, Gemini og Perplexity plukker deg opp som svar.
+              Vi løfter deg høyere på Google — og sørger samtidig for at ChatGPT, Gemini og Perplexity anbefaler deg.
               <br className="hidden sm:block" />
-              Ingen andre byråer i Norge gjør dette — ennå.
+              Ingen andre byråer i Norge gjør begge deler — ennå.
             </p>
 
             <button
