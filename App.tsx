@@ -1224,7 +1224,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
       // Stoppeklokken: Tvinger frem en feil hvis Supabase er stille i mer enn 5 sekunder
       const timeoutFelle = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("TIDSAVBRUDD: Supabase ignorerte oss i over 5 sekunder!")), 5000);
+        setTimeout(() => reject(new Error("TIDSAVBRUDD: Supabase ignorerte oss i over 5 sekunder!")), 10000);
       });
 
       // La dem løpe om kapp! Den som blir ferdig først, vinner.
