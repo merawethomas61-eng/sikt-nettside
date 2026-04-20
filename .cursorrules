@@ -1,0 +1,6 @@
+Etter hver gang du har endret kode som jeg skal teste, skal du ALLTID kjøre følgende kommandoer i terminalen for meg:
+1. git add .
+2. git commit -m "beskriv kort hva du endret"
+3. git push
+
+Du skal utføre dette automatisk som en del av din arbeidsflyt uten at jeg trenger å be om det spesifikt for hver endring.

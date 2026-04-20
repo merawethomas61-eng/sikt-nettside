@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 
 
+// --- GLOBALE KONSTANTER ---
+// Hvor lenge "Control Center"-loading-skjermen vises før vi slipper
+// brukeren inn i ClientPortal. Juster her ett sted for hele appen.
+const PORTAL_ENTRY_DELAY_MS = 2800;
 
 
 
@@ -173,7 +177,7 @@ const MyComponent = () => {
     if (isMounted.current) setIsLoading(true);
 
     // 2. Vent (Delay)
-    await new Promise(resolve => setTimeout(resolve, 2800));
+    await new Promise(resolve => setTimeout(resolve, PORTAL_ENTRY_DELAY_MS));
 
     // 3. Sjekk om vi fortsatt er "live" før vi oppdaterer state
     if (!isMounted.current) return; // Stopp her hvis brukeren har dratt
@@ -5859,7 +5863,7 @@ function App() {
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2800));
+    await new Promise(resolve => setTimeout(resolve, PORTAL_ENTRY_DELAY_MS));
     setHasAccess(true);
     setIsLoading(false);
   };
@@ -5877,62 +5881,71 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
-      // Vis loading-skjermen mens vi finner ut hvor brukeren skal
-      setIsLoading(true);
+      // NB: Vi viser IKKE loading-skjermen her. Den er forbeholdt
+      // inngangen til ClientPortal (se REGEL 3 nederst).
 
-      // NYTT: Sjekk om kunden akkurat kom fra kassa med kvittering i hånda
       // Bruker state-variabelen som ble fanget FØR URL-vasken,
       // så vi unngår race mellom vasken og denne ruteren.
       const justPaid = isPaymentSuccess;
 
-      // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
-      const savedPlan = localStorage.getItem('sikt_pending_plan');
-      if (savedPlan) {
-        localStorage.removeItem('sikt_pending_plan');
-        // Oppdaterer databasen lokalt umiddelbart
-        await supabase.from('clients').update({ package_name: savedPlan }).eq('user_id', user.id);
-        setSelectedPlan(savedPlan);
-      }
-
-      // 2. Hent fasiten fra databasen
-      const { data: client } = await supabase
-        .from('clients')
-        .select('onboarding_completed, package_name')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      // 3. Sett opp reglene
-      const harBetalt = !!client?.package_name || justPaid;
-      const harFyltUtSkjema = !!client?.onboarding_completed;
-
-      // --- DEN PERMANENTE RUTINGEN DIN ---
-      // Viktig: justPaid overstyrer IKKE fullført onboarding lenger.
-      // Det hindrer at eksisterende kunder blir sendt tilbake til skjemaet
-      // når de oppgraderer pakken og returnerer med ?payment_success=true.
-
-      if (harBetalt && !harFyltUtSkjema) {
-        // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
-        setView('onboarding');
-      }
-      else if (!harBetalt) {
-        // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
-        setView('home');
-        // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
-        if (isExplicitAction) {
-          setTimeout(() => {
-            document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 500);
+      try {
+        // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
+        const savedPlan = localStorage.getItem('sikt_pending_plan');
+        if (savedPlan) {
+          localStorage.removeItem('sikt_pending_plan');
+          // Oppdaterer databasen lokalt umiddelbart
+          await supabase.from('clients').update({ package_name: savedPlan }).eq('user_id', user.id);
+          setSelectedPlan(savedPlan);
         }
-      }
-      else {
-        // REGEL 3: Betalt og skjema levert -> Rett inn i dashboardet!
-        setHasAccess(true);
-        setView('dashboard');
-      }
 
-      setIsLoading(false);
+        // 2. Hent fasiten fra databasen
+        const { data: client } = await supabase
+          .from('clients')
+          .select('onboarding_completed, package_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!isMounted) return;
+
+        // 3. Sett opp reglene
+        const harBetalt = !!client?.package_name || justPaid;
+        const harFyltUtSkjema = !!client?.onboarding_completed;
+
+        // --- DEN PERMANENTE RUTINGEN DIN ---
+        // Viktig: justPaid overstyrer IKKE fullført onboarding lenger.
+        // Det hindrer at eksisterende kunder blir sendt tilbake til skjemaet
+        // når de oppgraderer pakken og returnerer med ?payment_success=true.
+
+        if (harBetalt && !harFyltUtSkjema) {
+          // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
+          setView('onboarding');
+        }
+        else if (!harBetalt) {
+          // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
+          setView('home');
+          // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
+          if (isExplicitAction) {
+            setTimeout(() => {
+              document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 500);
+          }
+        }
+        else {
+          // REGEL 3: Betalt og skjema levert -> Rett inn i ClientPortal
+          // MED loading-skjerm (Control Center) som mellomstopp.
+          setView('dashboard');
+          setIsLoading(true);
+          await new Promise(resolve => setTimeout(resolve, PORTAL_ENTRY_DELAY_MS));
+          if (!isMounted) return;
+          setHasAccess(true);
+        }
+      } catch (err: any) {
+        console.error("Feil i handleUserRouting:", err?.message || err);
+        // Fallback: Aldri la brukeren stå fast. Send til home og fjern loader.
+        if (isMounted) setView('home');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     };
 
     // --- VIKTIG: Resten av koden i useEffect-en din (f.eks supabase.auth.onAuthStateChange) 
@@ -6238,10 +6251,20 @@ function App() {
   if (view === 'success') {
     return (
       <SuccessPage
-        onBackHome={() => {
-          // Når de trykker "Gå videre" her, låser vi opp portalen
-          setHasAccess(true);
-          setView('deepdive');
+        onBackHome={async () => {
+          // Når de trykker "Gå videre" her, viser vi Control Center-loader
+          // i 2,8 s før vi slipper dem inn i ClientPortal.
+          try {
+            setView('deepdive');
+            setIsLoading(true);
+            await new Promise(resolve => setTimeout(resolve, PORTAL_ENTRY_DELAY_MS));
+            setHasAccess(true);
+          } catch (err: any) {
+            console.error("Feil ved inngang til portal fra SuccessPage:", err?.message || err);
+            setHasAccess(true);
+          } finally {
+            setIsLoading(false);
+          }
         }}
       />
     );
