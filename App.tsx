@@ -5877,8 +5877,13 @@ function App() {
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
 
+      // Vis loading-skjermen mens vi finner ut hvor brukeren skal
+      setIsLoading(true);
+
       // NYTT: Sjekk om kunden akkurat kom fra kassa med kvittering i hånda
-      const justPaid = typeof window !== 'undefined' && window.location.search.includes('payment_success');
+      // Bruker state-variabelen som ble fanget FØR URL-vasken,
+      // så vi unngår race mellom vasken og denne ruteren.
+      const justPaid = isPaymentSuccess;
 
       // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
       const savedPlan = localStorage.getItem('sikt_pending_plan');
@@ -5903,16 +5908,17 @@ function App() {
       const harFyltUtSkjema = !!client?.onboarding_completed;
 
       // --- DEN PERMANENTE RUTINGEN DIN ---
+      // Viktig: justPaid overstyrer IKKE fullført onboarding lenger.
+      // Det hindrer at eksisterende kunder blir sendt tilbake til skjemaet
+      // når de oppgraderer pakken og returnerer med ?payment_success=true.
 
-      if (justPaid || (harBetalt && !harFyltUtSkjema)) {
+      if (harBetalt && !harFyltUtSkjema) {
         // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
         setView('onboarding');
-        setIsLoading(false);
       }
       else if (!harBetalt) {
         // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
         setView('home');
-        setIsLoading(false);
         // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
         if (isExplicitAction) {
           setTimeout(() => {
@@ -5920,12 +5926,13 @@ function App() {
           }, 500);
         }
       }
-      else if (harBetalt && harFyltUtSkjema) {
+      else {
         // REGEL 3: Betalt og skjema levert -> Rett inn i dashboardet!
         setHasAccess(true);
         setView('dashboard');
-        setIsLoading(false);
       }
+
+      setIsLoading(false);
     };
 
     // --- VIKTIG: Resten av koden i useEffect-en din (f.eks supabase.auth.onAuthStateChange) 
@@ -6046,8 +6053,13 @@ function App() {
         }
       });
 
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('sikt_current_view');
+      }
+
       setUser(null);
       setHasAccess(false);
+      setSelectedPlan(null);
       setView('home');
     } catch (error: any) {
       console.error("Feil ved utlogging:", error.message);
