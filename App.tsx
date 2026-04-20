@@ -5805,7 +5805,14 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
 // --- MAIN APP COMPONENT ---
 function App() {
   // 1. SJEKK URL FØR VI STARTER
+  // Viktig: Disse må fanges ved render, FØR URL-vasken under kjører.
+  // Ellers tror init() at det er en normal visning og logger deg ut.
   const isPaymentSuccess = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment_success') === 'true';
+  const isAuthRedirect = typeof window !== 'undefined' && (
+    window.location.hash.includes('access_token') ||
+    window.location.search.includes('code=')
+  );
+  const isAnyRedirect = isPaymentSuccess || isAuthRedirect;
 
   const isProcessingClick = useRef(false);
 
@@ -5946,24 +5953,22 @@ function App() {
     //          Denne rekkefølgen er kritisk — ellers fanger listeneren
     //          den gamle sesjonen via INITIAL_SESSION og logger deg inn igjen.
     const init = async () => {
-      if (typeof window !== 'undefined') {
-        const url = window.location.href;
-
-        const isRedirect = url.includes('access_token') ||
-          url.includes('payment_success') ||
-          url.includes('code=');
-
-        if (!isRedirect) {
-          console.log("[Auth] Normal visning: Sletter gammel sesjon før vi lytter.");
-          try {
-            await supabase.auth.signOut();
-          } catch (err) {
-            console.warn("[Auth] signOut ved mount feilet:", err);
-          }
+      // Viktig: Vi bruker den FØRFANGEDE isAnyRedirect i stedet for å lese
+      // URL-en på nytt, fordi URL-vasken rekker å kjøre før denne init-en.
+      if (!isAnyRedirect) {
+        console.log("[Auth] Normal visning: Sletter gammel sesjon før vi lytter.");
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.warn("[Auth] signOut ved mount feilet:", err);
+        }
+        if (typeof window !== 'undefined') {
           Object.keys(localStorage).forEach((key) => {
             if (key.startsWith('sb-')) localStorage.removeItem(key);
           });
         }
+      } else {
+        console.log("[Auth] Redirect oppdaget (Stripe/OAuth) — beholder sesjonen.");
       }
 
       if (!isMounted) return;
