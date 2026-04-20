@@ -1492,7 +1492,7 @@ const StoryBrandOneLiner = () => {
 // ---------------------------------------------------------
 const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   return (
-    <section id="geo" className="relative py-24 sm:py-36 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+    <section id="geo" className="relative py-24 sm:py-36 pb-40 sm:pb-56 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Myk glød i bakgrunnen */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-gradient-to-tr from-violet-600/20 via-indigo-500/10 to-transparent rounded-full blur-[120px] pointer-events-none"></div>
 
@@ -1500,6 +1500,9 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
       <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
       </div>
+
+      {/* Myk fade i bunnen → blender mørk bakgrunn inn i Pricing-seksjonen (slate-50) */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 sm:h-56 bg-gradient-to-b from-transparent via-slate-950/80 to-slate-50 pointer-events-none"></div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6">
 
