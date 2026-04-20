@@ -1412,41 +1412,41 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   const plans = [
     {
       title: "⭐ BASIC",
-      price: "599",
-      tagline: "Få kontroll på grunnmuren.",
-      desc: "Stopp tapet av kunder ved å fikse det tekniske fundamentet.",
+      price: "499",
+      tagline: "Fiks grunnmuren.",
+      desc: "Få oversikt over hvor du står på Google — uten SEO-jargon.",
       features: [
-        "Automatisk teknisk SEO-analyse",
-        "PageSpeed Optimalisering",
-        "Search Console-integrasjon",
-        "Månedlig resultatrapport"
+        "Er siden din rask nok til å holde på kundene?",
+        "Hvor høyt kommer du opp når folk søker?",
+        "Hva sier Google Search Console egentlig?",
+        "Månedlig rapport på plain norsk"
       ]
     },
     {
       title: "⭐⭐ STANDARD",
       price: "1 499",
-      tagline: "Vekst og innholdsdominans.",
+      tagline: "Vekst gjennom innhold.",
       highlighted: true,
-      desc: "For bedrifter som aktivt vil klatre og knuse konkurrentene.",
+      desc: "Vi forteller deg hva kundene søker på — og hvordan du treffer akkurat dem.",
       features: [
         "Alt i Basic +",
-        "AI-drevet innholdsoptimalisering",
-        "Ukentlig Rank Tracking",
-        "SEO-helse overvåkning",
-        "Ukentlige suksessrapporter"
+        "Hva søker kundene dine faktisk etter?",
+        "Hvilke sider bør du forbedre først?",
+        "Hva gjør konkurrentene bedre enn deg?",
+        "Ukentlig sjekk av rangering"
       ]
     },
     {
       title: "⭐⭐⭐ PREMIUM",
       price: "4 999",
-      tagline: "Full automatisering og ROI.",
-      desc: "Total dominans. Vi overtar hele SEO-arbeidet for maksimal vekst.",
+      tagline: "Dominér både Google og AI.",
+      desc: "Vær synlig der kundene leter — både på Google og i ChatGPT, Gemini og Perplexity.",
       features: [
         "Alt i Standard +",
-        "AI-drevet innholdsstrategi",
-        "Dyp Konkurrentanalyse",
-        "Avansert lenkeanalyse",
-        "AI Forbedringsforslag (ukentlig)"
+        "Blir du anbefalt av ChatGPT og Gemini? (GEO)",
+        "Hvem på nettet anbefaler deg?",
+        "Spør Sikt AI hva som helst om din SEO",
+        "Dyp konkurrentanalyse hver uke"
       ]
     }
   ];
