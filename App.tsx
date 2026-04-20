@@ -1197,11 +1197,25 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Onboarding] 1/5 handleSubmit startet");
+    console.log("[Onboarding] 1/5 handleSubmit startet. User prop:", user?.id || "(tom)");
     setLoading(true);
 
-    if (!user) {
-      console.warn("[Onboarding] Avbryter: ingen bruker");
+    // Selvbergning: Hvis user-prop mangler (timing-race ved redirect fra Stripe
+    // eller treg auth-init), henter vi brukeren direkte fra Supabase i stedet
+    // for å gi opp. Da kan skjemaet lagres uansett om prop-en er satt ennå.
+    let aktivBruker = user;
+    if (!aktivBruker) {
+      console.warn("[Onboarding] User-prop mangler, prøver supabase.auth.getUser()");
+      try {
+        const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+        aktivBruker = fetchedUser;
+      } catch (err) {
+        console.error("[Onboarding] getUser() feilet:", err);
+      }
+    }
+
+    if (!aktivBruker) {
+      console.warn("[Onboarding] Avbryter: ingen bruker funnet (heller ikke fra Supabase)");
       alert("Feil: Ingen bruker funnet. Logg inn på nytt.");
       setLoading(false);
       return;
@@ -1209,7 +1223,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
     try {
       const dataTilDatabase = {
-        user_id: user.id,
+        user_id: aktivBruker.id,
         onboarding_completed: true,
         company_name: formData.companyName,
         contact_person: formData.contactPerson,
