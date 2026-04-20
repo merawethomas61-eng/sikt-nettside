@@ -5834,30 +5834,9 @@ function App() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   // --- NÅ OG FOR ALLTID: KREVER NY INNLOGGING VED HVERT BESØK ---
-  useEffect(() => {
-    const handleInitialAuth = async () => {
-      if (typeof window !== 'undefined') {
-        const url = window.location.href;
-
-        // Vi sjekker om brukeren kommer fra en "godkjent" retur (Google eller Stripe)
-        const isRedirect = url.includes('access_token') ||
-          url.includes('payment_success') ||
-          url.includes('code=');
-
-        // Hvis det er en helt vanlig sidevisning uten disse tegnene, logger vi ut.
-        if (!isRedirect) {
-          console.log("Normal visning: Sletter gammel sesjon.");
-          await supabase.auth.signOut();
-          // Vi sletter kun Supabase-nøklene så vi ikke ødelegger andre ting
-          Object.keys(localStorage).forEach((key) => {
-            if (key.startsWith('sb-')) localStorage.removeItem(key);
-          });
-        }
-      }
-    };
-
-    handleInitialAuth();
-  }, []);
+  // Dette kjører nå INNE I hovedsjekken under, slik at signOut rekker å fullføre
+  // FØR vi abonnerer på auth-events. Ellers fanger onAuthStateChange den gamle
+  // sesjonen via INITIAL_SESSION og logger deg inn igjen.
 
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
@@ -5876,6 +5855,7 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let hasInitialized = false;
+    let subscription: { unsubscribe: () => void } | null = null;
 
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
       if (!user || !isMounted) return;
@@ -5947,35 +5927,71 @@ function App() {
       }
     };
 
-    // --- VIKTIG: Resten av koden i useEffect-en din (f.eks supabase.auth.onAuthStateChange) 
-    // skal ligge urørt rett under her! ---
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // --- INIT: FØRST sletter vi gammel sesjon (hvis normal visning),
+    //          DERETTER abonnerer vi på auth-endringer.
+    //          Denne rekkefølgen er kritisk — ellers fanger listeneren
+    //          den gamle sesjonen via INITIAL_SESSION og logger deg inn igjen.
+    const init = async () => {
+      if (typeof window !== 'undefined') {
+        const url = window.location.href;
+
+        const isRedirect = url.includes('access_token') ||
+          url.includes('payment_success') ||
+          url.includes('code=');
+
+        if (!isRedirect) {
+          console.log("[Auth] Normal visning: Sletter gammel sesjon før vi lytter.");
+          try {
+            await supabase.auth.signOut();
+          } catch (err) {
+            console.warn("[Auth] signOut ved mount feilet:", err);
+          }
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith('sb-')) localStorage.removeItem(key);
+          });
+        }
+      }
+
       if (!isMounted) return;
-      if (event === 'TOKEN_REFRESHED') return;
 
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setView('home');
-        setIsLoading(false);
-        hasInitialized = true; // Etter utlogging vil neste innlogging være "Explicit"
-      }
-      else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-        setUser(session.user);
+      console.log("[Auth] Starter å lytte på auth-events.");
 
-        // Hvis eventet er SIGNED_IN og hasInitialized er true, er det et aktivt valg
-        const isExplicit = (event === 'SIGNED_IN' && hasInitialized);
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) return;
+        if (event === 'TOKEN_REFRESHED') return;
 
-        await handleUserRouting(session.user, isExplicit);
-        hasInitialized = true;
-      } else {
-        setIsLoading(false);
-        hasInitialized = true;
-      }
-    });
+        console.log("[Auth] Event:", event, "Har session:", !!session);
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setHasAccess(false);
+          setSelectedPlan(null);
+          setView('home');
+          setIsLoading(false);
+          hasInitialized = true;
+        }
+        else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+          setUser(session.user);
+
+          // Hvis eventet er SIGNED_IN og hasInitialized er true, er det et aktivt valg
+          const isExplicit = (event === 'SIGNED_IN' && hasInitialized);
+
+          await handleUserRouting(session.user, isExplicit);
+          hasInitialized = true;
+        } else {
+          setIsLoading(false);
+          hasInitialized = true;
+        }
+      });
+
+      subscription = data.subscription;
+    };
+
+    init();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
   }, []);
 
