@@ -1250,7 +1250,14 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
         <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault(); // DENNE TVINGER NETTLESEREN TIL Å FRYSE!
+            console.log("--- SKJEMA STOPPET FRA Å LASTE PÅ NYTT ---");
+            handleSubmit(e);
+          }}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
             <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
@@ -1292,7 +1299,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
           <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
 
-          <button type="submit" disabled={loading} className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg hover:bg-violet-700 transition-all shadow-xl disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={loading}
+            onClick={() => console.log("--- KNAPP FYSISK TRYKKEt ---")}
+            className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg hover:bg-violet-700 transition-all shadow-xl disabled:opacity-50"
+          >
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
           </button>
         </form>
