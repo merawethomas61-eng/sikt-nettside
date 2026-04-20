@@ -1214,29 +1214,39 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      console.log("2. Sender data til Supabase...");
+      console.log("2. Sender data til Supabase og starter stoppeklokken...");
 
-      // Vi fjerner .select() for å unngå RLS-lesefeil!
-      const { error } = await supabase
+      // Selve databaskallet (Vi prøver en direkte UPDATE i stedet for upsert for å unngå vranglås)
+      const lagreData = supabase
         .from('clients')
-        .upsert(dataTilDatabase, { onConflict: 'user_id' });
+        .update(dataTilDatabase)
+        .eq('user_id', user.id);
 
-      if (error) {
-        console.error("3a. Supabase returnerte en feil:", error);
-        alert("Supabase nektet lagring: " + error.message);
-        throw error;
+      // Stoppeklokken: Tvinger frem en feil hvis Supabase er stille i mer enn 5 sekunder
+      const timeoutFelle = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("TIDSAVBRUDD: Supabase ignorerte oss i over 5 sekunder!")), 5000);
+      });
+
+      // La dem løpe om kapp! Den som blir ferdig først, vinner.
+      const response: any = await Promise.race([lagreData, timeoutFelle]);
+
+      if (response.error) {
+        console.error("3a. Supabase returnerte en faktisk feil:", response.error);
+        alert("Lagring feilet: " + response.error.message);
+        throw response.error;
       }
 
-      console.log("3b. Suksess! Data trygt lagret i Supabase.");
+      console.log("3b. SUKSESS! Data trygt lagret.");
 
       if (typeof onComplete === 'function') {
         onComplete();
       }
 
     } catch (error: any) {
-      console.error("Kritisk feil ved lagring:", error.message);
+      console.error("Kritisk feil fanget:", error.message);
+      alert("Fikk ikke lagret: " + error.message);
     } finally {
-      console.log("4. Skrur av lastehjul uansett utfall.");
+      console.log("4. Lastehjul slått av.");
       setLoading(false);
     }
   };
