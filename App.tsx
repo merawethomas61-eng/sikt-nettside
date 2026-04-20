@@ -356,11 +356,11 @@ const TechnologyHero = () => (
     <div className="max-w-5xl mx-auto px-5 text-center relative z-10">
       <RevealOnScroll direction="down">
         <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-slate-950 mb-6 md:mb-8 leading-[1.05] tracking-tight">
-          Teknologien som setter din <br className="hidden md:block" />
-          <span className="text-violet-600">bedrift på kartet.</span>
+          Under panseret: AI. <br className="hidden md:block" />
+          <span className="text-violet-600">For deg: plain norsk.</span>
         </h1>
         <p className="text-base sm:text-lg md:text-2xl text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto mb-12 md:mb-16">
-          Vi kombinerer menneskelig strategi med AI-prosessering for å levere resultater tradisjonelle byråer ikke kan matche.
+          Vi overvåker siden din døgnet rundt, leser Google-dataene dine, og bruker AI til å finne ting du burde gjøre. Du får én rapport i måneden som forteller deg hva som skjer — uten forkortelser eller engelske ord.
         </p>
       </RevealOnScroll>
 
@@ -429,9 +429,9 @@ const FeatureMatrix = () => (
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
               <Wrench size={24} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Teknisk Overvåkning</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Vi passer på siden din</h3>
             <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed mb-6">
-              Vi overvåker alt fra PageSpeed og 404-feil til Core Web Vitals. Vårt system varsler oss umiddelbart hvis noe hindrer Google i å lese siden din optimalt.
+              Hastighet, ødelagte lenker, feilmeldinger og brukeropplevelse — vi sjekker alt sammen hvert døgn. Hvis noe hindrer Google i å vise siden din, får vi beskjed med en gang og fikser det.
             </p>
             <div className="mt-auto flex flex-wrap gap-2">
               <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Basic</span>
@@ -445,9 +445,9 @@ const FeatureMatrix = () => (
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
               <Globe2 size={24} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Search Console Data</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Ekte tall rett fra Google</h3>
             <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed mb-6">
-              Ingen gjetting – bare rådata. Vi integrerer direkte med Search Console for å analysere dine faktiske klikk, visninger og CTR for å finne uutnyttet potensiale.
+              Ingen gjetninger. Vi henter data direkte fra Google: hva folk faktisk søker etter før de finner deg, hvilke sider de klikker på, og hvor mange som går videre til kjøp.
             </p>
             <div className="mt-auto flex flex-wrap gap-2">
               <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Basic</span>
@@ -465,9 +465,9 @@ const FeatureMatrix = () => (
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-violet-600 rounded-2xl sm:rounded-[28px] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-xl text-white">
                 <Cpu size={32} />
               </div>
-              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tight">AI-Optimalisering i Sanntid</h3>
+              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tight">AI som skriver for deg</h3>
               <p className="text-sm sm:text-lg md:text-xl text-slate-600 font-medium leading-relaxed mb-8 sm:mb-10">
-                Vår AI-drevne innholdsmotor skanner algoritme-endringer og automatiserer genereringen av meta-titler og beskrivelser som "snakker" direkte med Googles semantiske hjerte.
+                AI-en vår skriver overskriftene og tekstene som vises når folk finner deg på Google — skreddersydd slik at de får lyst til å klikke. Du slipper å bry deg. Det bare blir gjort.
               </p>
               <div className="flex justify-center gap-3 sm:gap-4">
                 <span className="px-3 sm:px-4 py-1.5 bg-violet-50 border border-violet-100 rounded-full text-[9px] sm:text-xs font-black text-violet-600 uppercase">Standard</span>
@@ -489,16 +489,16 @@ const FeatureMatrix = () => (
                 <Stars size={12} />
                 <span>Eksklusivt for Premium</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">Full Markedsanalyse & <br className="hidden sm:block" /> Strategi</h3>
+              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">Vi dekoder <br className="hidden sm:block" /> konkurrentene dine</h3>
               <p className="text-slate-400 text-sm sm:text-lg md:text-xl font-medium leading-relaxed mb-8">
-                Vår mest avanserte pakke gir deg strategisk overtak. Vi utfører dyp konkurrentanalyse hvor AI-en dekoder hvorfor konkurrentene rangerer.
+                Hvorfor ligger de over deg på Google? Hva gjør de bedre? AI-en leser konkurrentene dine hver uke og forteller deg nøyaktig hva du må gjøre for å ta dem igjen.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
                 {[
-                  "Konkurrentanalyse (AI-basert)",
-                  "Innholdsplaner & Bloggideer",
-                  "Avansert intern lenkestruktur",
-                  "Månedlig strategimøte"
+                  "Hvem du må slå — og hvordan",
+                  "Ideer til blogg og nye sider",
+                  "Hvilke lenker du mangler",
+                  "Strategimøte hver måned"
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-bold">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
@@ -533,31 +533,31 @@ const DashboardSection = () => (
         <RevealOnScroll direction="left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-violet-100">
             <Sparkles size={11} />
-            <span>Handling foran data</span>
+            <span>Handling, ikke grafer</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-6 sm:mb-8 leading-[1.05] tracking-tight">
-            Strategisk Oversikt: <br />
-            <span className="text-violet-600">Din AI-Strateg.</span>
+            Ikke tall og grafer. <br />
+            <span className="text-violet-600">Bare gjøremål.</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-slate-600 font-medium leading-relaxed mb-10 sm:mb-12">
-            Vi har fjernet kompliserte grafer og erstattet dem med krystallklare instruksjoner. Begynn å utføre handlinger som gir resultater.
+            Andre dashboards krever at du tolker tallene selv. Hos Sikt får du én klar beskjed: "Gjør dette nå." Ferdig.
           </p>
           <div className="space-y-6 sm:space-y-8">
             {[
               {
-                title: "Smart Tolkning",
-                desc: "AI-en oversetter rådata til menneskelig språk.",
+                title: "AI som oversetter tallene",
+                desc: "I stedet for grafer får du en setning du skjønner.",
                 icon: <MessageCircle className="text-violet-600" />,
-                example: "AI-tips: 'Innholdet om Varmepumper mister terreng. Legg til en seksjon om energisparing.'"
+                example: "Eksempel: 'Siden om varmepumper får færre besøk. Skriv en seksjon om strømsparing.'"
               },
               {
-                title: "ROI-Prioritering",
-                desc: "Vi fokuserer kun på det som faktisk gir deg flere kunder.",
+                title: "Bare det som gir kunder",
+                desc: "Vi kutter alt som ikke fører til flere kunder. Du jobber bare med det som betyr noe.",
                 icon: <TrendingUp className="text-violet-600" />
               },
               {
-                title: "Konkurrent-Radar",
-                desc: "Vår radar overvåker markedet 24/7 og varsler deg umiddelbart.",
+                title: "Vi følger med på konkurrentene",
+                desc: "Får du beskjed når noen gjør noe nytt som kan treffe kundene dine. Da kan du svare.",
                 icon: <Activity className="text-violet-600" />
               }
             ].map((item, i) => (
@@ -585,9 +585,9 @@ const DashboardSection = () => (
               <div className="flex items-center gap-2.5 sm:gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
                 <div>
-                  <div className="text-[10px] sm:text-xs font-black text-slate-900 uppercase">AI Strategi-strøm</div>
+                  <div className="text-[10px] sm:text-xs font-black text-slate-900 uppercase">Sikt AI — Gjøremål</div>
                   <div className="text-[8px] sm:text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Aktiv Analyse
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Jobber nå
                   </div>
                 </div>
               </div>
@@ -599,12 +599,12 @@ const DashboardSection = () => (
                 <div className="flex gap-3 sm:gap-4 mb-3">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shrink-0"><Zap size={16} /></div>
                   <div>
-                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Innholds-optimalisering</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Høy prioritet · +15% ROI</div>
+                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Fiks innholdet</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Høy prioritet · +15% kunder</div>
                   </div>
                 </div>
                 <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                  "Oppdater 'Tjenester'-siden med søkeordet <span className="text-violet-600 font-bold">SEO-byrå Oslo</span>."
+                  "Legg til <span className="text-violet-600 font-bold">SEO-byrå Oslo</span> på tjeneste-siden. Det er dette kundene dine søker på."
                 </p>
               </div>
 
@@ -612,12 +612,12 @@ const DashboardSection = () => (
                 <div className="flex gap-3 sm:gap-4 mb-3">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><Target size={16} /></div>
                   <div>
-                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Markeds-radar</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Aktiv varsling</div>
+                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Konkurrent-varsel</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Nettopp publisert</div>
                   </div>
                 </div>
                 <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                  "Konkurrent A har lansert en ny bloggserie. Vi har generert 3 mot-strategier."
+                  "Nærmeste konkurrent la ut 3 nye blogger. Her er 3 ideer du kan publisere for å svare."
                 </p>
               </div>
 
@@ -626,16 +626,16 @@ const DashboardSection = () => (
                 <div className="flex gap-3 sm:gap-4 mb-3 relative z-10">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-violet-400 shrink-0"><Sparkles size={16} /></div>
                   <div>
-                    <div className="text-[10px] sm:text-xs font-black text-white mb-1">Neste handling</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Anbefalt av AI</div>
+                    <div className="text-[10px] sm:text-xs font-black text-white mb-1">Gjør dette nå</div>
+                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Anbefalt av Sikt AI</div>
                   </div>
                 </div>
                 <div className="text-[11px] sm:text-sm text-white font-bold leading-relaxed relative z-10">
-                  "Start optimalisering av produktsider for å øke konvertering."
+                  "Oppdater produktsidene. 80% av kundene som besøker dem klikker seg ikke videre."
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-end relative z-10">
                   <button className="text-[9px] sm:text-[10px] font-black text-violet-400 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
-                    Utfør nå <ArrowRight size={10} />
+                    Start nå <ArrowRight size={10} />
                   </button>
                 </div>
               </div>
@@ -649,72 +649,148 @@ const DashboardSection = () => (
 );
 
 const ComparisonTable = () => {
-  const features = [
-    { name: "Teknisk SEO-analyse", basic: true, standard: true, premium: true },
-    { name: "PageSpeed Overvåkning", basic: true, standard: true, premium: true },
-    { name: "Google Search Console Data", basic: true, standard: true, premium: true },
-    { name: "Innholdsoptimalisering (AI)", basic: false, standard: true, premium: true },
-    { name: "Rank Tracking", basic: false, standard: true, premium: true },
-    { name: "Konkurrentanalyse (AI)", basic: false, standard: true, premium: true },
-    { name: "Innholdsplaner & Bloggideer", basic: false, standard: true, premium: true },
-    { name: "Avansert Lenkestruktur", basic: false, standard: true, premium: true },
-    { name: "Prioritert Support", basic: false, standard: false, premium: true },
+  // Gruppert etter tema — gjør tabellen mye enklere å lese
+  // (zero cognitive load: tre tydelige bolker i stedet for én lang liste)
+  const groups = [
+    {
+      label: "Grunnleggende (alle pakker)",
+      features: [
+        { name: "Sjekk av hastighet og feil på siden din", basic: true, standard: true, premium: true },
+        { name: "Data direkte fra Google Search Console", basic: true, standard: true, premium: true },
+        { name: "Månedlig rapport på plain norsk", basic: true, standard: true, premium: true },
+        { name: "Hvor høyt du kommer opp på Google", basic: true, standard: true, premium: true },
+      ]
+    },
+    {
+      label: "Vekst og konkurrenter (Standard og Premium)",
+      features: [
+        { name: "Hva kundene dine faktisk søker etter", basic: false, standard: true, premium: true },
+        { name: "Hvilke sider bør du forbedre først", basic: false, standard: true, premium: true },
+        { name: "Hva gjør konkurrentene bedre enn deg", basic: false, standard: true, premium: true },
+        { name: "AI som skriver overskrifter og tekster", basic: false, standard: true, premium: true },
+        { name: "Ukentlig sjekk av rangering", basic: false, standard: true, premium: true },
+      ]
+    },
+    {
+      label: "Kun Premium",
+      features: [
+        { name: "Synlig i ChatGPT, Gemini og Perplexity (GEO)", basic: false, standard: false, premium: true, highlight: true },
+        { name: "Spør Sikt AI hva som helst — 24/7", basic: false, standard: false, premium: true, highlight: true },
+        { name: "Hvem på nettet nevner og anbefaler deg", basic: false, standard: false, premium: true },
+        { name: "Dyp konkurrentanalyse hver uke", basic: false, standard: false, premium: true },
+        { name: "Strategimøte hver måned", basic: false, standard: false, premium: true },
+        { name: "Prioritert support", basic: false, standard: false, premium: true },
+      ]
+    }
   ];
+
+  const Cell = ({ has, isPremiumCol = false }: { has: boolean, isPremiumCol?: boolean }) => (
+    has
+      ? <Check className={`mx-auto ${isPremiumCol ? 'text-violet-600' : 'text-emerald-500'}`} size={18} />
+      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>
+  );
 
   return (
     <section className="py-16 sm:py-32 bg-white">
       <div className="max-w-6xl mx-auto px-5">
         <RevealOnScroll direction="up">
           <div className="text-center mb-12 sm:mb-24">
-            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tighter">Sammenlign våre planer</h2>
-            <p className="text-sm sm:text-lg text-slate-500 font-medium">Finn pakken som passer din bedrifts ambisjon.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-5 border border-violet-100">
+              <Check size={11} />
+              <span>Hva får du i hver pakke</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tighter">Sammenlign pakkene.</h2>
+            <p className="text-sm sm:text-lg text-slate-500 font-medium max-w-xl mx-auto">
+              Start med Basic, oppgrader når du er klar. Ingen bindingstid — du betaler måned for måned.
+            </p>
           </div>
         </RevealOnScroll>
 
         <div className="relative">
           <div className="overflow-x-auto pb-4 scrollbar-hide">
-            <table className="w-full text-left border-collapse min-w-[650px]">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="py-6 sm:py-8 text-base sm:text-xl font-black text-slate-950 w-1/3">Funksjon</th>
+                <tr className="border-b-2 border-slate-200">
+                  <th className="py-6 sm:py-8 text-base sm:text-xl font-black text-slate-950 w-2/5"></th>
                   <th className="py-6 sm:py-8 text-center text-slate-950">
                     <div className="text-[9px] sm:text-xs font-black text-slate-400 uppercase mb-1 sm:mb-2">Basic</div>
-                    <div className="text-lg sm:text-2xl font-black">599,-</div>
+                    <div className="text-lg sm:text-2xl font-black">499,-</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
                   </th>
                   <th className="py-6 sm:py-8 text-center text-slate-950">
                     <div className="text-[9px] sm:text-xs font-black text-slate-400 uppercase mb-1 sm:mb-2">Standard</div>
                     <div className="text-lg sm:text-2xl font-black">1 499,-</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
                   </th>
-                  <th className="py-6 sm:py-8 text-center text-slate-950">
-                    <div className="text-[9px] sm:text-xs font-black text-slate-400 uppercase mb-1 sm:mb-2">Premium</div>
+                  <th className="py-6 sm:py-8 text-center text-slate-950 bg-violet-50/40 border-x border-violet-100 rounded-t-2xl">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider mb-1.5">
+                      <Sparkles size={9} /> Anbefalt
+                    </div>
+                    <div className="text-[9px] sm:text-xs font-black text-violet-600 uppercase mb-1 sm:mb-2">Premium</div>
                     <div className="text-lg sm:text-2xl font-black">4 999,-</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {features.map((f, i) => (
-                  <tr key={i} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 sm:py-6 font-bold text-slate-700 text-xs sm:text-base">{f.name}</td>
-                    <td className="py-4 sm:py-6 text-center">
-                      {f.basic ? <Check className="mx-auto text-emerald-500" size={18} /> : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>}
-                    </td>
-                    <td className="py-4 sm:py-6 text-center">
-                      {f.standard ? <Check className="mx-auto text-emerald-500" size={18} /> : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>}
-                    </td>
-                    <td className="py-4 sm:py-6 text-center bg-violet-50/10 group-hover:bg-violet-50/20 transition-all">
-                      {f.premium ? <Check className="mx-auto text-violet-600" size={18} /> : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>}
-                    </td>
-                  </tr>
+                {groups.map((group, gi) => (
+                  <React.Fragment key={gi}>
+                    {/* Gruppe-overskrift */}
+                    <tr>
+                      <td colSpan={4} className="pt-8 sm:pt-10 pb-3">
+                        <div className="text-[10px] sm:text-xs font-black text-violet-600 uppercase tracking-widest">
+                          {group.label}
+                        </div>
+                      </td>
+                    </tr>
+                    {group.features.map((f, i) => (
+                      <tr key={`${gi}-${i}`} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-4 sm:py-5 font-bold text-slate-700 text-xs sm:text-base">
+                          <div className="flex items-center gap-2">
+                            {f.highlight && <Sparkles size={12} className="text-violet-500 shrink-0" />}
+                            <span>{f.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 sm:py-5 text-center">
+                          <Cell has={f.basic} />
+                        </td>
+                        <td className="py-4 sm:py-5 text-center">
+                          <Cell has={f.standard} />
+                        </td>
+                        <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 group-hover:bg-violet-50/60 transition-all">
+                          <Cell has={f.premium} isPremiumCol />
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
                 ))}
+                {/* Bunn av Premium-kolonnen (avrundet hjørne) */}
+                <tr>
+                  <td colSpan={3}></td>
+                  <td className="bg-violet-50/40 border-x border-b border-violet-100 rounded-b-2xl h-4"></td>
+                </tr>
               </tbody>
             </table>
           </div>
           <div className="md:hidden flex justify-center items-center gap-2 mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">
             <ArrowRight size={10} className="rotate-0" />
-            <span>Sveip for å se mer</span>
+            <span>Sveip for å se alle pakker</span>
             <ArrowRight size={10} className="rotate-180" />
           </div>
         </div>
+
+        {/* Myk CTA under tabellen — guider brukeren videre uten å tvinge */}
+        <RevealOnScroll direction="up" delay={200}>
+          <div className="mt-12 sm:mt-16 text-center">
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mb-4">
+              Usikker på hvilken pakke som passer? Start med Basic — du kan oppgradere når som helst.
+            </p>
+            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-violet-600 hover:text-violet-700 transition-colors">
+              Se pakkene og kom i gang
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </a>
+          </div>
+        </RevealOnScroll>
       </div>
     </section>
   );
@@ -740,17 +816,17 @@ const Hero = () => {
         <RevealOnScroll direction="down" delay={100}>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-md text-violet-600 text-[9px] sm:text-[10px] font-bold mb-6 sm:mb-10 border border-violet-100/50 uppercase tracking-widest shadow-sm">
             <Sparkles size={11} className="fill-current" />
-            <span>AI-drevet SEO for vekst</span>
+            <span>SEO uten jargon</span>
           </div>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={200}>
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-slate-950 mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
-            Ranger høyere på Google <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
+            Flere kunder fra Google — <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
           </h1>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={300}>
           <p className="text-sm sm:text-lg md:text-xl mb-10 sm:mb-14 max-w-2xl mx-auto leading-relaxed font-semibold tracking-tight animate-subtext-dynamic px-2 opacity-90">
-            For bedrifter som vil bli mer synlige og få flere kunder gjennom Google.
+            Vi tar det tekniske. Du får en rapport på norsk som faktisk gir mening — og flere kunder som finner deg.
           </p>
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
@@ -811,22 +887,22 @@ const DashboardPreview = () => (
                 <div className="flex items-center gap-2 sm:gap-4">
                   <div className="sm:hidden w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-sm">S</div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Oversikt Dashboard</h3>
-                    <p className="text-[10px] text-slate-400 font-medium hidden sm:block">Sist oppdatert: Akkurat nå</p>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Din oversikt</h3>
+                    <p className="text-[10px] text-slate-400 font-medium hidden sm:block">Oppdatert akkurat nå</p>
                   </div>
                   <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-[9px] font-bold text-emerald-600 uppercase">System Normal</span>
+                    <span className="text-[9px] font-bold text-emerald-600 uppercase">Alt OK</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden md:flex gap-4 mr-4">
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">Nettside helse</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">Siden din</span>
                       <span className="text-xs font-black text-slate-900">98.5%</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">Aktive søkeord</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">Ord du ranker på</span>
                       <span className="text-xs font-black text-slate-900">2,341</span>
                     </div>
                   </div>
@@ -843,10 +919,10 @@ const DashboardPreview = () => (
                 {/* Row 1: KPI Cards (Dense) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
-                    { l: "Total Trafikk", v: "124.5k", c: "text-violet-600", g: "+12%" },
+                    { l: "Besøkende", v: "124.5k", c: "text-violet-600", g: "+12%" },
                     { l: "Synlighet", v: "89.2%", c: "text-emerald-600", g: "+4.1%" },
-                    { l: "Domene Autoritet", v: "54", c: "text-amber-600", g: "+1" },
-                    { l: "Tekniske Feil", v: "0", c: "text-slate-900", g: "-2" },
+                    { l: "Troverdighet", v: "54", c: "text-amber-600", g: "+1" },
+                    { l: "Feil å fikse", v: "0", c: "text-slate-900", g: "-2" },
                   ].map((kpi, i) => (
                     <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-20 sm:h-24">
                       <div className="flex justify-between items-start">
@@ -867,7 +943,7 @@ const DashboardPreview = () => (
                   {/* Score Card (Detailed) */}
                   <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">SEO Scorecard</h4>
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">Total score</h4>
                       <Wrench size={14} className="text-slate-300" />
                     </div>
                     <div className="flex items-center gap-6 mb-6">
@@ -895,8 +971,8 @@ const DashboardPreview = () => (
                       </div>
                     </div>
                     <div className="mt-auto border-t border-slate-50 pt-3 flex justify-between items-center">
-                      <span className="text-[10px] text-slate-400 font-medium">Neste scan om 2t 14m</span>
-                      <button className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">Scan Nå</button>
+                      <span className="text-[10px] text-slate-400 font-medium">Neste sjekk om 2t 14m</span>
+                      <button className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">Sjekk nå</button>
                     </div>
                   </div>
 
@@ -904,9 +980,9 @@ const DashboardPreview = () => (
                   <div className="md:col-span-8 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
                     <div className="flex justify-between items-center mb-4 z-10">
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Trafikk Analyse</h4>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Besøkende på siden</h4>
                         <div className="flex gap-2 text-[9px] text-slate-400 font-medium mt-0.5">
-                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div> Organisk</span>
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div> Fra Google</span>
                           <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> Direkte</span>
                         </div>
                       </div>
@@ -947,7 +1023,7 @@ const DashboardPreview = () => (
                 {/* Row 3: Bottom Density (New) */}
                 <div className="grid grid-cols-3 gap-4 h-24 hidden sm:grid">
                   <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Topp Søkeord</h4>
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Topp søk</h4>
                     <div className="space-y-1.5">
                       {[{ w: "seo byrå", r: 1 }, { w: "digital markedsføring", r: 3 }].map((kw, i) => (
                         <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-slate-50 pb-1">
@@ -958,12 +1034,12 @@ const DashboardPreview = () => (
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Core Web Vitals</h4>
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Brukeropplevelse</h4>
                     <div className="flex items-end gap-2 h-10 mt-2">
                       {[
-                        { l: "LCP", v: 80, c: "bg-emerald-400" },
-                        { l: "FID", v: 95, c: "bg-emerald-400" },
-                        { l: "CLS", v: 60, c: "bg-amber-400" }
+                        { l: "Fart", v: 80, c: "bg-emerald-400" },
+                        { l: "Respons", v: 95, c: "bg-emerald-400" },
+                        { l: "Stabilitet", v: 60, c: "bg-amber-400" }
                       ].map((m, i) => (
                         <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1">
                           <div className={`w-full rounded-t-sm ${m.c}`} style={{ height: `${m.v}%` }}></div>
@@ -975,8 +1051,8 @@ const DashboardPreview = () => (
                   <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
                     <div className="absolute inset-0 bg-violet-500/10 animate-pulse"></div>
                     <Activity size={20} className="text-violet-400 mb-2 relative z-10" />
-                    <span className="text-[9px] font-bold text-slate-400 uppercase relative z-10">AI Agent</span>
-                    <span className="text-[10px] font-black text-white relative z-10">Working...</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase relative z-10">Sikt AI</span>
+                    <span className="text-[10px] font-black text-white relative z-10">Jobber...</span>
                   </div>
                 </div>
               </div>
@@ -1407,6 +1483,157 @@ const StoryBrandOneLiner = () => {
 };
 
 
+// ---------------------------------------------------------
+// GEO SHIFT SECTION — Presenterer GEO (AI-søk-synlighet) for kunden
+// Design-prinsipp: ZERO COGNITIVE LOAD
+//   - Én overskrift, én visuell kontrast, én handling
+//   - Plassering: rett før Pricing (peak-end-prinsipp — siste argument før pris)
+//   - Psykologi: paradigmeskifte ("før vs nå") trigger FOMO uten å preke
+// ---------------------------------------------------------
+const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
+  return (
+    <section id="geo" className="relative py-24 sm:py-36 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Myk glød i bakgrunnen */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-gradient-to-tr from-violet-600/20 via-indigo-500/10 to-transparent rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Svake dotter for dybde — ZERO COGNITIVE LOAD: de må ikke ta fokus */}
+      <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6">
+
+        {/* --- OVERSKRIFT --- */}
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-16 sm:mb-24">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-600/10 backdrop-blur-md border border-violet-400/30 text-violet-300 text-[10px] sm:text-xs font-bold mb-8 uppercase tracking-widest">
+              <BrainCircuit size={13} />
+              <span>Neste generasjon søk</span>
+            </div>
+
+            <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+              Kundene dine slutter å <span className="line-through text-slate-500 decoration-violet-500/50">google.</span>
+              <br />
+              <span className="text-violet-400">De spør ChatGPT.</span>
+            </h2>
+            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
+              Hvis AI ikke nevner deg, eksisterer du ikke for morgendagens kunder.
+            </p>
+          </div>
+        </RevealOnScroll>
+
+        {/* --- VISUELL KONTRAST: Google (før) vs ChatGPT (nå) --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-16 sm:mb-24 max-w-5xl mx-auto">
+
+          {/* FØR: Google */}
+          <RevealOnScroll direction="left" delay={100}>
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 h-full">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full bg-slate-700/70 flex items-center justify-center">
+                  <SearchIcon size={16} className="text-slate-300" />
+                </div>
+                <span className="text-xs uppercase tracking-widest text-slate-400 font-bold">Før</span>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-white/5">
+                <p className="text-sm text-slate-200 italic">"Beste SEO-byrå Oslo"</p>
+              </div>
+
+              {/* Fake søkeresultater */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-2 opacity-70">
+                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-slate-600 rounded-full w-3/4"></div>
+                </div>
+                <div className="flex items-start gap-2 opacity-50">
+                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-slate-600 rounded-full w-2/3"></div>
+                </div>
+                <div className="flex items-start gap-2 opacity-30">
+                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-slate-600 rounded-full w-1/2"></div>
+                </div>
+                <div className="flex items-start gap-2 opacity-20">
+                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-slate-600 rounded-full w-5/6"></div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-400 mt-6 italic">10 blå lenker. Kunden velger én.</p>
+            </div>
+          </RevealOnScroll>
+
+          {/* NÅ: ChatGPT */}
+          <RevealOnScroll direction="right" delay={200}>
+            <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-violet-400/30 rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
+              {/* "Nå"-indikator */}
+              <div className="absolute -top-3 -right-3 bg-violet-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                2026
+              </div>
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
+                  <Sparkles size={16} className="text-white" />
+                </div>
+                <span className="text-xs uppercase tracking-widest text-violet-300 font-bold">Nå</span>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-violet-400/20">
+                <p className="text-sm text-slate-100 italic">"Hvilket SEO-byrå bør jeg velge?"</p>
+              </div>
+
+              {/* AI-svar med én anbefaling */}
+              <div className="space-y-3">
+                <div className="bg-white/10 rounded-xl p-4 border border-violet-400/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400 flex items-center justify-center">
+                      <Sparkles size={10} className="text-white" />
+                    </div>
+                    <span className="text-xs text-violet-200 font-bold">ChatGPT</span>
+                  </div>
+                  <p className="text-sm text-slate-100 leading-relaxed">
+                    Jeg vil anbefale <span className="font-bold text-violet-300 bg-violet-500/20 px-1.5 rounded">din bedrift</span> — de er kjent for...
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs text-violet-200 mt-6 italic">Ett svar. Én anbefaling. Er det deg?</p>
+            </div>
+          </RevealOnScroll>
+        </div>
+
+        {/* --- LØSNINGEN + CTA --- */}
+        <RevealOnScroll direction="up" delay={300}>
+          <div className="max-w-3xl mx-auto text-center">
+            <h3 className="text-2xl sm:text-3xl font-black mb-4 leading-tight">
+              Sikt GEO gjør at <span className="text-violet-400">AI snakker om deg.</span>
+            </h3>
+            <p className="text-slate-400 text-base sm:text-lg mb-10 leading-relaxed">
+              Vi strukturerer nettsiden din så ChatGPT, Gemini og Perplexity plukker deg opp som svar.
+              <br className="hidden sm:block" />
+              Ingen andre byråer i Norge gjør dette — ennå.
+            </p>
+
+            <button
+              onClick={() => onSelectPlan('PREMIUM')}
+              className="group inline-flex items-center gap-3 px-10 py-5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-base sm:text-lg font-black tracking-tight transition-all duration-300 shadow-xl shadow-violet-900/50 hover:shadow-violet-500/50 hover:scale-105 active:scale-95"
+            >
+              Inkludert i Premium
+              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+            </button>
+
+            <p className="text-xs text-slate-500 mt-5 uppercase tracking-widest font-bold">
+              Vær synlig der kundene leter — både på Google og i AI
+            </p>
+          </div>
+        </RevealOnScroll>
+
+      </div>
+    </section>
+  );
+};
+
+
 // Legg merke til at vi nå tar imot "handleLogin" her
 const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   const plans = [
@@ -1659,6 +1886,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <StepPlanSection onNavigate={onNavigate} onSelectPlan={onSelectPlan} />
     <InsightSection />
     <TrustSection />
+    {/* GEO-seksjon: peak-end — siste wow-argument før pris */}
+    <GeoShiftSection onSelectPlan={onSelectPlan as (plan: string) => void} />
     <Pricing onSelectPlan={onSelectPlan} />
     <FAQSection />
   </>
@@ -1726,24 +1955,28 @@ const FAQSection = () => {
 
   const faqs = [
     {
-      question: "Hvordan kan dere hjelpe min nettside med å rangere høyere på Google?",
-      answer: "Vi bruker en velprøvd strategi som kombinerer teknisk optimalisering, innholdsproduksjon og autoritetsbygging. Ved å analysere dine konkurrenter og tette de tekniske hullene på din side, sørger vi for at Google prioriterer deg foran konkurrentene. Vi gir deg ikke bare trafikk, men de riktige kundene."
+      question: "Jeg skjønner ikke SEO. Må jeg lære det?",
+      answer: "Nei. Det er hele poenget med Sikt. Vi tar oss av det tekniske og oversetter det til plain norsk i en månedlig rapport. Du trenger ikke vite hva en \"meta-description\" er — du trenger bare å vite at flere kunder finner deg. Hvis du lurer på noe, kan du spørre Sikt AI direkte på dashboardet og få svar som en 10-åring kan forstå."
     },
     {
-      question: "Hvor raskt kan jeg forvente resultater når jeg jobber med dere?",
-      answer: "Mens SEO generelt tar tid (3–12 måneder), starter vi alltid med \"lavthengende frukter\". Ved å optimalisere ditt eksisterende innhold kan vi ofte se positive bevegelser i løpet av de første ukene. Vi legger en langsiktig plan som sikrer at veksten din blir stabil og varig."
+      question: "Hvor lang tid tar det før jeg ser resultater?",
+      answer: "Du ser forbedringer på det tekniske (hastighet, feilmeldinger, sidescore) allerede første uken. Flere besøkende på nettsiden merker du vanligvis etter 2–3 måneder. Topposisjoner på Google tar 6–12 måneder — det er ikke noen som kan love det raskere uten å lyve. Vi gir deg ærlige tall hver måned så du ser at det går riktig vei."
     },
     {
-      question: "Kan dere sørge for at min bedrift blir nevnt av AI-er som ChatGPT?",
-      answer: "Ja, dette er en sentral del av vår moderne SEO-strategi (GEO). Vi strukturerer innholdet ditt med presise data og autoritære svar som er skreddersydd for at AI-modeller skal plukke det opp. Målet vårt er at når noen spør en AI om anbefalinger i din bransje, er det ditt navn som dukker opp."
+      question: "Hva skjer hvis det ikke fungerer?",
+      answer: "Ingen bindingstid. Du kan si opp når som helst. Men vi har aldri hatt en kunde som ikke har sett forbedring i løpet av tre måneder — fordi første måned handler om å fikse åpenbare ting mange har oversett: treg side, ødelagte lenker, manglende tekst. Det er alltid noe å hente."
     },
     {
-      question: "Hvorfor bør jeg velge dere i stedet for å gjøre SEO selv?",
-      answer: "SEO endrer seg nesten daglig. Ved å la oss håndtere det tekniske, søkeordsanalysen og innholdet, sparer du hundrevis av timer og unngår kostbare feil. Vi sitter på verktøyene og erfaringen som trengs for å tolke algoritmene korrekt, slik at du kan fokusere på å drive din bedrift."
+      question: "Hva er det med ChatGPT? Må jeg bry meg om det?",
+      answer: "Ja, hvis du vil ha kunder om 2–3 år. I dag googler folk. I morgen spør de ChatGPT, Gemini og Perplexity. Disse AI-ene gir ett svar, ikke 10 lenker — så hvis de ikke nevner deg, er du borte. Det er dette vi kaller GEO, og det er inkludert i Premium-pakken. Du er tidlig ute — de fleste norske bedrifter tenker ikke på dette ennå."
     },
     {
-      question: "Hvordan vet jeg at strategien deres faktisk fungerer?",
-      answer: "Vi tror på full åpenhet. Du vil motta jevnlige rapporter som viser nøyaktig hvordan rangeringen din forbedrer seg, hvor mye trafikk som kommer inn, og viktigst av alt: hvor mange av disse som konverterer til faktiske kunder. Din suksess er vårt bevis på at metoden fungerer."
+      question: "Hvorfor skal jeg velge dere i stedet for et vanlig SEO-byrå?",
+      answer: "Vanlige byråer sender deg månedsrapporter full av grafer og begreper du ikke forstår. Du aner ikke hva du betaler for. Sikt forteller deg hva vi har gjort, hva som har skjedd med bedriften din, og hva vi fokuserer på neste måned — på norsk du faktisk leser. I tillegg har du tilgang til et AI-dashboard 24/7 som svarer på spørsmålene dine med én gang."
+    },
+    {
+      question: "Er det tekniske vanskelig å sette opp?",
+      answer: "Nei. Vi trenger tilgang til Google Search Console og Google Analytics — to gratis verktøy de fleste bedrifter allerede har. Hvis du ikke har det, setter vi det opp for deg på 10 minutter. Etter det trenger du ikke gjøre noe selv. Vi overvåker og jobber i bakgrunnen."
     }
   ];
 
@@ -1757,13 +1990,13 @@ const FAQSection = () => {
             <RevealOnScroll direction="left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 border border-violet-100">
                 <HelpCircle size={11} />
-                <span>Kunskap & Svar</span>
+                <span>Det du lurer på</span>
               </div>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-950 mb-6 leading-tight tracking-tight">
-                Ofte stilte <br className="hidden lg:block" /> spørsmål
+                Spørsmål vi <br className="hidden lg:block" /> faktisk får.
               </h2>
               <p className="text-slate-500 font-medium text-sm sm:text-lg leading-relaxed mb-8 max-w-md">
-                De vanligste spørsmålene om moderne SEO og AI-drevet markedsføring.
+                Ærlige svar på det folk lurer på før de prøver Sikt. Ingen salgssnakk.
               </p>
               <Lightbulb className="w-32 h-32 text-violet-100 hidden lg:block opacity-50 mt-10 -ml-4" />
             </RevealOnScroll>
@@ -1837,10 +2070,29 @@ const velgPakke = async (pakkeNavn) => {
 };
 
 const ValuePropositionSection = () => {
+  // "Hvorfor Sikt"-seksjon. Psykologi:
+  //   - Kontrast mellom "andre byråer" og "Sikt" skaper klart valg
+  //   - Tre konkrete løfter, ikke vage slagord
+  //   - Plain norsk = seksjonen beviser sitt eget budskap
   const benefits = [
-    { title: "Høyere rangering", desc: "AI-drevne strategier for Norge.", icon: <TrendingUp className="text-violet-600" />, illu: <BarChart3 className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" /> },
-    { title: "Økt trafikk", desc: "Automatisert synlighet for vekst.", icon: <Zap className="text-violet-600" />, illu: <Rocket className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" /> },
-    { title: "Sjelefred", desc: "Full oversikt over din dominans.", icon: <ShieldCheck className="text-violet-600" />, illu: <Shield className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" /> }
+    {
+      title: "Rapporter på norsk du faktisk leser",
+      desc: "Ingen grafer med engelske forkortelser. Du får vite hva vi har gjort, hva som har skjedd med bedriften din, og hva som kommer — på plain norsk.",
+      icon: <FileText className="text-violet-600" />,
+      illu: <FileText className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
+    },
+    {
+      title: "Spør Sikt AI hva som helst",
+      desc: "Ikke en anelse hva et søkeord eller en backlink er? Spør dashboardet. Du får svar som en 10-åring kan forstå på 10 sekunder.",
+      icon: <Sparkles className="text-violet-600" />,
+      illu: <Sparkles className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
+    },
+    {
+      title: "Vi måler i kunder, ikke i bounce rate",
+      desc: "Du ser ekte forretningstall: hvor mange besøkende, hvor mange potensielle kunder, hvor mye omsetning. Ikke tall du må google for å forstå.",
+      icon: <TrendingUp className="text-violet-600" />,
+      illu: <TrendingUp className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
+    }
   ];
 
   return (
@@ -1853,29 +2105,35 @@ const ValuePropositionSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20 items-center">
           <RevealOnScroll direction="left">
             <div className="max-w-xl text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[10px] font-bold uppercase tracking-widest mb-6 border border-violet-100">
+                <Sparkles size={11} />
+                <span>Hvorfor Sikt</span>
+              </div>
               <h2 className="text-2xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight text-slate-950 mb-4 sm:mb-8 leading-tight">
-                Øk din synlighet på nett
+                Andre byråer snakker tech.
+                <br />
+                <span className="text-violet-600">Vi snakker norsk.</span>
               </h2>
               <p className="text-sm sm:text-lg md:text-xl text-slate-600 leading-relaxed mb-8 font-medium opacity-80">
-                Forvandle frustrasjon til målbar suksess med banebrytende SEO-løsninger skreddersydd for din bedrift.
+                Du driver en bedrift, ikke et IT-selskap. Sikt oversetter alt det tekniske til plain norsk — så du kan fokusere på det viktigste: kundene dine.
               </p>
               <div className="hidden lg:flex gap-4">
-                <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-400 rotate-6 shadow-sm"><Globe size={32} /></div>
-                <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Target size={32} /></div>
-                <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><Sparkles size={32} /></div>
+                <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-400 rotate-6 shadow-sm"><FileText size={32} /></div>
+                <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Sparkles size={32} /></div>
+                <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><TrendingUp size={32} /></div>
               </div>
             </div>
           </RevealOnScroll>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-left">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 text-left">
             {benefits.map((benefit, i) => (
-              <RevealOnScroll key={i} direction="right" delay={i * 100} className={i === 0 ? "sm:col-span-2" : ""}>
-                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-slate-100 group hover:shadow-xl hover:border-violet-100 transition-all duration-500 h-full flex flex-col sm:flex-row sm:items-center gap-5 relative overflow-hidden">
+              <RevealOnScroll key={i} direction="right" delay={i * 100}>
+                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-slate-100 group hover:shadow-xl hover:border-violet-100 transition-all duration-500 h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden">
                   {benefit.illu}
                   <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 relative z-10">
                     {React.cloneElement(benefit.icon as React.ReactElement<any>, { size: 28 })}
                   </div>
                   <div className="flex-1 relative z-10">
-                    <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-1">{benefit.title}</h3>
+                    <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-2">{benefit.title}</h3>
                     <p className="text-xs sm:text-base text-slate-500 leading-relaxed font-medium">{benefit.desc}</p>
                   </div>
                 </div>
