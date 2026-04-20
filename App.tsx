@@ -1189,53 +1189,43 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
   };
 
-  const testDatabase = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const tvingFremSvar = async () => {
+    console.log("--- STARTER DIREKTE NETTVERKSTEST ---");
 
-    if (!user) {
-      console.log("❌ Test feilet: Ingen bruker logget inn.");
+    // Bytt disse hvis du bruker f.eks process.env.REACT_APP_SUPABASE_URL
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      console.log("❌ Test stoppet: Mangler fortsatt URL eller Nøkkel i denne funksjonen.");
       return;
     }
 
-    console.log("--- STARTER DATABASE-DIAGNOSE ---");
-    console.log("User ID vi tester med:", user.id);
+    const testUrl = `${url}/rest/v1/clients?select=user_id&limit=1`;
+    console.log("Prøver å nå:", testUrl);
 
-    // TEST 1: Klarer vi i det hele tatt å lese noe?
-    console.log("1. Prøver å LESE fra clients-tabellen...");
-    const { data: lesData, error: lesFeil } = await supabase
-      .from('clients')
-      .select('user_id')
-      .limit(1);
+    try {
+      const response = await fetch(testUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': key,
+          'Authorization': `Bearer ${key}`
+        }
+      });
 
-    if (lesFeil) {
-      console.error("❌ LESING FEILET:", lesFeil.message);
-    } else {
-      console.log("✅ LESING FUNGERER!");
+      const text = await response.text();
+      console.log(`✅ SVAR FRA DATABASEN (Status ${response.status}):`, text);
+
+    } catch (error: any) {
+      console.error("❌ DIREKTE NETTVERKSKRASJ:", error.message);
     }
-
-    // TEST 2: Klarer vi å skrive én eneste, knøttliten ting?
-    console.log("2. Prøver å SKRIVE til clients-tabellen...");
-    const { error: skrivFeil } = await supabase
-      .from('clients')
-      .upsert({
-        user_id: user.id,
-        onboarding_completed: true
-      }); // Vi dropper alle feltene i skjemaet, tester KUN ID og status!
-
-    if (skrivFeil) {
-      console.error("❌ SKRIVING FEILET detaljer:", skrivFeil);
-    } else {
-      console.log("✅ SKRIVING FUNGERER PERFEKT!");
-    }
-
-    console.log("--- DIAGNOSE FERDIG ---");
   };
   return (
     <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
         <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
 
-        <form onSubmit={testDatabase} className="space-y-6">
+        <form onSubmit={tvingFremSvar} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
             <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
