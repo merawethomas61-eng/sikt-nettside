@@ -1189,60 +1189,53 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const testDatabase = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     if (!user) {
-      alert("Feil: Ingen bruker funnet. Logg inn på nytt.");
-      setLoading(false);
+      console.log("❌ Test feilet: Ingen bruker logget inn.");
       return;
     }
 
-    try {
-      console.log("Starter lagring for User ID:", user.id);
+    console.log("--- STARTER DATABASE-DIAGNOSE ---");
+    console.log("User ID vi tester med:", user.id);
 
-      const dataTilDatabase = {
-        user_id: user.id,
-        onboarding_completed: true,
-        company_name: formData.companyName,
-        contact_person: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone,
-        website_url: formData.websiteUrl,
-        industry: formData.industry,
-        target_audience: formData.targetAudience
-      };
+    // TEST 1: Klarer vi i det hele tatt å lese noe?
+    console.log("1. Prøver å LESE fra clients-tabellen...");
+    const { data: lesData, error: lesFeil } = await supabase
+      .from('clients')
+      .select('user_id')
+      .limit(1);
 
-      // Upsert: "Oppdater hvis kunden finnes, hvis ikke: lag en ny!"
-      const { error } = await supabase
-        .from('clients')
-        .upsert(dataTilDatabase, { onConflict: 'user_id' });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log("SUKSESS! Data trygt lagret.");
-
-      // Send kunden videre
-      if (typeof onComplete === 'function') {
-        onComplete();
-      }
-
-    } catch (error: any) {
-      console.error("Feil ved lagring:", error.message);
-      alert("Lagring feilet: Sjekk at du har nett og prøv igjen.");
-    } finally {
-      setLoading(false);
+    if (lesFeil) {
+      console.error("❌ LESING FEILET:", lesFeil.message);
+    } else {
+      console.log("✅ LESING FUNGERER!");
     }
+
+    // TEST 2: Klarer vi å skrive én eneste, knøttliten ting?
+    console.log("2. Prøver å SKRIVE til clients-tabellen...");
+    const { error: skrivFeil } = await supabase
+      .from('clients')
+      .upsert({
+        user_id: user.id,
+        onboarding_completed: true
+      }); // Vi dropper alle feltene i skjemaet, tester KUN ID og status!
+
+    if (skrivFeil) {
+      console.error("❌ SKRIVING FEILET detaljer:", skrivFeil);
+    } else {
+      console.log("✅ SKRIVING FUNGERER PERFEKT!");
+    }
+
+    console.log("--- DIAGNOSE FERDIG ---");
   };
   return (
     <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
         <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={testDatabase} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
             <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
