@@ -1629,17 +1629,17 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
 // --- VIEWS ---
 
-const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan: string) => void }) => (
+const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
     <Hero />
     <DashboardPreview />
     <StoryBrandOneLiner />
     <PainPointsSection />
     <ValuePropositionSection />
-    <StepPlanSection onNavigate={onNavigate} />
+    {/* Her er endringen: Vi sender onSelectPlan videre til StepPlanSection også */}
+    <StepPlanSection onNavigate={onNavigate} onSelectPlan={onSelectPlan} />
     <InsightSection />
     <TrustSection />
-    {/* Her er endringen: Vi sender onSelectPlan videre til Pricing */}
     <Pricing onSelectPlan={onSelectPlan} />
     <FAQSection />
   </>
