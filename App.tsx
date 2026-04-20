@@ -14,6 +14,8 @@ import {
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
+const isProcessingClick = useRef(false);
+
 
 
 // --- ZERO COGNITIVE LOAD ORDBOK ---
@@ -5960,7 +5962,15 @@ function App() {
   const handleBack = () => setView('home');
 
   const handlePlanSelect = async (plan: string) => {
+    // 0. SKJOLDET: Hvis funksjonen allerede kjører, avbryt umiddelbart!
+    if (isProcessingClick.current) {
+      console.log("Skjold aktivert: Ignorerer ekstra klikk for pakke:", plan);
+      return;
+    }
+
     try {
+      // Lås døren!
+      isProcessingClick.current = true;
       console.log("1. Knapp trykket for pakke:", plan);
 
       if (typeof window !== 'undefined') {
@@ -5968,14 +5978,12 @@ function App() {
         console.log("2. Plan midlertidig lagret i husk:", plan);
       }
 
-      // Hindrer krasj hvis komponenten mangler setSelectedPlan
       if (typeof setSelectedPlan === 'function') {
         setSelectedPlan(plan);
       }
 
-      console.log("3. Sjekker om bruker er logget inn (rask lokal sjekk)...");
+      console.log("3. Sjekker om bruker er logget inn...");
 
-      // DENNE FIKSEN HINDRER FRYS: Sjekker lokalt minne i stedet for å vente på serveren
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
@@ -5990,16 +5998,13 @@ function App() {
 
         if (typeof setView === 'function') {
           setView('login');
-        } else {
-          console.error("Advarsel: setView-funksjonen er ikke tilgjengelig her!");
         }
-        return;
+        return; // Vi beholder låsen på frem til siden er byttet
       }
 
       console.log("4c. Bruker ER logget inn:", currentUser.email);
       console.log("5. Finner riktig Stripe-lenke...");
 
-      // DENNE FIKSEN HINDRER SKRIVEFEIL: Gjør teksten stor uansett
       const planNavn = plan.toUpperCase();
       let stripeBaseUrl = "";
 
@@ -6019,35 +6024,31 @@ function App() {
     } catch (err: any) {
       console.error("KRITISK FEIL i handlePlanSelect:", err.message);
       alert("Feil: " + err.message);
+    } finally {
+      // Uansett hva som skjer (suksess eller krasj), låser vi opp døren igjen
+      // Vi venter 1 sekund før vi låser opp for å hindre ekstrem hurtig-klikking
+      setTimeout(() => {
+        isProcessingClick.current = false;
+      }, 1000);
     }
   };
-  // --- 3. LOGOUT HANDLER (Lim inn denne under useEffect) ---
+
+
   const handleLogout = async () => {
     try {
-      // 1. Nullstill appen lokalt FØRST
-      setUser(null);
-      setHasAccess(false);
-      setView('home');
+      await supabase.auth.signOut();
 
-      // 2. Fjern KUN Supabase sine nøkler fra minnet
       Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-')) {
+        if (key.startsWith('sb-') || key === 'sikt_pending_plan') {
           localStorage.removeItem(key);
         }
       });
 
-      // 3. Fortell Supabase at vi logger ut
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        console.error("Logout feil:", error);
-      }
-    } catch (error) {
-      console.error("Logout exception:", error);
-      // Sikring: Logg ut lokalt uansett
       setUser(null);
       setHasAccess(false);
       setView('home');
+    } catch (error: any) {
+      console.error("Feil ved utlogging:", error.message);
     }
   };
 
