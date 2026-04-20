@@ -1928,7 +1928,10 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
         {/* KNAPPEN */}
         <div className="flex justify-center pt-8">
           <button
-            onClick={() => onSelectPlan()}
+            onClick={() => {
+              // Dette fungerer som en heis direkte ned til pris-seksjonen
+              document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
             className="group flex items-center gap-3 bg-slate-950 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
           >
             Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
