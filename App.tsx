@@ -1869,7 +1869,7 @@ const ValuePropositionSection = () => {
   );
 };
 
-const StepPlanSection = ({ onNavigate }: { onNavigate: (view: string) => void }) => {
+const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => {
   const steps = [
     { number: "1", title: "Velg plan", desc: "Kom i gang på sekunder.", icon: <MousePointer2 />, illu: <Layers className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
     { number: "2", title: "Legg til URL", desc: "Vi analyserer umiddelbart.", icon: <Globe />, illu: <Globe className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
@@ -1928,7 +1928,7 @@ const StepPlanSection = ({ onNavigate }: { onNavigate: (view: string) => void })
         {/* KNAPPEN */}
         <div className="flex justify-center pt-8">
           <button
-            onClick={() => onNavigate('login')}
+            onClick={() => onSelectPlan()}
             className="group flex items-center gap-3 bg-slate-950 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
           >
             Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
