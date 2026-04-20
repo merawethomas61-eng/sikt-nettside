@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+console.log("Supabase URL er:", process.env.REACT_APP_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "IKKE FUNNET");
+
 
 // Bytt ut disse med dine verdier fra Supabase Dashboard
 const supabaseUrl = 'https://zsoqyerqdxhqnqjvzmsu.supabase.co'
