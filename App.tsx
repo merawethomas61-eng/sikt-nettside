@@ -14,7 +14,7 @@ import {
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink
 } from 'lucide-react';
 
-const isProcessingClick = useRef(false);
+
 
 
 
@@ -5789,6 +5789,8 @@ const PortalSettings = ({ user, clientData, selectedPlan, onNavigate, onSave, th
 function App() {
   // 1. SJEKK URL FØR VI STARTER
   const isPaymentSuccess = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment_success') === 'true';
+
+  const isProcessingClick = useRef(false);
 
   // 2. VASK URL-EN: Fjerner parameteret umiddelbart for å unngå spøkelser
   useEffect(() => {
