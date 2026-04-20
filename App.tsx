@@ -5968,37 +5968,52 @@ function App() {
         console.log("2. Plan midlertidig lagret i husk:", plan);
       }
 
-      setSelectedPlan(plan);
-      console.log("3. Sjekker om bruker er logget inn...");
-
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error) {
-        console.log("4a. Feil ved sjekk av bruker:", error.message);
+      // Hindrer krasj hvis komponenten mangler setSelectedPlan
+      if (typeof setSelectedPlan === 'function') {
+        setSelectedPlan(plan);
       }
 
-      if (!data?.user) {
+      console.log("3. Sjekker om bruker er logget inn (rask lokal sjekk)...");
+
+      // DENNE FIKSEN HINDRER FRYS: Sjekker lokalt minne i stedet for å vente på serveren
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.log("4a. Feil ved sjekk av session:", error.message);
+      }
+
+      const currentUser = session?.user;
+
+      if (!currentUser) {
         console.log("4b. INGEN bruker logget inn. Tvinger skjerm til toppen og bytter til 'login'.");
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Tvinger skjermen til toppen
-        setView('login'); // SJEKK HER: Heter innloggingen din 'login', eller noe annet?
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (typeof setView === 'function') {
+          setView('login');
+        } else {
+          console.error("Advarsel: setView-funksjonen er ikke tilgjengelig her!");
+        }
         return;
       }
 
-      console.log("4c. Bruker ER logget inn:", data.user.email);
+      console.log("4c. Bruker ER logget inn:", currentUser.email);
       console.log("5. Finner riktig Stripe-lenke...");
 
+      // DENNE FIKSEN HINDRER SKRIVEFEIL: Gjør teksten stor uansett
+      const planNavn = plan.toUpperCase();
       let stripeBaseUrl = "";
-      if (plan.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
-      else if (plan.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
-      else if (plan.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
+
+      if (planNavn.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_cNiaEX7LM84m6gvaHScbC00';
+      else if (planNavn.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_8x2bJ17LM4Sa7kz4jucbC01';
+      else if (planNavn.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_14A6oHeaadoGdIX8zKcbC02';
 
       if (!stripeBaseUrl) {
-        alert("Fant ingen betalingslenke for denne pakken.");
+        alert(`Fant ingen betalingslenke for denne pakken: ${plan}`);
         return;
       }
 
       console.log("6. Sender til Stripe nå...");
-      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(data.user.email || '')}`;
+      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(currentUser.email || '')}`;
       window.location.href = checkoutUrl;
 
     } catch (err: any) {
@@ -6006,7 +6021,6 @@ function App() {
       alert("Feil: " + err.message);
     }
   };
-
   // --- 3. LOGOUT HANDLER (Lim inn denne under useEffect) ---
   const handleLogout = async () => {
     try {
