@@ -2721,7 +2721,7 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
       <li>Klage til <a href="https://www.datatilsynet.no" target="_blank" rel="noopener">Datatilsynet</a> hvis du mener vi behandler data feil.</li>
     </ul>
     <p>
-      Send oss en e-post på <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a> så ordner vi det innen 30 dager.
+      Send oss en e-post på <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a> så ordner vi det innen 5 dager.
     </p>
 
     <h2>7. Sikkerhet</h2>
