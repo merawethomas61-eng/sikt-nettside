@@ -1189,35 +1189,60 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
   };
 
-  const tvingFremSvar = async () => {
-    console.log("--- STARTER DIREKTE NETTVERKSTEST ---");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-    // Bytt disse hvis du bruker f.eks process.env.REACT_APP_SUPABASE_URL
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!url || !key) {
-      console.log("❌ Test stoppet: Mangler fortsatt URL eller Nøkkel i denne funksjonen.");
+    if (!user) {
+      alert("Feil: Ingen bruker funnet. Logg inn på nytt.");
+      setLoading(false);
       return;
     }
 
-    const testUrl = `${url}/rest/v1/clients?select=user_id&limit=1`;
-    console.log("Prøver å nå:", testUrl);
-
     try {
-      const response = await fetch(testUrl, {
-        method: 'GET',
-        headers: {
-          'apikey': key,
-          'Authorization': `Bearer ${key}`
-        }
-      });
+      const dataTilDatabase = {
+        user_id: user.id,
+        onboarding_completed: true,
+        company_name: formData.companyName,
+        contact_person: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        website_url: formData.websiteUrl,
+        industry: formData.industry,
+        target_audience: formData.targetAudience
+      };
 
-      const text = await response.text();
-      console.log(`✅ SVAR FRA DATABASEN (Status ${response.status}):`, text);
+      // 1. Send dataene
+      const { error: skriveFeil } = await supabase
+        .from('clients')
+        .upsert(dataTilDatabase, { onConflict: 'user_id' });
+
+      if (skriveFeil) throw skriveFeil;
+
+      // 2. LØGNDETEKTOR: Vi tvinger Supabase til å vise oss raden vi nettopp lagret!
+      const { data: bevis, error: leseFeil } = await supabase
+        .from('clients')
+        .select('user_id')
+        .eq('user_id', user.id);
+
+      if (leseFeil || !bevis || bevis.length === 0) {
+        // Hvis vi havner her, lyver Supabase. Den sa OK, men lagret ingenting.
+        console.error("Løgndetektor utløst! RLS blokkerer lagringen.");
+        alert("Data ble IKKE lagret i Supabase. Dette skyldes at RLS (Row Level Security) mangler rettigheter for INSERT/UPDATE.");
+        setLoading(false);
+        return; // Stopper deg fra å bli sendt til hjemmesiden!
+      }
+
+      // Suksess! NÅ kan vi trygt sende kunden videre.
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
 
     } catch (error: any) {
-      console.error("❌ DIREKTE NETTVERKSKRASJ:", error.message);
+      console.error("Feil ved lagring:", error.message);
+      alert("Noe gikk galt under lagring: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -1225,7 +1250,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
         <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
 
-        <form onSubmit={tvingFremSvar} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
             <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
