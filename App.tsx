@@ -5825,12 +5825,20 @@ function App() {
 
   // --- NÅ OG FOR ALLTID: KREVER NY INNLOGGING VED HVERT BESØK ---
   useEffect(() => {
-    // Sjekker at vi ikke akkurat nå blir sendt tilbake fra Google-innloggingen med gyldig nøkkel
-    if (typeof window !== 'undefined' && !window.location.hash.includes('access_token')) {
-      supabase.auth.signOut();
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      });
+    if (typeof window !== 'undefined') {
+      // 1. Kommer kunden akkurat nå fra Google-innlogging?
+      const isFromGoogle = window.location.hash.includes('access_token');
+
+      // 2. Kommer kunden akkurat nå fra Stripe-betaling?
+      const isFromStripe = window.location.search.includes('payment_success');
+
+      // Hvis de IKKE kommer fra noen av disse, kast dem ut!
+      if (!isFromGoogle && !isFromStripe) {
+        supabase.auth.signOut();
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+      }
     }
   }, []);
 
