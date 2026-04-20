@@ -1200,7 +1200,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
 
     try {
-      console.log("1. Starter lagring for User ID:", user.id);
+      console.log("Starter lagring for User ID:", user.id);
 
       const dataTilDatabase = {
         user_id: user.id,
@@ -1214,39 +1214,26 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      console.log("2. Sender data til Supabase og starter stoppeklokken...");
-
-      // Selve databaskallet (Vi prøver en direkte UPDATE i stedet for upsert for å unngå vranglås)
-      const lagreData = supabase
+      // Upsert: "Oppdater hvis kunden finnes, hvis ikke: lag en ny!"
+      const { error } = await supabase
         .from('clients')
-        .update(dataTilDatabase)
-        .eq('user_id', user.id);
+        .upsert(dataTilDatabase, { onConflict: 'user_id' });
 
-      // Stoppeklokken: Tvinger frem en feil hvis Supabase er stille i mer enn 5 sekunder
-      const timeoutFelle = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("TIDSAVBRUDD: Supabase ignorerte oss i over 5 sekunder!")), 10000);
-      });
-
-      // La dem løpe om kapp! Den som blir ferdig først, vinner.
-      const response: any = await Promise.race([lagreData, timeoutFelle]);
-
-      if (response.error) {
-        console.error("3a. Supabase returnerte en faktisk feil:", response.error);
-        alert("Lagring feilet: " + response.error.message);
-        throw response.error;
+      if (error) {
+        throw error;
       }
 
-      console.log("3b. SUKSESS! Data trygt lagret.");
+      console.log("SUKSESS! Data trygt lagret.");
 
+      // Send kunden videre
       if (typeof onComplete === 'function') {
         onComplete();
       }
 
     } catch (error: any) {
-      console.error("Kritisk feil fanget:", error.message);
-      alert("Fikk ikke lagret: " + error.message);
+      console.error("Feil ved lagring:", error.message);
+      alert("Lagring feilet: Sjekk at du har nett og prøv igjen.");
     } finally {
-      console.log("4. Lastehjul slått av.");
       setLoading(false);
     }
   };
