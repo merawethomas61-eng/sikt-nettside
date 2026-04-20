@@ -1197,9 +1197,11 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[Onboarding] 1/5 handleSubmit startet");
     setLoading(true);
 
     if (!user) {
+      console.warn("[Onboarding] Avbryter: ingen bruker");
       alert("Feil: Ingen bruker funnet. Logg inn på nytt.");
       setLoading(false);
       return;
@@ -1218,35 +1220,37 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      // 1. Send dataene
-      const { error: skriveFeil } = await supabase
+      console.log("[Onboarding] 2/5 Sender upsert til Supabase...");
+
+      // Hard timeout: Hvis Supabase henger > 10s, kaster vi egen feil
+      // slik at knappen aldri blir stående som "Lagrer data..." i evigheter.
+      const upsertPromise = supabase
         .from('clients')
         .upsert(dataTilDatabase, { onConflict: 'user_id' });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Tidsavbrudd mot Supabase (10s)")), 10000)
+      );
+
+      const { error: skriveFeil } = (await Promise.race([upsertPromise, timeoutPromise])) as any;
+
+      console.log("[Onboarding] 3/5 Upsert fullført", { skriveFeil });
+
       if (skriveFeil) throw skriveFeil;
 
-      // 2. LØGNDETEKTOR: Vi tvinger Supabase til å vise oss raden vi nettopp lagret!
-      const { data: bevis, error: leseFeil } = await supabase
-        .from('clients')
-        .select('user_id')
-        .eq('user_id', user.id);
+      console.log("[Onboarding] 4/5 Kaller onComplete() for å gå til neste steg");
 
-      if (leseFeil || !bevis || bevis.length === 0) {
-        // Hvis vi havner her, lyver Supabase. Den sa OK, men lagret ingenting.
-        console.error("Løgndetektor utløst! RLS blokkerer lagringen.");
-        alert("Data ble IKKE lagret i Supabase. Dette skyldes at RLS (Row Level Security) mangler rettigheter for INSERT/UPDATE.");
-        setLoading(false);
-        return; // Stopper deg fra å bli sendt til hjemmesiden!
-      }
-
-      // Suksess! NÅ kan vi trygt sende kunden videre.
       if (typeof onComplete === 'function') {
         onComplete();
+      } else {
+        console.error("[Onboarding] onComplete er ikke en funksjon!", onComplete);
       }
 
+      console.log("[Onboarding] 5/5 Ferdig");
+
     } catch (error: any) {
-      console.error("Feil ved lagring:", error.message);
-      alert("Noe gikk galt under lagring: " + error.message);
+      console.error("[Onboarding] Feil ved lagring:", error?.message || error);
+      alert("Noe gikk galt under lagring: " + (error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -1257,11 +1261,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
 
         <form
-          onSubmit={(e) => {
-            e.preventDefault(); // DENNE TVINGER NETTLESEREN TIL Å FRYSE!
-            console.log("--- SKJEMA STOPPET FRA Å LASTE PÅ NYTT ---");
-            handleSubmit(e);
-          }}
+          onSubmit={handleSubmit}
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1308,7 +1308,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           <button
             type="submit"
             disabled={loading}
-            onClick={() => console.log("--- KNAPP FYSISK TRYKKEt ---")}
             className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg hover:bg-violet-700 transition-all shadow-xl disabled:opacity-50"
           >
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
