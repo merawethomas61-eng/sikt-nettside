@@ -674,6 +674,7 @@ const ComparisonTable = () => {
         { name: "Månedlig teknisk helsesjekk", detail: "Vi sjekker hastighet, mobilvennlighet, ødelagte lenker, SSL, redirect-kjeder og Core Web Vitals hver måned.", basic: true, standard: true, premium: true },
         { name: "Data direkte fra Google", detail: "Klikk, visninger og posisjon siste 16 måneder fra Search Console og Analytics — forklart uten jargon.", basic: true, standard: true, premium: true },
         { name: "AI-tekstforslag klar til bruk", detail: "Meta-titler, meta-beskrivelser, alt-tekster og JSON-LD schema generert av AI og klargjort for innliming.", basic: true, standard: true, premium: true },
+        { name: "Konkurrent-radar (du sover — Sikt holder øye)", detail: "Varsel når konkurrentene dine publiserer nytt innhold, endrer priser eller fikser tekniske ting. Du får beskjed før de løper fra deg.", basic: "2 konkurrenter", standard: "3 konkurrenter", premium: "Ubegrenset + AI", highlight: true },
         { name: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som er endret og hva du bør gjøre — uten SEO-jargon.", basic: true, standard: true, premium: true },
         { name: "Varsling når noe kritisk skjer", detail: "E-post med én gang ved trafikkdropp, nye 404-feil, nedetid eller mistet indeksering.", basic: true, standard: true, premium: true },
       ]
@@ -682,6 +683,7 @@ const ComparisonTable = () => {
       label: "Innholdsjobben (Standard og Premium)",
       features: [
         { name: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger.", basic: false, standard: true, premium: true, highlight: true },
+        { name: "Ukentlig «Dette har Sikt fikset for deg»-kvittering", detail: "Hver mandag: «12 meta-titler oppdatert, 3 ødelagte lenker fikset, 1 ny redirect, 6 bilder komprimert til WebP.» Konkret arbeid, ikke abstrakte SEO-tall.", basic: false, standard: true, premium: true, highlight: true },
         { name: "Meta-tekster skrives og publiseres", detail: "AI skriver meta-titler og -beskrivelser, og Sikt legger dem rett inn på siden. Du gjør ingenting.", basic: false, standard: true, premium: true },
         { name: "Alt-tekster på bilder", detail: "Vision-AI ser på bildene dine og skriver beskrivende alt-tekster som både Google og skjermlesere forstår.", basic: false, standard: true, premium: true },
         { name: "Schema markup legges inn automatisk", detail: "Organization, LocalBusiness, Article, Product, FAQ og BreadcrumbList injiseres slik at Google viser deg med stjerner, bilder og rik info i søk.", basic: false, standard: true, premium: true },
@@ -692,10 +694,10 @@ const ComparisonTable = () => {
       ]
     },
     {
-      label: "Vekst og konkurrenter (Standard og Premium)",
+      label: "Vekst og strategi (Standard og Premium)",
       features: [
         { name: "Ukentlig rangeringssjekk", detail: "Vi sporer hvor du rangerer hver uke, ikke bare hver måned, så du oppdager endringer raskt.", basic: false, standard: "50 søkeord", premium: "Ubegrenset" },
-        { name: "Overvåk konkurrentene", detail: "Sikt overvåker konkurrentene dine og varsler når de legger til nye sider, endrer innhold eller fikser tekniske problemer.", basic: false, standard: "2–3 konkurrenter", premium: "Dyp analyse" },
+        { name: "Dyp konkurrentanalyse", detail: "Utover radar-varslingen: AI analyserer innholdsstrategien deres, estimerer trafikken og viser hva som virker — så du vet nøyaktig hva du må gjøre for å gå forbi.", basic: false, standard: true, premium: "Inkl. AI-søk" },
         { name: "Søkeord kundene faktisk bruker", detail: "Finner søkeord dine kunder leter etter, men som du ennå ikke rangerer på.", basic: false, standard: true, premium: true },
         { name: "Månedlig innholdskalender", detail: "Månedlig plan med 4–8 artikkelforslag, skrevet av AI basert på det kundene dine faktisk søker etter.", basic: false, standard: true, premium: true },
         { name: "A/B-test av meta-titler", detail: "Sikt roterer automatisk mellom varianter og måler hvilken tittel som får flest klikk i søkeresultatene.", basic: false, standard: false, premium: true },
@@ -1784,6 +1786,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         { text: "Månedlig sjekk av hastighet og tekniske feil", detail: "Vi sjekker Core Web Vitals, mobilvennlighet, ødelagte lenker, SSL og redirect-kjeder hver måned." },
         { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Ferdige tekster for manglende meta-titler, beskrivelser og bilde-alt som du kan kopiere rett inn i ditt eget system." },
         { text: "Kopier-og-lim-inn kode for tekniske fikser", detail: "Når vi finner en teknisk feil, får du nøyaktig hvilken kode som må endres — forklart på plain norsk." },
+        { text: "Konkurrent-radar: varsel når 2 konkurrenter endrer seg", detail: "Du sover — Sikt holder øye. E-postvarsel når dine 2 hovedkonkurrenter publiserer nytt innhold, endrer priser eller fikser tekniske ting, så du aldri blir overrasket." },
         { text: "E-postvarsel når noe går galt", detail: "Øyeblikkelig varsel ved trafikkdropp, nye 404-feil eller nedetid." },
         { text: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som har endret seg og hva du bør gjøre — uten SEO-jargon." }
       ]
@@ -1795,11 +1798,12 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       highlighted: true,
       desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene — automatisk, hver uke.",
       features: [
-        { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag og månedlig rapport er inkludert." },
+        { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag, månedlig rapport og konkurrent-radar er inkludert." },
         { text: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger." },
+        { text: "Ukentlig «Dette har Sikt fikset for deg»-kvittering", detail: "Hver mandag: «12 meta-titler oppdatert, 3 ødelagte lenker fikset, 1 ny redirect opprettet, 6 bilder komprimert til WebP.» Konkret arbeid, ikke abstrakte SEO-tall — slik at du alltid ser hva du betaler for." },
         { text: "AI skriver og publiserer tekster, alt-tekster og schema", detail: "Meta-titler, beskrivelser, alt-tekster og strukturert data genereres og oppdateres automatisk på siden din." },
         { text: "Ukentlig rangeringssjekk på inntil 50 søkeord", detail: "Vi sporer posisjonen din hver uke — ikke bare hver måned — så du oppdager endringer tidlig." },
-        { text: "Se hva konkurrentene gjør bedre", detail: "Overvåkning av 2–3 konkurrenter: varsel når de legger til sider, endrer innhold eller fikser tekniske problemer." },
+        { text: "Konkurrent-radar utvidet: 3 konkurrenter + innholdsanalyse", detail: "Som i Basic, men utvidet til 3 konkurrenter og med AI-drevet analyse av hva som faktisk virker for dem — så du kan slå tilbake raskt." },
         { text: "1-klikks angre på enhver endring", detail: "Full endringslogg + rollback. Du er alltid i kontroll — ingenting gjøres som ikke kan reverseres." },
         { text: "Prioritert e-post-support", detail: "Svar innen 24 timer på hverdager." }
       ]
@@ -1810,11 +1814,11 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       tagline: "Dominér både Google og AI.",
       desc: "Alt i Standard, pluss full synlighet i ChatGPT, Gemini og Perplexity. Vær først ute i AI-søk.",
       features: [
-        { text: "Alt i Standard", detail: "Auto-fiks, AI-tekster, 50-søkeord-sporing, konkurrentovervåkning og prioritert support er inkludert." },
+        { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, 50-søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
         { text: "Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes." },
         { text: "Ubegrenset søkeord-sporing", detail: "Ingen grense. Spor alle søkeord som er relevante for bedriften din." },
         { text: "Spør Sikt AI hva som helst — 24/7", detail: "AI-chat som kjenner dine egne SEO-data og svarer på alt du lurer på, når som helst." },
-        { text: "Dyp konkurrentanalyse hver uke", detail: "Innholdsstrategi, nye sider, estimert trafikk og AI-svar-synlighet for konkurrentene dine." },
+        { text: "Konkurrent-radar uten grenser + dyp AI-analyse", detail: "Overvåk så mange konkurrenter du vil. AI leser deres innhold, estimerer trafikken og sjekker om ChatGPT/Gemini/Perplexity nevner dem — så du vet nøyaktig hva du må gjøre for å gå forbi." },
         { text: "Månedlig strategirapport på 10+ sider", detail: "Grundig AI-generert analyse med GEO-konkurrentanalyse, vekststrategi og konkrete neste steg." },
         { text: "4-timers support på hverdager", detail: "Raskeste svartid vi tilbyr — svar innen 4 timer, mot 24 timer i Standard." }
       ]
