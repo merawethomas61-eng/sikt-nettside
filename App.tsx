@@ -649,46 +649,85 @@ const DashboardSection = () => (
 );
 
 const ComparisonTable = () => {
+  // Zero cognitive load: default er ren sjekkmark-visning. Detaljer er ett klikk unna.
+  // Vi bruker "gruppe-featureIndex" som nøkkel for hvilken rad som har detaljer åpne.
+  const [openDetail, setOpenDetail] = useState<string | null>(null);
+
+  type CellValue = boolean | string;
+  type FeatureRow = {
+    name: string;
+    detail?: string;
+    basic: CellValue;
+    standard: CellValue;
+    premium: CellValue;
+    highlight?: boolean;
+  };
+  type Group = { label: string; features: FeatureRow[] };
+
   // Gruppert etter tema — gjør tabellen mye enklere å lese
-  // (zero cognitive load: tre tydelige bolker i stedet for én lang liste)
-  const groups = [
+  // (zero cognitive load: fire tydelige bolker som matcher kundens reise: fundament → auto-fiks → vekst → AI-søk)
+  const groups: Group[] = [
     {
       label: "Grunnleggende (alle pakker)",
       features: [
-        { name: "Sjekk av hastighet og feil på siden din", basic: true, standard: true, premium: true },
-        { name: "Data direkte fra Google Search Console", basic: true, standard: true, premium: true },
-        { name: "Månedlig rapport på plain norsk", basic: true, standard: true, premium: true },
-        { name: "Hvor høyt du kommer opp på Google", basic: true, standard: true, premium: true },
+        { name: "Hvor høyt du kommer opp på Google", detail: "Posisjon for alle søkeord du allerede rangerer på, rett fra Google Search Console. Ubegrenset antall søkeord i alle pakker.", basic: true, standard: true, premium: true },
+        { name: "Månedlig teknisk helsesjekk", detail: "Vi sjekker hastighet, mobilvennlighet, ødelagte lenker, SSL, redirect-kjeder og Core Web Vitals hver måned.", basic: true, standard: true, premium: true },
+        { name: "Data direkte fra Google", detail: "Klikk, visninger og posisjon siste 16 måneder fra Search Console og Analytics — forklart uten jargon.", basic: true, standard: true, premium: true },
+        { name: "AI-tekstforslag klar til bruk", detail: "Meta-titler, meta-beskrivelser, alt-tekster og JSON-LD schema generert av AI og klargjort for innliming.", basic: true, standard: true, premium: true },
+        { name: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som er endret og hva du bør gjøre — uten SEO-jargon.", basic: true, standard: true, premium: true },
+        { name: "Varsling når noe kritisk skjer", detail: "E-post med én gang ved trafikkdropp, nye 404-feil, nedetid eller mistet indeksering.", basic: true, standard: true, premium: true },
+      ]
+    },
+    {
+      label: "Innholdsjobben (Standard og Premium)",
+      features: [
+        { name: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger.", basic: false, standard: true, premium: true, highlight: true },
+        { name: "Meta-tekster skrives og publiseres", detail: "AI skriver meta-titler og -beskrivelser, og Sikt legger dem rett inn på siden. Du gjør ingenting.", basic: false, standard: true, premium: true },
+        { name: "Alt-tekster på bilder", detail: "Vision-AI ser på bildene dine og skriver beskrivende alt-tekster som både Google og skjermlesere forstår.", basic: false, standard: true, premium: true },
+        { name: "Schema markup legges inn automatisk", detail: "Organization, LocalBusiness, Article, Product, FAQ og BreadcrumbList injiseres slik at Google viser deg med stjerner, bilder og rik info i søk.", basic: false, standard: true, premium: true },
+        { name: "Intern lenking bygges opp", detail: "AI finner relaterte sider og legger inn lenker med gode ankertekster — uten at du løfter en finger.", basic: false, standard: true, premium: true },
+        { name: "Bildekomprimering og WebP", detail: "Sikt krymper bilder og konverterer til moderne format så siden laster raskere på mobil.", basic: false, standard: true, premium: true },
+        { name: "1-klikks angre (rollback)", detail: "Hver eneste endring Sikt gjør kan angres med ett klikk. Du er alltid i kontroll.", basic: false, standard: true, premium: true },
+        { name: "Full endringslogg", detail: "Se nøyaktig hva Sikt har gjort for deg, når, og på hvilken side.", basic: false, standard: true, premium: true },
       ]
     },
     {
       label: "Vekst og konkurrenter (Standard og Premium)",
       features: [
-        { name: "Hva kundene dine faktisk søker etter", basic: false, standard: true, premium: true },
-        { name: "Hvilke sider bør du forbedre først", basic: false, standard: true, premium: true },
-        { name: "Hva gjør konkurrentene bedre enn deg", basic: false, standard: true, premium: true },
-        { name: "AI som skriver overskrifter og tekster", basic: false, standard: true, premium: true },
-        { name: "Ukentlig sjekk av rangering", basic: false, standard: true, premium: true },
+        { name: "Ukentlig rangeringssjekk", detail: "Vi sporer hvor du rangerer hver uke, ikke bare hver måned, så du oppdager endringer raskt.", basic: false, standard: "50 søkeord", premium: "Ubegrenset" },
+        { name: "Overvåk konkurrentene", detail: "Sikt overvåker konkurrentene dine og varsler når de legger til nye sider, endrer innhold eller fikser tekniske problemer.", basic: false, standard: "2–3 konkurrenter", premium: "Dyp analyse" },
+        { name: "Søkeord kundene faktisk bruker", detail: "Finner søkeord dine kunder leter etter, men som du ennå ikke rangerer på.", basic: false, standard: true, premium: true },
+        { name: "Månedlig innholdskalender", detail: "Månedlig plan med 4–8 artikkelforslag, skrevet av AI basert på det kundene dine faktisk søker etter.", basic: false, standard: true, premium: true },
+        { name: "A/B-test av meta-titler", detail: "Sikt roterer automatisk mellom varianter og måler hvilken tittel som får flest klikk i søkeresultatene.", basic: false, standard: false, premium: true },
       ]
     },
     {
-      label: "Kun Premium",
+      label: "AI-søk og eksperthjelp (kun Premium)",
       features: [
-        { name: "Synlig i ChatGPT, Gemini og Perplexity (GEO)", basic: false, standard: false, premium: true, highlight: true },
-        { name: "Spør Sikt AI hva som helst — 24/7", basic: false, standard: false, premium: true, highlight: true },
-        { name: "Hvem på nettet nevner og anbefaler deg", basic: false, standard: false, premium: true },
-        { name: "Dyp konkurrentanalyse hver uke", basic: false, standard: false, premium: true },
-        { name: "Strategimøte hver måned", basic: false, standard: false, premium: true },
-        { name: "Prioritert support", basic: false, standard: false, premium: true },
+        { name: "Synlig i ChatGPT, Gemini og Perplexity (GEO)", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes.", basic: false, standard: false, premium: true, highlight: true },
+        { name: "GEO-score per side", detail: "0–100-poeng som forteller hvor godt innholdet ditt leses av AI. Vi forteller deg nøyaktig hva du må endre for å score høyere.", basic: false, standard: false, premium: true },
+        { name: "llms.txt publiseres automatisk", detail: "Vi lager og publiserer den nye standardfilen på /llms.txt som hjelper AI-søkemotorer forstå siden din.", basic: false, standard: false, premium: true },
+        { name: "Hvem på nettet nevner deg", detail: "Overvåkning av Reddit, forum og bransjesider for omtaler av bedriften din.", basic: false, standard: false, premium: true },
+        { name: "Citation-muligheter", detail: "Liste over autoritative norske nettsteder der du burde være nevnt — bransjeregistre, Wikipedia, bransjemedier.", basic: false, standard: false, premium: true },
+        { name: "Spør Sikt AI — 24/7", detail: "AI-chat som kjenner din SEO-data og svarer på alt du lurer på, når som helst.", basic: false, standard: false, premium: true, highlight: true },
+        { name: "Månedlig strategirapport (10+ sider)", detail: "Grundig analyse hver måned, inkludert GEO-konkurrentanalyse, vekststrategi og konkrete neste steg.", basic: false, standard: false, premium: true },
+        { name: "Prioritert support (4 timer)", detail: "Svar innen 4 timer på hverdager, mot 24 timer i Standard.", basic: false, standard: false, premium: true },
       ]
     }
   ];
 
-  const Cell = ({ has, isPremiumCol = false }: { has: boolean, isPremiumCol?: boolean }) => (
-    has
+  const Cell = ({ value, isPremiumCol = false }: { value: CellValue, isPremiumCol?: boolean }) => {
+    if (typeof value === 'string') {
+      return (
+        <span className={`text-[11px] sm:text-xs font-black ${isPremiumCol ? 'text-violet-600' : 'text-slate-700'}`}>
+          {value}
+        </span>
+      );
+    }
+    return value
       ? <Check className={`mx-auto ${isPremiumCol ? 'text-violet-600' : 'text-emerald-500'}`} size={18} />
-      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>
-  );
+      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>;
+  };
 
   return (
     <section className="py-16 sm:py-32 bg-white">
@@ -743,25 +782,52 @@ const ComparisonTable = () => {
                         </div>
                       </td>
                     </tr>
-                    {group.features.map((f, i) => (
-                      <tr key={`${gi}-${i}`} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 sm:py-5 font-bold text-slate-700 text-xs sm:text-base">
-                          <div className="flex items-center gap-2">
-                            {f.highlight && <Sparkles size={12} className="text-violet-500 shrink-0" />}
-                            <span>{f.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 sm:py-5 text-center">
-                          <Cell has={f.basic} />
-                        </td>
-                        <td className="py-4 sm:py-5 text-center">
-                          <Cell has={f.standard} />
-                        </td>
-                        <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 group-hover:bg-violet-50/60 transition-all">
-                          <Cell has={f.premium} isPremiumCol />
-                        </td>
-                      </tr>
-                    ))}
+                    {group.features.map((f, i) => {
+                      const detailKey = `${gi}-${i}`;
+                      const isOpen = openDetail === detailKey;
+                      return (
+                        <React.Fragment key={detailKey}>
+                          <tr className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 sm:py-5 font-bold text-slate-700 text-xs sm:text-base">
+                              <div className="flex items-center gap-2">
+                                {f.highlight && <Sparkles size={12} className="text-violet-500 shrink-0" />}
+                                <span className="flex-1">{f.name}</span>
+                                {f.detail && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenDetail(isOpen ? null : detailKey)}
+                                    aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
+                                    aria-expanded={isOpen}
+                                    className={`shrink-0 transition-colors ${isOpen ? 'text-violet-600' : 'text-slate-300 hover:text-violet-500'}`}
+                                  >
+                                    <HelpCircle size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-4 sm:py-5 text-center">
+                              <Cell value={f.basic} />
+                            </td>
+                            <td className="py-4 sm:py-5 text-center">
+                              <Cell value={f.standard} />
+                            </td>
+                            <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 group-hover:bg-violet-50/60 transition-all">
+                              <Cell value={f.premium} isPremiumCol />
+                            </td>
+                          </tr>
+                          {isOpen && f.detail && (
+                            <tr className="border-b border-slate-50">
+                              <td className="pb-4 sm:pb-5 pt-0" colSpan={3}>
+                                <div className="p-3 sm:p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                  {f.detail}
+                                </div>
+                              </td>
+                              <td className="pb-4 sm:pb-5 pt-0 bg-violet-50/40 border-x border-violet-100"></td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </React.Fragment>
                 ))}
                 {/* Bunn av Premium-kolonnen (avrundet hjørne) */}
@@ -1700,44 +1766,57 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
 
 // Legg merke til at vi nå tar imot "handleLogin" her
 const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
-  const plans = [
+  // Sporer hvilken feature-bullet som har detaljer åpne. Format: "kortIndex-featureIndex" eller null.
+  // Zero cognitive load: default er lukket, detaljer er ett klikk unna.
+  const [openDetail, setOpenDetail] = useState<string | null>(null);
+
+  type PlanFeature = { text: string; detail?: string };
+  type Plan = { title: string; price: string; tagline: string; desc: string; features: PlanFeature[]; highlighted?: boolean };
+
+  const plans: Plan[] = [
     {
       title: "⭐ BASIC",
       price: "499",
-      tagline: "Fiks grunnmuren.",
-      desc: "Få oversikt over hvor du står på Google — uten SEO-jargon.",
+      tagline: "Fiks grunnmuren — selv.",
+      desc: "Se alt som holder deg nede på Google. Du får klare instruksjoner og AI-genererte tekster du kan bruke selv.",
       features: [
-        "Er siden din rask nok til å holde på kundene?",
-        "Hvor høyt kommer du opp når folk søker?",
-        "Hva sier Google Search Console egentlig?",
-        "Månedlig rapport på plain norsk"
+        { text: "Se hvor du står på Google — ubegrenset antall søkeord", detail: "Posisjon, klikk og visninger for alle søkeord du allerede rangerer på, hentet direkte fra Google Search Console." },
+        { text: "Månedlig sjekk av hastighet og tekniske feil", detail: "Vi sjekker Core Web Vitals, mobilvennlighet, ødelagte lenker, SSL og redirect-kjeder hver måned." },
+        { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Ferdige tekster for manglende meta-titler, beskrivelser og bilde-alt som du kan kopiere rett inn i ditt eget system." },
+        { text: "Kopier-og-lim-inn kode for tekniske fikser", detail: "Når vi finner en teknisk feil, får du nøyaktig hvilken kode som må endres — forklart på plain norsk." },
+        { text: "E-postvarsel når noe går galt", detail: "Øyeblikkelig varsel ved trafikkdropp, nye 404-feil eller nedetid." },
+        { text: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som har endret seg og hva du bør gjøre — uten SEO-jargon." }
       ]
     },
     {
       title: "⭐⭐ STANDARD",
       price: "1 499",
-      tagline: "Vekst gjennom innhold.",
+      tagline: "Vi gjør jobben for deg.",
       highlighted: true,
-      desc: "Vi forteller deg hva kundene søker på — og hvordan du treffer akkurat dem.",
+      desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene — automatisk, hver uke.",
       features: [
-        "Alt i Basic +",
-        "Hva søker kundene dine faktisk etter?",
-        "Hvilke sider bør du forbedre først?",
-        "Hva gjør konkurrentene bedre enn deg?",
-        "Ukentlig sjekk av rangering"
+        { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag og månedlig rapport er inkludert." },
+        { text: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger." },
+        { text: "AI skriver og publiserer tekster, alt-tekster og schema", detail: "Meta-titler, beskrivelser, alt-tekster og strukturert data genereres og oppdateres automatisk på siden din." },
+        { text: "Ukentlig rangeringssjekk på inntil 50 søkeord", detail: "Vi sporer posisjonen din hver uke — ikke bare hver måned — så du oppdager endringer tidlig." },
+        { text: "Se hva konkurrentene gjør bedre", detail: "Overvåkning av 2–3 konkurrenter: varsel når de legger til sider, endrer innhold eller fikser tekniske problemer." },
+        { text: "1-klikks angre på enhver endring", detail: "Full endringslogg + rollback. Du er alltid i kontroll — ingenting gjøres som ikke kan reverseres." },
+        { text: "Prioritert e-post-support", detail: "Svar innen 24 timer på hverdager." }
       ]
     },
     {
       title: "⭐⭐⭐ PREMIUM",
       price: "4 999",
       tagline: "Dominér både Google og AI.",
-      desc: "Vær synlig der kundene leter — både på Google og i ChatGPT, Gemini og Perplexity.",
+      desc: "Alt i Standard, pluss full synlighet i ChatGPT, Gemini og Perplexity. Vær først ute i AI-søk.",
       features: [
-        "Alt i Standard +",
-        "Blir du anbefalt av ChatGPT og Gemini? (GEO)",
-        "Hvem på nettet anbefaler deg?",
-        "Spør Sikt AI hva som helst om din SEO",
-        "Dyp konkurrentanalyse hver uke"
+        { text: "Alt i Standard", detail: "Auto-fiks, AI-tekster, 50-søkeord-sporing, konkurrentovervåkning og prioritert support er inkludert." },
+        { text: "Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes." },
+        { text: "Ubegrenset søkeord-sporing", detail: "Ingen grense. Spor alle søkeord som er relevante for bedriften din." },
+        { text: "Spør Sikt AI hva som helst — 24/7", detail: "AI-chat som kjenner dine egne SEO-data og svarer på alt du lurer på, når som helst." },
+        { text: "Dyp konkurrentanalyse hver uke", detail: "Innholdsstrategi, nye sider, estimert trafikk og AI-svar-synlighet for konkurrentene dine." },
+        { text: "Månedlig strategirapport på 10+ sider", detail: "Grundig AI-generert analyse med GEO-konkurrentanalyse, vekststrategi og konkrete neste steg." },
+        { text: "4-timers support på hverdager", detail: "Raskeste svartid vi tilbyr — svar innen 4 timer, mot 24 timer i Standard." }
       ]
     }
   ];
@@ -1749,7 +1828,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         <RevealOnScroll direction="up">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-black text-slate-950 mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Ingen skjulte kostnader. Ingen bindingstid.</p>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={16} className="inline text-slate-400 -mt-0.5" /> for å se detaljer.</p>
           </div>
         </RevealOnScroll>
 
@@ -1777,15 +1856,36 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                 </div>
                 <p className="text-slate-600 mb-8 leading-relaxed">{plan.desc}</p>
 
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feat, j) => (
-                    <li key={j} className="flex items-start gap-3 text-slate-700">
-                      <div className="mt-1 w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-                        <Check size={12} strokeWidth={3} />
-                      </div>
-                      <span className="text-sm font-medium">{feat}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feat, j) => {
+                    const detailKey = `${i}-${j}`;
+                    const isOpen = openDetail === detailKey;
+                    return (
+                      <li key={j} className="text-slate-700">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                          <span className="text-sm font-medium flex-1">{feat.text}</span>
+                          {feat.detail && (
+                            <button
+                              type="button"
+                              onClick={() => setOpenDetail(isOpen ? null : detailKey)}
+                              aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
+                              className={`mt-0.5 shrink-0 transition-colors ${isOpen ? 'text-violet-600' : 'text-slate-300 hover:text-violet-500'}`}
+                            >
+                              <HelpCircle size={14} />
+                            </button>
+                          )}
+                        </div>
+                        {isOpen && feat.detail && (
+                          <div className="mt-2 ml-8 p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-600 leading-relaxed">
+                            {feat.detail}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* HER ER RETTELSEN: Vi sender 'plan.title' opp til Appen */}
