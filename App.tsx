@@ -2464,20 +2464,17 @@ const InsightSection = () => {
             <RevealOnScroll direction="left">
               <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-black uppercase tracking-widest mb-4 border border-violet-100">
                 <Sparkles size={12} />
-                <span>Vi hjelper deg å lykkes</span>
+                <span>Vi forstår problemet</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.15] sm:leading-[1.1] tracking-tight">
                 Føles markedsføringen <span className="text-violet-600">ineffektiv?</span>
               </h2>
               <div className="space-y-4 sm:space-y-6 text-slate-600 font-medium leading-relaxed mt-6 sm:mt-8">
                 <p className="text-base sm:text-lg md:text-xl text-slate-900 font-bold">
-                  Hver dag sliter utallige små og mellomstore bedrifter med lav synlighet på Google.
+                  Du legger ned timer og kroner — men telefonen ringer ikke.
                 </p>
                 <p className="text-sm sm:text-base md:text-lg opacity-80">
-                  Dette fører til tapte muligheter og frustrerte eiere. Hos Sikt bruker vi moderne AI-løsninger for å optimalisere nettstedet ditt, slik at du ikke bare forbedrer rangeringene dine, men også får den oppmerksomheten du fortjener.
-                </p>
-                <p className="text-sm sm:text-base md:text-lg opacity-80">
-                  Ikke la ineffektiv markedsføring holde deg tilbake; ta grep i dag og se bedriften din blomstre med økt nettstedstrafikk og synlighet.
+                  Du er ikke alene, og det er ikke din feil. SEO og AI-søk har blitt et eget fag. Vi gjør jobben for deg, og viser nøyaktig hva som skjer.
                 </p>
               </div>
             </RevealOnScroll>
@@ -2497,10 +2494,10 @@ const InsightSection = () => {
                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shrink-0 shadow-inner">
                     <SearchCheck size={24} />
                   </div>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950">Vi forstår frustrasjonen din</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950">Full åpenhet, null gjetting</h3>
                 </div>
                 <p className="text-sm sm:text-base md:text-lg text-slate-500 font-medium leading-relaxed max-w-xl">
-                  Vi vet hvor kjedelig det er å legge ned arbeid uten å se resultater. Våre AI-løsninger sikrer effektive strategier som øker rangeringene der det faktisk gir verdi for din bunnlinje.
+                  Du ser nøyaktig hva vi gjør, hvorfor, og hvilken effekt det har. Ingen svarte bokser, ingen månedsrapporter fulle av stammespråk.
                 </p>
               </div>
             </RevealOnScroll>
