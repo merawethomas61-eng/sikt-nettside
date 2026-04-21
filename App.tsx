@@ -1479,22 +1479,22 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 // --- STORYBRAND SEKSJON (Med Animasjon) ---
 const StoryBrandOneLiner = () => {
   return (
-    <section className="relative py-32 sm:py-48 overflow-hidden bg-[#fcfcfd]">
+    <section className="relative py-20 sm:py-32 md:py-48 overflow-hidden bg-[#fcfcfd]">
 
       {/* Bakgrunn: En rolig, pulserende glød */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-violet-100/50 via-indigo-50/50 to-white rounded-[100%] blur-[80px] animate-[pulse_10s_ease-in-out_infinite] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[800px] h-[400px] sm:h-[500px] bg-gradient-to-tr from-violet-100/50 via-indigo-50/50 to-white rounded-[100%] blur-[80px] animate-[pulse_10s_ease-in-out_infinite] pointer-events-none"></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
-        <div className="flex flex-col gap-16 sm:gap-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col gap-12 sm:gap-16 md:gap-24">
 
           {/* DEL 1: PROBLEMET (Venstre side) */}
           <RevealOnScroll delay={0} className="self-start sm:ml-12 relative">
             {/* En liten bakgrunns-sirkel for dybde */}
             <div className="absolute -left-4 -top-4 w-20 h-20 bg-slate-100 rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
 
-            <div className="backdrop-blur-md bg-white/80 border border-slate-200/60 shadow-sm px-8 py-5 rounded-2xl inline-flex items-center gap-4 max-w-lg relative z-10">
+            <div className="backdrop-blur-md bg-white/80 border border-slate-200/60 shadow-sm px-5 py-4 sm:px-8 sm:py-5 rounded-2xl inline-flex items-center gap-3 sm:gap-4 max-w-lg relative z-10">
               <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></div>
-              <p className="text-slate-600 font-medium text-lg leading-snug">
+              <p className="text-slate-600 font-medium text-sm sm:text-lg leading-snug">
                 Mange bedrifter gjetter på hvordan de oppnår <span className="text-slate-900 font-bold border-b-2 border-slate-200">høyere rangering</span> på Google.
               </p>
             </div>
@@ -1502,10 +1502,10 @@ const StoryBrandOneLiner = () => {
 
 
           {/* DEL 2: LØSNINGEN (Høyre side) */}
-          <RevealOnScroll delay={200} className="self-end text-left sm:text-right max-w-5xl flex flex-col sm:flex-row-reverse items-center sm:items-start gap-8 sm:gap-12">
+          <RevealOnScroll delay={200} className="self-end text-left sm:text-right max-w-5xl flex flex-col sm:flex-row-reverse items-center sm:items-start gap-6 sm:gap-8 md:gap-12">
 
             {/* NY MODERNE ILLUSTRASJON (Abstrakt Vekst-Graf) */}
-            <div className="relative shrink-0 w-48 h-48 sm:w-64 sm:h-64 animate-[float_6s_ease-in-out_infinite]">
+            <div className="relative shrink-0 w-40 h-40 sm:w-64 sm:h-64 animate-[float_6s_ease-in-out_infinite]">
               {/* Bakgrunnsglød */}
               <div className="absolute inset-0 bg-gradient-to-tr from-violet-200 via-indigo-200 to-blue-100 rounded-full blur-2xl opacity-60 animate-pulse"></div>
 
@@ -1529,12 +1529,12 @@ const StoryBrandOneLiner = () => {
 
             {/* Teksten */}
             <div className="text-left sm:text-right">
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 tracking-tight leading-[1.15]">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-[1.2] sm:leading-[1.15]">
                 Vi bruker <span className="text-violet-600">AI</span> til å gi deg en <br className="hidden sm:block" />
                 konkret oppskrift på å <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">nå toppen.</span>
               </h2>
 
-              <p className="mt-8 text-xl sm:text-2xl text-slate-600 font-normal leading-relaxed max-w-2xl sm:ml-auto">
+              <p className="mt-4 sm:mt-8 text-base sm:text-xl md:text-2xl text-slate-600 font-normal leading-relaxed max-w-2xl sm:ml-auto">
                 Slik at du får trafikken og veksten du fortjener – helt uten gjetting.
               </p>
             </div>
@@ -1616,31 +1616,31 @@ const IndustriesSection = () => {
 // ---------------------------------------------------------
 const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   return (
-    <section id="geo" className="relative py-24 sm:py-36 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+    <section id="geo" className="relative py-16 sm:py-24 md:py-36 overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Myk glød i bakgrunnen */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-gradient-to-tr from-violet-600/20 via-indigo-500/10 to-transparent rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[900px] h-[400px] sm:h-[600px] bg-gradient-to-tr from-violet-600/20 via-indigo-500/10 to-transparent rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
 
       {/* Svake dotter for dybde — ZERO COGNITIVE LOAD: de må ikke ta fokus */}
       <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
 
         {/* --- OVERSKRIFT --- */}
         <RevealOnScroll direction="up">
-          <div className="text-center mb-16 sm:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-600/10 backdrop-blur-md border border-violet-400/30 text-violet-300 text-[10px] sm:text-xs font-bold mb-8 uppercase tracking-widest">
+          <div className="text-center mb-10 sm:mb-16 md:mb-24">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-600/10 backdrop-blur-md border border-violet-400/30 text-violet-300 text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
               <BrainCircuit size={13} />
               <span>Både Google og AI</span>
             </div>
 
-            <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 leading-[1.1] sm:leading-[1.05]">
               Google er ikke <span className="text-violet-400">alene</span> lenger.
-              <br />
-              Kundene spør også ChatGPT.
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>Kundene spør også ChatGPT.
             </h2>
-            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium px-2">
               For å vinne i dag må du være synlig begge steder. Sikt jobber for begge.
             </p>
           </div>
@@ -1822,41 +1822,41 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   ];
 
   return (
-    <section id="priser" className="py-20 sm:py-32 bg-slate-50 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-5 relative z-10">
+    <section id="priser" className="py-16 sm:py-24 md:py-32 bg-slate-50 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 relative z-10">
 
         <RevealOnScroll direction="up">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-950 mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={16} className="inline text-slate-400 -mt-0.5" /> for å se detaljer.</p>
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-slate-400 -mt-0.5" /> for å se detaljer.</p>
           </div>
         </RevealOnScroll>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-start">
           {plans.map((plan, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 100}>
-              <div className={`relative bg-white rounded-[32px] p-8 sm:p-10 shadow-xl transition-transform duration-300 hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 scale-105 z-10' : 'border-slate-100'}`}>
+              <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-transform duration-300 hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 md:scale-105 z-10' : 'border-slate-100'}`}>
 
-                <div className="absolute -top-4 -right-4 bg-violet-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12">
+                <div className="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 bg-violet-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 sm:px-3 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12 whitespace-nowrap">
                   70% RABATT 1. MND
                 </div>
 
                 {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg">
+                  <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wide shadow-lg whitespace-nowrap">
                     Mest valgt
                   </div>
                 )}
 
-                <h3 className="text-2xl font-bold text-slate-950 mb-2">{plan.title}</h3>
-                <p className="text-violet-600 text-sm font-bold mb-4 uppercase tracking-wider">{plan.tagline}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-2 mt-2 sm:mt-0">{plan.title}</h3>
+                <p className="text-violet-600 text-xs sm:text-sm font-bold mb-3 sm:mb-4 uppercase tracking-wider">{plan.tagline}</p>
 
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-black text-slate-950">{plan.price},-</span>
-                  <span className="text-slate-500 font-medium">/mnd</span>
+                <div className="flex items-baseline gap-1 mb-3 sm:mb-4">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-950">{plan.price},-</span>
+                  <span className="text-slate-500 font-medium text-sm sm:text-base">/mnd</span>
                 </div>
-                <p className="text-slate-600 mb-8 leading-relaxed">{plan.desc}</p>
+                <p className="text-sm sm:text-base text-slate-600 mb-6 sm:mb-8 leading-relaxed">{plan.desc}</p>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-6 sm:mb-8">
                   {plan.features.map((feat, j) => {
                     const detailKey = `${i}-${j}`;
                     const isOpen = openDetail === detailKey;
@@ -1891,7 +1891,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                 {/* HER ER RETTELSEN: Vi sender 'plan.title' opp til Appen */}
                 <button
                   onClick={() => onSelectPlan(plan.title)}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${plan.highlighted
+                  className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base transition-all ${plan.highlighted
                     ? 'bg-slate-950 text-white hover:bg-violet-600 shadow-lg hover:shadow-violet-200'
                     : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
                     }`}
@@ -2222,35 +2222,35 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
   };
 
   return (
-    <section className="relative py-24 sm:py-36 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
+    <section className="relative py-16 sm:py-24 md:py-36 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
       {/* Dekorative glød-effekter */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-400/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-violet-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-indigo-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <RevealOnScroll direction="up">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-bold mb-8 uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
             <Sparkles size={13} />
             <span>Klar til å komme i gang?</span>
           </div>
 
-          <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 leading-[1.1] sm:leading-[1.05]">
             Gi Sikt en måned.
             <br />
             <span className="text-violet-200">Du kan alltid si opp.</span>
           </h2>
 
-          <p className="text-lg sm:text-xl text-violet-100 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-violet-100 max-w-2xl mx-auto leading-relaxed font-medium mb-8 sm:mb-12 px-2">
             Ingen bindingstid. 70% rabatt første måned. Start med Basic for 499 kr — oppgrader når du er klar.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={scrollToPricing}
-              className="group w-full sm:w-auto px-10 py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 shadow-2xl"
+              className="group w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 shadow-2xl"
             >
               Se pakkene
               <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
@@ -2258,7 +2258,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           </div>
 
           {/* Trygghet-punkter under CTA */}
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-10 text-xs sm:text-sm font-bold text-violet-100">
+          <div className="flex flex-wrap justify-center gap-x-4 sm:gap-x-6 gap-y-3 mt-8 sm:mt-10 text-xs sm:text-sm font-bold text-violet-100">
             <span className="flex items-center gap-2">
               <Check size={16} className="text-violet-300" /> Ingen bindingstid
             </span>
@@ -2436,15 +2436,15 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
         </div>
 
         {/* KNAPPEN */}
-        <div className="flex justify-center pt-8">
+        <div className="flex justify-center pt-6 sm:pt-8 px-4">
           <button
             onClick={() => {
               // Dette fungerer som en heis direkte ned til pris-seksjonen
               document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
-            className="group flex items-center gap-3 bg-slate-950 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
+            className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-950 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
           >
-            Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform shrink-0" />
           </button>
         </div>
 
@@ -2455,28 +2455,28 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
 
 const InsightSection = () => {
   return (
-    <section className="py-20 sm:py-32 bg-transparent relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+    <section className="py-16 sm:py-24 md:py-32 bg-transparent relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-start">
 
           {/* Venstre side: Kontekst og emosjonell tekst */}
-          <div className="lg:col-span-5 space-y-8">
+          <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <RevealOnScroll direction="left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-black uppercase tracking-widest mb-4 border border-violet-100">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-black uppercase tracking-widest mb-4 border border-violet-100">
                 <Sparkles size={12} />
                 <span>Vi hjelper deg å lykkes</span>
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.1] tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.15] sm:leading-[1.1] tracking-tight">
                 Føles markedsføringen <span className="text-violet-600">ineffektiv?</span>
               </h2>
-              <div className="space-y-6 text-slate-600 font-medium leading-relaxed">
-                <p className="text-lg sm:text-xl text-slate-900 font-bold">
+              <div className="space-y-4 sm:space-y-6 text-slate-600 font-medium leading-relaxed mt-6 sm:mt-8">
+                <p className="text-base sm:text-lg md:text-xl text-slate-900 font-bold">
                   Hver dag sliter utallige små og mellomstore bedrifter med lav synlighet på Google.
                 </p>
-                <p className="text-base sm:text-lg opacity-80">
+                <p className="text-sm sm:text-base md:text-lg opacity-80">
                   Dette fører til tapte muligheter og frustrerte eiere. Hos Sikt bruker vi moderne AI-løsninger for å optimalisere nettstedet ditt, slik at du ikke bare forbedrer rangeringene dine, men også får den oppmerksomheten du fortjener.
                 </p>
-                <p className="text-base sm:text-lg opacity-80">
+                <p className="text-sm sm:text-base md:text-lg opacity-80">
                   Ikke la ineffektiv markedsføring holde deg tilbake; ta grep i dag og se bedriften din blomstre med økt nettstedstrafikk og synlighet.
                 </p>
               </div>
@@ -2485,21 +2485,21 @@ const InsightSection = () => {
           </div>
 
           {/* Høyre side: Bento Grid med løsningskort */}
-          <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
             {/* Kort 1: Frustrasjon (Stor) */}
             <RevealOnScroll direction="up" className="md:col-span-2">
-              <div className="p-8 sm:p-10 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
+              <div className="p-6 sm:p-8 md:p-10 bg-white border border-slate-100 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
                 <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 group-hover:scale-110 transition-all duration-700">
                   <HeartHandshake size={180} />
                 </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
-                  <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shrink-0 shadow-inner">
-                    <SearchCheck size={28} />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shrink-0 shadow-inner">
+                    <SearchCheck size={24} />
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-black text-slate-950">Vi forstår frustrasjonen din</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950">Vi forstår frustrasjonen din</h3>
                 </div>
-                <p className="text-base sm:text-lg text-slate-500 font-medium leading-relaxed max-w-xl">
+                <p className="text-sm sm:text-base md:text-lg text-slate-500 font-medium leading-relaxed max-w-xl">
                   Vi vet hvor kjedelig det er å legge ned arbeid uten å se resultater. Våre AI-løsninger sikrer effektive strategier som øker rangeringene der det faktisk gir verdi for din bunnlinje.
                 </p>
               </div>
@@ -2507,15 +2507,15 @@ const InsightSection = () => {
 
             {/* Kort 2: AI (Liten) */}
             <RevealOnScroll direction="up" delay={100}>
-              <div className="p-8 bg-indigo-50/30 border border-indigo-100/50 rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
+              <div className="p-6 sm:p-8 bg-indigo-50/30 border border-indigo-100/50 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
                 <div className="absolute -right-4 -top-4 opacity-5 group-hover:rotate-12 transition-transform duration-500">
                   <BrainCircuit size={100} />
                 </div>
-                <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-100">
-                  <Cpu size={24} />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-indigo-100">
+                  <Cpu size={22} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-950 mb-3">Drevet av moderne AI</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-950 mb-2 sm:mb-3">Drevet av moderne AI</h3>
                   <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
                     Vi bruker banebrytende teknologi for å maksimere rekkevidden din og automatisere suksess på en måte tradisjonelle metoder ikke kan.
                   </p>
@@ -2525,15 +2525,15 @@ const InsightSection = () => {
 
             {/* Kort 3: Vekst (Liten) */}
             <RevealOnScroll direction="up" delay={200}>
-              <div className="p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
+              <div className="p-6 sm:p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
                 <div className="absolute -right-4 -top-4 opacity-5 group-hover:-rotate-12 transition-transform duration-500">
                   <BarChart4 size={100} />
                 </div>
-                <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-100">
-                  <TrendingUp size={24} />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-emerald-100">
+                  <TrendingUp size={22} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-950 mb-3">Velprøvde strategier</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-950 mb-2 sm:mb-3">Velprøvde strategier</h3>
                   <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
                     Utviklet spesifikt for små bedrifter i Norge med fokus på vekst. Vi leverer målbare resultater som faktisk merkes på trafikken din.
                   </p>
@@ -2550,97 +2550,97 @@ const InsightSection = () => {
 
 const TrustSection = () => {
   return (
-    <section className="py-20 bg-slate-950 text-white relative overflow-hidden">
+    <section className="py-16 sm:py-20 md:py-24 bg-slate-950 text-white relative overflow-hidden">
       {/* Bakgrunnseffekt */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
-        <div className="absolute top-[-50%] left-[-10%] w-[600px] h-[600px] rounded-full bg-violet-900 blur-[120px]"></div>
-        <div className="absolute bottom-[-50%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-900 blur-[100px]"></div>
+        <div className="absolute top-[-50%] left-[-10%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-violet-900 blur-[100px] sm:blur-[120px]"></div>
+        <div className="absolute bottom-[-50%] right-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-indigo-900 blur-[80px] sm:blur-[100px]"></div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-5 relative z-10 text-center">
+      <div className="max-w-6xl mx-auto px-4 sm:px-5 relative z-10 text-center">
 
-        <div className="mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-sm font-bold mb-8">
-            <ShieldCheck size={16} />
+        <div className="mb-10 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-xs sm:text-sm font-bold mb-6 sm:mb-8">
+            <ShieldCheck size={14} />
             <span>Null risiko. Full kontroll.</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-black mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">
             Vår <span className="text-violet-400">Kvalitetsgaranti</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed px-2">
             Vi vet at du har brent deg på byråer før. Derfor har vi fjernet usikkerheten og lagt risikoen på våre skuldre, ikke dine.
           </p>
         </div>
 
         {/* GARANTI-GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-left">
 
           {/* Punkt 1: Økonomi (OPPDATERT MED 70% RABATT) */}
-          <div className="bg-gradient-to-br from-violet-900/40 to-slate-900/40 border border-violet-500/30 p-8 rounded-3xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
+          <div className="bg-gradient-to-br from-violet-900/40 to-slate-900/40 border border-violet-500/30 p-6 sm:p-8 rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 bg-violet-600 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-bl-xl">
               ØKONOMISK TRYGGHET
             </div>
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-violet-900/20">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-violet-900/20 mt-2">
               <span className="text-xl font-black">70%</span>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-white">70% rabatt start</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">70% rabatt start</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               Er du usikker på effekten? Vi gir deg 70% rabatt den første måneden. Vi tar den økonomiske risikoen for å bevise at vi leverer verdi før du betaler fullpris. Ingen bindingstid.
             </p>
           </div>
 
           {/* Punkt 2: Sikkerhet */}
-          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
-              <ShieldCheck size={24} />
+          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+              <ShieldCheck size={22} />
             </div>
-            <h3 className="text-xl font-bold mb-3">Din side er trygg</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Din side er trygg</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               Frykt ikke for nettsiden din. Vi tar alltid full backup før arbeid. Ingen endringer publiseres uten din godkjenning. Vi passer på merkevaren din.
             </p>
           </div>
 
           {/* Punkt 3: Kvalitet */}
-          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
-              <User size={24} />
+          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+              <User size={22} />
             </div>
-            <h3 className="text-xl font-bold mb-3">Ekte eksperter</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Ekte eksperter</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               Ingen automatiserte søppel-rapporter. En rådgiver analyserer din bedrift manuelt og legger en konkret slagplan for å slå dine konkurrenter.
             </p>
           </div>
 
           {/* Punkt 4: Arbeidsmengde (Med Zap i stedet for Coffee for å unngå feil) */}
-          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 transition-transform">
-              <Zap size={24} />
+          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+              <Zap size={22} />
             </div>
-            <h3 className="text-xl font-bold mb-3">Vi gjør jobben</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Vi gjør jobben</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               Slipp å lære deg SEO. Vi tar det tunge tekniske løftet. Din eneste oppgave er å si "ja" eller "nei" til våre forslag.
             </p>
           </div>
 
           {/* Punkt 5: Fremtiden */}
-          <div className="md:col-span-2 bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group relative overflow-hidden">
+          <div className="md:col-span-2 bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group relative overflow-hidden">
             <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
-            <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
               <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-rose-400 shrink-0 group-hover:scale-110 transition-transform">
-                <TrendingUp size={24} />
+                <TrendingUp size={22} />
               </div>
-              <div>
-                <h3 className="text-xl font-bold mb-3">Hva skjer på toppen?</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Hva skjer på toppen?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-3 sm:mb-4">
                   Når vi når 1. plassen, er ikke jobben over. Da velger du veien videre:
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-slate-900/50 p-3 sm:p-4 rounded-xl border border-white/5">
                     <strong className="text-white block text-sm mb-1">A) Forsvar</strong>
                     <span className="text-xs text-slate-500">Vi overvåker og nøytraliserer konkurrenter som prøver å ta plassen din.</span>
                   </div>
-                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
+                  <div className="bg-slate-900/50 p-3 sm:p-4 rounded-xl border border-white/5">
                     <strong className="text-white block text-sm mb-1">B) Dominans</strong>
                     <span className="text-xs text-slate-500">Vi bruker tilliten Google nå har til deg for å vinne enda flere lønnsomme søkeord.</span>
                   </div>
@@ -2652,10 +2652,10 @@ const TrustSection = () => {
         </div>
 
         {/* Call to Action i bunnen av garantien */}
-        <div className="mt-16">
+        <div className="mt-10 sm:mt-16">
           <button
             onClick={handleLogin}
-            className="bg-white text-slate-950 px-8 py-4 rounded-full font-bold text-lg hover:bg-violet-200 transition-colors shadow-lg shadow-white/10"
+            className="w-full sm:w-auto bg-white text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-violet-200 transition-colors shadow-lg shadow-white/10"
           >
             Start risikofritt i dag <ArrowRight className="inline ml-2" size={20} />
           </button>
@@ -2984,13 +2984,13 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const getAvatarUrl = (u: any) => u?.user_metadata?.avatar_url || u?.user_metadata?.picture;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-4 shadow-sm' : 'bg-transparent py-8'}`}>
-      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
 
         {/* LOGO */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold group-hover:bg-violet-600 transition-colors">S</div>
-          <span className="text-xl font-black text-slate-900 group-hover:text-violet-600 transition-colors">Sikt</span>
+        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold group-hover:bg-violet-600 transition-colors">S</div>
+          <span className="text-lg sm:text-xl font-black text-slate-900 group-hover:text-violet-600 transition-colors">Sikt</span>
         </div>
 
         {/* DESKTOP MENY */}
@@ -3058,7 +3058,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
         </div>
 
         {/* MOBIL MENY KNAPP */}
-        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>{isMobileMenuOpen ? <X /> : <Menu />}</button>
+        <button className="md:hidden p-2 -mr-2 text-slate-900" aria-label={isMobileMenuOpen ? "Lukk meny" : "Åpne meny"} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button>
       </div>
 
       {/* MOBIL MENY (Expandable) */}
