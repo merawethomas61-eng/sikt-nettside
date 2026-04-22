@@ -4,6 +4,7 @@ import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
+import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
   MousePointer2, TrendingUp, Cpu, Globe, Activity, ArrowUpRight, User, MonitorCheck, Code2, PenTool,
@@ -3769,10 +3770,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     if (!confirm(`Vil du endre pakke til ${newPlanName}?`)) return;
     setSaving(true);
     try {
-      await supabase.from('clients').update({ package_name: newPlanName }).eq('user_id', user.id);
+      await supabaseRest(`clients?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        body: { package_name: newPlanName },
+        headers: { Prefer: 'return=representation' },
+      });
       setClientData({ ...clientData, package_name: newPlanName });
       toastSuccess(`Pakke endret til ${newPlanName}!`);
-    } catch (err) { toastError("Kunne ikke endre pakke."); } finally { setSaving(false); }
+    } catch (err: any) {
+      console.error('[handleChangePlan] feil:', err?.message || err);
+      toastError("Kunne ikke endre pakke: " + (err?.message || 'ukjent feil'));
+    } finally { setSaving(false); }
   };
 
   const handleUpgrade = () => {
@@ -7127,11 +7135,11 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
         setPlanSwitchMessage({ type: 'success', text: `Byttet til ${confirmPlanChange.name} (dev-modus, kun lokalt).` });
         setConfirmPlanChange(null);
       } else {
-        const { error } = await supabase
-          .from('clients')
-          .update({ package_name: confirmPlanChange.name })
-          .eq('user_id', user.id);
-        if (error) throw error;
+        await supabaseRest(`clients?user_id=eq.${user.id}`, {
+          method: 'PATCH',
+          body: { package_name: confirmPlanChange.name },
+          headers: { Prefer: 'return=representation' },
+        });
         setPlanSwitchMessage({ type: 'success', text: `Byttet til ${confirmPlanChange.name}. Laster på nytt...` });
         setConfirmPlanChange(null);
         setTimeout(() => window.location.reload(), 800);
@@ -7785,17 +7793,32 @@ function App() {
         const savedPlan = localStorage.getItem('sikt_pending_plan');
         if (savedPlan) {
           localStorage.removeItem('sikt_pending_plan');
-          // Oppdaterer databasen lokalt umiddelbart
-          await supabase.from('clients').update({ package_name: savedPlan }).eq('user_id', user.id);
+          try {
+            // UPSERT slik at raden opprettes hvis den ikke finnes fra før
+            // (f.eks. første gang brukeren kommer tilbake fra Stripe og
+            // ennå ikke har sendt inn onboarding-skjemaet).
+            await supabaseRest('clients?on_conflict=user_id', {
+              method: 'POST',
+              body: { user_id: user.id, package_name: savedPlan },
+              headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+            });
+            console.log('[Routing] Pakke lagret i clients:', savedPlan);
+          } catch (e: any) {
+            console.error('[Routing] Kunne ikke lagre pakke:', e?.message || e);
+          }
           setSelectedPlan(savedPlan);
         }
 
-        // 2. Hent fasiten fra databasen
-        const { data: client } = await supabase
-          .from('clients')
-          .select('onboarding_completed, package_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // 2. Hent fasiten fra databasen (rå fetch — supabase-js kan henge ved auth-lock)
+        let client: { onboarding_completed?: boolean; package_name?: string } | null = null;
+        try {
+          const rows = await supabaseRest<any[]>(
+            `clients?user_id=eq.${user.id}&select=onboarding_completed,package_name&limit=1`,
+          );
+          client = Array.isArray(rows) && rows.length ? rows[0] : null;
+        } catch (e: any) {
+          console.error('[Routing] Kunne ikke hente client:', e?.message || e);
+        }
 
         if (!isMounted) return;
 
@@ -7932,13 +7955,11 @@ function App() {
 
       console.log("3. Sjekker om bruker er logget inn...");
 
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.log("4a. Feil ved sjekk av session:", error.message);
-      }
-
-      const currentUser = session?.user;
+      // NB: Vi bruker IKKE supabase.auth.getSession() her — den kan henge
+      // på grunn av auth-lock-deadlock i supabase-js. Vi sjekker i stedet
+      // om det finnes et gyldig token i localStorage + om vi har user-state.
+      const hasToken = !!getStoredAccessToken();
+      const currentUser = hasToken ? user : null;
 
       if (!currentUser) {
         console.log("4b. INGEN bruker logget inn. Tvinger skjerm til toppen og bytter til 'login'.");
