@@ -1314,56 +1314,76 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      console.log("[Onboarding] 2/5 Sender upsert til Supabase...", dataTilDatabase);
+      console.log("[Onboarding] 2/5 Forbereder upsert...", dataTilDatabase);
 
-      // DIAGNOSTIKK: sjekk sesjonsstatus først
-      const { data: sessionInfo } = await supabase.auth.getSession();
-      console.log("[Onboarding] 2a/5 Sesjonscheck", {
-        harSession: !!sessionInfo.session,
-        userId: sessionInfo.session?.user?.id,
-        tokenUtloperAt: sessionInfo.session?.expires_at,
-        access_token_start: sessionInfo.session?.access_token?.slice(0, 20) + '...',
-      });
+      // Vi bruker rå fetch mot Supabase REST API i stedet for supabase-js-klienten.
+      // Årsak: klienten henger av og til ved ugyldig sesjonstilstand (auth-lock-deadlock).
+      // Dette gir oss full kontroll og synlige feilmeldinger.
 
-      if (!sessionInfo.session?.access_token) {
-        throw new Error("Ingen gyldig sesjon — logg inn på nytt.");
+      // Hent token direkte fra localStorage (samme sted supabase-js lagrer det)
+      const getStoredAccessToken = (): string | null => {
+        try {
+          const keys = Object.keys(localStorage);
+          const tokenKey = keys.find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+          if (!tokenKey) return null;
+          const raw = localStorage.getItem(tokenKey);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          return parsed?.access_token || null;
+        } catch {
+          return null;
+        }
+      };
+
+      const accessToken = getStoredAccessToken();
+      console.log("[Onboarding] 2a/5 Token funnet i localStorage?", !!accessToken, accessToken?.slice(0, 20) + '...');
+
+      if (!accessToken) {
+        throw new Error("Ingen gyldig sesjon i localStorage. Logg ut og logg inn på nytt.");
       }
 
-      // DIAGNOSTIKK: test enkel SELECT først for å verifisere at RLS + auth funker
-      console.log("[Onboarding] 2b/5 Tester SELECT på clients...");
-      const selectPromise = supabase
-        .from('clients')
-        .select('user_id')
-        .eq('user_id', aktivBruker.id)
-        .maybeSingle();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const selectTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("SELECT hang >10s — sannsynligvis nettverks-/auth-problem")), 10000)
-      );
+      console.log("[Onboarding] 2b/5 Sender POST til /rest/v1/clients (raw fetch)...");
 
-      const selectResult: any = await Promise.race([selectPromise, selectTimeout]);
-      console.log("[Onboarding] 2c/5 SELECT resultat", selectResult);
+      const fetchController = new AbortController();
+      const fetchTimeout = setTimeout(() => fetchController.abort(), 15000);
 
-      // Selve upserten
-      console.log("[Onboarding] 2d/5 Sender UPSERT...");
-      const upsertPromise = supabase
-        .from('clients')
-        .upsert(dataTilDatabase, { onConflict: 'user_id' })
-        .select();
+      let response: Response;
+      try {
+        response = await fetch(`${supabaseUrl}/rest/v1/clients?on_conflict=user_id`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=representation',
+          },
+          body: JSON.stringify(dataTilDatabase),
+          signal: fetchController.signal,
+        });
+      } finally {
+        clearTimeout(fetchTimeout);
+      }
 
-      const upsertTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("UPSERT hang >20s — del konsoll med utvikleren")), 20000)
-      );
+      const responseText = await response.text();
+      let responseJson: any = null;
+      try { responseJson = responseText ? JSON.parse(responseText) : null; } catch { /* ikke json */ }
 
-      const result: any = await Promise.race([upsertPromise, upsertTimeout]);
-      const skriveFeil = result.error;
-      const skriveData = result.data;
+      console.log("[Onboarding] 3/5 Svar fra Supabase", {
+        status: response.status,
+        ok: response.ok,
+        body: responseJson ?? responseText,
+      });
 
-      console.log("[Onboarding] 3/5 Upsert fullført", { skriveFeil, skriveData });
+      if (!response.ok) {
+        const details = responseJson?.message || responseJson?.error || responseText || `HTTP ${response.status}`;
+        throw new Error(`Supabase avviste: ${details}`);
+      }
 
-      if (skriveFeil) throw skriveFeil;
-      if (!skriveData || skriveData.length === 0) {
-        throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk at clients-tabellen har INSERT/UPDATE-policy for authenticated brukere.");
+      if (!responseJson || (Array.isArray(responseJson) && responseJson.length === 0)) {
+        throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk INSERT/UPDATE-policy på clients-tabellen.");
       }
 
       console.log("[Onboarding] 4/5 Kaller onComplete() for å gå til neste steg");
