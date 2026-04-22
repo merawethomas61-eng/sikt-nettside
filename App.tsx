@@ -4715,7 +4715,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'Kunne ikke analysere siden.');
+        // Vis serveren sin egne feilmelding når den finnes — ikke overskriv med "Sjekk URLen".
+        throw new Error(errBody.error || `Serveren svarte med HTTP ${res.status}`);
       }
 
       const { mobile: mobileRaw, desktop: desktopRaw } = await res.json();
@@ -4732,7 +4733,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         details: { mobile_score: mobile.performance, desktop_score: desktop.performance, seo_score: mobile.seo },
         pageUrl: formattedUrl,
       });
-    } catch (err: any) { setAnalyzeError("Noe gikk galt. Sjekk URLen."); } finally { setIsAnalyzing(false); }
+    } catch (err: any) {
+      const msg = err?.message || 'Ukjent feil';
+      console.error('[runRealAnalysis] Feil:', err);
+      // Gi brukeren et hint om hvor feilen ligger
+      if (/PAGESPEED_API_KEY/i.test(msg)) {
+        setAnalyzeError('Serveren mangler PAGESPEED_API_KEY. Sett den i Vercel → Project Settings → Environment Variables.');
+      } else if (/HTTP 5\d\d|Intern feil|PageSpeed feilet/i.test(msg)) {
+        setAnalyzeError('Serveren klarte ikke å kjøre PageSpeed-analysen (' + msg + '). Sjekk at PageSpeed Insights API er aktivert i Google Cloud og at nøkkelen er satt i Vercel.');
+      } else {
+        setAnalyzeError(msg);
+      }
+    } finally { setIsAnalyzing(false); }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster...</div></div>;
@@ -6368,10 +6380,25 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     {showSuggestions && <div className="fixed inset-0 z-[-1]" onClick={() => setShowSuggestions(false)}></div>}
                   </div>
 
+                  {/* LEGG-TIL-KNAPP — tydeliggjør at man først må legge til søkeord før analysen kan kjøres */}
+                  <button
+                    type="button"
+                    onClick={handleAddKeyword}
+                    disabled={!canAddMoreKeywords || !newKeywordInput.trim()}
+                    title="Legg til søkeord i listen"
+                    className={`w-full md:w-auto px-5 py-2.5 rounded-xl font-bold ml-0 md:ml-2 transition-all flex items-center justify-center gap-2 mt-2 md:mt-0
+                      ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                    `}
+                  >
+                    <Plus size={14} /> Legg til
+                  </button>
+
                   <button
                     onClick={handleCheckRankings}
                     disabled={rankingLoading || keywordsToTrack?.length === 0}
-                    className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
+                    title={keywordsToTrack?.length === 0 ? 'Legg til minst ett søkeord først' : 'Kjør rangering-sjekk på alle lagrede søkeord'}
+                    className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-0 md:ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
                   >
                     {rankingLoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
                     {rankingLoading ? 'Søker...' : 'Kjør Analyse'}
@@ -7346,7 +7373,11 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
   const tierPlan = (clientData?.package_name || selectedPlan || '').toString().toUpperCase();
   const tierIsBasic = !tierPlan.includes('STANDARD') && !tierPlan.includes('PREMIUM');
   const hostMode: string = hostConnection?.connectionMode || 'none';
-  const hostLastChangedMs = hostConnection?.lastChangedAt ? new Date(hostConnection.lastChangedAt).getTime() : 0;
+  // Ukentlig lås gjelder KUN etter at host faktisk er koblet til (light/full).
+  // Hvis kunden bare har hoppet over eller ikke gjort noe, skal de kunne koble til når som helst.
+  const hostIsConnected = hostMode === 'light' || hostMode === 'full';
+  const hostLastChangedMs = (hostIsConnected && hostConnection?.lastChangedAt)
+    ? new Date(hostConnection.lastChangedAt).getTime() : 0;
   const hostMsUntilUnlock = hostLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - hostLastChangedMs)) : 0;
   const hostLocked = hostMsUntilUnlock > 0;
   const hostDaysLeft = Math.ceil(hostMsUntilUnlock / (24 * 60 * 60 * 1000));
