@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
-console.log("Supabase URL er:", process.env.REACT_APP_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "IKKE FUNNET");
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-// Bytt ut disse med dine verdier fra Supabase Dashboard
-const supabaseUrl = 'https://zsoqyerqdxhqnqjvzmsu.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzb3F5ZXJxZHhocW5xanZ6bXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTM2NjQsImV4cCI6MjA4NDA2OTY2NH0.tJUWiYfBgVgzDwZH567sAWXDQt6cfe93qhj0n-JcmK8'
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Fanges opp tidlig slik at vi ikke lanserer med tom konfig
+  throw new Error(
+    'Mangler VITE_SUPABASE_URL eller VITE_SUPABASE_ANON_KEY. Sett dem i .env.local (lokalt) og i Vercel → Project Settings → Environment Variables (produksjon).'
+  )
+}
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

@@ -4,241 +4,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sikt | Moderne SEO</title>
+    <meta name="theme-color" content="#7c3aed">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Sikt | Moderne SEO for norske bedrifter</title>
+    <meta name="description"
+        content="Sikt er et moderne norsk SEO-byrå som kombinerer AI-drevet optimalisering med plain-norsk rapportering. Få bedre synlighet på Google uten teknisk sjargong.">
+    <meta name="keywords" content="SEO, søkemotoroptimalisering, norsk SEO-byrå, Google-rangering, teknisk SEO, AI SEO">
+    <meta name="author" content="Sikt">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://sikt.no/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sikt.no/">
+    <meta property="og:title" content="Sikt | Moderne SEO for norske bedrifter">
+    <meta property="og:description"
+        content="AI-drevet SEO med rapporter du faktisk forstår. Få bedre synlighet på Google — uten teknisk sjargong.">
+    <meta property="og:image" content="https://sikt.no/og-image.png">
+    <meta property="og:locale" content="nb_NO">
+    <meta property="og:site_name" content="Sikt">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://sikt.no/">
+    <meta name="twitter:title" content="Sikt | Moderne SEO for norske bedrifter">
+    <meta name="twitter:description"
+        content="AI-drevet SEO med rapporter du faktisk forstår. Få bedre synlighet på Google — uten teknisk sjargong.">
+    <meta name="twitter:image" content="https://sikt.no/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Ctext x='50%25' y='54%25' font-family='Inter, sans-serif' font-size='18' font-weight='800' fill='white' text-anchor='middle' dominant-baseline='middle'%3ES%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Ctext x='50%25' y='54%25' font-family='Inter, sans-serif' font-size='18' font-weight='800' fill='white' text-anchor='middle' dominant-baseline='middle'%3ES%3C/text%3E%3C/svg%3E">
+
+    <!-- Skrifter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Satisfy&display=swap"
         rel="stylesheet">
 
-    <style>
-        :root {
-            --font-main: 'Inter', sans-serif;
-            --font-display: 'Plus Jakarta Sans', sans-serif;
-        }
+    <!-- JSON-LD strukturert data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Sikt",
+        "url": "https://sikt.no",
+        "description": "Moderne norsk SEO-byrå med AI-drevet optimalisering og plain-norsk rapportering.",
+        "areaServed": "NO",
+        "inLanguage": "nb-NO"
+    }
+    </script>
 
-        body {
-            font-family: var(--font-main);
-            background-color: #fcfcfd;
-            color: #0f172a;
-            line-height: 1.5;
-            overflow-x: hidden;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4 {
-            font-family: var(--font-display);
-            letter-spacing: -0.04em;
-            line-height: 1.1;
-        }
-
-        .font-script {
-            font-family: 'Satisfy', cursive;
-        }
-
-        /* Glassmorphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        /* Hero Gradient */
-        .hero-gradient {
-            background: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
-        }
-
-        /* Premium Cards */
-        .premium-card {
-            border: 1px solid rgba(0, 0, 0, 0.03);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(8px);
-        }
-
-        .premium-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(124, 58, 237, 0.15);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.03), 0 0 30px -5px rgba(124, 58, 237, 0.05);
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        /* Scroll Reveal Animations (Used by App.tsx helper) */
-        .reveal {
-            opacity: 0;
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal-up {
-            transform: translateY(40px);
-        }
-
-        .reveal-down {
-            transform: translateY(-40px);
-        }
-
-        .reveal-left {
-            transform: translateX(40px);
-        }
-
-        .reveal-right {
-            transform: translateX(-40px);
-        }
-
-        .reveal-scale {
-            transform: scale(0.97);
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translate(0) scale(1);
-        }
-
-        /* Background Pattern */
-        .grid-pattern {
-            background-image: radial-gradient(rgba(124, 58, 237, 0.15) 0.5px, transparent 0.5px);
-            background-size: 32px 32px;
-        }
-
-        /* Keyframe Animations */
-        @keyframes float-subtle {
-            0% {
-                transform: translateY(0px) rotate(0deg);
-            }
-
-            50% {
-                transform: translateY(-15px) rotate(1deg);
-            }
-
-            100% {
-                transform: translateY(0px) rotate(0deg);
-            }
-        }
-
-        .animate-float-subtle {
-            animation: float-subtle 6s ease-in-out infinite;
-        }
-
-        @keyframes gradient-shift {
-
-            0%,
-            100% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-        }
-
-        .animate-subtext-dynamic {
-            background: linear-gradient(90deg, #0f172a, #6366f1, #a855f7, #0f172a);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient-shift 8s ease infinite;
-        }
-
-        @keyframes mesh-blob {
-            0% {
-                transform: translate(0px, 0px) scale(1) rotate(0deg);
-            }
-
-            33% {
-                transform: translate(80px, -100px) scale(1.2) rotate(120deg);
-            }
-
-            66% {
-                transform: translate(-50px, 50px) scale(0.8) rotate(240deg);
-            }
-
-            100% {
-                transform: translate(0px, 0px) scale(1) rotate(360deg);
-            }
-        }
-
-        .animate-mesh {
-            animation: mesh-blob 30s ease-in-out infinite;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes scan-tech {
-            0% {
-                transform: translateY(-50px);
-            }
-
-            100% {
-                transform: translateY(500px);
-            }
-        }
-
-        .animate-scan-tech {
-            animation: scan-tech 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes float-particle {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-                opacity: 0;
-            }
-
-            50% {
-                transform: translate(20px, -40px) scale(1.5);
-                opacity: 0.6;
-            }
-        }
-
-        .animate-float-particle {
-            animation: float-particle 8s ease-in-out infinite;
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
-    <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
-  }
-}
-</script>
-    <link rel="stylesheet" href="/index.css">
-
+    <!-- PostHog analytics -->
     <script>
         !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
         posthog.init('phc_QgvepfGFFgyQNJUVZs2NFsJsc95ALAs8msVx49KhQtH', {
