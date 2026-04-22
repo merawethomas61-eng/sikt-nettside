@@ -1246,7 +1246,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const [formData, setFormData] = useState({
     companyName: '', contactPerson: '', email: '', phone: '',
-    websiteUrl: '', industry: '', targetAudience: ''
+    websiteUrl: '', websiteHost: '', industry: '', targetAudience: ''
   });
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -1311,6 +1311,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         email: formData.email,
         phone: formData.phone,
         website_url: formData.websiteUrl,
+        website_host: formData.websiteHost,
         industry: formData.industry,
         target_audience: formData.targetAudience
       };
@@ -1426,6 +1427,19 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
           </div>
           <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+
+          <div>
+            <input
+              name="websiteHost"
+              value={formData.websiteHost}
+              onChange={handleChange}
+              placeholder="Valgfritt: Hvor er nettsiden hostet? (f.eks. Shopify, WordPress, Webflow, eget webhotell)"
+              className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none"
+            />
+            <p className="text-[11px] text-slate-400 mt-2 ml-1">
+              <span className="font-bold text-slate-500">Tips:</span> Du kan hoppe over dette nå og legge det til senere i innstillinger. AI gir deg mer presise kode-forslag hvis webhost er oppgitt. URL og webhost kan kun endres én gang.
+            </p>
+          </div>
 
           {/* 3. CRITICAL FIX: UI for Bransjeforslag */}
           <div className="relative">
@@ -1772,7 +1786,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
 
   const plans: Plan[] = [
     {
-      title: "⭐ BASIC",
+      title: "BASIC",
       price: "499",
       tagline: "Fiks grunnmuren — selv.",
       desc: "Se alt som holder deg nede på Google. Du får klare instruksjoner og AI-genererte tekster du kan bruke selv.",
@@ -1788,7 +1802,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       ]
     },
     {
-      title: "⭐⭐ STANDARD",
+      title: "STANDARD",
       price: "1 499",
       tagline: "Vi gjør jobben for deg.",
       highlighted: true,
@@ -1805,7 +1819,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       ]
     },
     {
-      title: "⭐⭐⭐ PREMIUM",
+      title: "PREMIUM",
       price: "4 999",
       tagline: "Dominér både Google og AI.",
       desc: "Alt i Standard, pluss full synlighet i ChatGPT, Gemini og Perplexity. Vær først ute i AI-søk.",
@@ -3456,6 +3470,46 @@ const LockedSection = ({
   </div>
 );
 
+// --- HJELPEKOMPONENT: PÅMINNELSE OM Å KOBLE WEBHOST ---
+// Vises etter analyse-resultater hvis kunden ikke har oppgitt webhost ennå.
+// Ved å koble den til får AI tilgang til å lese HTML-en og foreslå eksakt kode
+// som skal fjernes/erstattes, i stedet for generiske forslag.
+const WebhostReminderBox = ({
+  onGoToSettings,
+  theme = 'light',
+}: {
+  onGoToSettings: () => void;
+  theme?: 'light' | 'dark';
+}) => (
+  <div className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 my-4
+    ${theme === 'light'
+      ? 'bg-gradient-to-br from-amber-50 to-white border-amber-200'
+      : 'bg-gradient-to-br from-amber-950/30 to-slate-900/50 border-amber-500/20'
+    }`}>
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
+        ${theme === 'light' ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/20 text-amber-300'}`}>
+        <Lightbulb size={22} />
+      </div>
+      <div className="flex-1">
+        <h3 className={`text-base font-black mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+          Få mer presise kode-forslag
+        </h3>
+        <p className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
+          Du har ikke koblet til webhost ennå. Når du gjør det, kan Sikt lese HTML-en fra siden din
+          og vise deg nøyaktig hvilken kode-linje du må fjerne, og hva den skal erstattes med.
+        </p>
+      </div>
+      <button
+        onClick={onGoToSettings}
+        className="shrink-0 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 transition-all flex items-center gap-2 shadow-sm"
+      >
+        <Settings size={14} /> Koble til webhost
+      </button>
+    </div>
+  </div>
+);
+
 // --- HJELPEKOMPONENT: STATUS KORT (Dashboard) ---
 const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
   <div className="bg-slate-900/50 backdrop-blur-md p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all shadow-xl shadow-black/20 group relative overflow-hidden">
@@ -3553,7 +3607,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
 
 
-  // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
+  // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet.
+  // Sender webhost + URL til serveren, slik at AI kan hente HTML og finne eksakt kode
+  // å fjerne/erstatte (når webhost er koblet til).
   useEffect(() => {
     const fetchAiSolution = async () => {
       if (!activeSolveProblem) return;
@@ -3562,52 +3618,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       setAiSolution(null);
 
       try {
+        const accessToken = getStoredAccessToken();
         const response = await fetch('/api/solve-problem', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
           body: JSON.stringify({
-            url: 'din-nettside.no',
+            url: formData.websiteUrl || clientData?.websiteUrl || '',
+            websiteHost: clientData?.websiteHost || '',
             problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
-            problemDetails: activeSolveProblem
-          })
-        });
-
-        if (!response.ok) throw new Error("Klarte ikke å koble til AI");
-
-        const data = await response.json();
-        setAiSolution(data);
-      } catch (error) {
-        console.error(error);
-        setAiSolution({
-          explanation: "Systembeskjed: Klarte ikke å koble til AI-serveren. Sjekk at api/solve-problem.js kjører riktig.",
-          codePatch: null
-        });
-      } finally {
-        setAiIsThinking(false);
-      }
-    };
-
-    fetchAiSolution();
-  }, [activeSolveProblem]);
-
-
-
-  // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet
-  useEffect(() => {
-    const fetchAiSolution = async () => {
-      if (!activeSolveProblem) return;
-
-      setAiIsThinking(true);
-      setAiSolution(null);
-
-      try {
-        const response = await fetch('/api/solve-problem', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: 'din-nettside.no',
-            problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
-            problemDetails: activeSolveProblem
+            problemDetails: activeSolveProblem,
           })
         });
 
@@ -3706,25 +3728,57 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   useEffect(() => {
     const fetchClientData = async () => {
       if (!user?.email) return;
-      const { data } = await supabase.from('clients').select('*').eq('user_id', user.id).maybeSingle();
-      if (data) {
-        setClientData(data);
-        setFormData({
-          contactPerson: data.contactPerson, companyName: data.companyName, email: data.email,
-          phone: data.phone, websiteUrl: data.websiteUrl, industry: data.industry, targetAudience: data.targetAudience
-        });
+      try {
+        // Bruker rå fetch (supabaseRest) for å omgå auth-lock-deadlock i supabase-js.
+        const rows = await supabaseRest<any[]>(
+          `clients?user_id=eq.${user.id}&select=*&limit=1`,
+        );
+        const raw = Array.isArray(rows) && rows.length ? rows[0] : null;
 
-        // Hent lagrede søkeord fra nettleseren
-        const savedKeywords = localStorage.getItem(`keywords_${user.id}`);
-        if (savedKeywords) setKeywordsToTrack(JSON.parse(savedKeywords));
+        if (raw) {
+          // DB-en bruker snake_case. Vi mapper til camelCase som resten av UI-koden forventer.
+          const mapped = {
+            ...raw,
+            companyName: raw.company_name ?? raw.companyName ?? '',
+            contactPerson: raw.contact_person ?? raw.contactPerson ?? '',
+            websiteUrl: raw.website_url ?? raw.websiteUrl ?? '',
+            websiteHost: raw.website_host ?? raw.websiteHost ?? '',
+            targetAudience: raw.target_audience ?? raw.targetAudience ?? '',
+            email: raw.email ?? '',
+            phone: raw.phone ?? '',
+            industry: raw.industry ?? '',
+            // Låse-tellere — standard 0 hvis kolonnene enda ikke finnes
+            url_change_count: raw.url_change_count ?? 0,
+            host_change_count: raw.host_change_count ?? 0,
+          };
 
-        const savedRankings = localStorage.getItem(`rankings_${user.id}`);
-        if (savedRankings) {
-          setRealRankings(JSON.parse(savedRankings));
-          setHasSearched(true);
+          setClientData(mapped);
+          setFormData({
+            contactPerson: mapped.contactPerson,
+            companyName: mapped.companyName,
+            email: mapped.email,
+            phone: mapped.phone,
+            websiteUrl: mapped.websiteUrl,
+            websiteHost: mapped.websiteHost,
+            industry: mapped.industry,
+            targetAudience: mapped.targetAudience,
+          });
+
+          // Hent lagrede søkeord fra nettleseren
+          const savedKeywords = localStorage.getItem(`keywords_${user.id}`);
+          if (savedKeywords) setKeywordsToTrack(JSON.parse(savedKeywords));
+
+          const savedRankings = localStorage.getItem(`rankings_${user.id}`);
+          if (savedRankings) {
+            setRealRankings(JSON.parse(savedRankings));
+            setHasSearched(true);
+          }
         }
+      } catch (err: any) {
+        console.error('[ClientPortal] Kunne ikke hente clients:', err?.message || err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchClientData();
   }, [user]);
@@ -3751,19 +3805,78 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   }, [isAnalyzing]);
 
   // --- HANDLERS (Generelle) ---
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Mottar oppdatert formData fra PortalSettings (camelCase) og
+  // lagrer til DB med snake_case. Respekterer én-gangs-låsen på URL og webhost.
+  const handleSaveSettings = async (incomingFormData?: any) => {
+    const merged = incomingFormData || {};
     if (!confirm("Vil du lagre endringene?")) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from('clients').update(formData).eq('user_id', user.id);
-      if (error) throw error;
-      setClientData({ ...clientData, ...formData });
+      const currentUrlCount: number = clientData?.url_change_count ?? 0;
+      const currentHostCount: number = clientData?.host_change_count ?? 0;
+
+      const urlChanged = merged.websiteUrl !== undefined
+        && merged.websiteUrl !== (clientData?.websiteUrl ?? '');
+      const hostChanged = merged.websiteHost !== undefined
+        && merged.websiteHost !== (clientData?.websiteHost ?? '');
+
+      // Blokker endring hvis låsen allerede er aktiv
+      if (urlChanged && currentUrlCount >= 1) {
+        toastError("Nettadressen er allerede låst og kan ikke endres.");
+        setSaving(false);
+        return;
+      }
+      if (hostChanged && currentHostCount >= 1) {
+        toastError("Webhost er allerede låst og kan ikke endres.");
+        setSaving(false);
+        return;
+      }
+
+      // Bygg patch med kun snake_case kolonner som faktisk finnes i DB
+      const patch: Record<string, any> = {};
+      if (merged.companyName !== undefined) patch.company_name = merged.companyName;
+      if (merged.contactPerson !== undefined) patch.contact_person = merged.contactPerson;
+      if (merged.email !== undefined) patch.email = merged.email;
+      if (merged.phone !== undefined) patch.phone = merged.phone;
+      if (merged.industry !== undefined) patch.industry = merged.industry;
+      if (merged.targetAudience !== undefined) patch.target_audience = merged.targetAudience;
+      if (urlChanged) {
+        patch.website_url = merged.websiteUrl;
+        patch.url_change_count = currentUrlCount + 1;
+      }
+      if (hostChanged) {
+        patch.website_host = merged.websiteHost;
+        patch.host_change_count = currentHostCount + 1;
+      }
+
+      await supabaseRest(`clients?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        body: patch,
+        headers: { Prefer: 'return=representation' },
+      });
+
+      // Oppdater lokal state umiddelbart slik at UI reflekterer låsingen
+      setClientData({
+        ...clientData,
+        ...merged,
+        url_change_count: urlChanged ? currentUrlCount + 1 : currentUrlCount,
+        host_change_count: hostChanged ? currentHostCount + 1 : currentHostCount,
+      });
+
       setSaveMessage('Lagret!');
       setIsEditing(false);
       setUrlUnlockRequested(false);
+      if (urlChanged) toastSuccess("Nettadresse lagret og låst permanent.");
+      if (hostChanged) toastSuccess("Webhost lagret og låst permanent.");
+      if (!urlChanged && !hostChanged) toastSuccess("Endringer lagret.");
       setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) { console.error(error); setSaveMessage('Feil ved lagring.'); } finally { setSaving(false); }
+    } catch (err: any) {
+      console.error('[handleSaveSettings] feil:', err?.message || err);
+      setSaveMessage('Feil ved lagring.');
+      toastError("Kunne ikke lagre: " + (err?.message || 'ukjent feil'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePlan = async (newPlanName: string) => {
@@ -5432,6 +5545,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                     {analysisResults ? (
                       <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-5">
+                        {!clientData?.websiteHost && (
+                          <WebhostReminderBox
+                            onGoToSettings={() => setActiveTab('settings')}
+                            theme={theme}
+                          />
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => {
                             const toneClass = i.s >= 90 ? 'text-emerald-600' : i.s >= 50 ? 'text-amber-600' : 'text-rose-600';
@@ -5555,6 +5674,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 {isScanning ? 'Analyserer nettsiden...' : 'Skann Nettsted'}
               </button>
             </div>
+
+            {contentPages.length > 0 && !clientData?.websiteHost && (
+              <WebhostReminderBox
+                onGoToSettings={() => setActiveTab('settings')}
+                theme={theme}
+              />
+            )}
 
             {/* 2. KPI KORT */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -5850,6 +5976,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 {isScanningLinks ? 'Kartlegger lenker...' : 'Start Lenkeanalyse'}
               </button>
             </div>
+
+            {linkPages.length > 0 && !clientData?.websiteHost && (
+              <WebhostReminderBox
+                onGoToSettings={() => setActiveTab('settings')}
+                theme={theme}
+              />
+            )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -6885,12 +7018,51 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <Sparkles size={14} /> Slik fikser du problemet
                           </h3>
 
-                          {/* KODE-BOKS (Vises KUN hvis AI-en har en spesifikk kodeendring å foreslå) */}
+                          {/* PÅMINNELSE: webhost mangler — AI kan ikke finne konkret kode */}
+                          {!clientData?.websiteHost && !aiIsThinking && aiSolution && (
+                            <div className="mb-6">
+                              <WebhostReminderBox
+                                onGoToSettings={() => setActiveTab('settings')}
+                                theme={theme}
+                              />
+                            </div>
+                          )}
+
+                          {/* ORIGINAL-KODE-BOKS (KUN når webhost er koblet og AI fant eksakt kode) */}
+                          {aiSolution?.originalCode && (
+                            <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-rose-50/50 border border-rose-200/60' : 'bg-rose-950/20 border border-rose-500/20'} mb-4`}>
+                              <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
+                                  <XCircle size={14} /> Fjern denne koden
+                                </h3>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText(String(aiSolution.originalCode))}
+                                  className={`${portalTextDim} hover:text-rose-600 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-black transition active:scale-95`}
+                                >
+                                  <Copy size={14} /> Kopier
+                                </button>
+                              </div>
+
+                              <div className="bg-[#0D1117] p-5 rounded-xl border border-white/10 font-mono text-sm text-slate-300 overflow-x-auto relative shadow-inner">
+                                <pre className="text-rose-300 whitespace-pre-wrap">
+                                  <code>{String(aiSolution.originalCode)}</code>
+                                </pre>
+                              </div>
+
+                              {aiSolution?.fileHint && (
+                                <p className={`text-xs mt-3 leading-relaxed ${portalTextDim}`}>
+                                  <span className="font-bold">Hvor du finner den:</span> {aiSolution.fileHint}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* PATCH-BOKS (Vises når AI-en har en kodeendring å foreslå) */}
                           {aiSolution?.codePatch && (
-                            <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-slate-50 border border-slate-100' : 'bg-slate-900/60 border border-white/5'} mb-6`}>
+                            <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-emerald-50/50 border border-emerald-200/60' : 'bg-emerald-950/20 border border-emerald-500/20'} mb-6`}>
                               <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                                  <Code2 size={14} /> Foreslått Kodeendring
+                                  <Code2 size={14} /> {aiSolution?.originalCode ? 'Bytt ut med' : 'Foreslått kodeendring'}
                                 </h3>
                                 <button
                                   onClick={() => navigator.clipboard.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch))}
@@ -6900,7 +7072,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 </button>
                               </div>
 
-                              {/* Terminal-vindu (alltid mørkt — code-estetikk) */}
                               <div className="bg-[#0D1117] p-5 rounded-xl border border-white/10 font-mono text-sm text-slate-300 overflow-x-auto relative shadow-inner">
                                 <div className="flex gap-1.5 mb-4 opacity-50">
                                   <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
@@ -6911,9 +7082,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   <code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code>
                                 </pre>
                               </div>
-                              <p className={`text-xs mt-4 leading-relaxed ${portalTextDim}`}>
-                                Erstatt din nåværende kode med blokken over. Husk å teste siden din etter endringen.
-                              </p>
+
+                              {aiSolution?.replacementExplanation ? (
+                                <p className={`text-xs mt-3 leading-relaxed ${portalTextDim}`}>
+                                  <span className="font-bold">Hvorfor:</span> {aiSolution.replacementExplanation}
+                                </p>
+                              ) : (
+                                <p className={`text-xs mt-4 leading-relaxed ${portalTextDim}`}>
+                                  Erstatt din nåværende kode med blokken over. Husk å teste siden din etter endringen.
+                                </p>
+                              )}
                             </div>
                           )}
 
@@ -7059,11 +7237,32 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
 
   const [formData, setFormData] = useState({
     companyName: clientData?.companyName || 'Min Bedrift AS',
-    websiteUrl: clientData?.websiteUrl || 'https://eksempel.no',
+    websiteUrl: clientData?.websiteUrl || '',
+    websiteHost: clientData?.websiteHost || '',
     email: clientData?.email || user?.email || '',
     industry: clientData?.industry || '',
     targetAudience: clientData?.targetAudience || ''
   });
+
+  // Hold formData i synk hvis clientData oppdateres (f.eks. etter fetch)
+  useEffect(() => {
+    if (!clientData) return;
+    setFormData((prev: any) => ({
+      ...prev,
+      companyName: clientData.companyName ?? prev.companyName,
+      websiteUrl: clientData.websiteUrl ?? prev.websiteUrl,
+      websiteHost: clientData.websiteHost ?? prev.websiteHost,
+      email: clientData.email ?? prev.email,
+      industry: clientData.industry ?? prev.industry,
+      targetAudience: clientData.targetAudience ?? prev.targetAudience,
+    }));
+  }, [clientData]);
+
+  // Én-gangs-endring for URL og webhost — tracker i DB via clients.url_change_count / host_change_count
+  const urlChangeCount: number = clientData?.url_change_count ?? 0;
+  const hostChangeCount: number = clientData?.host_change_count ?? 0;
+  const urlLocked = urlChangeCount >= 1;
+  const hostLocked = hostChangeCount >= 1;
 
   // --- PLAN-BYTTE ---
   const [confirmPlanChange, setConfirmPlanChange] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
@@ -7246,14 +7445,41 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
             </div>
 
             <div className="space-y-6">
-              {/* URL ER ALLTID LÅST (forceLock=true) */}
-              <InputField
-                label="Nettside URL"
-                value={formData.websiteUrl}
-                disabled={true}
-                forceLock={true}
-                icon={Globe}
-              />
+              {/* URL: KAN ENDRES ÉN GANG — deretter låst permanent */}
+              <div>
+                <InputField
+                  label={`Nettside URL${urlLocked ? ' (låst)' : ''}`}
+                  value={formData.websiteUrl}
+                  onChange={(e: any) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  disabled={!isEditing || urlLocked}
+                  forceLock={urlLocked}
+                  icon={Globe}
+                  placeholder="https://minbedrift.no"
+                />
+                {!urlLocked && (
+                  <p className="text-[11px] text-amber-500 mt-2 ml-1 font-medium">
+                    Du kan endre nettadressen én gang. Etter lagring blir den låst permanent.
+                  </p>
+                )}
+              </div>
+
+              {/* WEBHOST: Samme én-gangs-regel */}
+              <div>
+                <InputField
+                  label={`Webhost / plattform${hostLocked ? ' (låst)' : ''}`}
+                  value={formData.websiteHost}
+                  onChange={(e: any) => setFormData({ ...formData, websiteHost: e.target.value })}
+                  disabled={!isEditing || hostLocked}
+                  forceLock={hostLocked}
+                  icon={Server}
+                  placeholder="f.eks. Shopify, WordPress, Webflow, eget webhotell"
+                />
+                {!hostLocked && (
+                  <p className="text-[11px] text-amber-500 mt-2 ml-1 font-medium">
+                    Du kan endre webhost én gang. Etter lagring blir den låst permanent.
+                  </p>
+                )}
+              </div>
 
               <InputField
                 label="E-post adresse"
@@ -7776,6 +8002,7 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let hasInitialized = false;
+    let lastRoutedUserId: string | null = null;
     let subscription: { unsubscribe: () => void } | null = null;
 
     const handleUserRouting = async (user: any, isExplicitAction: boolean) => {
@@ -7905,11 +8132,23 @@ function App() {
           hasInitialized = true;
         }
         else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+          const sameUserAsBefore = lastRoutedUserId === session.user.id;
           setUser(session.user);
+
+          // Viktig: Hvis vi allerede har rutet denne brukeren, IKKE kjør ruting igjen.
+          // Dette skjer f.eks. når brukeren bytter fane og kommer tilbake —
+          // supabase fyrer SIGNED_IN på nytt etter token-refresh, og uten denne
+          // sjekken ville vi flyttet brukeren ut av onboarding / settings / verksted.
+          if (event === 'SIGNED_IN' && hasInitialized && sameUserAsBefore) {
+            console.log("[Auth] Tab-refokus / token-refresh — beholder nåværende view.");
+            hasInitialized = true;
+            return;
+          }
 
           // Hvis eventet er SIGNED_IN og hasInitialized er true, er det et aktivt valg
           const isExplicit = (event === 'SIGNED_IN' && hasInitialized);
 
+          lastRoutedUserId = session.user.id;
           await handleUserRouting(session.user, isExplicit);
           hasInitialized = true;
         } else {
