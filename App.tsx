@@ -1316,25 +1316,48 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
       console.log("[Onboarding] 2/5 Sender upsert til Supabase...", dataTilDatabase);
 
-      // Bruk AbortController: Supabase-klienten støtter .abortSignal() og
-      // rydder opp ordentlig hvis forespørselen henger. Vi legger også til
-      // .select() slik at vi faktisk får tilbake raden og kan bekrefte skrivet.
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      // DIAGNOSTIKK: sjekk sesjonsstatus først
+      const { data: sessionInfo } = await supabase.auth.getSession();
+      console.log("[Onboarding] 2a/5 Sesjonscheck", {
+        harSession: !!sessionInfo.session,
+        userId: sessionInfo.session?.user?.id,
+        tokenUtloperAt: sessionInfo.session?.expires_at,
+        access_token_start: sessionInfo.session?.access_token?.slice(0, 20) + '...',
+      });
 
-      let skriveFeil: any = null;
-      let skriveData: any = null;
-      try {
-        const result = await supabase
-          .from('clients')
-          .upsert(dataTilDatabase, { onConflict: 'user_id' })
-          .select()
-          .abortSignal(controller.signal);
-        skriveFeil = result.error;
-        skriveData = result.data;
-      } finally {
-        clearTimeout(timeoutId);
+      if (!sessionInfo.session?.access_token) {
+        throw new Error("Ingen gyldig sesjon — logg inn på nytt.");
       }
+
+      // DIAGNOSTIKK: test enkel SELECT først for å verifisere at RLS + auth funker
+      console.log("[Onboarding] 2b/5 Tester SELECT på clients...");
+      const selectPromise = supabase
+        .from('clients')
+        .select('user_id')
+        .eq('user_id', aktivBruker.id)
+        .maybeSingle();
+
+      const selectTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("SELECT hang >10s — sannsynligvis nettverks-/auth-problem")), 10000)
+      );
+
+      const selectResult: any = await Promise.race([selectPromise, selectTimeout]);
+      console.log("[Onboarding] 2c/5 SELECT resultat", selectResult);
+
+      // Selve upserten
+      console.log("[Onboarding] 2d/5 Sender UPSERT...");
+      const upsertPromise = supabase
+        .from('clients')
+        .upsert(dataTilDatabase, { onConflict: 'user_id' })
+        .select();
+
+      const upsertTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("UPSERT hang >20s — del konsoll med utvikleren")), 20000)
+      );
+
+      const result: any = await Promise.race([upsertPromise, upsertTimeout]);
+      const skriveFeil = result.error;
+      const skriveData = result.data;
 
       console.log("[Onboarding] 3/5 Upsert fullført", { skriveFeil, skriveData });
 
