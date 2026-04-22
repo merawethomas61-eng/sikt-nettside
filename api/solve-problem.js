@@ -108,7 +108,7 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Avvist: Ugyldig bruker' });
     }
 
-    const { url, websiteHost, problemTitle, problemDetails, category } = req.body || {};
+    const { url, problemTitle, problemDetails, category } = req.body || {};
 
     if (!problemTitle) {
         return res.status(400).json({ error: 'Mangler problemTitle' });
@@ -121,9 +121,27 @@ export default async function handler(req, res) {
         });
     }
 
+    // Hent host-tilkobling fra client_hosts — vi stoler ikke på frontend for dette
+    // siden det avgjør om vi bruker betalt AI-kontekst eller ikke.
+    let hostConnection = null;
+    try {
+        const { data: hostRow } = await supabase
+            .from('client_hosts')
+            .select('platform, connection_mode, repo_url, admin_url')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+        if (hostRow && (hostRow.connection_mode === 'light' || hostRow.connection_mode === 'full')) {
+            hostConnection = hostRow;
+        }
+    } catch (hostErr) {
+        console.warn('[solve-problem] Kunne ikke hente client_hosts:', hostErr?.message || hostErr);
+    }
+
     // Hvis kunden har koblet til webhost, henter vi faktisk HTML fra siden.
     // Dette lar AI-en peke på KONKRET kode i stedet for å gi generiske svar.
-    const hasHost = !!(websiteHost && String(websiteHost).trim().length > 0);
+    const websiteHost = hostConnection?.platform || null;
+    const hasHost = !!hostConnection;
     let htmlContext = null;
     let htmlError = null;
     if (hasHost && url) {

@@ -1246,7 +1246,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const [formData, setFormData] = useState({
     companyName: '', contactPerson: '', email: '', phone: '',
-    websiteUrl: '', websiteHost: '', industry: '', targetAudience: ''
+    websiteUrl: '', industry: '', targetAudience: ''
   });
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -1311,7 +1311,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         email: formData.email,
         phone: formData.phone,
         website_url: formData.websiteUrl,
-        website_host: formData.websiteHost,
         industry: formData.industry,
         target_audience: formData.targetAudience
       };
@@ -1427,19 +1426,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
           </div>
           <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
-
-          <div>
-            <input
-              name="websiteHost"
-              value={formData.websiteHost}
-              onChange={handleChange}
-              placeholder="Valgfritt: Hvor er nettsiden hostet? (f.eks. Shopify, WordPress, Webflow, eget webhotell)"
-              className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none"
-            />
-            <p className="text-[11px] text-slate-400 mt-2 ml-1">
-              <span className="font-bold text-slate-500">Tips:</span> Du kan hoppe over dette nå og legge det til senere i innstillinger. AI gir deg mer presise kode-forslag hvis webhost er oppgitt. URL og webhost kan kun endres én gang.
-            </p>
-          </div>
 
           {/* 3. CRITICAL FIX: UI for Bransjeforslag */}
           <div className="relative">
@@ -3471,44 +3457,88 @@ const LockedSection = ({
 );
 
 // --- HJELPEKOMPONENT: PÅMINNELSE OM Å KOBLE WEBHOST ---
-// Vises etter analyse-resultater hvis kunden ikke har oppgitt webhost ennå.
-// Ved å koble den til får AI tilgang til å lese HTML-en og foreslå eksakt kode
-// som skal fjernes/erstattes, i stedet for generiske forslag.
-const WebhostReminderBox = ({
-  onGoToSettings,
+// Tier-bevisst påminnelsesboks som vises etter hver analyse.
+// Tre varianter:
+//  - BASIC          → "Oppgrader for å få AI kode-forslag"
+//  - Ikke koblet    → "Koble til webhost" (knapp til innstillinger)
+//  - Koblet til     → "Åpne i Verksted" for presise kode-forslag
+const AnalysisReminderBox = ({
+  variant,
+  onPrimary,
   theme = 'light',
 }: {
-  onGoToSettings: () => void;
+  variant: 'basic_upgrade' | 'connect_host' | 'open_workshop';
+  onPrimary: () => void;
   theme?: 'light' | 'dark';
-}) => (
-  <div className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 my-4
-    ${theme === 'light'
-      ? 'bg-gradient-to-br from-amber-50 to-white border-amber-200'
-      : 'bg-gradient-to-br from-amber-950/30 to-slate-900/50 border-amber-500/20'
-    }`}>
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
-        ${theme === 'light' ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/20 text-amber-300'}`}>
-        <Lightbulb size={22} />
+}) => {
+  const palette = variant === 'basic_upgrade'
+    ? { bgLight: 'from-violet-50 to-white border-violet-200', bgDark: 'from-violet-950/30 to-slate-900/50 border-violet-500/20', iconLight: 'bg-violet-100 text-violet-700', iconDark: 'bg-violet-500/20 text-violet-300', btn: 'bg-violet-600 hover:bg-violet-500 text-white' }
+    : variant === 'connect_host'
+      ? { bgLight: 'from-amber-50 to-white border-amber-200', bgDark: 'from-amber-950/30 to-slate-900/50 border-amber-500/20', iconLight: 'bg-amber-100 text-amber-700', iconDark: 'bg-amber-500/20 text-amber-300', btn: 'bg-slate-900 hover:bg-violet-600 text-white' }
+      : { bgLight: 'from-emerald-50 to-white border-emerald-200', bgDark: 'from-emerald-950/30 to-slate-900/50 border-emerald-500/20', iconLight: 'bg-emerald-100 text-emerald-700', iconDark: 'bg-emerald-500/20 text-emerald-300', btn: 'bg-emerald-600 hover:bg-emerald-500 text-white' };
+
+  const title = variant === 'basic_upgrade'
+    ? 'Oppgrader for eksakte kode-forslag'
+    : variant === 'connect_host'
+      ? 'Få mer presise kode-forslag'
+      : 'Klar for kode-forslag';
+
+  const body = variant === 'basic_upgrade'
+    ? 'Med Standard eller Premium leser Sikt HTML-en fra nettsiden din og viser deg nøyaktig hvilken kode-linje du må fjerne og hva du bør erstatte den med. Basic viser kun funn og generiske anbefalinger.'
+    : variant === 'connect_host'
+      ? 'Du har hoppet over webhost-tilkobling. Koble til i innstillinger så kan Sikt lese HTML-en fra siden din og peke ut eksakt hvilken kode-linje som må fjernes/erstattes.'
+      : 'Webhost er koblet til. Åpne problemet i Verksted for å se eksakt kode som bør fjernes og anbefalt erstatning, basert på AI-analyse av siden din.';
+
+  const buttonLabel = variant === 'basic_upgrade'
+    ? 'Se planer'
+    : variant === 'connect_host'
+      ? 'Koble til webhost'
+      : 'Åpne i Verksted';
+
+  const Icon = variant === 'basic_upgrade' ? Zap : variant === 'connect_host' ? Settings : Wrench;
+
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 my-4 bg-gradient-to-br
+      ${theme === 'light' ? palette.bgLight : palette.bgDark}`}>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
+          ${theme === 'light' ? palette.iconLight : palette.iconDark}`}>
+          <Icon size={22} />
+        </div>
+        <div className="flex-1">
+          <h3 className={`text-base font-black mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+            {title}
+          </h3>
+          <p className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
+            {body}
+          </p>
+        </div>
+        <button
+          onClick={onPrimary}
+          className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${palette.btn}`}
+        >
+          <Icon size={14} /> {buttonLabel}
+        </button>
       </div>
-      <div className="flex-1">
-        <h3 className={`text-base font-black mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-          Få mer presise kode-forslag
-        </h3>
-        <p className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
-          Du har ikke koblet til webhost ennå. Når du gjør det, kan Sikt lese HTML-en fra siden din
-          og vise deg nøyaktig hvilken kode-linje du må fjerne, og hva den skal erstattes med.
-        </p>
-      </div>
-      <button
-        onClick={onGoToSettings}
-        className="shrink-0 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 transition-all flex items-center gap-2 shadow-sm"
-      >
-        <Settings size={14} /> Koble til webhost
-      </button>
     </div>
-  </div>
-);
+  );
+};
+
+/**
+ * Bestemmer hvilken variant AnalysisReminderBox skal vise basert på kundens plan + host-status.
+ * Returnerer null hvis vi ikke skal vise boksen i det hele tatt.
+ */
+const getReminderVariant = (
+  packageName: string | undefined,
+  hostConnection: { connectionMode?: string } | null,
+): 'basic_upgrade' | 'connect_host' | 'open_workshop' | null => {
+  const plan = (packageName || '').toUpperCase();
+  const isBasic = plan.includes('BASIC') || (!plan.includes('STANDARD') && !plan.includes('PREMIUM'));
+  if (isBasic) return 'basic_upgrade';
+  const mode = hostConnection?.connectionMode;
+  if (mode === 'light' || mode === 'full') return 'open_workshop';
+  return 'connect_host';
+};
 
 // --- HJELPEKOMPONENT: STATUS KORT (Dashboard) ---
 const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
@@ -3577,6 +3607,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
 
+  // Host-tilkoblings-info (fra client_hosts-tabellen). null = ikke hentet ennå eller
+  // ingen rad finnes. Relevante felt: connectionMode ('light' | 'full' | 'skipped'),
+  // platform, repoUrl, adminUrl, notes, lastChangedAt.
+  const [hostConnection, setHostConnection] = useState<any>(null);
+
   // --- SIDEBAR-SAMMENTREKNING (persisteres i localStorage) ---
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try {
@@ -3627,7 +3662,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           },
           body: JSON.stringify({
             url: formData.websiteUrl || clientData?.websiteUrl || '',
-            websiteHost: clientData?.websiteHost || '',
             problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
             problemDetails: activeSolveProblem,
           })
@@ -3742,14 +3776,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             companyName: raw.company_name ?? raw.companyName ?? '',
             contactPerson: raw.contact_person ?? raw.contactPerson ?? '',
             websiteUrl: raw.website_url ?? raw.websiteUrl ?? '',
-            websiteHost: raw.website_host ?? raw.websiteHost ?? '',
             targetAudience: raw.target_audience ?? raw.targetAudience ?? '',
             email: raw.email ?? '',
             phone: raw.phone ?? '',
             industry: raw.industry ?? '',
-            // Låse-tellere — standard 0 hvis kolonnene enda ikke finnes
-            url_change_count: raw.url_change_count ?? 0,
-            host_change_count: raw.host_change_count ?? 0,
+            // Ukentlig lås for URL
+            urlLastChangedAt: raw.url_last_changed_at ?? null,
           };
 
           setClientData(mapped);
@@ -3759,7 +3791,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             email: mapped.email,
             phone: mapped.phone,
             websiteUrl: mapped.websiteUrl,
-            websiteHost: mapped.websiteHost,
             industry: mapped.industry,
             targetAudience: mapped.targetAudience,
           });
@@ -3773,6 +3804,28 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             setRealRankings(JSON.parse(savedRankings));
             setHasSearched(true);
           }
+        }
+
+        // Hent host-tilkoblings-info fra client_hosts (kan være tom)
+        try {
+          const hostRows = await supabaseRest<any[]>(
+            `client_hosts?user_id=eq.${user.id}&select=*&limit=1`,
+          );
+          const hostRaw = Array.isArray(hostRows) && hostRows.length ? hostRows[0] : null;
+          if (hostRaw) {
+            setHostConnection({
+              platform: hostRaw.platform ?? null,
+              connectionMode: hostRaw.connection_mode ?? 'skipped',
+              repoUrl: hostRaw.repo_url ?? '',
+              adminUrl: hostRaw.admin_url ?? '',
+              notes: hostRaw.notes ?? '',
+              lastChangedAt: hostRaw.last_changed_at ?? null,
+            });
+          } else {
+            setHostConnection(null);
+          }
+        } catch (hostErr: any) {
+          console.warn('[ClientPortal] Kunne ikke hente client_hosts:', hostErr?.message || hostErr);
         }
       } catch (err: any) {
         console.error('[ClientPortal] Kunne ikke hente clients:', err?.message || err);
@@ -3805,29 +3858,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   }, [isAnalyzing]);
 
   // --- HANDLERS (Generelle) ---
-  // Mottar oppdatert formData fra PortalSettings (camelCase) og
-  // lagrer til DB med snake_case. Respekterer én-gangs-låsen på URL og webhost.
+  // Mottar oppdatert formData fra PortalSettings (camelCase) og lagrer til DB med snake_case.
+  // URL er låst i 7 dager etter hver endring (urlLastChangedAt). Host-info lagres i egen
+  // tabell (client_hosts) via ConnectHost-flyten, ikke her.
+  const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
   const handleSaveSettings = async (incomingFormData?: any) => {
     const merged = incomingFormData || {};
     if (!confirm("Vil du lagre endringene?")) return;
     setSaving(true);
     try {
-      const currentUrlCount: number = clientData?.url_change_count ?? 0;
-      const currentHostCount: number = clientData?.host_change_count ?? 0;
-
       const urlChanged = merged.websiteUrl !== undefined
         && merged.websiteUrl !== (clientData?.websiteUrl ?? '');
-      const hostChanged = merged.websiteHost !== undefined
-        && merged.websiteHost !== (clientData?.websiteHost ?? '');
 
-      // Blokker endring hvis låsen allerede er aktiv
-      if (urlChanged && currentUrlCount >= 1) {
-        toastError("Nettadressen er allerede låst og kan ikke endres.");
-        setSaving(false);
-        return;
-      }
-      if (hostChanged && currentHostCount >= 1) {
-        toastError("Webhost er allerede låst og kan ikke endres.");
+      // Ukentlig lås: sjekk hvor lang tid det er siden forrige URL-endring
+      const lastAt = clientData?.urlLastChangedAt ? new Date(clientData.urlLastChangedAt).getTime() : 0;
+      const sinceLast = Date.now() - lastAt;
+      if (urlChanged && lastAt > 0 && sinceLast < MS_PER_WEEK) {
+        const daysLeft = Math.ceil((MS_PER_WEEK - sinceLast) / (24 * 60 * 60 * 1000));
+        toastError(`Nettadressen kan endres på nytt om ${daysLeft} dag${daysLeft === 1 ? '' : 'er'}.`);
         setSaving(false);
         return;
       }
@@ -3842,11 +3890,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       if (merged.targetAudience !== undefined) patch.target_audience = merged.targetAudience;
       if (urlChanged) {
         patch.website_url = merged.websiteUrl;
-        patch.url_change_count = currentUrlCount + 1;
-      }
-      if (hostChanged) {
-        patch.website_host = merged.websiteHost;
-        patch.host_change_count = currentHostCount + 1;
+        patch.url_last_changed_at = new Date().toISOString();
       }
 
       await supabaseRest(`clients?user_id=eq.${user.id}`, {
@@ -3855,20 +3899,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         headers: { Prefer: 'return=representation' },
       });
 
-      // Oppdater lokal state umiddelbart slik at UI reflekterer låsingen
+      // Oppdater lokal state umiddelbart
       setClientData({
         ...clientData,
         ...merged,
-        url_change_count: urlChanged ? currentUrlCount + 1 : currentUrlCount,
-        host_change_count: hostChanged ? currentHostCount + 1 : currentHostCount,
+        urlLastChangedAt: urlChanged ? patch.url_last_changed_at : clientData?.urlLastChangedAt,
       });
 
       setSaveMessage('Lagret!');
       setIsEditing(false);
       setUrlUnlockRequested(false);
-      if (urlChanged) toastSuccess("Nettadresse lagret og låst permanent.");
-      if (hostChanged) toastSuccess("Webhost lagret og låst permanent.");
-      if (!urlChanged && !hostChanged) toastSuccess("Endringer lagret.");
+      if (urlChanged) toastSuccess("Nettadresse lagret. Kan endres igjen om 7 dager.");
+      else toastSuccess("Endringer lagret.");
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err: any) {
       console.error('[handleSaveSettings] feil:', err?.message || err);
@@ -5545,12 +5587,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                     {analysisResults ? (
                       <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-5">
-                        {!clientData?.websiteHost && (
-                          <WebhostReminderBox
-                            onGoToSettings={() => setActiveTab('settings')}
-                            theme={theme}
-                          />
-                        )}
+                        {(() => {
+                          const v = getReminderVariant(clientData?.package_name, hostConnection);
+                          if (!v) return null;
+                          return (
+                            <AnalysisReminderBox
+                              variant={v}
+                              theme={theme}
+                              onPrimary={() => {
+                                if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
+                                else if (v === 'connect_host') setActiveTab('settings');
+                                else setActiveTab('verksted');
+                              }}
+                            />
+                          );
+                        })()}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => {
                             const toneClass = i.s >= 90 ? 'text-emerald-600' : i.s >= 50 ? 'text-amber-600' : 'text-rose-600';
@@ -5675,12 +5726,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </button>
             </div>
 
-            {contentPages.length > 0 && !clientData?.websiteHost && (
-              <WebhostReminderBox
-                onGoToSettings={() => setActiveTab('settings')}
-                theme={theme}
-              />
-            )}
+            {contentPages.length > 0 && (() => {
+              const v = getReminderVariant(clientData?.package_name, hostConnection);
+              if (!v) return null;
+              return (
+                <AnalysisReminderBox
+                  variant={v}
+                  theme={theme}
+                  onPrimary={() => {
+                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
+                    else if (v === 'connect_host') setActiveTab('settings');
+                    else setActiveTab('verksted');
+                  }}
+                />
+              );
+            })()}
 
             {/* 2. KPI KORT */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -5977,12 +6037,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </button>
             </div>
 
-            {linkPages.length > 0 && !clientData?.websiteHost && (
-              <WebhostReminderBox
-                onGoToSettings={() => setActiveTab('settings')}
-                theme={theme}
-              />
-            )}
+            {linkPages.length > 0 && (() => {
+              const v = getReminderVariant(clientData?.package_name, hostConnection);
+              if (!v) return null;
+              return (
+                <AnalysisReminderBox
+                  variant={v}
+                  theme={theme}
+                  onPrimary={() => {
+                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
+                    else if (v === 'connect_host') setActiveTab('settings');
+                    else setActiveTab('verksted');
+                  }}
+                />
+              );
+            })()}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -7018,15 +7087,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <Sparkles size={14} /> Slik fikser du problemet
                           </h3>
 
-                          {/* PÅMINNELSE: webhost mangler — AI kan ikke finne konkret kode */}
-                          {!clientData?.websiteHost && !aiIsThinking && aiSolution && (
-                            <div className="mb-6">
-                              <WebhostReminderBox
-                                onGoToSettings={() => setActiveTab('settings')}
-                                theme={theme}
-                              />
-                            </div>
-                          )}
+                          {/* PÅMINNELSE: webhost mangler eller Basic-plan — AI kan ikke finne konkret kode */}
+                          {!aiIsThinking && aiSolution && (() => {
+                            const v = getReminderVariant(clientData?.package_name, hostConnection);
+                            if (!v || v === 'open_workshop') return null;
+                            return (
+                              <div className="mb-6">
+                                <AnalysisReminderBox
+                                  variant={v}
+                                  theme={theme}
+                                  onPrimary={() => {
+                                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
+                                    else setActiveTab('settings');
+                                  }}
+                                />
+                              </div>
+                            );
+                          })()}
 
                           {/* ORIGINAL-KODE-BOKS (KUN når webhost er koblet og AI fant eksakt kode) */}
                           {aiSolution?.originalCode && (
@@ -7174,6 +7251,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               theme={theme}
               setTheme={setTheme}
               onSelectPlan={onSelectPlan}
+              hostConnection={hostConnection}
+              setHostConnection={setHostConnection}
             />
           </div>
 
@@ -7184,7 +7263,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 };
 
 
-const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavigate, onSave, theme, setTheme, onSelectPlan }: any) => {
+const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavigate, onSave, theme, setTheme, onSelectPlan, hostConnection, setHostConnection }: any) => {
   const [activeTab, setActiveTab] = useState('general');
   const [showPlans, setShowPlans] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -7238,7 +7317,6 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
   const [formData, setFormData] = useState({
     companyName: clientData?.companyName || 'Min Bedrift AS',
     websiteUrl: clientData?.websiteUrl || '',
-    websiteHost: clientData?.websiteHost || '',
     email: clientData?.email || user?.email || '',
     industry: clientData?.industry || '',
     targetAudience: clientData?.targetAudience || ''
@@ -7251,18 +7329,33 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
       ...prev,
       companyName: clientData.companyName ?? prev.companyName,
       websiteUrl: clientData.websiteUrl ?? prev.websiteUrl,
-      websiteHost: clientData.websiteHost ?? prev.websiteHost,
       email: clientData.email ?? prev.email,
       industry: clientData.industry ?? prev.industry,
       targetAudience: clientData.targetAudience ?? prev.targetAudience,
     }));
   }, [clientData]);
 
-  // Én-gangs-endring for URL og webhost — tracker i DB via clients.url_change_count / host_change_count
-  const urlChangeCount: number = clientData?.url_change_count ?? 0;
-  const hostChangeCount: number = clientData?.host_change_count ?? 0;
-  const urlLocked = urlChangeCount >= 1;
-  const hostLocked = hostChangeCount >= 1;
+  // Ukentlig lås for URL. Låsen er aktiv fra siste endring og i 7 dager fremover.
+  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const urlLastChangedMs = clientData?.urlLastChangedAt ? new Date(clientData.urlLastChangedAt).getTime() : 0;
+  const urlMsUntilUnlock = urlLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - urlLastChangedMs)) : 0;
+  const urlLocked = urlMsUntilUnlock > 0;
+  const urlDaysLeft = Math.ceil(urlMsUntilUnlock / (24 * 60 * 60 * 1000));
+
+  // Tier — for å avgjøre om "Koble til webhost"-seksjonen skal vises
+  const tierPlan = (clientData?.package_name || selectedPlan || '').toString().toUpperCase();
+  const tierIsBasic = !tierPlan.includes('STANDARD') && !tierPlan.includes('PREMIUM');
+  const hostMode: string = hostConnection?.connectionMode || 'none';
+  const hostLastChangedMs = hostConnection?.lastChangedAt ? new Date(hostConnection.lastChangedAt).getTime() : 0;
+  const hostMsUntilUnlock = hostLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - hostLastChangedMs)) : 0;
+  const hostLocked = hostMsUntilUnlock > 0;
+  const hostDaysLeft = Math.ceil(hostMsUntilUnlock / (24 * 60 * 60 * 1000));
+
+  // State for "Koble til webhost"-modal inne i innstillinger
+  const [showHostConnectModal, setShowHostConnectModal] = useState(false);
+  const [hostPlatform, setHostPlatform] = useState<string>('');
+  const [hostInputValue, setHostInputValue] = useState<string>('');
+  const [hostSaving, setHostSaving] = useState(false);
 
   // --- PLAN-BYTTE ---
   const [confirmPlanChange, setConfirmPlanChange] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
@@ -7445,10 +7538,10 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
             </div>
 
             <div className="space-y-6">
-              {/* URL: KAN ENDRES ÉN GANG — deretter låst permanent */}
+              {/* URL: kan endres én gang per uke */}
               <div>
                 <InputField
-                  label={`Nettside URL${urlLocked ? ' (låst)' : ''}`}
+                  label={`Nettside URL${urlLocked ? ` (låst i ${urlDaysLeft} dag${urlDaysLeft === 1 ? '' : 'er'})` : ''}`}
                   value={formData.websiteUrl}
                   onChange={(e: any) => setFormData({ ...formData, websiteUrl: e.target.value })}
                   disabled={!isEditing || urlLocked}
@@ -7456,30 +7549,68 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
                   icon={Globe}
                   placeholder="https://minbedrift.no"
                 />
-                {!urlLocked && (
+                {!urlLocked ? (
                   <p className="text-[11px] text-amber-500 mt-2 ml-1 font-medium">
-                    Du kan endre nettadressen én gang. Etter lagring blir den låst permanent.
+                    Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-2 ml-1">
+                    Kan endres på nytt om {urlDaysLeft} dag{urlDaysLeft === 1 ? '' : 'er'}.
                   </p>
                 )}
               </div>
 
-              {/* WEBHOST: Samme én-gangs-regel */}
-              <div>
-                <InputField
-                  label={`Webhost / plattform${hostLocked ? ' (låst)' : ''}`}
-                  value={formData.websiteHost}
-                  onChange={(e: any) => setFormData({ ...formData, websiteHost: e.target.value })}
-                  disabled={!isEditing || hostLocked}
-                  forceLock={hostLocked}
-                  icon={Server}
-                  placeholder="f.eks. Shopify, WordPress, Webflow, eget webhotell"
-                />
-                {!hostLocked && (
-                  <p className="text-[11px] text-amber-500 mt-2 ml-1 font-medium">
-                    Du kan endre webhost én gang. Etter lagring blir den låst permanent.
-                  </p>
-                )}
-              </div>
+              {/* WEBHOST — egen seksjon, ikke del av vanlige "lagre"-skjemaet */}
+              {!tierIsBasic && (
+                <div className={`rounded-2xl border p-5 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Server size={16} className={theme === 'light' ? 'text-slate-700' : 'text-white'} />
+                        <h3 className={`text-sm font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Webhost-tilkobling</h3>
+                        {(hostMode === 'light' || hostMode === 'full') && (
+                          <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-600 px-2 py-0.5 rounded-full">KOBLET</span>
+                        )}
+                        {hostMode === 'skipped' && (
+                          <span className="text-[9px] font-bold bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">HOPPET OVER</span>
+                        )}
+                      </div>
+                      <p className={`text-xs leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {(hostMode === 'light' || hostMode === 'full') ? (
+                          <>
+                            Plattform: <strong>{hostConnection?.platform || 'ukjent'}</strong>
+                            {hostConnection?.repoUrl && <> · {hostConnection.repoUrl}</>}
+                            {hostConnection?.adminUrl && !hostConnection?.repoUrl && <> · {hostConnection.adminUrl}</>}
+                          </>
+                        ) : (
+                          <>Koble til hvor nettsiden din ligger, så kan AI-en vise eksakt hvilken kode-linje du må fjerne og hva du skal erstatte den med.</>
+                        )}
+                      </p>
+                      {hostLocked && (
+                        <p className="text-[11px] text-slate-400 mt-2">
+                          Kan endres på nytt om {hostDaysLeft} dag{hostDaysLeft === 1 ? '' : 'er'}.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={hostLocked}
+                      onClick={() => {
+                        setHostPlatform(hostConnection?.platform || '');
+                        setHostInputValue(hostConnection?.repoUrl || hostConnection?.adminUrl || hostConnection?.notes || '');
+                        setShowHostConnectModal(true);
+                      }}
+                      className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                        hostLocked
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-violet-600 hover:bg-violet-500 text-white shadow-sm'
+                      }`}
+                    >
+                      <Server size={14} /> {(hostMode === 'light' || hostMode === 'full') ? 'Endre' : 'Koble til'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <InputField
                 label="E-post adresse"
@@ -7770,6 +7901,109 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* --- KOBLE-TIL-HOST MODAL (inne i innstillinger) --- */}
+        {showHostConnectModal && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+            <div className={`border rounded-2xl p-6 w-full max-w-md shadow-2xl ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className={`text-lg font-black flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  <Server size={18} /> Koble til webhost
+                </h3>
+                <button onClick={() => setShowHostConnectModal(false)} className={theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-slate-400 hover:text-white'}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Plattform</label>
+                <select
+                  value={hostPlatform}
+                  onChange={(e) => setHostPlatform(e.target.value)}
+                  className={`w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}`}
+                >
+                  <option value="">Velg plattform...</option>
+                  <option value="github">GitHub (repo)</option>
+                  <option value="wordpress">WordPress</option>
+                  <option value="shopify">Shopify</option>
+                  <option value="wix">Wix</option>
+                  <option value="webflow">Webflow</option>
+                  <option value="vercel">Vercel</option>
+                  <option value="custom">Eget webhotell / annet</option>
+                </select>
+              </div>
+
+              {hostPlatform && (
+                <div className="mb-6">
+                  <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {hostPlatform === 'github' ? 'URL til repository' : hostPlatform === 'custom' ? 'Beskrivelse' : 'URL til siden / admin'}
+                  </label>
+                  <input
+                    type="text"
+                    value={hostInputValue}
+                    onChange={(e) => setHostInputValue(e.target.value)}
+                    placeholder={
+                      hostPlatform === 'github' ? 'https://github.com/brukernavn/repo' :
+                      hostPlatform === 'wordpress' ? 'https://dinside.no/wp-admin' :
+                      hostPlatform === 'shopify' ? 'https://dinside.myshopify.com' :
+                      hostPlatform === 'custom' ? 'F.eks. one.com, Bluehost cPanel…' :
+                      'https://...'
+                    }
+                    className={`w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}`}
+                  />
+                </div>
+              )}
+
+              <button
+                disabled={!hostPlatform || !hostInputValue.trim() || hostSaving}
+                onClick={async () => {
+                  setHostSaving(true);
+                  try {
+                    const body: any = {
+                      user_id: user.id,
+                      platform: hostPlatform,
+                      connection_mode: 'light',
+                      repo_url: hostPlatform === 'github' ? hostInputValue.trim() : null,
+                      admin_url: (hostPlatform !== 'github' && hostPlatform !== 'custom') ? hostInputValue.trim() : null,
+                      notes: hostPlatform === 'custom' ? hostInputValue.trim() : null,
+                      last_changed_at: new Date().toISOString(),
+                    };
+                    await supabaseRest('client_hosts?on_conflict=user_id', {
+                      method: 'POST',
+                      body,
+                      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+                    });
+                    // Oppdater lokalt
+                    if (typeof setHostConnection === 'function') {
+                      setHostConnection({
+                        platform: body.platform,
+                        connectionMode: 'light',
+                        repoUrl: body.repo_url || '',
+                        adminUrl: body.admin_url || '',
+                        notes: body.notes || '',
+                        lastChangedAt: body.last_changed_at,
+                      });
+                    }
+                    toastSuccess('Webhost koblet til. Låst i 7 dager.');
+                    setShowHostConnectModal(false);
+                  } catch (err: any) {
+                    console.error('[Settings] Kunne ikke lagre host:', err);
+                    toastError('Kunne ikke lagre: ' + (err?.message || 'ukjent feil'));
+                  } finally {
+                    setHostSaving(false);
+                  }
+                }}
+                className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-all flex justify-center items-center gap-2"
+              >
+                {hostSaving ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={14} /> Lagre tilkobling</>}
+              </button>
+
+              <p className={`text-[11px] mt-4 text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                URL-en brukes kun som kontekst for AI-analyse. Sikt får ikke skrive-tilgang.
+              </p>
+            </div>
           </div>
         )}
 
@@ -8421,22 +8655,32 @@ function App() {
   // 🚪 DØRVAKT 2: PROSESS (Registrering & Integrasjon)
   // ---------------------------------------------------------
 
-  // 1. Skjemaet etter betaling
+  // Hjelpefunksjon: utled tier (Basic/Standard/Premium) fra plan-navn
+  const getTier = (): 'BASIC' | 'STANDARD' | 'PREMIUM' => {
+    const planStr = (selectedPlan || '').toString().toUpperCase();
+    if (planStr.includes('PREMIUM')) return 'PREMIUM';
+    if (planStr.includes('STANDARD')) return 'STANDARD';
+    return 'BASIC';
+  };
+
+  // 1. Skjemaet etter betaling. Basic-brukere går RETT til success (hopper over host-steget).
   if (view === 'onboarding') {
-    return <>{devOverlay}<OnboardingPage user={user} onComplete={() => setView('setup')} /></>;
+    return <>{devOverlay}<OnboardingPage user={user} onComplete={() => {
+      const nextView = getTier() === 'BASIC' ? 'success' : 'setup';
+      setView(nextView);
+    }} /></>;
   }
 
-  // 2. Kildekode-integrasjon (Den nye siden din)
+  // 2. Koble til webhost (kun Standard/Premium ser dette steget)
   if (view === 'setup' || view === 'setup_guide') {
     return (
       <>
       {devOverlay}
       <CodeIntegrationStep
-        onNext={(files) => {
-          setCustomerFiles(files); // Vi lagrer koden i minnet!
-          setView('success');
-        }}
-        onSkip={() => setView('success')}
+        userId={user.id}
+        tier={getTier()}
+        onFinish={() => setView('success')}
+        onUpgrade={() => { setView('home'); setTimeout(() => document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth' }), 200); }}
       />
       </>
     );
