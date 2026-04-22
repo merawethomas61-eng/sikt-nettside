@@ -1314,23 +1314,34 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      console.log("[Onboarding] 2/5 Sender upsert til Supabase...");
+      console.log("[Onboarding] 2/5 Sender upsert til Supabase...", dataTilDatabase);
 
-      // Hard timeout: Hvis Supabase henger > 10s, kaster vi egen feil
-      // slik at knappen aldri blir stående som "Lagrer data..." i evigheter.
-      const upsertPromise = supabase
-        .from('clients')
-        .upsert(dataTilDatabase, { onConflict: 'user_id' });
+      // Bruk AbortController: Supabase-klienten støtter .abortSignal() og
+      // rydder opp ordentlig hvis forespørselen henger. Vi legger også til
+      // .select() slik at vi faktisk får tilbake raden og kan bekrefte skrivet.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Tidsavbrudd mot Supabase (10s)")), 10000)
-      );
+      let skriveFeil: any = null;
+      let skriveData: any = null;
+      try {
+        const result = await supabase
+          .from('clients')
+          .upsert(dataTilDatabase, { onConflict: 'user_id' })
+          .select()
+          .abortSignal(controller.signal);
+        skriveFeil = result.error;
+        skriveData = result.data;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
-      const { error: skriveFeil } = (await Promise.race([upsertPromise, timeoutPromise])) as any;
-
-      console.log("[Onboarding] 3/5 Upsert fullført", { skriveFeil });
+      console.log("[Onboarding] 3/5 Upsert fullført", { skriveFeil, skriveData });
 
       if (skriveFeil) throw skriveFeil;
+      if (!skriveData || skriveData.length === 0) {
+        throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk at clients-tabellen har INSERT/UPDATE-policy for authenticated brukere.");
+      }
 
       console.log("[Onboarding] 4/5 Kaller onComplete() for å gå til neste steg");
 
@@ -1343,8 +1354,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       console.log("[Onboarding] 5/5 Ferdig");
 
     } catch (error: any) {
-      console.error("[Onboarding] Feil ved lagring:", error?.message || error);
-      toastError("Noe gikk galt under lagring: " + (error?.message || error));
+      const rawMsg = error?.message || String(error);
+      const friendlyMsg = /abort/i.test(rawMsg)
+        ? "Tidsavbrudd (20s) — Supabase svarte ikke. Sjekk nettverkstilkobling og RLS-policy på clients-tabellen."
+        : rawMsg;
+      console.error("[Onboarding] Feil ved lagring:", { message: rawMsg, details: error?.details, code: error?.code, hint: error?.hint });
+      toastError("Noe gikk galt under lagring: " + friendlyMsg);
     } finally {
       setLoading(false);
     }
