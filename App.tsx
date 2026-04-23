@@ -3612,6 +3612,74 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // platform, repoUrl, adminUrl, notes, lastChangedAt.
   const [hostConnection, setHostConnection] = useState<any>(null);
 
+  // Konkurrenter: ekte domener fra dine Google-resultater (SERP), kan fjernes manuelt
+  const [trackedCompetitors, setTrackedCompetitors] = useState<{ id: string; domain: string; title?: string; url?: string; serpRank: number; sourceKeyword?: string }[]>([]);
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const raw = localStorage.getItem(`sikt_competitors_${user.id}`);
+      if (raw) setTrackedCompetitors(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, [user?.id]);
+
+  const persistCompetitors = (list: typeof trackedCompetitors) => {
+    setTrackedCompetitors(list);
+    if (user?.id) {
+      try { localStorage.setItem(`sikt_competitors_${user.id}`, JSON.stringify(list)); } catch { /* ignore */ }
+    }
+  };
+
+  const loadCompetitorsFromSerp = () => {
+    const rawUrl = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
+    if (!rawUrl) { toastWarning('Legg inn nettside-URL under Innstillinger først.'); return; }
+    const cleanDomain = rawUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
+    const out: typeof trackedCompetitors = [];
+    const seen = new Set<string>();
+    for (const r of realRankings || []) {
+      const myPos = typeof (r as any).position === 'number' ? (r as any).position : 101;
+      for (const c of (r as any).competitors || []) {
+        try {
+          if (!c?.url) continue;
+          const cp = typeof c.position === 'number' ? c.position : 999;
+          if (myPos <= 100) {
+            if (cp >= myPos) continue;
+          } else {
+            if (cp > 20) continue;
+          }
+          const host = new URL(c.url).hostname.replace(/^www\./i, '').toLowerCase();
+          if (!host || host === cleanDomain) continue;
+          if (seen.has(host)) continue;
+          seen.add(host);
+          out.push({
+            id: host,
+            domain: host,
+            title: c.title,
+            url: c.url,
+            serpRank: cp,
+            sourceKeyword: (r as any).keyword,
+          });
+        } catch { /* ignore */ }
+      }
+    }
+    out.sort((a, b) => a.serpRank - b.serpRank);
+    const cap = hasPremium ? 12 : hasStandardOrHigher ? 6 : 4;
+    if (out.length === 0) {
+      toastWarning('Ingen konkurrenter funnet. Kjør «Kjør Analyse» på søkeord-fanen først — vi henter da ekte treff fra Google.');
+      return;
+    }
+    persistCompetitors(out.slice(0, cap));
+    toastSuccess(`La til ${Math.min(out.length, cap)} konkurrenter fra søkeresultater (bedre plassering enn deg i listen).`);
+  };
+
+  const removeCompetitor = (id: string) => {
+    persistCompetitors(trackedCompetitors.filter((c) => c.id !== id));
+  };
+
+  // --- GEO / AI-synlighet chat ---
+  const [geoChatInput, setGeoChatInput] = useState('');
+  const [geoChatLoading, setGeoChatLoading] = useState(false);
+  const [geoChatReply, setGeoChatReply] = useState<string | null>(null);
+
   // --- SIDEBAR-SAMMENTREKNING (persisteres i localStorage) ---
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try {
@@ -3654,28 +3722,43 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
       try {
         const accessToken = getStoredAccessToken();
+        if (!accessToken) {
+          setAiSolution({
+            steps: [{ title: 'Ikke innlogget', description: 'Logg inn på nytt og prøv «Gå til dybde» igjen.' }],
+            codePatch: null,
+          });
+          return;
+        }
         const response = await fetch('/api/solve-problem', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             url: formData.websiteUrl || clientData?.websiteUrl || '',
             problemTitle: activeSolveProblem.raw?.title || activeSolveProblem.title || 'Ukjent feil',
             problemDetails: activeSolveProblem,
-          })
+          }),
         });
 
-        if (!response.ok) throw new Error("Klarte ikke å koble til AI");
-
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const msg = data?.error || data?.message || `HTTP ${response.status}`;
+          setAiSolution({
+            steps: [{ title: 'AI-serveren svarte med feil', description: String(msg) }],
+            explanation: String(msg),
+            codePatch: null,
+          });
+          return;
+        }
         setAiSolution(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setAiSolution({
-          explanation: "Systembeskjed: Klarte ikke å koble til AI-serveren. Sjekk at api/solve-problem.js kjører riktig.",
-          codePatch: null
+          steps: [{ title: 'Nettverksfeil', description: error?.message || 'Ukjent feil. Sjekk internett og at OPENAI_API_KEY er satt i Vercel.' }],
+          explanation: error?.message || 'Ukjent feil',
+          codePatch: null,
         });
       } finally {
         setAiIsThinking(false);
@@ -3766,7 +3849,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     return 1;
   };
 
-  const currentLevel = clientData ? getPackageLevel(clientData.package_name) : 1;
   const currentPkgName = clientData?.package_name || 'Basic';
 
   const plans = [
@@ -3775,9 +3857,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { name: 'Premium', level: 3, price: '9 990', color: 'violet', features: ['Alt i Standard', 'Teknisk Helse', 'SEO-Garanti', 'Prioritert Support'] }
   ];
 
-  const pkgLower = (clientData?.package_name || '').toLowerCase();
-  const hasStandardOrHigher = pkgLower.includes('standard') || pkgLower.includes('premium');
-  const hasPremium = pkgLower.includes('premium');
+  const planBundle = `${clientData?.package_name || ''} ${selectedPlan || ''} ${typeof window !== 'undefined' ? (localStorage.getItem('sikt_dev_plan') || '') : ''}`;
+  const hasPremium = /premium/i.test(planBundle) || /⭐\s*⭐\s*⭐/.test(planBundle);
+  const hasStandardOrHigher = hasPremium || /standard/i.test(planBundle);
+  const dbPackageLevel = clientData ? getPackageLevel(clientData.package_name) : 1;
+  const bundlePackageLevel = hasPremium ? 3 : hasStandardOrHigher ? 2 : 1;
+  const currentLevel = Math.max(dbPackageLevel, bundlePackageLevel);
+
+  const formatGoogleRankDisplay = (position: number): { short: string; explain: string } => {
+    if (position == null || position <= 0) return { short: '—', explain: 'Ingen organisk treff registrert for ditt domene i dette søket (sjekk URL under Innstillinger).' };
+    if (position > 100) return { short: '100+', explain: 'Du er ikke blant de 100 øverste organiske resultatene for dette søket og stedet. Jobb med mer relevant innhold, lokale signaler og teknisk SEO — kjør analysen på nytt etter endringer.' };
+    if (position > 50) return { short: '50+', explain: 'Utenfor topp 50. Synlig, men langt fra side 1. Prioriter én sterk landingsside for dette søkeordet.' };
+    if (position > 20) return { short: String(position), explain: `Plass ${position} — typisk side 2–3. Målet er topp 10; forbedre tittel, innhold og interne lenker.` };
+    if (position > 10) return { short: String(position), explain: `Plass ${position} — du er på førsteside, men under topp 10. Små forbedringer i relevans kan løfte deg.` };
+    if (position > 3) return { short: String(position), explain: `Plass ${position} i topp 10 — god synlighet. Hold siden oppdatert og bygg tillit (lenker, omtaler).` };
+    return { short: String(position), explain: 'Topp 3 — veldig sterk plassering for dette søket.' };
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -3977,11 +4072,59 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     const stripeLenke = "https://buy.stripe.com/test_din_stripe_lenke";
     window.location.href = `${stripeLenke}?client_reference_id=${user.id}`;
   };
+
+  const sendGeoChat = async () => {
+    const q = geoChatInput.trim();
+    if (!q || geoChatLoading || !hasPremium) return;
+    const token = getStoredAccessToken();
+    if (!token) {
+      toastError('Du må være logget inn. Prøv å logge inn på nytt.');
+      return;
+    }
+    setGeoChatLoading(true);
+    setGeoChatReply(null);
+    try {
+      const ctx = [clientData?.companyName, formData.websiteUrl || clientData?.websiteUrl, clientData?.industry].filter(Boolean).join(' · ');
+      const prompt = `Du er Sikt AI, en norsk rådgiver for synlighet i Google og generativ søk (ChatGPT m.fl.). Bedriftskontekst: ${ctx || 'ikke oppgitt'}. Svar kort, konkret og på norsk (maks ca. 150 ord). Ingen hallusinerte tall om rangering — gi metode og prioritering.\n\nSpørsmål: ${q}`;
+      const res = await fetch('/api/openai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ prompt, model: 'gpt-4o-mini', maxTokens: 450 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : (data?.message || `Feil ${res.status}`));
+      const text = String(data.content || '').trim();
+      setGeoChatReply(text || 'Tomt svar fra modellen.');
+    } catch (e: any) {
+      toastError(e?.message || 'Kunne ikke nå AI.');
+      setGeoChatReply(null);
+    } finally {
+      setGeoChatLoading(false);
+    }
+  };
+
   const handleUnlockUrl = () => { if (confirm("Endring av URL nullstiller historikk. Sikker?")) setUrlUnlockRequested(true); };
 
   // --- NY STATE FOR DENNE SIDEN ---
   const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null); // For AI-analyse
+  const [trendKeywordKey, setTrendKeywordKey] = useState<string | null>(null);
+
+  const keywordRowKey = (k: Pick<KeywordData, 'keyword' | 'location'>) => `${k.keyword}\t${k.location || ''}`;
+
+  useEffect(() => {
+    if (!keywordData?.length) {
+      setTrendKeywordKey(null);
+      return;
+    }
+    const keys = keywordData.map((k) => keywordRowKey(k));
+    const selKey = selectedKeyword ? keywordRowKey(selectedKeyword) : null;
+    setTrendKeywordKey((prev) => {
+      if (prev && keys.includes(prev)) return prev;
+      if (selKey && keys.includes(selKey)) return selKey;
+      return keys[0];
+    });
+  }, [keywordData, selectedKeyword]);
 
 
 
@@ -4218,10 +4361,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     // EKTE TEKSTGENERERING VIA BACKEND (sikker — OpenAI-nøkkel lever kun på serveren)
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      const accessToken = getStoredAccessToken();
+      if (!accessToken) {
         toastError("Du må være logget inn for å bruke AI-funksjoner.");
-        setAiLoading(null);
         return;
       }
 
@@ -4231,7 +4373,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           prompt,
@@ -4240,10 +4382,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || 'Ukjent feil fra AI');
+        const errMsg = typeof data?.error === 'string' ? data.error : (data?.message || `HTTP ${response.status}`);
+        throw new Error(errMsg);
       }
 
       if (data.content) {
@@ -4255,9 +4398,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       } else {
         throw new Error("Fikk ikke svar fra AI.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setAiResponse({ type: 'text', title: 'Feil', content: 'Kunne ikke koble til AI. Prøv igjen senere.' });
+      const msg = error?.message || 'Kunne ikke koble til AI. Prøv igjen senere.';
+      toastError(msg);
+      setAiResponse({ type: 'text', title: 'Feil', content: msg });
     } finally {
       setAiLoading(null);
     }
@@ -4573,9 +4718,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         }
       });
 
-      const results = (await Promise.all(promises)).filter(Boolean);
+      const results = (await Promise.all(promises)).filter(Boolean) as any[];
       setKeywordData(results);
       setRealRankings(results);
+      setKeywordsToTrack(results.map((r: any) => ({ keyword: r.keyword, location: r.location })));
 
       // Logg til Ukens kvittering
       const top10 = results.filter((r: any) => r.position <= 10).length;
@@ -5510,80 +5656,82 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             </div>
 
-            {/* Varsler (seneste endringer) */}
-            <div className={`${portalCard} rounded-2xl overflow-hidden`}>
-              <div className={`p-5 border-b ${portalDivider}`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Siste varsler</p>
-              </div>
-              <div className={`divide-y ${portalDivider}`}>
-                {[
-                  { comp: 'konkurrent-a.no', type: 'Nytt innhold', what: 'Publiserte ny bloggpost: «Komplett guide til vinterjakker»', when: 'For 2 timer siden', severity: 'info' },
-                  { comp: 'konkurrent-b.no', type: 'Prisendring', what: 'Satte ned prisen på toppselger med 15%', when: 'I går', severity: 'warn' },
-                  { comp: 'konkurrent-a.no', type: 'Teknisk fiks', what: 'Forbedret sidefart: mobil LCP fra 4.2s → 1.8s', when: '2 dager siden', severity: 'warn' },
-                  ...(hasStandardOrHigher ? [{ comp: 'konkurrent-c.no', type: 'Ny søkeordstrategi', what: 'Ranker nå på #3 for «varm vinterjakke dame» (tidligere #14)', when: '3 dager siden', severity: 'warn' as const }] : []),
-                ].map((v, i) => {
-                  const pillClass = v.severity === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600';
-                  return (
-                    <div key={i} className="p-5 flex items-start gap-4">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${v.severity === 'warn' ? 'bg-amber-500' : 'bg-slate-400'}`}></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className={`text-sm font-black ${portalTextMain}`}>{v.comp}</span>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${pillClass}`}>{v.type}</span>
-                        </div>
-                        <p className={`text-sm ${portalTextDim}`}>{v.what}</p>
-                      </div>
-                      <span className={`text-[10px] ${portalTextLabel} shrink-0 whitespace-nowrap`}>{v.when}</span>
-                    </div>
-                  );
-                })}
+            <div className={`${portalCard} rounded-2xl p-5 space-y-3`}>
+              <p className={`text-sm ${portalTextDim}`}>
+                <strong className={portalTextMain}>Ekte konkurrenter</strong> hentes fra dine egne Google-resultater når du kjører <strong>«Kjør Analyse»</strong> under Søkeord.
+                Vi lister domener som ligger foran deg i SERP — ikke fiktive eksempler. Du kan fjerne treff du ikke vil følge.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={loadCompetitorsFromSerp}
+                  className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-black hover:bg-violet-500 transition"
+                >
+                  Hent / oppdater fra søkeresultater
+                </button>
+                {trackedCompetitors.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { persistCompetitors([]); toastSuccess('Konkurrentlisten er tømt.'); }}
+                    className={`px-4 py-2 rounded-xl text-xs font-black border ${portalIsLight ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-white/10 text-slate-200 hover:bg-white/5'}`}
+                  >
+                    Tøm listen
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Konkurrent-liste */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { name: 'konkurrent-a.no', score: 72, keywords: 142, traffic: '8.2k', change: '+4%', trend: 'up' },
-                { name: 'konkurrent-b.no', score: 68, keywords: 98, traffic: '5.1k', change: '-2%', trend: 'down' },
-                ...(hasStandardOrHigher ? [{ name: 'konkurrent-c.no', score: 81, keywords: 210, traffic: '12.4k', change: '+11%', trend: 'up' as const }] : []),
-                ...(hasPremium ? [
-                  { name: 'konkurrent-d.no', score: 64, keywords: 76, traffic: '3.8k', change: '+1%', trend: 'up' as const },
-                  { name: 'konkurrent-e.no', score: 77, keywords: 165, traffic: '9.1k', change: '+6%', trend: 'up' as const },
-                ] : []),
-              ].map((c, i) => (
-                <div key={i} className={`${portalCard} rounded-2xl p-5`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className={`text-sm font-black ${portalTextMain} truncate`}>{c.name}</p>
-                    <button className={`${portalTextLabel} hover:text-violet-600 transition`}>
-                      <ExternalLink size={13} />
-                    </button>
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className={`text-3xl font-black ${portalTextMain}`}>{c.score}</span>
-                    <span className={`text-xs ${portalTextLabel}`}>/ 100</span>
-                    <span className={`ml-auto text-xs font-black ${c.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>{c.change}</span>
-                  </div>
-                  <div className={`grid grid-cols-2 gap-3 pt-3 border-t ${portalDivider}`}>
-                    <div>
-                      <p className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>Søkeord</p>
-                      <p className={`text-sm font-black ${portalTextMain}`}>{c.keywords}</p>
-                    </div>
-                    <div>
-                      <p className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>Estimert trafikk</p>
-                      <p className={`text-sm font-black ${portalTextMain}`}>{c.traffic}</p>
-                    </div>
-                  </div>
+            <div className={`${portalCard} rounded-2xl overflow-hidden`}>
+              <div className={`p-5 border-b ${portalDivider}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Overvåkede konkurrenter</p>
+                <p className={`text-xs mt-1 ${portalTextDim}`}>Domene · ca. plass i Google for søket du analyserte · du kan fjerne enkeltvise treff.</p>
+              </div>
+              {trackedCompetitors.length === 0 ? (
+                <div className={`p-8 text-center ${portalTextDim} text-sm`}>
+                  Ingen lagret ennå. Kjør søkeordsanalyse først, deretter «Hent / oppdater fra søkeresultater».
                 </div>
-              ))}
+              ) : (
+                <div className={`divide-y ${portalDivider}`}>
+                  {trackedCompetitors.map((c) => (
+                    <div key={c.id} className="p-5 flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`text-sm font-black ${portalTextMain}`}>{c.domain}</span>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-slate-100 text-slate-600' : 'bg-slate-800 text-slate-300'}`}>
+                            ~#{c.serpRank}
+                          </span>
+                        </div>
+                        {c.sourceKeyword && (
+                          <p className={`text-[11px] ${portalTextLabel}`}>Fra søk: «{c.sourceKeyword}»</p>
+                        )}
+                        {c.title && (
+                          <p className={`text-xs ${portalTextDim} mt-1 line-clamp-2`}>{c.title}</p>
+                        )}
+                        {c.url && (
+                          <a href={c.url} target="_blank" rel="noreferrer" className="text-[11px] text-violet-600 hover:underline mt-1 inline-flex items-center gap-1">
+                            <ExternalLink size={11} /> Åpne resultat
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { removeCompetitor(c.id); toastSuccess(`Fjernet ${c.domain}`); }}
+                        className={`shrink-0 p-2 rounded-lg transition ${portalIsLight ? 'text-slate-400 hover:bg-rose-50 hover:text-rose-600' : 'text-slate-500 hover:bg-white/10 hover:text-rose-400'}`}
+                        title="Fjern fra listen"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              {/* Legg til konkurrent */}
-              <button className={`rounded-2xl p-5 border-2 border-dashed flex flex-col items-center justify-center text-center gap-2 min-h-[180px] transition ${portalIsLight ? 'border-slate-200 hover:border-violet-400 hover:bg-violet-50/30' : 'border-white/10 hover:border-violet-500/40'}`}>
-                <div className={`w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center ${portalIsLight ? '' : 'bg-violet-500/10'}`}>
-                  <Plus size={16} className="text-violet-600" />
-                </div>
-                <p className={`text-sm font-black ${portalTextMain}`}>Legg til konkurrent</p>
-                <p className={`text-[11px] ${portalTextDim}`}>{hasPremium ? 'Ingen grense' : hasStandardOrHigher ? 'Inntil 3 konkurrenter' : 'Inntil 2 konkurrenter'}</p>
-              </button>
+            <div className={`${portalCard} rounded-2xl p-5`}>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel} mb-2`}>Varsler om endringer</p>
+              <p className={`text-sm ${portalTextDim}`}>
+                Automatiske «konkurrenten publiserte nytt»-varsler er ikke aktivert ennå. Her viser vi bare <strong className={portalTextMain}>data du allerede har hentet</strong> fra Google via Søkeord-fanen.
+              </p>
             </div>
           </div>
         )}
@@ -5612,12 +5760,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <h2 className={`text-xl font-black ${portalTextMain}`}>AI-synlighet</h2>
             </div>
 
-            {/* LLM-kort */}
+            <p className={`text-xs ${portalTextDim}`}>
+              <span className={`font-bold ${portalTextMain}`}>Illustrasjon:</span> Tallene under er eksempeldata for å vise layout. Ekte ukentlig sporing mot ChatGPT, Gemini og Perplexity kobles på når API-et er klart — vi viser ikke «ekte» nevner før da.
+            </p>
+
+            {/* LLM-kort (eksempelvisning) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
-                { name: 'ChatGPT', mentions: hasPremium ? 14 : 0, total: 30, trend: '+3', bg: 'bg-emerald-50', fg: 'text-emerald-600', fill: 'bg-emerald-500' },
-                { name: 'Gemini', mentions: hasPremium ? 9 : 0, total: 30, trend: '+1', bg: 'bg-violet-50', fg: 'text-violet-600', fill: 'bg-violet-500' },
-                { name: 'Perplexity', mentions: hasPremium ? 18 : 0, total: 30, trend: '+5', bg: 'bg-amber-50', fg: 'text-amber-600', fill: 'bg-amber-500' },
+                { name: 'ChatGPT', mentions: 14, total: 30, trend: '+3', bg: 'bg-emerald-50', fg: 'text-emerald-600', fill: 'bg-emerald-500' },
+                { name: 'Gemini', mentions: 9, total: 30, trend: '+1', bg: 'bg-violet-50', fg: 'text-violet-600', fill: 'bg-violet-500' },
+                { name: 'Perplexity', mentions: 18, total: 30, trend: '+5', bg: 'bg-amber-50', fg: 'text-amber-600', fill: 'bg-amber-500' },
               ].map((llm, i) => {
                 const pct = Math.round((llm.mentions / llm.total) * 100);
                 return (
@@ -5629,34 +5781,35 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </div>
                         <span className={`text-sm font-black ${portalTextMain}`}>{llm.name}</span>
                       </div>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600`}>{hasPremium ? llm.trend : '—'}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-slate-100 text-slate-500' : 'bg-slate-800 text-slate-400'}`}>Eksempel</span>
                     </div>
                     <div className="flex items-baseline gap-1 mb-3">
-                      <span className={`text-4xl font-black ${portalTextMain}`}>{hasPremium ? llm.mentions : '—'}</span>
+                      <span className={`text-4xl font-black ${portalTextMain}`}>{llm.mentions}</span>
                       <span className={`text-sm ${portalTextLabel}`}>/ {llm.total} spørsmål</span>
+                      <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600`}>{llm.trend}</span>
                     </div>
                     <div className={`h-1.5 ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'} rounded-full overflow-hidden mb-2`}>
-                      <div className={`h-full rounded-full ${llm.fill} transition-all duration-700`} style={{ width: `${hasPremium ? pct : 0}%` }} />
+                      <div className={`h-full rounded-full ${llm.fill} transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
-                    <p className={`text-[11px] ${portalTextDim}`}>Nevnt i {hasPremium ? pct : 0}% av relevante spørsmål</p>
+                    <p className={`text-[11px] ${portalTextDim}`}>I en ekte rapport: andel spørsmål der du ble nevnt (illustrasjon: {pct}%).</p>
                   </div>
                 );
               })}
             </div>
 
-            {/* Eksempel-spørsmål */}
+            {/* Eksempel-spørsmål (alle brukere — merket som demo) */}
             <div className={`${portalCard} rounded-2xl overflow-hidden`}>
-              <div className={`p-5 border-b ${portalDivider} flex items-center justify-between`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Spørsmål Sikt testet denne uken</p>
-                <span className={`text-xs ${portalTextDim}`}>{hasPremium ? '41 spørsmål' : '—'}</span>
+              <div className={`p-5 border-b ${portalDivider} flex items-center justify-between flex-wrap gap-2`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Eksempel: spørsmål som kan testes</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-amber-50 text-amber-800' : 'bg-amber-500/20 text-amber-200'}`}>Ikke live-data for din bedrift</span>
               </div>
               <div className={`divide-y ${portalDivider}`}>
-                {(hasPremium ? [
+                {[
                   { q: '"Hvilket SEO-byrå passer best for en nettbutikk?"', mentioned: true, source: 'ChatGPT', position: 2 },
                   { q: '"Beste måte å rangere høyere på Google i 2026?"', mentioned: true, source: 'Perplexity', position: 4 },
                   { q: '"Hva koster et SEO-byrå i Norge?"', mentioned: false, source: 'Gemini', position: null },
                   { q: '"Automatisert SEO for små bedrifter?"', mentioned: true, source: 'ChatGPT', position: 1 },
-                ] : []).map((t, i) => (
+                ].map((t, i) => (
                   <div key={i} className="p-5 flex items-start gap-4">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.mentioned ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
                       {t.mentioned ? <CheckCircle2 size={14} /> : <X size={14} />}
@@ -5666,19 +5819,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <div className="flex items-center gap-3 mt-1 flex-wrap">
                         <span className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>{t.source}</span>
                         {t.mentioned ? (
-                          <span className="text-[10px] font-black text-emerald-600">Nevnt som #{t.position}</span>
+                          <span className="text-[10px] font-black text-emerald-600">Eksempel: nevnt som #{t.position}</span>
                         ) : (
-                          <span className="text-[10px] font-black text-rose-600">Ikke nevnt</span>
+                          <span className="text-[10px] font-black text-rose-600">Eksempel: ikke nevnt</span>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
-                {!hasPremium && (
-                  <div className="p-12 text-center">
-                    <p className={`text-sm ${portalTextDim}`}>Oppgrader til Premium for å se hvilke spørsmål bedriften din nevnes i.</p>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -5691,19 +5839,33 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
                   <div>
                     <p className={`text-sm font-black ${portalTextMain}`}>Spør Sikt AI</p>
-                    <p className={`text-[11px] ${portalTextDim}`}>AI-en kjenner alle dine SEO-data. Tilgjengelig 24/7.</p>
+                    <p className={`text-[11px] ${portalTextDim}`}>Stil et kort spørsmål om synlighet og innhold. Vi bruker din profil-URL og bransje som kontekst — ikke sensitive data.</p>
                   </div>
                 </div>
                 <div className={`flex items-center gap-2 p-2 rounded-xl border ${portalIsLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800 border-white/10'}`}>
                   <input
                     type="text"
-                    placeholder="F.eks. «Hva bør jeg gjøre for å rangere bedre på 'vinterjakke'?»"
-                    className={`flex-1 bg-transparent outline-none text-sm ${portalTextMain} placeholder:${portalTextLabel}`}
+                    value={geoChatInput}
+                    onChange={(e) => setGeoChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendGeoChat())}
+                    placeholder="F.eks. «Hvordan kan en elektriker bedre lokale søk?»"
+                    disabled={geoChatLoading}
+                    className={`flex-1 bg-transparent outline-none text-sm ${portalTextMain} placeholder:text-slate-400`}
                   />
-                  <button className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 transition">
-                    <Send size={14} />
+                  <button
+                    type="button"
+                    onClick={() => sendGeoChat()}
+                    disabled={geoChatLoading || !geoChatInput.trim()}
+                    className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 transition disabled:opacity-50"
+                  >
+                    {geoChatLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                   </button>
                 </div>
+                {geoChatReply && (
+                  <div className={`mt-4 p-4 rounded-xl text-sm leading-relaxed border ${portalIsLight ? 'bg-violet-50 border-violet-100 text-slate-800' : 'bg-white/5 border-white/10 text-slate-200'}`}>
+                    {geoChatReply}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -5813,7 +5975,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               <p className={`text-2xl font-black ${portalTextMain}`}>{analysisResults[activeDevice].extras?.totalWeight || '-'}</p>
                             </div>
                             <div className={`col-span-2 ${portalCard} p-4 rounded-2xl`}>
-                              <DetailedHealthCheck result={analysisResults[activeDevice]} />
+                              <DetailedHealthCheck result={analysisResults[activeDevice]} theme={theme === 'light' ? 'light' : 'dark'} />
                             </div>
                           </div>
                         </div>
@@ -6154,10 +6316,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </div>
 
                           {aiResponse && (
-                            <div className={`mb-4 p-3 rounded-lg border animate-in slide-in-from-top-2 ${theme === 'light' ? 'bg-violet-50 border-violet-100' : 'bg-white/10 border-white/10'}`}>
-                              <p className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1"><Sparkles size={10} /> {aiResponse.title}</p>
+                            <div className={`mb-4 p-3 rounded-lg border animate-in slide-in-from-top-2 ${aiResponse.title === 'Feil' ? (theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/30') : (theme === 'light' ? 'bg-violet-50 border-violet-100' : 'bg-white/10 border-white/10')}`}>
+                              <p className={`text-[10px] font-bold uppercase mb-1 flex items-center gap-1 ${aiResponse.title === 'Feil' ? 'text-rose-600' : 'text-emerald-500'}`}>{aiResponse.title === 'Feil' ? <AlertTriangle size={10} /> : <Sparkles size={10} />}{aiResponse.title}</p>
                               {aiResponse.type === 'text' ? (
-                                <p className={`text-xs leading-relaxed italic ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>"{aiResponse.content}"</p>
+                                <p className={`text-xs leading-relaxed ${aiResponse.title === 'Feil' ? '' : 'italic'} ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>{aiResponse.title === 'Feil' ? aiResponse.content : `«${aiResponse.content}»`}</p>
                               ) : (
                                 aiResponse.links ? (
                                   <ul className={`text-xs space-y-1 ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>
@@ -6474,9 +6636,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             {/* HEADER & INPUT SECTION */}
             <div className="flex flex-col xl:flex-row justify-between items-end gap-8">
               <div>
-                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Søkeord & Synlighet</h1>
+                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Søkeord & synlighet</h1>
                 <p className={`mt-2 text-lg font-light max-w-xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Sanntidsanalyse av din markedsposisjon på Google Norge.
+                  Skriv søkeord og sted, og trykk <strong className={theme === 'light' ? 'text-slate-800' : 'text-slate-200'}>Kjør analyse</strong> — da legges ordet inn og vi henter ekte treff fra Google.
                 </p>
               </div>
 
@@ -6500,8 +6662,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <input
                       value={newKeywordInput}
                       onChange={(e) => setNewKeywordInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
-                      placeholder={canAddMoreKeywords ? "Søkeord (f.eks 'rørlegger')" : "Kvoten er full..."}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        document.getElementById('kw-loc-input')?.focus();
+                      }}
+                      placeholder={canAddMoreKeywords ? "Søkeord (f.eks elektriker)" : "Kvoten er full..."}
                       disabled={!canAddMoreKeywords}
                       className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
                         ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}
@@ -6514,9 +6680,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <div className="relative w-full md:w-48 group">
                     <MapIcon className={`absolute left-4 top-3 transition-colors ${!canAddMoreKeywords ? 'text-rose-400' : 'text-slate-400 group-focus-within:text-violet-500'}`} size={18} />
                     <input
+                      id="kw-loc-input"
                       value={locationInput}
                       onFocus={() => setShowSuggestions(true)}
                       onChange={(e) => { setLocationInput(e.target.value); setShowSuggestions(true); }}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        if (newKeywordInput.trim() && locationInput.trim() && !rankingLoading) handleCheckRankings();
+                      }}
                       disabled={!canAddMoreKeywords}
                       placeholder="Sted (f.eks Oslo)"
                       className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
@@ -6549,24 +6721,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     {showSuggestions && <div className="fixed inset-0 z-[-1]" onClick={() => setShowSuggestions(false)}></div>}
                   </div>
 
-                  {/* LEGG-TIL-KNAPP — tydeliggjør at man først må legge til søkeord før analysen kan kjøres */}
-                  <button
-                    type="button"
-                    onClick={handleAddKeyword}
-                    disabled={!canAddMoreKeywords || !newKeywordInput.trim()}
-                    title="Legg til søkeord i listen"
-                    className={`w-full md:w-auto px-5 py-2.5 rounded-xl font-bold ml-0 md:ml-2 transition-all flex items-center justify-center gap-2 mt-2 md:mt-0
-                      ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    `}
-                  >
-                    <Plus size={14} /> Legg til
-                  </button>
-
                   <button
                     onClick={handleCheckRankings}
-                    disabled={rankingLoading || keywordsToTrack?.length === 0}
-                    title={keywordsToTrack?.length === 0 ? 'Legg til minst ett søkeord først' : 'Kjør rangering-sjekk på alle lagrede søkeord'}
+                    disabled={
+                      rankingLoading ||
+                      (keywordsToTrack?.length === 0 && (!newKeywordInput.trim() || !locationInput.trim()))
+                    }
+                    title={
+                      keywordsToTrack?.length === 0 && (!newKeywordInput.trim() || !locationInput.trim())
+                        ? 'Fyll inn søkeord og sted, eller bruk lagrede ord'
+                        : 'Hent rangering fra Google for alle ord i listen (og eventuelt nytt ord i feltene)'
+                    }
                     className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-0 md:ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
                   >
                     {rankingLoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
@@ -6606,45 +6771,71 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <div className={`lg:col-span-2 rounded-3xl border p-6 relative overflow-hidden h-96 transition-all duration-300
                 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
               `}>
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Activity size={18} className="text-violet-500" /> Rangeringstrend</h3>
-                  {currentLevel < 2 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Låst</span>}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
+                  <div>
+                    <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Activity size={18} className="text-violet-500" /> Rangeringstrend</h3>
+                    <p className={`text-xs mt-1 max-w-md ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <strong className={theme === 'light' ? 'text-slate-700' : 'text-slate-300'}>Lavere tall er bedre</strong> (1 = øverst på Google). Grafen oppdateres når du kjører analyse på nytt — velg hvilket lagret søkeord du vil se.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {currentLevel >= 2 && keywordData?.length > 1 && (
+                      <select
+                        value={trendKeywordKey || ''}
+                        onChange={(e) => setTrendKeywordKey(e.target.value)}
+                        className={`text-xs font-bold rounded-lg border px-3 py-2 max-w-[min(100%,280px)] ${theme === 'light' ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-800 border-white/10 text-white'}`}
+                        aria-label="Velg søkeord for graf"
+                      >
+                        {keywordData.map((k) => (
+                          <option key={keywordRowKey(k)} value={keywordRowKey(k)}>{k.keyword} · {k.location}</option>
+                        ))}
+                      </select>
+                    )}
+                    {currentLevel < 2 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 w-fit ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Låst</span>}
+                  </div>
                 </div>
 
                 <div className="h-64 w-full flex items-center justify-center">
                   {currentLevel >= 2 ? (
-                    keywordData?.length > 0 && keywordData[0]?.history?.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={keywordData[0].history}>
-                          <defs>
-                            <linearGradient id="colorRank" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? '#e2e8f0' : '#334155'} opacity={theme === 'light' ? 0.8 : 0.3} />
-                          <XAxis dataKey="date" stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} />
-                          <YAxis reversed stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} domain={[1, 100]} />
-                          <RechartsTooltip
-                            contentStyle={{
-                              backgroundColor: theme === 'light' ? '#fff' : '#0f172a',
-                              borderColor: theme === 'light' ? '#e2e8f0' : '#334155',
-                              color: theme === 'light' ? '#0f172a' : '#fff',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                            }}
-                            itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
-                          />
-                          <Area type="monotone" dataKey="rank" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorRank)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className={`text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm font-medium">Ingen historikk enda</p>
-                        <p className="text-xs">Grafen bygges opp over tid.</p>
-                      </div>
-                    )
+                    (() => {
+                      const trendRow = keywordData?.length ? (keywordData.find((k) => keywordRowKey(k) === trendKeywordKey) || keywordData[0]) : null;
+                      const trendHistory = trendRow?.history?.length ? trendRow.history : [];
+                      const maxRank = trendHistory.length ? Math.max(...trendHistory.map((h: any) => Number(h.rank) || 0), 1) : 10;
+                      const yMax = Math.min(100, Math.max(10, maxRank + 5));
+                      return keywordData?.length > 0 && trendHistory.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={trendHistory}>
+                            <defs>
+                              <linearGradient id="colorRank" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? '#e2e8f0' : '#334155'} opacity={theme === 'light' ? 0.8 : 0.3} />
+                            <XAxis dataKey="date" stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} />
+                            <YAxis reversed stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} domain={[1, yMax]} allowDecimals={false} />
+                            <RechartsTooltip
+                              formatter={(value: number) => [`Plass ${value}`, 'Google']}
+                              contentStyle={{
+                                backgroundColor: theme === 'light' ? '#fff' : '#0f172a',
+                                borderColor: theme === 'light' ? '#e2e8f0' : '#334155',
+                                color: theme === 'light' ? '#0f172a' : '#fff',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                              }}
+                              itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
+                            />
+                            <Area type="monotone" dataKey="rank" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorRank)" dot={{ r: 3, strokeWidth: 1, fill: '#8b5cf6' }} isAnimationActive />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className={`text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm font-medium">Ingen historikk for valgt ord ennå</p>
+                          <p className="text-xs">Kjør «Kjør Analyse» i dag og kom tilbake i morgen — da får du en ny prikk og en linje mellom dagene.</p>
+                        </div>
+                      );
+                    })()
                   ) : (
                     <div className={`absolute inset-0 flex items-center justify-center z-10 backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-900/80'}`}>
                       <div className="text-center">
@@ -6665,38 +6856,53 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <div className="p-2 bg-violet-600 rounded-lg text-white shadow-lg shadow-violet-500/50"><Sparkles size={18} /></div>
                   <div>
                     <h3 className={`font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>AI Rådgiver</h3>
-                    <p className="text-[10px] text-violet-500 font-bold uppercase tracking-wide">Live Analyse</p>
+                    <p className="text-[10px] text-violet-500 font-bold uppercase tracking-wide">Forklaring av resultatet</p>
                   </div>
                 </div>
 
                 {selectedKeyword ? (
                   <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                     <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 border-white/10'}`}>
-                      <div className="flex justify-between items-center">
-                        <p className={`font-bold truncate max-w-[120px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>"{selectedKeyword.keyword}"</p>
-                        <span className={`text-xl font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>#{selectedKeyword.position > 100 ? '-' : selectedKeyword.position}</span>
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <p className={`font-bold truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>"{selectedKeyword.keyword}"</p>
+                          {selectedKeyword.location && (
+                            <p className={`text-[10px] mt-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{selectedKeyword.location}</p>
+                          )}
+                        </div>
+                        <span className={`text-xl font-black shrink-0 tabular-nums ${theme === 'light' ? 'text-slate-900' : 'text-white'}`} title="Organisk plassering i dette søket">
+                          {formatGoogleRankDisplay(selectedKeyword.position).short}
+                        </span>
                       </div>
+                      <p className={`text-[11px] leading-snug mt-2 ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {formatGoogleRankDisplay(selectedKeyword.position).explain}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
+                      <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Topp treff i Google for dette søket</p>
                       {selectedKeyword.competitors && selectedKeyword.competitors.slice(0, 3)?.map((comp: any, i: number) => (
                         <div key={i} className={`text-xs p-2 rounded border ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-slate-950/50 border-white/5 text-slate-300'}`}>
-                          <span className="font-bold text-violet-500">#{comp.position}</span> <span className="ml-2 truncate">{comp.title.substring(0, 30)}...</span>
+                          <span className="font-bold text-violet-500">#{comp.position}</span>
+                          <span className="ml-2">{comp.title ? `${String(comp.title).slice(0, 48)}${String(comp.title).length > 48 ? '…' : ''}` : (comp.url || '')}</span>
                         </div>
                       ))}
                     </div>
 
                     <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                      <h4 className="text-emerald-500 font-bold text-xs mb-1 flex items-center gap-2"><Lightbulb size={12} /> Tips:</h4>
+                      <h4 className="text-emerald-500 font-bold text-xs mb-1 flex items-center gap-2"><Lightbulb size={12} /> Neste steg</h4>
                       <p className={`text-[10px] leading-relaxed ${theme === 'light' ? 'text-emerald-900' : 'text-slate-300'}`}>
-                        De over deg bruker ordet <strong>"{selectedKeyword.keyword}"</strong> tidlig i tittelen.
+                        {selectedKeyword.position > 10
+                          ? <>Sammenlign tittel og ingress på dine sider med treffene over. Bruk «{selectedKeyword.keyword}» naturlig i overskrift, første avsnitt og mellomtitler — uten å fylle teksten med gjentakelser.</>
+                          : <>Du er synlig for dette søket. Hold siden oppdatert, svar på vanlige spørsmål i innholdet, og sørg for at Google forstår lokalt område (adresse, områdesider) hvis det er relevant.</>}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className={`flex-1 flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-40 text-slate-500' : 'opacity-50 text-slate-600'}`}>
                     <MousePointer2 className="w-12 h-12 mb-2" />
-                    <p className="text-sm font-medium">Velg et ord</p>
+                    <p className="text-sm font-medium">Velg et søkeord i tabellen under</p>
+                    <p className="text-xs mt-1 max-w-[200px]">Da forklarer vi plasseringen og hva de øverste resultatene gjør.</p>
                   </div>
                 )}
               </div>
@@ -6711,7 +6917,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <thead className={`text-[10px] uppercase font-black tracking-wider ${theme === 'light' ? 'bg-slate-50 text-slate-500 border-b border-slate-200 rounded-t-3xl' : 'bg-white/5 text-slate-400'}`}>
                     <tr>
                       <th className="p-6 rounded-tl-3xl"><div className="flex items-center">Søkeord & Sted <InfoHint text="Hva du vil bli funnet på." /></div></th>
-                      <th className="p-6"><div className="flex items-center">Posisjon <InfoHint text="Din plassering på Google." /></div></th>
+                      <th className="p-6"><div className="flex items-center">Posisjon <InfoHint text="Organisk plassering i dette søket. 100+ betyr ikke blant topp 100. Lavere tall er bedre." /></div></th>
                       <th className="p-6"><div className="flex items-center">Intent <InfoHint text="Hva brukeren egentlig vil." /></div></th>
                       <th className="p-6"><div className="flex items-center">Resultat-type <InfoHint text="Kart, Bilder, Shopping osv." /></div></th>
                       <th className="p-6"><div className="flex items-center">KD % <InfoHint text="Vanskelighetsgrad (0-100)." /></div></th>
@@ -6737,12 +6943,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </td>
 
                           <td className="p-6">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border 
-                              ${k.position <= 3 ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-sm' :
-                                k.position <= 10 ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' :
-                                  (theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700')}
-                            `}>
-                              {k.position > 100 ? '-' : k.position}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border 
+                                ${k.position <= 3 ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-sm' :
+                                  k.position <= 10 ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' :
+                                    k.position > 100 ? (theme === 'light' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30') :
+                                      (theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700')}
+                              `}>
+                                {formatGoogleRankDisplay(k.position).short}
+                              </div>
+                              <InfoHint text={formatGoogleRankDisplay(k.position).explain} />
                             </div>
                           </td>
 
@@ -7411,15 +7621,33 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </p>
                     </div>
 
-                    {/* Premium Upsell */}
-                    <div className={`p-5 rounded-2xl ${portalCard} opacity-70 cursor-not-allowed`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className={`text-sm font-black flex items-center gap-2 ${portalTextMain}`}>1-Klikks Fix <Lock size={14} /></h3>
-                        <span className="text-[10px] uppercase font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">Premium</span>
+                    {hasPremium ? (
+                      <div className={`p-5 rounded-2xl ${portalCard}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className={`text-sm font-black flex items-center gap-2 ${portalTextMain}`}>1-Klikks Fix</h3>
+                          <span className="text-[10px] uppercase font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">Premium</span>
+                        </div>
+                        <p className={`text-xs mb-4 leading-relaxed ${portalTextDim}`}>
+                          Automatisk utrulling av kode til webhotellet krever koblet host med API/skrivetilgang. Følg stegene i Verksted og lim inn patch manuelt inntil auto-deploy er aktivert for din plattform.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('settings')}
+                          className={`w-full py-3 rounded-xl text-sm font-black transition ${portalIsLight ? 'bg-violet-600 text-white hover:bg-violet-500' : 'bg-violet-600 text-white hover:bg-violet-500'}`}
+                        >
+                          Gå til koble webhost
+                        </button>
                       </div>
-                      <p className={`text-xs mb-6 leading-relaxed ${portalTextDim}`}>La AI pushe koden direkte til din server. Spar tid og unngå feil.</p>
-                      <button disabled className={`w-full py-3 rounded-xl text-sm font-black ${portalIsLight ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-slate-500 border border-white/5'}`}>Oppgrader</button>
-                    </div>
+                    ) : (
+                      <div className={`p-5 rounded-2xl ${portalCard} opacity-70 cursor-not-allowed`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className={`text-sm font-black flex items-center gap-2 ${portalTextMain}`}>1-Klikks Fix <Lock size={14} /></h3>
+                          <span className="text-[10px] uppercase font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">Premium</span>
+                        </div>
+                        <p className={`text-xs mb-6 leading-relaxed ${portalTextDim}`}>La AI pushe koden direkte til din server. Spar tid og unngå feil.</p>
+                        <button type="button" onClick={handleUpgrade} className={`w-full py-3 rounded-xl text-sm font-black ${portalIsLight ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-violet-600 text-white hover:bg-violet-500'}`}>Oppgrader</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
