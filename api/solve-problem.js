@@ -138,14 +138,31 @@ export default async function handler(req, res) {
         console.warn('[solve-problem] Kunne ikke hente client_hosts:', hostErr?.message || hostErr);
     }
 
+    // Finn URL server-side også (fallback) slik at vi ikke er avhengig av at frontend
+    // alltid sender riktig adresse i body.
+    let effectiveUrl = typeof url === 'string' ? url.trim() : '';
+    if (!effectiveUrl) {
+        try {
+            const { data: clientRow } = await supabase
+                .from('clients')
+                .select('website_url, websiteUrl')
+                .eq('user_id', user.id)
+                .limit(1)
+                .maybeSingle();
+            effectiveUrl = clientRow?.website_url || clientRow?.websiteUrl || '';
+        } catch (urlErr) {
+            console.warn('[solve-problem] Kunne ikke hente website_url:', urlErr?.message || urlErr);
+        }
+    }
+
     // Hvis kunden har koblet til webhost, henter vi faktisk HTML fra siden.
     // Dette lar AI-en peke på KONKRET kode i stedet for å gi generiske svar.
     const websiteHost = hostConnection?.platform || null;
     const hasHost = !!hostConnection;
     let htmlContext = null;
     let htmlError = null;
-    if (hasHost && url) {
-        const fetched = await fetchRelevantHtml(url, problemTitle);
+    if (hasHost && effectiveUrl) {
+        const fetched = await fetchRelevantHtml(effectiveUrl, problemTitle);
         if (fetched?.html) htmlContext = fetched.html;
         if (fetched?.error) htmlError = fetched.error;
     }
@@ -187,8 +204,8 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
 3. Koden skal være ren, kommentert på norsk, og klar til å limes rett inn i prosjektet.`;
 
     const userContent = hasHost && htmlContext
-        ? `URL: ${url}\nWebhost/plattform: ${websiteHost}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}\n\nHTML-UTDRAG FRA SIDEN (bruk denne som kilde for originalCode):\n\`\`\`html\n${htmlContext}\n\`\`\``
-        : `URL: ${url || 'ukjent'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}`;
+        ? `URL: ${effectiveUrl}\nWebhost/plattform: ${websiteHost}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}\n\nHTML-UTDRAG FRA SIDEN (bruk denne som kilde for originalCode):\n\`\`\`html\n${htmlContext}\n\`\`\``
+        : `URL: ${effectiveUrl || 'ukjent'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -226,6 +243,9 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
             replacementExplanation: aiResult.replacementExplanation || null,
             usedHtmlContext: !!htmlContext,
             htmlFetchError: htmlError,
+            effectiveUrl: effectiveUrl || null,
+            hostConnected: hasHost,
+            hostPlatform: websiteHost,
         });
 
     } catch (error) {

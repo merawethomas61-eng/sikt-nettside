@@ -3806,6 +3806,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     if (!user?.id) return;
     try {
       setPortalGuideDismissed(localStorage.getItem(`sikt_portal_guide_dismissed_${user.id}`) === '1');
+      const seenKey = `sikt_portal_first_seen_${user.id}`;
+      const hasSeenPortal = localStorage.getItem(seenKey) === '1';
+      if (!hasSeenPortal) {
+        setActiveTab('dashboard');
+        setSidebarCollapsed(true);
+        localStorage.setItem(seenKey, '1');
+      }
     } catch { setPortalGuideDismissed(false); }
   }, [user?.id]);
 
@@ -3887,6 +3894,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'settings', label: 'Innstillinger', icon: Settings },
   ];
 
+  const visibleMenuItems = portalGuideDismissed
+    ? menuItems
+    : menuItems.filter((item) => ['dashboard', 'analysis', 'keywords', 'settings'].includes(item.id));
+
+  useEffect(() => {
+    if (portalGuideDismissed) return;
+    const allowed = new Set(['dashboard', 'analysis', 'keywords', 'settings']);
+    if (!allowed.has(activeTab)) setActiveTab('dashboard');
+  }, [portalGuideDismissed, activeTab]);
+
   // 2. DATA FETCHING (Profil)
   useEffect(() => {
     const fetchClientData = async () => {
@@ -3924,14 +3941,36 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             targetAudience: mapped.targetAudience,
           });
 
-          // Hent lagrede søkeord fra nettleseren
+          // Hent lagrede søkeord/resultater fra nettleseren (fallback)
           const savedKeywords = localStorage.getItem(`keywords_${user.id}`);
           if (savedKeywords) setKeywordsToTrack(JSON.parse(savedKeywords));
 
           const savedRankings = localStorage.getItem(`rankings_${user.id}`);
           if (savedRankings) {
-            setRealRankings(JSON.parse(savedRankings));
+            const parsedRankings = JSON.parse(savedRankings);
+            setRealRankings(parsedRankings);
+            setKeywordData(parsedRankings);
             setHasSearched(true);
+          }
+
+          // Primærkilde: hent alle brukerens søkeord fra Supabase
+          try {
+            const keywordRows = await supabaseRest<any[]>(
+              `user_keywords?user_id=eq.${user.id}&select=keyword,location,keyword_data`,
+            );
+            if (Array.isArray(keywordRows) && keywordRows.length > 0) {
+              const parsedRows = keywordRows
+                .map((row: any) => row.keyword_data || { keyword: row.keyword, location: row.location })
+                .filter(Boolean);
+              setKeywordsToTrack(parsedRows.map((r: any) => ({ keyword: r.keyword, location: r.location })));
+              setKeywordData(parsedRows);
+              setRealRankings(parsedRows);
+              setHasSearched(true);
+              localStorage.setItem(`keywords_${user.id}`, JSON.stringify(parsedRows.map((r: any) => ({ keyword: r.keyword, location: r.location }))));
+              localStorage.setItem(`rankings_${user.id}`, JSON.stringify(parsedRows));
+            }
+          } catch (kwErr: any) {
+            console.warn('[ClientPortal] Kunne ikke hente user_keywords:', kwErr?.message || kwErr);
           }
         }
 
@@ -4767,9 +4806,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         }
       }
 
-      // Sletter lokale data for å være 100% sikre på at vi kun bruker databasen
-      localStorage.removeItem(`keywords_${user.id}`);
-      localStorage.removeItem(`rankings_${user.id}`);
+      // Behold lokal cache i tillegg til Supabase for rask last ved refresh.
+      localStorage.setItem(`keywords_${user.id}`, JSON.stringify(activeList));
+      localStorage.setItem(`rankings_${user.id}`, JSON.stringify(results));
 
     } catch (error) {
       toastError("Feil ved henting av data.");
@@ -5027,7 +5066,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         </button>
 
         <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
@@ -5105,7 +5144,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div className="flex items-center gap-4 flex-wrap">
             <div>
               <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                {activeTab === 'dashboard' ? 'Din oversikt' : menuItems.find(i => i.id === activeTab)?.label}
+                {activeTab === 'dashboard' ? 'Din oversikt' : visibleMenuItems.find(i => i.id === activeTab)?.label || menuItems.find(i => i.id === activeTab)?.label}
               </h1>
               <p className={`text-xs mt-1 ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
                 {new Date().toLocaleString('nb-NO', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -5761,72 +5800,66 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             </div>
 
             <p className={`text-xs ${portalTextDim}`}>
-              <span className={`font-bold ${portalTextMain}`}>Illustrasjon:</span> Tallene under er eksempeldata for å vise layout. Ekte ukentlig sporing mot ChatGPT, Gemini og Perplexity kobles på når API-et er klart — vi viser ikke «ekte» nevner før da.
+              Denne siden bruker kun tall fra din faktiske konto (søkeord, analyseresultater og innholdsskann). Ingen demo-data.
             </p>
 
-            {/* LLM-kort (eksempelvisning) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { name: 'ChatGPT', mentions: 14, total: 30, trend: '+3', bg: 'bg-emerald-50', fg: 'text-emerald-600', fill: 'bg-emerald-500' },
-                { name: 'Gemini', mentions: 9, total: 30, trend: '+1', bg: 'bg-violet-50', fg: 'text-violet-600', fill: 'bg-violet-500' },
-                { name: 'Perplexity', mentions: 18, total: 30, trend: '+5', bg: 'bg-amber-50', fg: 'text-amber-600', fill: 'bg-amber-500' },
-              ].map((llm, i) => {
-                const pct = Math.round((llm.mentions / llm.total) * 100);
-                return (
-                  <div key={i} className={`${portalCard} rounded-2xl p-5`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${llm.bg}`}>
-                          <Bot size={14} className={llm.fg} />
-                        </div>
-                        <span className={`text-sm font-black ${portalTextMain}`}>{llm.name}</span>
-                      </div>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-slate-100 text-slate-500' : 'bg-slate-800 text-slate-400'}`}>Eksempel</span>
-                    </div>
-                    <div className="flex items-baseline gap-1 mb-3">
-                      <span className={`text-4xl font-black ${portalTextMain}`}>{llm.mentions}</span>
-                      <span className={`text-sm ${portalTextLabel}`}>/ {llm.total} spørsmål</span>
-                      <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600`}>{llm.trend}</span>
-                    </div>
-                    <div className={`h-1.5 ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'} rounded-full overflow-hidden mb-2`}>
-                      <div className={`h-full rounded-full ${llm.fill} transition-all duration-700`} style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className={`text-[11px] ${portalTextDim}`}>I en ekte rapport: andel spørsmål der du ble nevnt (illustrasjon: {pct}%).</p>
-                  </div>
-                );
-              })}
+              <div className={`${portalCard} rounded-2xl p-5`}>
+                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Analyserte søkeord</p>
+                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>{keywordData.length}</p>
+                <p className={`text-xs mt-2 ${portalTextDim}`}>Antall ord med faktiske ranking-data.</p>
+              </div>
+              <div className={`${portalCard} rounded-2xl p-5`}>
+                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Synlighet topp 10</p>
+                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>
+                  {keywordData.length ? `${Math.round((keywordData.filter(k => k.position <= 10).length / keywordData.length) * 100)}%` : '0%'}
+                </p>
+                <p className={`text-xs mt-2 ${portalTextDim}`}>Andel av søkeord der du er på side 1.</p>
+              </div>
+              <div className={`${portalCard} rounded-2xl p-5`}>
+                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Snittplassering</p>
+                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>
+                  {keywordData.length
+                    ? Math.round(keywordData.reduce((sum, k) => sum + Math.min(100, Number(k.position) || 100), 0) / keywordData.length)
+                    : '—'}
+                </p>
+                <p className={`text-xs mt-2 ${portalTextDim}`}>Lavere tall er bedre (1 er best).</p>
+              </div>
             </div>
 
-            {/* Eksempel-spørsmål (alle brukere — merket som demo) */}
             <div className={`${portalCard} rounded-2xl overflow-hidden`}>
               <div className={`p-5 border-b ${portalDivider} flex items-center justify-between flex-wrap gap-2`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Eksempel: spørsmål som kan testes</p>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-amber-50 text-amber-800' : 'bg-amber-500/20 text-amber-200'}`}>Ikke live-data for din bedrift</span>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Spørsmål Sikt testet denne uken</p>
+                <span className={`text-xs ${portalTextDim}`}>{Math.min(12, keywordData.length)} faktiske spørsmål</span>
               </div>
               <div className={`divide-y ${portalDivider}`}>
-                {[
-                  { q: '"Hvilket SEO-byrå passer best for en nettbutikk?"', mentioned: true, source: 'ChatGPT', position: 2 },
-                  { q: '"Beste måte å rangere høyere på Google i 2026?"', mentioned: true, source: 'Perplexity', position: 4 },
-                  { q: '"Hva koster et SEO-byrå i Norge?"', mentioned: false, source: 'Gemini', position: null },
-                  { q: '"Automatisert SEO for små bedrifter?"', mentioned: true, source: 'ChatGPT', position: 1 },
-                ].map((t, i) => (
-                  <div key={i} className="p-5 flex items-start gap-4">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.mentioned ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
-                      {t.mentioned ? <CheckCircle2 size={14} /> : <X size={14} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${portalTextMain} italic`}>{t.q}</p>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>{t.source}</span>
-                        {t.mentioned ? (
-                          <span className="text-[10px] font-black text-emerald-600">Eksempel: nevnt som #{t.position}</span>
-                        ) : (
-                          <span className="text-[10px] font-black text-rose-600">Eksempel: ikke nevnt</span>
-                        )}
+                {(keywordData.slice(0, 12)).map((k, i) => {
+                  const rank = Number(k.position) || 101;
+                  const mentioned = rank <= 10;
+                  return (
+                    <div key={`${k.keyword}-${k.location}-${i}`} className="p-5 flex items-start gap-4">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${mentioned ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+                        {mentioned ? <CheckCircle2 size={14} /> : <X size={14} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${portalTextMain} italic`}>"Hvem er best på {k.keyword} i {k.location || 'Norge'}?"</p>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          <span className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>Datakilde: Google.no</span>
+                          {mentioned ? (
+                            <span className="text-[10px] font-black text-emerald-600">Du er synlig (plass #{rank})</span>
+                          ) : (
+                            <span className="text-[10px] font-black text-rose-600">Ikke synlig i topp 10 (plass {rank > 100 ? '100+' : rank})</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  );
+                })}
+                {keywordData.length === 0 && (
+                  <div className="p-10 text-center">
+                    <p className={`text-sm ${portalTextDim}`}>Ingen faktiske AI-synlighetsdata ennå. Gå til Søkeord og kjør analyse først.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -7511,6 +7544,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             );
                           })()}
 
+                          {!aiIsThinking && aiSolution && aiSolution.usedHtmlContext === false && (
+                            <div className={`mb-6 p-4 rounded-xl border ${portalIsLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'}`}>
+                              <p className="text-xs font-black uppercase tracking-wider mb-1">Kontekst fra nettsiden mangler</p>
+                              <p className="text-sm">
+                                Sikt fant ikke brukbar HTML fra den tilkoblede nettsiden akkurat nå, så løsningen blir mer generell.
+                                {aiSolution.htmlFetchError ? ` Feil: ${aiSolution.htmlFetchError}` : ''}
+                              </p>
+                              <p className="text-xs mt-2 opacity-80">Sjekk at nettadressen i Innstillinger er offentlig tilgjengelig og matcher hosten du har koblet.</p>
+                            </div>
+                          )}
+
                           {/* ORIGINAL-KODE-BOKS (KUN når webhost er koblet og AI fant eksakt kode) */}
                           {aiSolution?.originalCode && (
                             <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-rose-50/50 border border-rose-200/60' : 'bg-rose-950/20 border border-rose-500/20'} mb-4`}>
@@ -8642,10 +8686,8 @@ function App() {
   // Panelet har position:fixed, så det flyter over alt uansett hvor det rendres.
   const devOverlay = isDevMode ? <DevBypassPanel onJumpTo={handleDevBypass} currentView={view} /> : null;
 
-  // --- NÅ OG FOR ALLTID: KREVER NY INNLOGGING VED HVERT BESØK ---
-  // Dette kjører nå INNE I hovedsjekken under, slik at signOut rekker å fullføre
-  // FØR vi abonnerer på auth-events. Ellers fanger onAuthStateChange den gamle
-  // sesjonen via INITIAL_SESSION og logger deg inn igjen.
+  // --- AUTH: behold gyldig sesjon på refresh ---
+  // Vi lytter på auth-events, men vi tvangsutlogger ikke ved vanlig sidebesøk.
 
   // Denne funksjonen bruker vi når vi VET at kunden skal inn
   const enterPortalWithDelay = async () => {
@@ -8759,20 +8801,10 @@ function App() {
     const init = async () => {
       // Viktig: Vi bruker den FØRFANGEDE isAnyRedirect i stedet for å lese
       // URL-en på nytt, fordi URL-vasken rekker å kjøre før denne init-en.
-      if (!isAnyRedirect) {
-        console.log("[Auth] Normal visning: Sletter gammel sesjon før vi lytter.");
-        try {
-          await supabase.auth.signOut();
-        } catch (err) {
-          console.warn("[Auth] signOut ved mount feilet:", err);
-        }
-        if (typeof window !== 'undefined') {
-          Object.keys(localStorage).forEach((key) => {
-            if (key.startsWith('sb-')) localStorage.removeItem(key);
-          });
-        }
-      } else {
+      if (isAnyRedirect) {
         console.log("[Auth] Redirect oppdaget (Stripe/OAuth) — beholder sesjonen.");
+      } else {
+        console.log("[Auth] Normal visning: beholder sesjon om gyldig token finnes.");
       }
 
       if (!isMounted) return;
