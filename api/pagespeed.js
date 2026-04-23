@@ -60,19 +60,44 @@ export default async function handler(req, res) {
     const categories = 'category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES';
     const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(formattedUrl)}&${categories}&locale=no&key=${apiKey}`;
 
-    try {
-        const [resMobile, resDesktop] = await Promise.all([
-            fetch(`${base}&strategy=mobile`),
-            fetch(`${base}&strategy=desktop`),
-        ]);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-        if (!resMobile.ok || !resDesktop.ok) {
-            const detail = !resMobile.ok ? await resMobile.text() : await resDesktop.text();
-            return res.status(502).json({ error: 'PageSpeed feilet', detail: detail.slice(0, 500) });
+    const fetchStrategy = async (strategy, attempt = 0) => {
+        const url = `${base}&strategy=${strategy}`;
+        const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+            ? AbortSignal.timeout(120000)
+            : undefined;
+        const r = await fetch(url, ctrl ? { signal: ctrl } : {});
+        if ((r.status === 429 || r.status >= 500) && attempt < 2) {
+            await sleep(1500 * (attempt + 1));
+            return fetchStrategy(strategy, attempt + 1);
+        }
+        return r;
+    };
+
+    try {
+        let lastDetail = '';
+        for (let round = 0; round < 3; round++) {
+            if (round > 0) await sleep(2000 * round);
+
+            const [resMobile, resDesktop] = await Promise.all([
+                fetchStrategy('mobile'),
+                fetchStrategy('desktop'),
+            ]);
+
+            if (resMobile.ok && resDesktop.ok) {
+                const [mobile, desktop] = await Promise.all([resMobile.json(), resDesktop.json()]);
+                return res.status(200).json({ mobile, desktop });
+            }
+
+            lastDetail = !resMobile.ok ? await resMobile.text() : await resDesktop.text();
+            const status = !resMobile.ok ? resMobile.status : resDesktop.status;
+            if (status !== 429 && status < 500) {
+                return res.status(502).json({ error: 'PageSpeed feilet', detail: lastDetail.slice(0, 500) });
+            }
         }
 
-        const [mobile, desktop] = await Promise.all([resMobile.json(), resDesktop.json()]);
-        return res.status(200).json({ mobile, desktop });
+        return res.status(502).json({ error: 'PageSpeed feilet etter flere forsøk', detail: lastDetail.slice(0, 500) });
     } catch (error) {
         console.error('pagespeed error:', error);
         return res.status(500).json({ error: 'Intern feil ved PageSpeed-analyse' });

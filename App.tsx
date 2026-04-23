@@ -116,7 +116,7 @@ interface KeywordData {
   competitors: { position: number; title: string; url: string; snippet: string }[];
 }
 // Legg til disse i import-listen din fra 'recharts' (hvis den ikke finnes, lag en ny linje):
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
 const InfoHint = ({ text }: { text: string }) => (
@@ -3708,6 +3708,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('Forbereder...');
 
+  // Historikk for teknisk score (mobil) — lagres lokalt per bruker, norsk tidsstempel i visning
+  const [scoreHistory, setScoreHistory] = useState<{ at: string; mobilePerf: number; mobileSeo: number; desktopPerf: number }[]>([]);
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const arr = JSON.parse(localStorage.getItem(`sikt_portal_score_history_${user.id}`) || '[]');
+      setScoreHistory(Array.isArray(arr) ? arr : []);
+    } catch { setScoreHistory([]); }
+  }, [user?.id]);
+
+  const [portalGuideDismissed, setPortalGuideDismissed] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      setPortalGuideDismissed(localStorage.getItem(`sikt_portal_guide_dismissed_${user.id}`) === '1');
+    } catch { setPortalGuideDismissed(false); }
+  }, [user?.id]);
+
+  // Gjenopprett siste analyse fra cache (samme domene som i profilen)
+  useEffect(() => {
+    if (!user?.id) return;
+    const urlNow = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
+    if (!urlNow) return;
+    try {
+      const raw = localStorage.getItem(`sikt_analysis_cache_${user.id}`);
+      if (!raw) return;
+      const { url: cachedUrl, results } = JSON.parse(raw);
+      const norm = (s: string) => String(s || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
+      if (results?.mobile && results?.desktop && norm(cachedUrl) === norm(urlNow)) {
+        setAnalysisResults(results);
+      }
+    } catch { /* ignore */ }
+  }, [user?.id, formData.websiteUrl, clientData?.websiteUrl]);
+
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
@@ -3716,7 +3750,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [urlUnlockRequested, setUrlUnlockRequested] = useState(false);
 
   // SØKEORD STATE (EKTE DATA)
-  const [keywordsToTrack, setKeywordsToTrack] = useState<string[]>([]);
+  const [keywordsToTrack, setKeywordsToTrack] = useState<any[]>([]);
   const [newKeywordInput, setNewKeywordInput] = useState('');
   const [realRankings, setRealRankings] = useState<any[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
@@ -3741,9 +3775,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { name: 'Premium', level: 3, price: '9 990', color: 'violet', features: ['Alt i Standard', 'Teknisk Helse', 'SEO-Garanti', 'Prioritert Support'] }
   ];
 
-  const currentTier = (clientData?.plan || '').toLowerCase();
-  const hasStandardOrHigher = currentTier.includes('standard') || currentTier.includes('premium');
-  const hasPremium = currentTier.includes('premium');
+  const pkgLower = (clientData?.package_name || '').toLowerCase();
+  const hasStandardOrHigher = pkgLower.includes('standard') || pkgLower.includes('premium');
+  const hasPremium = pkgLower.includes('premium');
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -4435,19 +4469,25 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     const cleanDomain = formData.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
 
+    const rankToken = getStoredAccessToken();
+    if (!rankToken) {
+      toastWarning('Sesjonen din er utløpt. Logg inn på nytt.');
+      setRankingLoading(false);
+      return;
+    }
+
     try {
       const promises = activeList.map(async (entry: any) => {
         const keyword = typeof entry === 'string' ? entry : entry.keyword;
         const location = typeof entry === 'string' ? 'Oslo' : entry.location;
 
-        const { data: { session } } = await supabase.auth.getSession();
         try {
           // Snakker med den trygge Vercel-serveren din (backend)
           const response = await fetch('/api/search', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session?.access_token}`
+              'Authorization': `Bearer ${rankToken}`
             },
             body: JSON.stringify({ keyword, location })
           });
@@ -4673,74 +4713,110 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   }) => {
     if (!user?.id) return;
     try {
-      await supabase.from('sikt_actions').insert({
-        user_id: user.id,
-        action_type: params.actionType,
-        category: params.category,
-        title: params.title,
-        details: params.details ?? null,
-        page_url: params.pageUrl ?? null,
-        before_value: params.beforeValue ?? null,
-        after_value: params.afterValue ?? null,
+      // Rå REST — unngår supabase-js som kan henge ved auth-lock
+      await supabaseRest('sikt_actions', {
+        method: 'POST',
+        body: {
+          user_id: user.id,
+          action_type: params.actionType,
+          category: params.category,
+          title: params.title,
+          details: params.details ?? null,
+          page_url: params.pageUrl ?? null,
+          before_value: params.beforeValue ?? null,
+          after_value: params.afterValue ?? null,
+        },
+        headers: { Prefer: 'return=minimal' },
       });
     } catch (err) {
-      // Tabellen kan mangle under utvikling — ignorer stille
+      try {
+        const key = `sikt_actions_fallback_${user.id}`;
+        const q = JSON.parse(localStorage.getItem(key) || '[]');
+        q.push({ ...params, savedAt: new Date().toISOString() });
+        localStorage.setItem(key, JSON.stringify(q.slice(-50)));
+      } catch { /* ignore */ }
     }
   };
 
   const runRealAnalysis = async () => {
-    const url = formData.websiteUrl;
-    if (!url) { setAnalyzeError("Mangler URL."); return; }
-    setIsAnalyzing(true); setAnalyzeError(null); setAnalysisResults(null);
-    let formattedUrl = url.trim();
+    const url = formData.websiteUrl || clientData?.websiteUrl;
+    if (!url) { setAnalyzeError("Mangler URL. Legg inn nettadresse under Innstillinger."); return; }
+    setIsAnalyzing(true); setAnalyzeError(null);
+    let formattedUrl = String(url).trim();
     if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
 
+    const token = getStoredAccessToken();
+    if (!token) {
+      setAnalyzeError("Du må være logget inn for å kjøre analyse.");
+      setIsAnalyzing(false);
+      return;
+    }
+
+    let lastErr = 'Ukjent feil';
     try {
-      // Henter via vår backend — PageSpeed-nøkkelen ligger kun på serveren
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setAnalyzeError("Du må være logget inn for å kjøre analyse.");
-        setIsAnalyzing(false);
-        return;
-      }
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          setAnalyzeError(`Prøver på nytt (${attempt + 1}/3) …`);
+          await new Promise(r => setTimeout(r, 1200 * attempt));
+        }
 
-      const res = await fetch('/api/pagespeed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ url: formattedUrl }),
-      });
+        const res = await fetch('/api/pagespeed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ url: formattedUrl }),
+        });
 
-      if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        // Vis serveren sin egne feilmelding når den finnes — ikke overskriv med "Sjekk URLen".
-        throw new Error(errBody.error || `Serveren svarte med HTTP ${res.status}`);
+
+        if (res.ok) {
+          const { mobile: mobileRaw, desktop: desktopRaw } = errBody;
+          const mobile = formatLighthouseData(mobileRaw);
+          const desktop = formatLighthouseData(desktopRaw);
+          setAnalysisResults({ mobile, desktop });
+          setAnalyzeError(null);
+
+          try {
+            localStorage.setItem(`sikt_analysis_cache_${user.id}`, JSON.stringify({ url: formattedUrl, results: { mobile, desktop } }));
+          } catch { /* ignore */ }
+
+          const histEntry = {
+            at: new Date().toISOString(),
+            mobilePerf: mobile.performance,
+            mobileSeo: mobile.seo,
+            desktopPerf: desktop.performance,
+          };
+          setScoreHistory((prev) => {
+            const next = [...prev, histEntry].slice(-30);
+            try { localStorage.setItem(`sikt_portal_score_history_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+            return next;
+          });
+
+          const issuesFound = (mobile.opportunities?.length ?? 0) + (mobile.diagnostics?.filter((d: any) => !d.passed)?.length ?? 0);
+          await logSiktAction({
+            actionType: 'analysis_run',
+            category: 'finding',
+            title: `Kjørte teknisk helsesjekk — fant ${issuesFound} punkter å fikse`,
+            details: { mobile_score: mobile.performance, desktop_score: desktop.performance, seo_score: mobile.seo },
+            pageUrl: formattedUrl,
+          });
+          return;
+        }
+
+        lastErr = errBody.error || `HTTP ${res.status}`;
+        if (![429, 500, 502, 503].includes(res.status)) break;
       }
 
-      const { mobile: mobileRaw, desktop: desktopRaw } = await res.json();
-      const mobile = formatLighthouseData(mobileRaw);
-      const desktop = formatLighthouseData(desktopRaw);
-      setAnalysisResults({ mobile, desktop });
-
-      // Logg: teknisk helseskjekk kjørt
-      const issuesFound = (mobile.opportunities?.length ?? 0) + (mobile.diagnostics?.filter((d: any) => !d.passed)?.length ?? 0);
-      await logSiktAction({
-        actionType: 'analysis_run',
-        category: 'finding',
-        title: `Kjørte teknisk helsesjekk — fant ${issuesFound} punkter å fikse`,
-        details: { mobile_score: mobile.performance, desktop_score: desktop.performance, seo_score: mobile.seo },
-        pageUrl: formattedUrl,
-      });
+      throw new Error(lastErr);
     } catch (err: any) {
-      const msg = err?.message || 'Ukjent feil';
+      const msg = err?.message || lastErr;
       console.error('[runRealAnalysis] Feil:', err);
-      // Gi brukeren et hint om hvor feilen ligger
       if (/PAGESPEED_API_KEY/i.test(msg)) {
         setAnalyzeError('Serveren mangler PAGESPEED_API_KEY. Sett den i Vercel → Project Settings → Environment Variables.');
-      } else if (/HTTP 5\d\d|Intern feil|PageSpeed feilet/i.test(msg)) {
-        setAnalyzeError('Serveren klarte ikke å kjøre PageSpeed-analysen (' + msg + '). Sjekk at PageSpeed Insights API er aktivert i Google Cloud og at nøkkelen er satt i Vercel.');
+      } else if (/HTTP 5\d\d|Intern feil|PageSpeed feilet/i.test(msg) || /feilet/i.test(msg)) {
+        setAnalyzeError('Kunne ikke kjøre PageSpeed akkurat nå: ' + msg + ' Sjekk at API-nøkkelen er satt og at PageSpeed Insights API er aktivert i Google Cloud. Vi prøvde tre ganger automatisk.');
       } else {
         setAnalyzeError(msg);
       }
@@ -4758,6 +4834,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const portalTextDim = portalIsLight ? 'text-slate-500' : 'text-slate-400';
   const portalTextLabel = portalIsLight ? 'text-slate-400' : 'text-slate-500';
   const portalDivider = portalIsLight ? 'border-slate-100' : 'border-white/5';
+
+  const portalWebsiteUrlGuide = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
+  const portalOnboardingSteps: { id: string; label: string; done: boolean; tab: string }[] = [
+    { id: 'url', label: 'Nettside-URL', done: !!portalWebsiteUrlGuide, tab: 'settings' },
+    { id: 'analysis', label: 'Teknisk analyse', done: !!analysisResults, tab: 'analysis' },
+    { id: 'keywords', label: 'Søkeord', done: keywordsToTrack.length > 0, tab: 'keywords' },
+    ...(hasStandardOrHigher
+      ? [{ id: 'host', label: 'Webhost', done: hostConnection != null, tab: 'settings' }]
+      : []),
+  ];
+  const portalOnboardingDone = portalOnboardingSteps.filter((s) => s.done).length;
+  const portalOnboardingTotal = portalOnboardingSteps.length;
+  const portalOnboardingPct = portalOnboardingTotal ? Math.round((portalOnboardingDone / portalOnboardingTotal) * 100) : 100;
+  const portalOnboardingNext = portalOnboardingSteps.find((s) => !s.done);
+  const showPortalOnboardingBar = !portalGuideDismissed && portalOnboardingNext !== undefined;
 
   return (
     <div className={`flex min-h-screen transition-colors duration-300 ${theme === 'light' ? 'bg-[#F8FAFC] text-slate-800' : 'bg-slate-950 text-slate-200'}`}>
@@ -4822,6 +4913,47 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       {/* Content Area — justerer margin og max-bredde basert på sidebar */}
       <main className={`flex-1 p-6 lg:p-10 mx-auto relative z-10 transition-all duration-300 ${sidebarCollapsed ? 'ml-20 max-w-7xl' : 'ml-20 lg:ml-64 max-w-6xl'}`}>
 
+        {showPortalOnboardingBar && (
+          <div className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-sm ${portalIsLight ? 'bg-white border-slate-200' : 'bg-slate-900/80 border-white/10'}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Kom i gang</p>
+                  <span className={`text-[10px] font-black ${portalTextMain}`}>{portalOnboardingDone}/{portalOnboardingTotal} steg</span>
+                </div>
+                <div className={`h-2 rounded-full overflow-hidden ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
+                  <div className="h-full rounded-full bg-violet-600 transition-all duration-500" style={{ width: `${portalOnboardingPct}%` }} />
+                </div>
+                <p className={`text-sm mt-2 ${portalTextDim}`}>
+                  <span className={`font-bold ${portalTextMain}`}>Neste: </span>
+                  {portalOnboardingNext?.label}
+                  <span className="hidden sm:inline"> — følg stegene én gang, så vet du hvor du skal starte.</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => { if (portalOnboardingNext) setActiveTab(portalOnboardingNext.tab); }}
+                  className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold transition flex items-center gap-2"
+                >
+                  Gå til steg <ArrowRight size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user?.id) return;
+                    try { localStorage.setItem(`sikt_portal_guide_dismissed_${user.id}`, '1'); } catch { /* ignore */ }
+                    setPortalGuideDismissed(true);
+                  }}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition ${portalIsLight ? 'border-slate-200 text-slate-600 hover:bg-slate-50' : 'border-white/10 text-slate-300 hover:bg-white/5'}`}
+                >
+                  Skjul
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Top Header — redesignet for å matche dashboard-mockupen */}
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div className="flex items-center gap-4 flex-wrap">
@@ -4829,11 +4961,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                 {activeTab === 'dashboard' ? 'Din oversikt' : menuItems.find(i => i.id === activeTab)?.label}
               </h1>
-              <p className={`text-xs mt-1 ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>Oppdatert akkurat nå</p>
+              <p className={`text-xs mt-1 ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {new Date().toLocaleString('nb-NO', { dateStyle: 'medium', timeStyle: 'short' })}
+              </p>
             </div>
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${theme === 'light' ? 'bg-emerald-50 border-emerald-100' : 'bg-emerald-950/40 border-emerald-900/40'}`}>
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-              <span className={`text-[10px] font-black uppercase tracking-wider ${theme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>ALT OK</span>
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+              analyzeError
+                ? (theme === 'light' ? 'bg-rose-50 border-rose-100' : 'bg-rose-950/40 border-rose-900/40')
+                : !analysisResults
+                  ? (theme === 'light' ? 'bg-amber-50 border-amber-100' : 'bg-amber-950/40 border-amber-900/40')
+                  : (theme === 'light' ? 'bg-emerald-50 border-emerald-100' : 'bg-emerald-950/40 border-emerald-900/40')
+            }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${analyzeError ? 'bg-rose-500' : !analysisResults ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+              <span className={`text-[10px] font-black uppercase tracking-wider ${
+                analyzeError
+                  ? (theme === 'light' ? 'text-rose-700' : 'text-rose-400')
+                  : !analysisResults
+                    ? (theme === 'light' ? 'text-amber-800' : 'text-amber-400')
+                    : (theme === 'light' ? 'text-emerald-700' : 'text-emerald-400')
+              }`}>
+                {analyzeError ? 'Sjekk analyse' : !analysisResults ? 'Start med analyse' : 'Alt klart'}
+              </span>
             </div>
           </div>
 
@@ -4870,14 +5018,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const contentPct = Math.round(seoScore);
           const linksPct = linkPages.length > 0 ? 80 : 0; // plassholder til vi har ekte link-health
 
-          // 30-dagers plassholder for besøkende-grafen. Blir byttet ut med Search Console-data senere.
-          const trafficData = Array.from({ length: 30 }, (_, i) => {
-            const base = 1200 + i * 40;
-            const noise = Math.sin(i / 3) * 80 + Math.cos(i / 5) * 60;
-            return { day: i + 1, visits: Math.max(600, Math.round(base + noise)) };
-          });
-          const totalVisits = trafficData.reduce((sum, d) => sum + d.visits, 0);
-          const visitsFormatted = totalVisits > 1000 ? `${(totalVisits / 1000).toFixed(1)}k` : `${totalVisits}`;
+          const perfDelta = scoreHistory.length >= 2
+            ? scoreHistory[scoreHistory.length - 1].mobilePerf - scoreHistory[scoreHistory.length - 2].mobilePerf
+            : null;
+          const perfDeltaLabel = perfDelta == null
+            ? (scoreHistory.length < 2 ? 'Første måling' : '—')
+            : `${perfDelta >= 0 ? '+' : ''}${perfDelta} poeng`;
+
+          const seoDelta = scoreHistory.length >= 2
+            ? scoreHistory[scoreHistory.length - 1].mobileSeo - scoreHistory[scoreHistory.length - 2].mobileSeo
+            : null;
+          const seoDeltaLabel = seoDelta == null
+            ? (scoreHistory.length < 2 ? 'Første måling' : '—')
+            : `${seoDelta >= 0 ? '+' : ''}${seoDelta} poeng`;
+
+          const scoreChartData = scoreHistory.map((h, i) => ({
+            idx: i + 1,
+            perf: h.mobilePerf,
+            seo: h.mobileSeo,
+            label: new Date(h.at).toLocaleString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          }));
 
           const topSearches = realRankings.slice(0, 2);
           const cwv = {
@@ -4902,13 +5062,32 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           return (
             <div className="animate-in fade-in duration-500 space-y-5 pb-16">
 
+              {portalOnboardingNext && (
+                <div className={`rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${isLight ? 'bg-violet-50/80 border-violet-100' : 'bg-violet-950/30 border-violet-500/20'}`}>
+                  <div className="flex-1">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Start her</p>
+                    <p className={`text-lg font-black mt-1 ${textMain}`}>Du er på steg {portalOnboardingDone + 1} av {portalOnboardingTotal}</p>
+                    <p className={`text-sm mt-1 ${textDim}`}>
+                      Neste anbefaling: <span className="font-bold text-violet-600">{portalOnboardingNext.label}</span>. Vi har samlet alt i én meny til venstre — følg rekkefølgen én gang.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(portalOnboardingNext.tab)}
+                    className="shrink-0 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-black transition flex items-center gap-2"
+                  >
+                    Åpne {portalOnboardingNext.label} <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
+
               {/* RAD 1: 4 KPI-kort */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: 'Besøkende', value: visitsFormatted, delta: '+12%', deltaPositive: true, barPct: 72, accent: 'text-violet-600' },
-                  { label: 'Synlighet', value: seoScore ? `${seoScore.toFixed(1)}%` : '—', delta: '+4.1%', deltaPositive: true, barPct: Math.max(seoScore, 20), accent: 'text-emerald-500' },
-                  { label: 'Troverdighet', value: trust ? `${Math.round(trust)}` : '—', delta: '+1', deltaPositive: true, barPct: Math.max(trust, 20), accent: 'text-amber-500' },
-                  { label: 'Feil å fikse', value: `${problemsLeft}`, delta: problemsLeft === 0 ? '-2' : '+0', deltaPositive: true, barPct: problemsLeft === 0 ? 0 : 40, accent: problemsLeft === 0 ? 'text-slate-400' : 'text-rose-500' },
+                  { label: 'Ytelse (mobil)', value: perf ? `${Math.round(perf)}` : '—', delta: perfDeltaLabel, deltaPositive: perfDelta == null || perfDelta >= 0, barPct: Math.min(100, Math.max(perf, analysisResults ? 8 : 0)), accent: 'text-violet-600' },
+                  { label: 'SEO-score', value: seoScore ? `${Math.round(seoScore)}` : '—', delta: seoDeltaLabel, deltaPositive: seoDelta == null || seoDelta >= 0, barPct: Math.max(seoScore, analysisResults ? 8 : 0), accent: 'text-emerald-500' },
+                  { label: 'Beste praksis', value: trust ? `${Math.round(trust)}` : '—', delta: 'Google Lighthouse', deltaPositive: true, barPct: Math.max(trust, analysisResults ? 8 : 0), accent: 'text-amber-500' },
+                  { label: 'Felt under mål', value: `${problemsLeft}`, delta: problemsLeft === 0 ? 'Ingen' : 'under 70', deltaPositive: problemsLeft === 0, barPct: problemsLeft === 0 ? 0 : Math.min(100, problemsLeft * 25), accent: problemsLeft === 0 ? 'text-slate-400' : 'text-rose-500' },
                 ].map((kpi, i) => (
                   <div key={i} className={`${cardBase} rounded-2xl p-5`}>
                     <div className="flex items-center justify-between mb-3">
@@ -4974,70 +5153,60 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
 
                   <div className={`mt-5 pt-4 border-t flex items-center justify-between ${isLight ? 'border-slate-100' : 'border-white/5'}`}>
-                    <span className={`text-xs ${textDim}`}>Neste sjekk om 2t 14m</span>
+                    <span className={`text-xs ${textDim}`}>Kjør ny analyse når du har gjort endringer på siden</span>
                     <button
                       onClick={() => setActiveTab('analysis')}
                       className="px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black hover:bg-violet-100 transition dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
                     >
-                      Sjekk nå
+                      Til analyse
                     </button>
                   </div>
                 </div>
 
-                {/* BESØKENDE-GRAF */}
+                {/* Teknisk utvikling — ekte tall fra dine PageSpeed-kjøringer (lagres lokalt) */}
                 <div className={`${cardBase} rounded-2xl p-5 lg:col-span-8`}>
-                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Besøkende på siden</p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-3 text-[10px] font-bold">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-violet-600"></div>
-                          <span className={textDim}>Fra Google</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                          <span className={textDim}>Direkte</span>
-                        </div>
-                      </div>
-                      <div className={`flex rounded-full p-0.5 ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                        {['1U', '1M', '3M', '1Å'].map((t, i) => (
-                          <button
-                            key={t}
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black transition ${i === 1 ? (isLight ? 'bg-white shadow-sm text-slate-900' : 'bg-slate-700 text-white') : textDim}`}
-                          >
-                            {t}
-                          </button>
-                        ))}
-                      </div>
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Utvikling over tid</p>
+                      <p className={`text-[11px] mt-1 ${textDim}`}>Basert på dine analyser (Google PageSpeed, norsk tid). Lagres i nettleseren — kjør «Ny test» under Analyse for nye punkter.</p>
                     </div>
                   </div>
 
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={trafficData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-                        <defs>
-                          <linearGradient id="dashboardTrafficGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.25} />
-                            <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#f1f5f9' : '#1e293b'} />
-                        <XAxis dataKey="day" hide />
-                        <YAxis hide domain={['dataMin - 100', 'dataMax + 200']} />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: isLight ? '#ffffff' : '#0f172a',
-                            border: `1px solid ${isLight ? '#e2e8f0' : '#334155'}`,
-                            borderRadius: 12,
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                          labelFormatter={(v) => `Dag ${v}`}
-                          formatter={(v: any) => [`${v}`, 'Besøkende']}
-                        />
-                        <Area type="monotone" dataKey="visits" stroke="#7c3aed" strokeWidth={2} fill="url(#dashboardTrafficGradient)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <div className="h-52">
+                    {scoreChartData.length === 0 ? (
+                      <div className={`h-full flex flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center ${isLight ? 'border-slate-200 bg-slate-50/50' : 'border-white/10 bg-white/[0.02]'}`}>
+                        <p className={`text-sm font-bold ${textMain}`}>Ingen historikk ennå</p>
+                        <p className={`text-xs mt-2 max-w-md ${textDim}`}>Gå til Analyse og trykk «Ny test». Etter flere kjøringer ser du trend for ytelse og SEO her.</p>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('analysis')}
+                          className="mt-4 px-5 py-2 rounded-xl bg-violet-600 text-white text-xs font-black hover:bg-violet-500"
+                        >
+                          Kjør første analyse
+                        </button>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={scoreChartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#f1f5f9' : '#1e293b'} />
+                          <XAxis dataKey="label" tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} interval="preserveStartEnd" />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} width={32} />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                              border: `1px solid ${isLight ? '#e2e8f0' : '#334155'}`,
+                              borderRadius: 12,
+                              fontSize: 12,
+                              fontWeight: 700,
+                            }}
+                            labelFormatter={(_, payload) => (payload && payload[0] ? String(payload[0].payload.label) : '')}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                          <Line type="monotone" dataKey="perf" name="Ytelse (mobil)" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
+                          <Line type="monotone" dataKey="seo" name="SEO" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 </div>
               </div>
