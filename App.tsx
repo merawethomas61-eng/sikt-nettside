@@ -3426,136 +3426,160 @@ const DashboardView = ({ user, onBack }: { user: any, onBack: () => void }) => {
 
 
 // --- HJELPEKOMPONENT: LÅST SEKSJON ---
-const LockedSection = ({
-  title,
-  description,
-  reqPackage,
-  onUpgrade,
-  color = "violet"
-}: {
-  title: string,
-  description: string,
-  reqPackage: string,
-  onUpgrade: () => void,
-  color?: string
-}) => (
-  <div className={`relative w-full rounded-2xl overflow-hidden border border-white/5 bg-slate-900/50 p-8 text-center group hover:border-${color}-500/30 transition-all`}>
-    {/* Glass-effekt bakgrunn */}
-    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-0"></div>
+// =====================================================================
+// PORTAL UI BUILDING BLOCKS
+// =====================================================================
+// Felles, profesjonelle byggeklosser brukt av den redesignede ClientPortal.
+// Holdt minimale (én aksent-farge, ingen gradient/blur, sentence-case labels).
+// =====================================================================
 
-    <div className="relative z-10 flex flex-col items-center">
-      <div className={`w-12 h-12 bg-${color}-500/10 text-${color}-400 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-${color}-900/20 group-hover:scale-110 transition-transform border border-${color}-500/20`}>
-        <Lock size={20} />
-      </div>
-      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-      <p className="text-slate-400 max-w-md mb-6 text-sm">{description}</p>
-      <button onClick={onUpgrade} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:shadow-lg hover:shadow-violet-500/25 transition-all border border-white/10">
-        <Zap size={16} fill="currentColor" /> Lås opp i {reqPackage}
-      </button>
-    </div>
-  </div>
+type PortalTheme = 'light' | 'dark';
+
+const portalCardClass = (theme: PortalTheme) =>
+  theme === 'light'
+    ? 'bg-white border border-slate-200 rounded-2xl'
+    : 'bg-slate-900 border border-white/10 rounded-2xl';
+
+const portalTextMainClass = (theme: PortalTheme) =>
+  theme === 'light' ? 'text-slate-900' : 'text-white';
+
+const portalTextDimClass = (theme: PortalTheme) =>
+  theme === 'light' ? 'text-slate-600' : 'text-slate-400';
+
+const portalTextLabelClass = (theme: PortalTheme) =>
+  theme === 'light' ? 'text-slate-500' : 'text-slate-500';
+
+const portalDividerClass = (theme: PortalTheme) =>
+  theme === 'light' ? 'border-slate-200' : 'border-white/10';
+
+const portalSubtleBgClass = (theme: PortalTheme) =>
+  theme === 'light' ? 'bg-slate-50' : 'bg-slate-950/40';
+
+// PortalCard — én konsistent kort-stil. Erstatter dagens fire-fem varianter.
+const PortalCard: React.FC<{
+  theme: PortalTheme;
+  className?: string;
+  children: React.ReactNode;
+}> = ({ theme, className = '', children }) => (
+  <section className={`${portalCardClass(theme)} ${className}`}>{children}</section>
 );
 
-// --- HJELPEKOMPONENT: PÅMINNELSE OM Å KOBLE WEBHOST ---
-// Tier-bevisst påminnelsesboks som vises etter hver analyse.
-// Tre varianter:
-//  - BASIC          → "Oppgrader for å få AI kode-forslag"
-//  - Ikke koblet    → "Koble til webhost" (knapp til innstillinger)
-//  - Koblet til     → "Åpne i Verksted" for presise kode-forslag
-const AnalysisReminderBox = ({
-  variant,
-  onPrimary,
-  theme = 'light',
-}: {
-  variant: 'basic_upgrade' | 'connect_host' | 'open_workshop';
-  onPrimary: () => void;
-  theme?: 'light' | 'dark';
-}) => {
-  const palette = variant === 'basic_upgrade'
-    ? { bgLight: 'from-violet-50 to-white border-violet-200', bgDark: 'from-violet-950/30 to-slate-900/50 border-violet-500/20', iconLight: 'bg-violet-100 text-violet-700', iconDark: 'bg-violet-500/20 text-violet-300', btn: 'bg-violet-600 hover:bg-violet-500 text-white' }
-    : variant === 'connect_host'
-      ? { bgLight: 'from-amber-50 to-white border-amber-200', bgDark: 'from-amber-950/30 to-slate-900/50 border-amber-500/20', iconLight: 'bg-amber-100 text-amber-700', iconDark: 'bg-amber-500/20 text-amber-300', btn: 'bg-slate-900 hover:bg-violet-600 text-white' }
-      : { bgLight: 'from-emerald-50 to-white border-emerald-200', bgDark: 'from-emerald-950/30 to-slate-900/50 border-emerald-500/20', iconLight: 'bg-emerald-100 text-emerald-700', iconDark: 'bg-emerald-500/20 text-emerald-300', btn: 'bg-emerald-600 hover:bg-emerald-500 text-white' };
+// CardHeader — overskrift + valgfri handling. Sentence case, ikke uppercase.
+const CardHeader: React.FC<{
+  theme: PortalTheme;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}> = ({ theme, title, subtitle, action }) => (
+  <header className="flex items-start justify-between gap-4 mb-5">
+    <div className="min-w-0">
+      <h3 className={`text-base font-semibold tracking-tight ${portalTextMainClass(theme)}`}>{title}</h3>
+      {subtitle && <p className={`text-sm mt-1 ${portalTextDimClass(theme)}`}>{subtitle}</p>}
+    </div>
+    {action && <div className="shrink-0">{action}</div>}
+  </header>
+);
 
-  const title = variant === 'basic_upgrade'
-    ? 'Oppgrader for eksakte kode-forslag'
-    : variant === 'connect_host'
-      ? 'Få mer presise kode-forslag'
-      : 'Klar for kode-forslag';
-
-  const body = variant === 'basic_upgrade'
-    ? 'Med Standard eller Premium leser Sikt HTML-en fra nettsiden din og viser deg nøyaktig hvilken kode-linje du må fjerne og hva du bør erstatte den med. Basic viser kun funn og generiske anbefalinger.'
-    : variant === 'connect_host'
-      ? 'Du har hoppet over webhost-tilkobling. Koble til i innstillinger så kan Sikt lese HTML-en fra siden din og peke ut eksakt hvilken kode-linje som må fjernes/erstattes.'
-      : 'Webhost er koblet til. Åpne problemet i Verksted for å se eksakt kode som bør fjernes og anbefalt erstatning, basert på AI-analyse av siden din.';
-
-  const buttonLabel = variant === 'basic_upgrade'
-    ? 'Se planer'
-    : variant === 'connect_host'
-      ? 'Koble til webhost'
-      : 'Åpne i Verksted';
-
-  const Icon = variant === 'basic_upgrade' ? Zap : variant === 'connect_host' ? Settings : Wrench;
-
+// BigNumber — store, profesjonelle tall (semibold, ikke black).
+const BigNumber: React.FC<{
+  theme: PortalTheme;
+  value: React.ReactNode;
+  unit?: string;
+  tone?: 'neutral' | 'good' | 'warn' | 'bad';
+}> = ({ theme, value, unit, tone = 'neutral' }) => {
+  const toneClass =
+    tone === 'good'
+      ? 'text-emerald-600'
+      : tone === 'warn'
+        ? 'text-amber-600'
+        : tone === 'bad'
+          ? 'text-rose-600'
+          : portalTextMainClass(theme);
   return (
-    <div className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 my-4 bg-gradient-to-br
-      ${theme === 'light' ? palette.bgLight : palette.bgDark}`}>
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
-          ${theme === 'light' ? palette.iconLight : palette.iconDark}`}>
-          <Icon size={22} />
-        </div>
-        <div className="flex-1">
-          <h3 className={`text-base font-black mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-            {title}
-          </h3>
-          <p className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
-            {body}
-          </p>
-        </div>
-        <button
-          onClick={onPrimary}
-          className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${palette.btn}`}
-        >
-          <Icon size={14} /> {buttonLabel}
-        </button>
-      </div>
+    <div className="flex items-baseline gap-2">
+      <span className={`text-4xl font-semibold tracking-tight ${toneClass}`}>{value}</span>
+      {unit && <span className={`text-sm ${portalTextDimClass(theme)}`}>{unit}</span>}
     </div>
   );
 };
 
-/**
- * Bestemmer hvilken variant AnalysisReminderBox skal vise basert på kundens plan + host-status.
- * Returnerer null hvis vi ikke skal vise boksen i det hele tatt.
- */
-const getReminderVariant = (
-  packageName: string | undefined,
-  hostConnection: { connectionMode?: string } | null,
-): 'basic_upgrade' | 'connect_host' | 'open_workshop' | null => {
-  const plan = (packageName || '').toUpperCase();
-  const isBasic = plan.includes('BASIC') || (!plan.includes('STANDARD') && !plan.includes('PREMIUM'));
-  if (isBasic) return 'basic_upgrade';
-  const mode = hostConnection?.connectionMode;
-  if (mode === 'light' || mode === 'full') return 'open_workshop';
-  return 'connect_host';
+// PrimaryButton — én primær CTA-stil. Brukes til hovedhandlinger.
+const PrimaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  size?: 'md' | 'lg';
+}> = ({ className = '', size = 'md', children, ...rest }) => {
+  const sizeClass = size === 'lg' ? 'px-6 py-3 text-sm' : 'px-4 py-2.5 text-sm';
+  return (
+    <button
+      {...rest}
+      className={`${sizeClass} rounded-xl bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium transition-colors inline-flex items-center justify-center gap-2 ${className}`}
+    >
+      {children}
+    </button>
+  );
 };
 
-// --- HJELPEKOMPONENT: STATUS KORT (Dashboard) ---
-const StatusCard = ({ icon: Icon, title, value, subtext, color }: any) => (
-  <div className="bg-slate-900/50 backdrop-blur-md p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all shadow-xl shadow-black/20 group relative overflow-hidden">
-    <div className={`absolute -right-10 -top-10 w-20 h-20 bg-${color}-500/10 blur-3xl rounded-full group-hover:bg-${color}-500/20 transition-all`}></div>
-    <div className="flex justify-between items-start mb-4 relative z-10">
-      <div className={`p-3 rounded-xl bg-${color}-500/10 text-${color}-400 border border-${color}-500/10`}>
-        <Icon size={24} />
-      </div>
-      {subtext && <span className={`text-xs font-bold px-2 py-1 rounded-full bg-${color}-500/10 text-${color}-400 border border-${color}-500/10`}>{subtext}</span>}
-    </div>
-    <div className="relative z-10">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
-      <p className="text-3xl font-black text-white tracking-tight">{value}</p>
-    </div>
+// SecondaryButton — diskré sekundær handling.
+const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  theme: PortalTheme;
+}> = ({ theme, className = '', children, ...rest }) => (
+  <button
+    {...rest}
+    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+      theme === 'light'
+        ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+        : 'bg-slate-800 border border-white/10 text-slate-200 hover:bg-slate-700'
+    } ${className}`}
+  >
+    {children}
+  </button>
+);
+
+// TierTeaser — diskré "Lås opp i Standard/Premium"-linje. Erstatter LockedSection.
+// Aldri full-card overlay; bare én linje med klar invitasjon nederst i et kort.
+const TierTeaser: React.FC<{
+  theme: PortalTheme;
+  tier: 'Standard' | 'Premium';
+  price: string;
+  message: string;
+  onUpgrade: () => void;
+}> = ({ theme, tier, price, message, onUpgrade }) => (
+  <div
+    className={`rounded-xl px-4 py-3 flex items-center gap-3 ${
+      theme === 'light'
+        ? 'bg-violet-50 border border-violet-100'
+        : 'bg-violet-500/10 border border-violet-500/20'
+    }`}
+  >
+    <Sparkles size={16} className="text-violet-600 shrink-0" />
+    <p className={`flex-1 text-sm ${portalTextDimClass(theme)} min-w-0`}>
+      <span className={`font-medium ${portalTextMainClass(theme)}`}>{message}</span>
+      <span className="hidden sm:inline">{' '}— {tier} {price}/mnd.</span>
+    </p>
+    <button
+      type="button"
+      onClick={onUpgrade}
+      className="text-sm font-medium text-violet-600 hover:text-violet-500 shrink-0"
+    >
+      Lås opp →
+    </button>
   </div>
 );
+
+// CategoryDot — fargemerket prikk for sikt_actions-kategori i loggen.
+const categoryMeta = (
+  category: 'finding' | 'suggestion' | 'fix' | 'alert',
+): { label: string; dot: string; bg: string; fg: string; icon: any } => {
+  switch (category) {
+    case 'fix':
+      return { label: 'Fiks', dot: 'bg-emerald-500', bg: 'bg-emerald-50', fg: 'text-emerald-700', icon: CheckCircle2 };
+    case 'suggestion':
+      return { label: 'Forslag', dot: 'bg-sky-500', bg: 'bg-sky-50', fg: 'text-sky-700', icon: PenTool };
+    case 'alert':
+      return { label: 'Varsel', dot: 'bg-amber-500', bg: 'bg-amber-50', fg: 'text-amber-700', icon: Bell };
+    default:
+      return { label: 'Funn', dot: 'bg-violet-500', bg: 'bg-violet-50', fg: 'text-violet-700', icon: Search };
+  }
+};
 
 // --- HOVEDKOMPONENT: CLIENT PORTAL ---
 // Her tar vi imot ALLE verktøyene fra App (theme, setView, selectedPlan osv.)
@@ -3603,9 +3627,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // 1. STATE & VARIABLER
   // VIKTIG: Vi har SLETTET [clientData, setClientData] herfra fordi den kommer fra props!
   const [formData, setFormData] = useState<any>({});
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Den redesignede portalen har kun tre faner: 'home' (Hjem), 'log' (Sikt-loggen),
+  // 'settings' (Innstillinger). Drawer for Verksted styres av activeSolveProblem.
+  const [activeTab, setActiveTab] = useState<'home' | 'log' | 'settings'>('home');
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
+
+  // Hvilke ekspanderbare hjem-kort som er åpne. Holdes lokalt for å unngå at brukeren
+  // må forholde seg til alle detaljene på én gang (zero cognitive load).
+  const [expandedHomeCard, setExpandedHomeCard] = useState<string | null>(null);
+  const toggleHomeCard = (id: string) => setExpandedHomeCard((prev) => (prev === id ? null : id));
+
+  // Settings-tab: hvilken seksjon som redigeres akkurat nå (kun én om gangen).
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [showHostModal, setShowHostModal] = useState(false);
+  const [hostPlatform, setHostPlatform] = useState<string>('');
+  const [hostInputValue, setHostInputValue] = useState<string>('');
+  const [hostSaving, setHostSaving] = useState(false);
+  const [planChangeTarget, setPlanChangeTarget] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
+  const [switchingPlan, setSwitchingPlan] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState({ weeklyReport: true, criticalAlerts: true, rankChanges: false });
 
   // Host-tilkoblings-info (fra client_hosts-tabellen). null = ikke hentet ennå eller
   // ingen rad finnes. Relevante felt: connectionMode ('light' | 'full' | 'skipped'),
@@ -3680,20 +3721,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [geoChatLoading, setGeoChatLoading] = useState(false);
   const [geoChatReply, setGeoChatReply] = useState<string | null>(null);
 
-  // --- SIDEBAR-SAMMENTREKNING (persisteres i localStorage) ---
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
-    try {
-      return typeof window !== 'undefined' && localStorage.getItem('sikt_sidebar_collapsed') === '1';
-    } catch { return false; }
-  });
-  const toggleSidebar = () => {
-    setSidebarCollapsed(prev => {
-      const next = !prev;
-      try { localStorage.setItem('sikt_sidebar_collapsed', next ? '1' : '0'); } catch { /* ignore */ }
-      return next;
-    });
-  };
-
   // --- UKENS KVITTERING (Sikt-handlinger) ---
   const [siktActions, setSiktActions] = useState<any[]>([]);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
@@ -3701,11 +3728,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [receiptCategoryFilter, setReceiptCategoryFilter] = useState<'all' | 'finding' | 'suggestion' | 'fix' | 'alert'>('all');
 
   // --- HUKOMMELSE FOR "LØS PROBLEMET" - ARBEIDSROMMET ---
-  const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null); // Hvilket problem vi er inni nå
-  const [problemHistory, setProblemHistory] = useState<any[]>([]); // Historikk over løste problemer
-  const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null); // Det man har trykket på i analysen (viser knappen)
+  // Brukes av WorkshopDrawer-overlayet i Hjem-fanen.
+  const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null);
   const [aiIsThinking, setAiIsThinking] = useState(false);
-  const [aiHasSolved, setAiHasSolved] = useState(false);
   const [aiSolution, setAiSolution] = useState<any>(null);
 
 
@@ -3785,7 +3810,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   // Analyse State
   const [analysisResults, setAnalysisResults] = useState<{ mobile: AnalysisResult; desktop: AnalysisResult } | null>(null);
-  const [activeDevice, setActiveDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -3801,19 +3825,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     } catch { setScoreHistory([]); }
   }, [user?.id]);
 
-  const [portalGuideDismissed, setPortalGuideDismissed] = useState(false);
+  // Markér første åpning av portalen — brukes til å vise ekstra-vennlig hilsen
+  // i StatusHero ved første besøk. Ingen mørklegging av meny eller onboarding-banner.
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
   useEffect(() => {
     if (!user?.id) return;
     try {
-      setPortalGuideDismissed(localStorage.getItem(`sikt_portal_guide_dismissed_${user.id}`) === '1');
       const seenKey = `sikt_portal_first_seen_${user.id}`;
-      const hasSeenPortal = localStorage.getItem(seenKey) === '1';
-      if (!hasSeenPortal) {
-        setActiveTab('dashboard');
-        setSidebarCollapsed(true);
+      if (localStorage.getItem(seenKey) !== '1') {
+        setIsFirstVisit(true);
         localStorage.setItem(seenKey, '1');
       }
-    } catch { setPortalGuideDismissed(false); }
+    } catch { /* ignore */ }
   }, [user?.id]);
 
   // Gjenopprett siste analyse fra cache (samme domene som i profilen)
@@ -3833,20 +3856,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   }, [user?.id, formData.websiteUrl, clientData?.websiteUrl]);
 
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
-
-  // UI State
-  const [isEditing, setIsEditing] = useState(false);
-  const [urlUnlockRequested, setUrlUnlockRequested] = useState(false);
 
   // SØKEORD STATE (EKTE DATA)
   const [keywordsToTrack, setKeywordsToTrack] = useState<any[]>([]);
   const [newKeywordInput, setNewKeywordInput] = useState('');
   const [realRankings, setRealRankings] = useState<any[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [filterIntent, setFilterIntent] = useState('All');
-  const [filterPos, setFilterPos] = useState('All');
+  // Internt brukt av data-fetching-hooks og handlers — beholdes for kompatibilitet
+  // (den nye UI-en bruker realRankings, men disse settes fortsatt for fremtidig bruk).
+  const [, setHasSearched] = useState(false);
+  const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
 
   // --- VIKTIG: VARIABLER & HJELPERE (Må defineres FØR de brukes) ---
   const getPackageLevel = (pkgName: string) => {
@@ -3871,38 +3890,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const bundlePackageLevel = hasPremium ? 3 : hasStandardOrHigher ? 2 : 1;
   const currentLevel = Math.max(dbPackageLevel, bundlePackageLevel);
 
-  const formatGoogleRankDisplay = (position: number): { short: string; explain: string } => {
-    if (position == null || position <= 0) return { short: '—', explain: 'Ingen organisk treff registrert for ditt domene i dette søket (sjekk URL under Innstillinger).' };
-    if (position > 100) return { short: '100+', explain: 'Du er ikke blant de 100 øverste organiske resultatene for dette søket og stedet. Jobb med mer relevant innhold, lokale signaler og teknisk SEO — kjør analysen på nytt etter endringer.' };
-    if (position > 50) return { short: '50+', explain: 'Utenfor topp 50. Synlig, men langt fra side 1. Prioriter én sterk landingsside for dette søkeordet.' };
-    if (position > 20) return { short: String(position), explain: `Plass ${position} — typisk side 2–3. Målet er topp 10; forbedre tittel, innhold og interne lenker.` };
-    if (position > 10) return { short: String(position), explain: `Plass ${position} — du er på førsteside, men under topp 10. Små forbedringer i relevans kan løfte deg.` };
-    if (position > 3) return { short: String(position), explain: `Plass ${position} i topp 10 — god synlighet. Hold siden oppdatert og bygg tillit (lenker, omtaler).` };
-    return { short: String(position), explain: 'Topp 3 — veldig sterk plassering for dette søket.' };
-  };
-
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'receipt', label: 'Ukens kvittering', icon: ClipboardCheck },
-    { id: 'competitors', label: 'Konkurrenter', icon: Radar },
-    { id: 'analysis', label: 'Analyse', icon: Activity },
-    { id: 'keywords', label: 'Søkeord', icon: Search },
-    { id: 'content', label: 'Innhold', icon: FileText },
-    { id: 'links', label: 'Lenker', icon: Link2 },
-    { id: 'aivis', label: 'AI-synlighet', icon: BrainCircuit },
-    { id: 'verksted', label: 'Verksted', icon: Wrench },
-    { id: 'settings', label: 'Innstillinger', icon: Settings },
+  // Tre-fane navigasjon. Loggen heter "Sikt-loggen" — kort og menneskelig.
+  const navItems: { id: 'home' | 'log' | 'settings'; label: string }[] = [
+    { id: 'home', label: 'Hjem' },
+    { id: 'log', label: 'Sikt-loggen' },
+    { id: 'settings', label: 'Innstillinger' },
   ];
-
-  const visibleMenuItems = portalGuideDismissed
-    ? menuItems
-    : menuItems.filter((item) => ['dashboard', 'analysis', 'keywords', 'settings'].includes(item.id));
-
-  useEffect(() => {
-    if (portalGuideDismissed) return;
-    const allowed = new Set(['dashboard', 'analysis', 'keywords', 'settings']);
-    if (!allowed.has(activeTab)) setActiveTab('dashboard');
-  }, [portalGuideDismissed, activeTab]);
 
   // 2. DATA FETCHING (Profil)
   useEffect(() => {
@@ -4074,36 +4067,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         urlLastChangedAt: urlChanged ? patch.url_last_changed_at : clientData?.urlLastChangedAt,
       });
 
-      setSaveMessage('Lagret!');
-      setIsEditing(false);
-      setUrlUnlockRequested(false);
       if (urlChanged) toastSuccess("Nettadresse lagret. Kan endres igjen om 7 dager.");
       else toastSuccess("Endringer lagret.");
-      setTimeout(() => setSaveMessage(''), 3000);
     } catch (err: any) {
       console.error('[handleSaveSettings] feil:', err?.message || err);
-      setSaveMessage('Feil ved lagring.');
       toastError("Kunne ikke lagre: " + (err?.message || 'ukjent feil'));
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleChangePlan = async (newPlanName: string) => {
-    if (!confirm(`Vil du endre pakke til ${newPlanName}?`)) return;
-    setSaving(true);
-    try {
-      await supabaseRest(`clients?user_id=eq.${user.id}`, {
-        method: 'PATCH',
-        body: { package_name: newPlanName },
-        headers: { Prefer: 'return=representation' },
-      });
-      setClientData({ ...clientData, package_name: newPlanName });
-      toastSuccess(`Pakke endret til ${newPlanName}!`);
-    } catch (err: any) {
-      console.error('[handleChangePlan] feil:', err?.message || err);
-      toastError("Kunne ikke endre pakke: " + (err?.message || 'ukjent feil'));
-    } finally { setSaving(false); }
   };
 
   const handleUpgrade = () => {
@@ -4142,34 +4113,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   };
 
-  const handleUnlockUrl = () => { if (confirm("Endring av URL nullstiller historikk. Sikker?")) setUrlUnlockRequested(true); };
-
-  // --- NY STATE FOR DENNE SIDEN ---
-  const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
-  const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null); // For AI-analyse
-  const [trendKeywordKey, setTrendKeywordKey] = useState<string | null>(null);
-
-  const keywordRowKey = (k: Pick<KeywordData, 'keyword' | 'location'>) => `${k.keyword}\t${k.location || ''}`;
-
-  useEffect(() => {
-    if (!keywordData?.length) {
-      setTrendKeywordKey(null);
-      return;
-    }
-    const keys = keywordData.map((k) => keywordRowKey(k));
-    const selKey = selectedKeyword ? keywordRowKey(selectedKeyword) : null;
-    setTrendKeywordKey((prev) => {
-      if (prev && keys.includes(prev)) return prev;
-      if (selKey && keys.includes(selKey)) return selKey;
-      return keys[0];
-    });
-  }, [keywordData, selectedKeyword]);
-
-
-
-  // --- STATE FOR INNHOLD SIDE ---
+  // --- INNHOLDS-/LENKE-DATA (brukes av runContentScan/runLinkScan + cache) ---
   const [contentPages, setContentPages] = useState<ContentPage[]>([]);
-  const [selectedPage, setSelectedPage] = useState<ContentPage | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
   // EKTE INNHOLDSSKANNER (Bruker Vercel Backend)
@@ -4248,19 +4193,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [isScanningLinks, setIsScanningLinks] = useState(false);
 
 
-  // --- DYNAMISK RAPPORT-GENERATOR (Bruker dine ekte data) ---
-  const [dynamicReport, setDynamicReport] = useState<any>(null);
-
+  // --- HENT SIKT-HANDLINGER NÅR LOGGEN ÅPNES ---
   useEffect(() => {
-    // Kjør denne hver gang vi åpner rapport-fanen eller data endres
-    if (activeTab === 'reports') {
-      generateRealReport();
-    }
-  }, [activeTab, keywordData, contentPages, linkPages]);
-
-  // --- HENT SIKT-HANDLINGER NÅR UKENS KVITTERING ÅPNES ---
-  useEffect(() => {
-    if (activeTab !== 'receipt' || !user?.id) return;
+    if (activeTab !== 'log' || !user?.id) return;
 
     const fetchActions = async () => {
       setLoadingReceipt(true);
@@ -4294,164 +4229,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     fetchActions();
   }, [activeTab, user?.id]);
 
-  const generateRealReport = () => {
-    // 1. Finn beste og dårligste data
-    const topKeywords = keywordData.filter(k => k.position <= 10);
-    const criticalPages = contentPages.filter(p => p.status === 'Kritisk');
-    const isolatedPages = linkPages.filter(p => p.status === 'Isolert');
-    const bestPage = contentPages.reduce((prev, current) => (prev.score > current.score) ? prev : current, contentPages[0]);
-    const worstPage = contentPages.reduce((prev, current) => (prev.score < current.score) ? prev : current, contentPages[0]);
-
-    // 2. Generer "Hvorfor du vokser" tekst basert på fakta
-    let growthText = "Vi har ikke nok data enda. Kjør flere analyser.";
-    let growthTitle = "Venter på data";
-
-    if (topKeywords.length > 0) {
-      growthTitle = "Sterk rangering";
-      growthText = `Google belønner deg for søkeordet "${topKeywords[0].keyword}" (Pos #${topKeywords[0].position}). Dette driver mesteparten av din organiske synlighet akkurat nå.`;
-    } else if (bestPage && bestPage.score > 80) {
-      growthTitle = "Kvalitetsinnhold";
-      growthText = `Siden din "${bestPage.title}" har en svært høy teknisk score (${bestPage.score}/100). Google liker sider som laster raskt og har godt innhold.`;
-    }
-
-    // 3. Generer "Hva som holder deg tilbake" tekst
-    let problemText = "Alt ser bra ut så langt!";
-    let problemTitle = "Ingen kritiske feil";
-
-    if (criticalPages.length > 0) {
-      problemTitle = "Tekniske hindringer";
-      problemText = `Du har ${criticalPages.length} sider med kritiske feil. Siden "${criticalPages[0].title}" ${criticalPages[0].issues[0] ? 'har problemet: ' + criticalPages[0].issues[0] : 'trenger umiddelbar oppmerksomhet'}.`;
-    } else if (isolatedPages.length > 0) {
-      problemTitle = "Isolert innhold";
-      problemText = `Siden "${isolatedPages[0].title}" har ingen interne lenker. Google finner ikke denne siden, og du går glipp av trafikk.`;
-    } else if (keywordData.length > 0 && topKeywords.length === 0) {
-      problemTitle = "Lav synlighet";
-      problemText = `Ingen av dine ${keywordData.length} søkeord er på side 1 enda. Du må jobbe med innholdet på sidene som rangerer på side 2-3.`;
-    }
-
-    // 4. Lag en faktisk handlingsplan (Weekly Plan)
-    const tasks = [];
-
-    // Oppgave 1: Lavthengende frukt (Søkeord pos 4-20)
-    const opportunityKeyword = keywordData.find(k => k.position > 3 && k.position < 20);
-    if (opportunityKeyword) {
-      tasks.push({
-        task: `Optimaliser teksten for "${opportunityKeyword.keyword}"`,
-        desc: `Du er på posisjon #${opportunityKeyword.position}. Litt mer innhold kan vippe deg til side 1.`,
-        impact: 'Høy trafikk',
-        time: '30 min',
-        color: 'emerald'
-      });
-    }
-
-    // Oppgave 2: Fiks den verste siden
-    if (worstPage && worstPage.status === 'Kritisk') {
-      tasks.push({
-        task: `Fiks feil på "${worstPage.title}"`,
-        desc: `Denne siden har score ${worstPage.score}/100. ${worstPage.issues[0] || 'Se gjennom innholdet.'}`,
-        impact: 'Teknisk SEO',
-        time: '15 min',
-        color: 'rose'
-      });
-    }
-
-    // Oppgave 3: Internlenking
-    if (isolatedPages.length > 0) {
-      tasks.push({
-        task: `Lenk til "${isolatedPages[0].title}"`,
-        desc: "Siden er foreldreløs. Legg til en lenke fra forsiden eller menyen.",
-        impact: 'Indeksering',
-        time: '5 min',
-        color: 'blue'
-      });
-    }
-
-    // Fallback oppgaver hvis alt er perfekt
-    if (tasks.length === 0) {
-      tasks.push({ task: "Se etter nye søkeord", desc: "Du har god helse. Utvid horisonten.", impact: 'Vekst', time: '20 min', color: 'violet' });
-    }
-
-    setDynamicReport({ growthTitle, growthText, problemTitle, problemText, tasks });
-  };
-
-  // --- AI HANDLERS FOR INNHOLD ---
-  const [aiLoading, setAiLoading] = useState<string | null>(null); // 'text' | 'links'
-  const [aiResponse, setAiResponse] = useState<any>(null);
-
-  // --- EKTE AI HANDLER (Bruker OpenAI API) ---
-  const handleAiAction = async (type: 'text' | 'links') => {
-    if (!selectedPage) return;
-    setAiLoading(type);
-    setAiResponse(null);
-
-    if (type === 'links') {
-      // Lenkeforslag er allerede ekte (den sjekker dine andre sider via koden din)
-      const internalSuggestions = contentPages
-        .filter(p => p.id !== selectedPage.id)
-        .slice(0, 3)
-        .map(p => ({
-          fromUrl: p.url,
-          anchor: selectedPage.title.split(' - ')[0] || 'Les mer'
-        }));
-      setAiResponse({ type: 'links', title: 'Forslag til interne lenker', links: internalSuggestions.length > 0 ? internalSuggestions : null });
-      setAiLoading(null);
-      return;
-    }
-
-    // EKTE TEKSTGENERERING VIA BACKEND (sikker — OpenAI-nøkkel lever kun på serveren)
-    try {
-      const accessToken = getStoredAccessToken();
-      if (!accessToken) {
-        toastError("Du må være logget inn for å bruke AI-funksjoner.");
-        return;
-      }
-
-      const prompt = `Du er en SEO-ekspert. Skriv en optimalisert og selgende intro-tekst (ca 50 ord) for en nettside med tittel "${selectedPage.title}". Den skal være på norsk, fengende, og inkludere viktige nøkkelord for temaet.`;
-
-      const response = await fetch('/api/openai-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          prompt,
-          model: 'gpt-4o-mini',
-          maxTokens: 150,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const errMsg = typeof data?.error === 'string' ? data.error : (data?.message || `HTTP ${response.status}`);
-        throw new Error(errMsg);
-      }
-
-      if (data.content) {
-        setAiResponse({
-          type: 'text',
-          title: 'AI-optimalisert utkast',
-          content: String(data.content).trim(),
-        });
-      } else {
-        throw new Error("Fikk ikke svar fra AI.");
-      }
-    } catch (error: any) {
-      console.error(error);
-      const msg = error?.message || 'Kunne ikke koble til AI. Prøv igjen senere.';
-      toastError(msg);
-      setAiResponse({ type: 'text', title: 'Feil', content: msg });
-    } finally {
-      setAiLoading(null);
-    }
-  };
-
-
-
-  // --- STATE FOR LENKER (LIM INN HER, INNI ClientPortal) ---
-
-  // EKTE LENKESKANNER (Bruker Vercel Backend)
+  // --- LENKE-SKANNER (kalles ikke fra UI ennå, men beholdt for fremtidig bruk) ---
   const runLinkScan = async () => {
     if (!formData.websiteUrl) { toastWarning("Legg inn URL i innstillinger først."); return; }
 
@@ -4534,32 +4312,28 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   }, [user.id]);
 
-  // --- AUTO-LOAD CACHE (Gjør appen lynrask) ---
+  // --- AUTO-LOAD CACHE (innhold/lenker hentes ved bruk i drawer/scan) ---
   useEffect(() => {
     if (!formData.websiteUrl) return;
-
-    // Last inn Innhold-cache hvis tabellen er tom
-    if (activeTab === 'content' && contentPages.length === 0) {
+    if (contentPages.length === 0) {
       const contentCache = localStorage.getItem(`content_cache_${formData.websiteUrl}`);
       if (contentCache) {
         try {
           const { data, timestamp } = JSON.parse(contentCache);
           if (Date.now() - timestamp < 86400000) setContentPages(data);
-        } catch (e) { }
+        } catch (e) { /* ignore */ }
       }
     }
-
-    // Last inn Lenke-cache hvis tabellen er tom
-    if (activeTab === 'links' && linkPages.length === 0) {
+    if (linkPages.length === 0) {
       const linkCache = localStorage.getItem(`link_cache_${formData.websiteUrl}`);
       if (linkCache) {
         try {
           const { data, timestamp } = JSON.parse(linkCache);
           if (Date.now() - timestamp < 86400000) setLinkPages(data);
-        } catch (e) { }
+        } catch (e) { /* ignore */ }
       }
     }
-  }, [activeTab, formData.websiteUrl, contentPages.length, linkPages.length]);
+  }, [formData.websiteUrl, contentPages.length, linkPages.length]);
 
   // --- SØKEORDSGRENSER ---
   const getKeywordLimit = (level: number) => {
@@ -4817,13 +4591,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   };
 
-  const filteredRankings = realRankings.filter(r => {
-    if (filterIntent !== 'All' && r.intent !== filterIntent) return false;
-    if (filterPos === 'Top3' && r.position > 3) return false;
-    if (filterPos === 'Top10' && r.position > 10) return false;
-    return true;
-  });
-
   // --- ANALYSE LOGIKK (PageSpeed) ---
   const formatLighthouseData = (data: any): AnalysisResult => {
     const lh = data.lighthouseResult;
@@ -5008,480 +4775,705 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     } finally { setIsAnalyzing(false); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-pulse text-violet-400 font-bold">Laster...</div></div>;
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'light' ? 'bg-slate-50' : 'bg-slate-950'}`}>
+        <div className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Laster portalen…</div>
+      </div>
+    );
+  }
 
-  // Felles designtokens som brukes av alle de nye fanene (holdt her for å unngå duplisering)
-  const portalIsLight = theme === 'light';
-  const portalCard = portalIsLight
-    ? 'bg-white border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.02),0_4px_8px_rgba(0,0,0,0.02)]'
-    : 'bg-slate-900/60 border border-white/5';
-  const portalTextMain = portalIsLight ? 'text-slate-900' : 'text-white';
-  const portalTextDim = portalIsLight ? 'text-slate-500' : 'text-slate-400';
-  const portalTextLabel = portalIsLight ? 'text-slate-400' : 'text-slate-500';
-  const portalDivider = portalIsLight ? 'border-slate-100' : 'border-white/5';
+  // ===================================================================
+  // DESIGN-TOKENS — én konsistent palett for hele portalen.
+  // ===================================================================
+  const themed: PortalTheme = theme === 'light' ? 'light' : 'dark';
+  const isLight = themed === 'light';
+  const rootBg = isLight ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100';
+  const textMain = portalTextMainClass(themed);
+  const textDim = portalTextDimClass(themed);
+  const textLabel = portalTextLabelClass(themed);
+  const divider = portalDividerClass(themed);
+  const subtleBg = portalSubtleBgClass(themed);
+  const navBg = isLight ? 'bg-white/90' : 'bg-slate-950/90';
+  const navBorder = divider;
 
-  const portalWebsiteUrlGuide = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
-  const portalOnboardingSteps: { id: string; label: string; done: boolean; tab: string }[] = [
-    { id: 'url', label: 'Nettside-URL', done: !!portalWebsiteUrlGuide, tab: 'settings' },
-    { id: 'analysis', label: 'Teknisk analyse', done: !!analysisResults, tab: 'analysis' },
-    { id: 'keywords', label: 'Søkeord', done: keywordsToTrack.length > 0, tab: 'keywords' },
-    ...(hasStandardOrHigher
-      ? [{ id: 'host', label: 'Webhost', done: hostConnection != null, tab: 'settings' }]
-      : []),
-  ];
-  const portalOnboardingDone = portalOnboardingSteps.filter((s) => s.done).length;
-  const portalOnboardingTotal = portalOnboardingSteps.length;
-  const portalOnboardingPct = portalOnboardingTotal ? Math.round((portalOnboardingDone / portalOnboardingTotal) * 100) : 100;
-  const portalOnboardingNext = portalOnboardingSteps.find((s) => !s.done);
-  const showPortalOnboardingBar = !portalGuideDismissed && portalOnboardingNext !== undefined;
+  const navBtnClass = (active: boolean) =>
+    active
+      ? `px-4 py-2 rounded-lg text-sm font-medium ${isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`
+      : `px-4 py-2 rounded-lg text-sm font-medium ${textDim} hover:${textMain} transition-colors`;
+
+  // ===================================================================
+  // AVLEDET DATA — alt vi trenger for å vise et meningsfylt Hjem.
+  // ===================================================================
+  const firstName = (clientData?.contactPerson || clientData?.companyName || user?.email || '').toString().split(/[\s@]/)[0] || 'der';
+  const websiteUrl = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
+
+  // Total score (gjennomsnitt av de fire Lighthouse-kategoriene). Brukes som "ett tall" på Hjem.
+  const perfMobile = analysisResults?.mobile?.performance ?? null;
+  const seoMobile = analysisResults?.mobile?.seo ?? null;
+  const bpMobile = analysisResults?.mobile?.bestPractices ?? null;
+  const a11yMobile = analysisResults?.mobile?.accessibility ?? null;
+  const totalScore = analysisResults
+    ? Math.round(((perfMobile ?? 0) + (seoMobile ?? 0) + (bpMobile ?? 0) + (a11yMobile ?? 0)) / 4)
+    : null;
+  const scoreTone: 'good' | 'warn' | 'bad' | 'neutral' =
+    totalScore == null ? 'neutral' : totalScore >= 80 ? 'good' : totalScore >= 60 ? 'warn' : 'bad';
+
+  // Headline + støttetekst på StatusHero.
+  const statusHeadline = !websiteUrl
+    ? 'Velkommen til Sikt.'
+    : !analysisResults
+      ? 'Klar for første sjekk?'
+      : totalScore! >= 80
+        ? 'Synligheten din er sterk.'
+        : totalScore! >= 60
+          ? 'Synligheten din er god — med rom for vekst.'
+          : 'Synligheten din trenger oppmerksomhet.';
+  const statusSubtext = !websiteUrl
+    ? 'Legg inn nettadressen din under Innstillinger, så starter Sikt å jobbe for deg.'
+    : !analysisResults
+      ? `Vi tester ${websiteUrl.replace(/^https?:\/\//i, '')} mot Google og foreslår de første fiksene. Det tar omtrent 30 sekunder.`
+      : totalScore! >= 80
+        ? 'Hold tempoet — Sikt overvåker nettsiden din og varsler ved endringer.'
+        : totalScore! >= 60
+          ? 'Et par konkrete fikser løfter deg over 80. Se «Hva Sikt jobber med» under.'
+          : 'Sikt har funnet flere ting du kan fikse i dag. Se forslagene i loggen.';
+
+  // Primær CTA på StatusHero — alltid kontekstuell, alltid bare ÉN.
+  type Cta = { label: string; onClick: () => void; icon?: React.ReactNode };
+  const primaryCTA: Cta = !websiteUrl
+    ? { label: 'Legg inn nettside', onClick: () => { setActiveTab('settings'); setEditingSection('profile'); }, icon: <Globe size={16} /> }
+    : !analysisResults
+      ? { label: isAnalyzing ? 'Kjører…' : 'Kjør første analyse', onClick: () => runRealAnalysis(), icon: <Activity size={16} /> }
+      : hasStandardOrHigher && !hostConnection
+        ? { label: 'Koble til CMS', onClick: () => { setActiveTab('settings'); setShowHostModal(true); }, icon: <Server size={16} /> }
+        : { label: 'Se ukens fikser', onClick: () => setActiveTab('log'), icon: <ClipboardCheck size={16} /> };
+
+  // Søkeord-statistikk
+  const keywordLimit = getKeywordLimit(currentLevel);
+  const sortedRankings = [...realRankings].sort((a: any, b: any) => (a.position ?? 999) - (b.position ?? 999));
+  const topRankings = sortedRankings.filter((r: any) => r.position && r.position <= 100).slice(0, 3);
+  const weakRankings = [...realRankings].filter((r: any) => (r.position ?? 999) > 10).sort((a: any, b: any) => (b.position ?? 0) - (a.position ?? 0)).slice(0, 3);
+
+  // Logg-statistikk for Hjem-preview
+  const recentActions = (siktActions || []).slice(0, 5);
+  const hasAnyActions = recentActions.length > 0;
+
+  // Pakke-pris-tekst (brukes i settings + teaser)
+  const planPrices: Record<string, string> = { BASIC: '499 kr', STANDARD: '1 499 kr', PREMIUM: '4 999 kr' };
+  const planNames: Record<string, string> = { BASIC: 'Basic', STANDARD: 'Standard', PREMIUM: 'Premium' };
+  const activePlanKey: 'BASIC' | 'STANDARD' | 'PREMIUM' =
+    /premium/i.test(planBundle) ? 'PREMIUM' : /standard/i.test(planBundle) ? 'STANDARD' : 'BASIC';
+
+  // Webhost-status (for settings-fanen)
+  const hostMode: string = hostConnection?.connectionMode || 'none';
+  const hostIsConnected = hostMode === 'light' || hostMode === 'full';
+
+  // URL-lås (én endring per uke)
+  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const urlLastChangedMs = clientData?.urlLastChangedAt ? new Date(clientData.urlLastChangedAt).getTime() : 0;
+  const urlMsUntilUnlock = urlLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - urlLastChangedMs)) : 0;
+  const urlLocked = urlMsUntilUnlock > 0;
+  const urlDaysLeft = Math.ceil(urlMsUntilUnlock / (24 * 60 * 60 * 1000));
+
+  // Dev-modus for plan-bytte
+  const isDevMode = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    new URLSearchParams(window.location.search).get('dev') === '1'
+  );
+  const isMockUser = user?.id === 'dev-mock-user-id' || user?.app_metadata?.provider === 'dev' ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user?.id || '');
+
+  // Lokal handler for plan-bytte (dev) — speiler den gamle logikken fra PortalSettings
+  const performPlanChange = async () => {
+    if (!planChangeTarget || !user?.id) return;
+    setSwitchingPlan(true);
+    try {
+      if (isMockUser) {
+        setClientData((prev: any) => ({ ...(prev || {}), package_name: planChangeTarget.name }));
+        try { localStorage.setItem('sikt_dev_plan', planChangeTarget.name); } catch { /* ignore */ }
+        toastSuccess(`Byttet til ${planChangeTarget.name} (dev-modus, kun lokalt).`);
+      } else {
+        await supabaseRest(`clients?user_id=eq.${user.id}`, {
+          method: 'PATCH',
+          body: { package_name: planChangeTarget.name },
+          headers: { Prefer: 'return=representation' },
+        });
+        toastSuccess(`Byttet til ${planChangeTarget.name}.`);
+        setTimeout(() => window.location.reload(), 800);
+      }
+      setPlanChangeTarget(null);
+    } catch (err: any) {
+      toastError('Kunne ikke bytte plan: ' + (err?.message || 'ukjent feil'));
+    } finally {
+      setSwitchingPlan(false);
+    }
+  };
+
+  // Webhost-tilkobling-handler (speiler logikken fra gamle PortalSettings)
+  const saveHostConnection = async () => {
+    if (!hostPlatform || !hostInputValue.trim()) return;
+    setHostSaving(true);
+    try {
+      const body: any = {
+        user_id: user.id,
+        platform: hostPlatform,
+        connection_mode: 'light',
+        repo_url: hostPlatform === 'github' ? hostInputValue.trim() : null,
+        admin_url: (hostPlatform !== 'github' && hostPlatform !== 'custom') ? hostInputValue.trim() : null,
+        notes: hostPlatform === 'custom' ? hostInputValue.trim() : null,
+        last_changed_at: new Date().toISOString(),
+      };
+      await supabaseRest('client_hosts?on_conflict=user_id', {
+        method: 'POST',
+        body,
+        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+      });
+      setHostConnection({
+        platform: body.platform,
+        connectionMode: 'light',
+        repoUrl: body.repo_url || '',
+        adminUrl: body.admin_url || '',
+        notes: body.notes || '',
+        lastChangedAt: body.last_changed_at,
+      });
+      toastSuccess('CMS koblet til. Sikt kan nå pushe fikser direkte.');
+      setShowHostModal(false);
+      setHostPlatform('');
+      setHostInputValue('');
+    } catch (err: any) {
+      toastError('Kunne ikke koble til: ' + (err?.message || 'ukjent feil'));
+    } finally {
+      setHostSaving(false);
+    }
+  };
+
+  const toggleNotif = (key: keyof typeof notifPrefs) =>
+    setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className={`flex min-h-screen transition-colors duration-300 ${theme === 'light' ? 'bg-[#F8FAFC] text-slate-800' : 'bg-slate-950 text-slate-200'}`}>
+    <div className={`min-h-screen ${rootBg} antialiased`}>
 
-      {/* Bakgrunnseffekter (Mykere i lys modus) */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className={`absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full blur-[120px] ${theme === 'light' ? 'bg-indigo-100/40' : 'bg-violet-900/20'}`}></div>
-      </div>
+      {/* =============================================================== */}
+      {/* TOPP-NAVIGASJON — tre faner, ingen sidebar, ingen jargon.        */}
+      {/* =============================================================== */}
+      <header className={`sticky top-0 z-30 border-b ${navBorder} ${navBg} backdrop-blur`}>
+        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between gap-4">
+          <button onClick={() => setActiveTab('home')} className="flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-semibold text-sm">S</div>
+            <span className={`font-semibold text-base ${textMain}`}>Sikt</span>
+          </button>
 
-      {/* Sidebar med skygge i lys modus — sammentrekkbar */}
-      <aside className={`fixed h-full z-20 flex flex-col transition-all duration-300 border-r backdrop-blur-xl
-        ${sidebarCollapsed ? 'w-20' : 'w-20 lg:w-64'}
-        ${theme === 'light' ? 'bg-white border-slate-200/50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)]' : 'bg-slate-900/80 border-white/5 shadow-2xl'}
-      `}>
-        <div className={`p-6 flex items-center gap-3 border-b ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
-          <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm shrink-0">S</div>
-          <span className={`font-black text-xl ${sidebarCollapsed ? 'hidden' : 'hidden lg:block'} ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Sikt.</span>
+          <nav className="hidden sm:flex items-center gap-1 mx-auto">
+            {navItems.map((item) => (
+              <button key={item.id} onClick={() => setActiveTab(item.id)} className={navBtnClass(activeTab === item.id)}>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <span className={`hidden md:inline text-sm ${textDim}`}>{currentPkgName}</span>
+            {currentLevel < 3 && (
+              <button
+                onClick={handleUpgrade}
+                className="hidden sm:inline text-sm font-medium text-violet-600 hover:text-violet-500 transition-colors"
+              >
+                Oppgrader
+              </button>
+            )}
+            <button
+              onClick={onLogout}
+              aria-label="Logg ut"
+              className={`p-2 rounded-lg ${textDim} hover:text-rose-600 transition-colors`}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Toggle-knapp — flyter på høyre kant av sidebaren (kun desktop) */}
-        <button
-          onClick={toggleSidebar}
-          aria-label={sidebarCollapsed ? 'Utvid meny' : 'Trekk sammen meny'}
-          title={sidebarCollapsed ? 'Utvid meny' : 'Trekk sammen meny'}
-          className={`hidden lg:flex absolute top-20 -right-3 w-6 h-6 rounded-full border items-center justify-center z-30 transition-all hover:scale-110
-            ${theme === 'light' ? 'bg-white border-slate-200 text-slate-600 hover:text-violet-600 shadow-md' : 'bg-slate-800 border-white/10 text-slate-300 hover:text-white shadow-lg'}
-          `}
-        >
-          {sidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-        </button>
-
-        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
-          {visibleMenuItems.map((item) => (
+        {/* Mobil-fanene under logoen */}
+        <nav className={`sm:hidden grid grid-cols-3 border-t ${navBorder}`}>
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              title={sidebarCollapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all border font-medium ${sidebarCollapsed ? 'justify-center lg:justify-center' : 'lg:justify-start'} ${activeTab === item.id ? 'bg-violet-600 text-white shadow-md border-transparent' : theme === 'light' ? 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent' : 'text-slate-400 hover:bg-white/5 border-transparent'}`}
+              className={`py-3 text-sm font-medium ${activeTab === item.id ? `${textMain} border-b-2 border-violet-600` : textDim}`}
             >
-              <item.icon size={20} className="shrink-0" />
-              <span className={`text-sm ${sidebarCollapsed ? 'hidden' : 'hidden lg:block'}`}>{item.label}</span>
+              {item.label}
             </button>
           ))}
         </nav>
+      </header>
 
-        <div className={`p-4 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
-          <p className={`text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider ${sidebarCollapsed ? 'hidden' : 'hidden lg:block'}`}>ABONNEMENT</p>
-          <div className={`justify-between items-center p-2 rounded-lg border mb-3 ${sidebarCollapsed ? 'hidden' : 'hidden lg:flex'} ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/50 border-white/5'}`}>
-            <span className={`text-xs font-bold pl-1 ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{currentPkgName}</span>
-            {currentLevel < 3 && <button onClick={handleUpgrade} className="text-[10px] font-bold text-violet-500 hover:text-violet-600">Oppgrader</button>}
-          </div>
-          <button
-            onClick={onLogout}
-            title={sidebarCollapsed ? 'Logg ut' : undefined}
-            className={`flex items-center gap-2 text-xs font-bold w-full p-2 rounded-lg transition-colors ${sidebarCollapsed ? 'justify-center' : ''} ${theme === 'light' ? 'text-slate-500 hover:bg-rose-50 hover:text-rose-600' : 'text-slate-500 hover:text-rose-400 hover:bg-white/5'}`}
-          >
-            <LogOut size={16} /><span className={sidebarCollapsed ? 'hidden' : 'hidden lg:inline'}>Logg ut</span>
-          </button>
-        </div>
-      </aside>
+      <main className="mx-auto max-w-5xl px-6 py-10 sm:py-14">
 
-      {/* Content Area — justerer margin og max-bredde basert på sidebar */}
-      <main className={`flex-1 p-6 lg:p-10 mx-auto relative z-10 transition-all duration-300 ${sidebarCollapsed ? 'ml-20 max-w-7xl' : 'ml-20 lg:ml-64 max-w-6xl'}`}>
+        {/* =============================================================== */}
+        {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
+        {/* =============================================================== */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
 
-        {showPortalOnboardingBar && (
-          <div className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-sm ${portalIsLight ? 'bg-white border-slate-200' : 'bg-slate-900/80 border-white/10'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Kom i gang</p>
-                  <span className={`text-[10px] font-black ${portalTextMain}`}>{portalOnboardingDone}/{portalOnboardingTotal} steg</span>
-                </div>
-                <div className={`h-2 rounded-full overflow-hidden ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                  <div className="h-full rounded-full bg-violet-600 transition-all duration-500" style={{ width: `${portalOnboardingPct}%` }} />
-                </div>
-                <p className={`text-sm mt-2 ${portalTextDim}`}>
-                  <span className={`font-bold ${portalTextMain}`}>Neste: </span>
-                  {portalOnboardingNext?.label}
-                  <span className="hidden sm:inline"> — følg stegene én gang, så vet du hvor du skal starte.</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => { if (portalOnboardingNext) setActiveTab(portalOnboardingNext.tab); }}
-                  className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold transition flex items-center gap-2"
-                >
-                  Gå til steg <ArrowRight size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!user?.id) return;
-                    try { localStorage.setItem(`sikt_portal_guide_dismissed_${user.id}`, '1'); } catch { /* ignore */ }
-                    setPortalGuideDismissed(true);
-                  }}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition ${portalIsLight ? 'border-slate-200 text-slate-600 hover:bg-slate-50' : 'border-white/10 text-slate-300 hover:bg-white/5'}`}
-                >
-                  Skjul
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Top Header — redesignet for å matche dashboard-mockupen */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div>
-              <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                {activeTab === 'dashboard' ? 'Din oversikt' : visibleMenuItems.find(i => i.id === activeTab)?.label || menuItems.find(i => i.id === activeTab)?.label}
-              </h1>
-              <p className={`text-xs mt-1 ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {new Date().toLocaleString('nb-NO', { dateStyle: 'medium', timeStyle: 'short' })}
-              </p>
-            </div>
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${
-              analyzeError
-                ? (theme === 'light' ? 'bg-rose-50 border-rose-100' : 'bg-rose-950/40 border-rose-900/40')
-                : !analysisResults
-                  ? (theme === 'light' ? 'bg-amber-50 border-amber-100' : 'bg-amber-950/40 border-amber-900/40')
-                  : (theme === 'light' ? 'bg-emerald-50 border-emerald-100' : 'bg-emerald-950/40 border-emerald-900/40')
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${analyzeError ? 'bg-rose-500' : !analysisResults ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-              <span className={`text-[10px] font-black uppercase tracking-wider ${
-                analyzeError
-                  ? (theme === 'light' ? 'text-rose-700' : 'text-rose-400')
-                  : !analysisResults
-                    ? (theme === 'light' ? 'text-amber-800' : 'text-amber-400')
-                    : (theme === 'light' ? 'text-emerald-700' : 'text-emerald-400')
-              }`}>
-                {analyzeError ? 'Sjekk analyse' : !analysisResults ? 'Start med analyse' : 'Alt klart'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 sm:gap-8">
-            <div className="text-right">
-              <p className={`text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>Siden din</p>
-              <p className={`text-sm font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{analysisResults?.mobile?.performance ? `${Math.round(analysisResults.mobile.performance)}%` : '—'}</p>
-            </div>
-            <div className="text-right">
-              <p className={`text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>Ord du ranker på</p>
-              <p className={`text-sm font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{realRankings.length || keywordsToTrack.length || 0}</p>
-            </div>
-            <button className={`relative w-10 h-10 rounded-full border flex items-center justify-center transition ${theme === 'light' ? 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600' : 'bg-slate-800 border-white/10 hover:bg-slate-700 text-slate-300'}`}>
-              <MessageCircle size={16} />
-              <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full"></div>
-            </button>
-          </div>
-        </header>
-
-        {/* --- CRM DASHBOARD (MINIMALISTISK & CLEAN) --- */}
-        {activeTab === 'dashboard' && (() => {
-          // --- Data fra eksisterende state med fornuftige fallbacks ---
-          const perf = analysisResults?.mobile?.performance ?? 0;
-          const seoScore = analysisResults?.mobile?.seo ?? 0;
-          const trust = analysisResults?.mobile?.bestPractices ?? 0;
-          // Teller score-kategorier som er under 70 som "feil å fikse" — enkel proxy til vi har ekte problem-queue
-          const problemsLeft = analysisResults
-            ? [perf, seoScore, trust, analysisResults.mobile.accessibility ?? 0].filter(s => s < 70).length
-            : 0;
-          const totalScore = analysisResults
-            ? Math.round((perf + seoScore + trust + (analysisResults.mobile.accessibility ?? 0)) / 4)
-            : 0;
-          const technicalPct = Math.round(perf);
-          const contentPct = Math.round(seoScore);
-          const linksPct = linkPages.length > 0 ? 80 : 0; // plassholder til vi har ekte link-health
-
-          const perfDelta = scoreHistory.length >= 2
-            ? scoreHistory[scoreHistory.length - 1].mobilePerf - scoreHistory[scoreHistory.length - 2].mobilePerf
-            : null;
-          const perfDeltaLabel = perfDelta == null
-            ? (scoreHistory.length < 2 ? 'Første måling' : '—')
-            : `${perfDelta >= 0 ? '+' : ''}${perfDelta} poeng`;
-
-          const seoDelta = scoreHistory.length >= 2
-            ? scoreHistory[scoreHistory.length - 1].mobileSeo - scoreHistory[scoreHistory.length - 2].mobileSeo
-            : null;
-          const seoDeltaLabel = seoDelta == null
-            ? (scoreHistory.length < 2 ? 'Første måling' : '—')
-            : `${seoDelta >= 0 ? '+' : ''}${seoDelta} poeng`;
-
-          const scoreChartData = scoreHistory.map((h, i) => ({
-            idx: i + 1,
-            perf: h.mobilePerf,
-            seo: h.mobileSeo,
-            label: new Date(h.at).toLocaleString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
-          }));
-
-          const topSearches = realRankings.slice(0, 2);
-          const cwv = {
-            speed: analysisResults?.mobile?.lcp?.score,
-            response: analysisResults?.mobile?.tbt?.score,
-            stability: analysisResults?.mobile?.cls?.score,
-          };
-
-          const isLight = theme === 'light';
-          const cardBase = isLight
-            ? 'bg-white border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.02),0_4px_8px_rgba(0,0,0,0.02)]'
-            : 'bg-slate-900/60 border border-white/5';
-          const textMain = isLight ? 'text-slate-900' : 'text-white';
-          const textDim = isLight ? 'text-slate-500' : 'text-slate-400';
-          const textLabel = isLight ? 'text-slate-400' : 'text-slate-500';
-          const pbTrack = isLight ? 'bg-slate-100' : 'bg-slate-800';
-
-          // Donut-SVG for total score
-          const donutCircumference = 2 * Math.PI * 42;
-          const donutOffset = donutCircumference - (totalScore / 100) * donutCircumference;
-
-          return (
-            <div className="animate-in fade-in duration-500 space-y-5 pb-16">
-
-              {portalOnboardingNext && (
-                <div className={`rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${isLight ? 'bg-violet-50/80 border-violet-100' : 'bg-violet-950/30 border-violet-500/20'}`}>
-                  <div className="flex-1">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Start her</p>
-                    <p className={`text-lg font-black mt-1 ${textMain}`}>Du er på steg {portalOnboardingDone + 1} av {portalOnboardingTotal}</p>
-                    <p className={`text-sm mt-1 ${textDim}`}>
-                      Neste anbefaling: <span className="font-bold text-violet-600">{portalOnboardingNext.label}</span>. Vi har samlet alt i én meny til venstre — følg rekkefølgen én gang.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(portalOnboardingNext.tab)}
-                    className="shrink-0 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-black transition flex items-center gap-2"
-                  >
-                    Åpne {portalOnboardingNext.label} <ArrowRight size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* RAD 1: 4 KPI-kort */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Ytelse (mobil)', value: perf ? `${Math.round(perf)}` : '—', delta: perfDeltaLabel, deltaPositive: perfDelta == null || perfDelta >= 0, barPct: Math.min(100, Math.max(perf, analysisResults ? 8 : 0)), accent: 'text-violet-600' },
-                  { label: 'SEO-score', value: seoScore ? `${Math.round(seoScore)}` : '—', delta: seoDeltaLabel, deltaPositive: seoDelta == null || seoDelta >= 0, barPct: Math.max(seoScore, analysisResults ? 8 : 0), accent: 'text-emerald-500' },
-                  { label: 'Beste praksis', value: trust ? `${Math.round(trust)}` : '—', delta: 'Google Lighthouse', deltaPositive: true, barPct: Math.max(trust, analysisResults ? 8 : 0), accent: 'text-amber-500' },
-                  { label: 'Felt under mål', value: `${problemsLeft}`, delta: problemsLeft === 0 ? 'Ingen' : 'under 70', deltaPositive: problemsLeft === 0, barPct: problemsLeft === 0 ? 0 : Math.min(100, problemsLeft * 25), accent: problemsLeft === 0 ? 'text-slate-400' : 'text-rose-500' },
-                ].map((kpi, i) => (
-                  <div key={i} className={`${cardBase} rounded-2xl p-5`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>{kpi.label}</p>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${kpi.deltaPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                        {kpi.delta}
-                      </span>
-                    </div>
-                    <p className={`text-3xl sm:text-4xl font-black tracking-tight mb-4 ${kpi.accent}`}>{kpi.value}</p>
-                    <div className={`h-1 ${pbTrack} rounded-full overflow-hidden`}>
-                      <div className={`h-full rounded-full bg-current ${kpi.accent} transition-all duration-700`} style={{ width: `${kpi.barPct}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* RAD 2: Total Score + Besøkende-graf */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-                {/* TOTAL SCORE kort */}
-                <div className={`${cardBase} rounded-2xl p-5 lg:col-span-4`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Total score</p>
-                    <button onClick={() => setActiveTab('analysis')} className={`${textDim} hover:text-violet-600 transition`} aria-label="Rediger">
-                      <Edit2 size={12} />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-5">
-                    <div className="relative w-24 h-24 shrink-0">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="42" fill="none" className={pbTrack.replace('bg-', 'stroke-')} strokeWidth="8" />
-                        <circle
-                          cx="50" cy="50" r="42"
-                          fill="none" stroke="#7c3aed" strokeWidth="8" strokeLinecap="round"
-                          strokeDasharray={donutCircumference}
-                          strokeDashoffset={donutOffset}
-                          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.16,1,0.3,1)' }}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`text-2xl font-black ${textMain}`}>{totalScore || '—'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 space-y-2.5">
-                      {[
-                        { label: 'Teknisk', pct: technicalPct },
-                        { label: 'Innhold', pct: contentPct },
-                        { label: 'Lenker', pct: linksPct },
-                      ].map((row, i) => (
-                        <div key={i}>
-                          <div className="flex justify-between items-baseline mb-1">
-                            <span className={`text-xs font-medium ${textDim}`}>{row.label}</span>
-                            <span className={`text-xs font-black ${textMain}`}>{row.pct}%</span>
-                          </div>
-                          <div className={`h-1 ${pbTrack} rounded-full overflow-hidden`}>
-                            <div className="h-full rounded-full bg-slate-900 dark:bg-white transition-all duration-700" style={{ width: `${row.pct}%` }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={`mt-5 pt-4 border-t flex items-center justify-between ${isLight ? 'border-slate-100' : 'border-white/5'}`}>
-                    <span className={`text-xs ${textDim}`}>Kjør ny analyse når du har gjort endringer på siden</span>
-                    <button
-                      onClick={() => setActiveTab('analysis')}
-                      className="px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-black hover:bg-violet-100 transition dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
-                    >
-                      Til analyse
-                    </button>
-                  </div>
-                </div>
-
-                {/* Teknisk utvikling — ekte tall fra dine PageSpeed-kjøringer (lagres lokalt) */}
-                <div className={`${cardBase} rounded-2xl p-5 lg:col-span-8`}>
-                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <div>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel}`}>Utvikling over tid</p>
-                      <p className={`text-[11px] mt-1 ${textDim}`}>Basert på dine analyser (Google PageSpeed, norsk tid). Lagres i nettleseren — kjør «Ny test» under Analyse for nye punkter.</p>
-                    </div>
-                  </div>
-
-                  <div className="h-52">
-                    {scoreChartData.length === 0 ? (
-                      <div className={`h-full flex flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center ${isLight ? 'border-slate-200 bg-slate-50/50' : 'border-white/10 bg-white/[0.02]'}`}>
-                        <p className={`text-sm font-bold ${textMain}`}>Ingen historikk ennå</p>
-                        <p className={`text-xs mt-2 max-w-md ${textDim}`}>Gå til Analyse og trykk «Ny test». Etter flere kjøringer ser du trend for ytelse og SEO her.</p>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('analysis')}
-                          className="mt-4 px-5 py-2 rounded-xl bg-violet-600 text-white text-xs font-black hover:bg-violet-500"
-                        >
-                          Kjør første analyse
-                        </button>
-                      </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={scoreChartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#f1f5f9' : '#1e293b'} />
-                          <XAxis dataKey="label" tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} interval="preserveStartEnd" />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} width={32} />
-                          <RechartsTooltip
-                            contentStyle={{
-                              backgroundColor: isLight ? '#ffffff' : '#0f172a',
-                              border: `1px solid ${isLight ? '#e2e8f0' : '#334155'}`,
-                              borderRadius: 12,
-                              fontSize: 12,
-                              fontWeight: 700,
-                            }}
-                            labelFormatter={(_, payload) => (payload && payload[0] ? String(payload[0].payload.label) : '')}
-                          />
-                          <Legend wrapperStyle={{ fontSize: 11 }} />
-                          <Line type="monotone" dataKey="perf" name="Ytelse (mobil)" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
-                          <Line type="monotone" dataKey="seo" name="SEO" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
+            {/* StatusHero — én setning, én tall, én knapp. */}
+            <PortalCard theme={themed} className="p-8 sm:p-10">
+              <div className="flex flex-col lg:flex-row gap-8 lg:items-end justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm ${textDim}`}>
+                    {isFirstVisit ? `Velkommen til Sikt, ${firstName}.` : `Hei ${firstName}.`}
+                  </p>
+                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight mt-3 ${textMain}`}>
+                    {statusHeadline}
+                  </h1>
+                  <p className={`text-base mt-3 leading-relaxed ${textDim} max-w-xl`}>
+                    {statusSubtext}
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <PrimaryButton onClick={primaryCTA.onClick} disabled={isAnalyzing && primaryCTA.label.startsWith('Kjør')} size="lg">
+                      {primaryCTA.icon}
+                      {primaryCTA.label}
+                      {!isAnalyzing && <ArrowRight size={14} />}
+                    </PrimaryButton>
+                    {analysisResults && (
+                      <SecondaryButton theme={themed} onClick={() => setActiveTab('log')}>
+                        Se Sikt-loggen
+                      </SecondaryButton>
                     )}
                   </div>
                 </div>
+
+                {totalScore != null && (
+                  <div className={`shrink-0 rounded-2xl px-6 py-5 ${subtleBg} text-right`}>
+                    <p className={`text-xs ${textLabel}`}>Total score</p>
+                    <BigNumber theme={themed} value={totalScore} unit="/ 100" tone={scoreTone} />
+                    {scoreHistory.length >= 2 && (() => {
+                      const delta = scoreHistory[scoreHistory.length - 1].mobilePerf - scoreHistory[scoreHistory.length - 2].mobilePerf;
+                      const sign = delta > 0 ? '+' : '';
+                      const cls = delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-rose-600' : textDim;
+                      return <p className={`text-xs mt-1 ${cls}`}>{sign}{delta} siden forrige måling</p>;
+                    })()}
+                  </div>
+                )}
               </div>
 
-              {/* RAD 3: Topp søk + Brukeropplevelse + Sikt AI */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                {/* TOPP SØK */}
-                <div className={`${cardBase} rounded-2xl p-5`}>
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel} mb-4`}>Topp søk</p>
-                  {topSearches.length > 0 ? (
-                    <div className="space-y-3">
-                      {topSearches.map((r: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <span className={`text-sm font-medium ${textMain} truncate pr-2`}>{r.keyword || r.term || '—'}</span>
-                          <span className={`text-sm font-black ${r.position <= 3 ? 'text-violet-600' : 'text-slate-400'}`}>#{r.position ?? '—'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between opacity-60">
-                        <span className={`text-sm font-medium ${textDim}`}>seo byrå</span>
-                        <span className={`text-sm font-black text-violet-600`}>#1</span>
-                      </div>
-                      <div className="flex items-center justify-between opacity-60">
-                        <span className={`text-sm font-medium ${textDim}`}>digital markedsføring</span>
-                        <span className={`text-sm font-black text-violet-600`}>#3</span>
-                      </div>
-                      <p className={`text-[10px] ${textLabel} pt-2 italic`}>Legg til søkeord under "Søkeord"-fanen</p>
-                    </div>
-                  )}
+              {analyzeError && (
+                <div className={`mt-6 rounded-xl px-4 py-3 text-sm ${isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-300'}`}>
+                  {analyzeError}
                 </div>
+              )}
+              {isAnalyzing && (
+                <div className={`mt-6`}>
+                  <div className={`h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
+                    <div className="h-full bg-violet-600 transition-all duration-300" style={{ width: `${progress}%` }} />
+                  </div>
+                  <p className={`text-xs mt-2 ${textDim}`}>{progressText}</p>
+                </div>
+              )}
+            </PortalCard>
 
-                {/* BRUKEROPPLEVELSE (Core Web Vitals) */}
-                <div className={`${cardBase} rounded-2xl p-5`}>
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${textLabel} mb-4`}>Brukeropplevelse</p>
-                  <div className="grid grid-cols-3 gap-2">
+            {/* SYNLIGHET — analyse + Core Web Vitals i ett kort */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Synligheten din"
+                subtitle="Slik ser nettsiden din ut for Google og besøkende på mobil."
+                action={
+                  analysisResults && (
+                    <button
+                      type="button"
+                      onClick={() => toggleHomeCard('visibility')}
+                      className={`text-sm font-medium ${textDim} hover:${textMain}`}
+                    >
+                      {expandedHomeCard === 'visibility' ? 'Skjul' : 'Vis detaljer'}
+                    </button>
+                  )
+                }
+              />
+
+              {!analysisResults ? (
+                <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                  <p className={`text-sm ${textDim}`}>
+                    Ingen analyse kjørt enda. Trykk «Kjør første analyse» øverst, så får du Lighthouse-resultatet med plain norske forklaringer.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-6">
                     {[
-                      { label: 'Fart', score: cwv.speed },
-                      { label: 'Respons', score: cwv.response },
-                      { label: 'Stabilitet', score: cwv.stability },
+                      { label: 'Fart', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
+                      { label: 'Respons', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
+                      { label: 'Stabilitet', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
                     ].map((m, i) => {
-                      const pct = typeof m.score === 'number' ? Math.round(m.score * 100) : 0;
-                      const color = pct >= 75 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : pct > 0 ? 'bg-rose-500' : 'bg-slate-200';
+                      const tone: 'good' | 'warn' | 'bad' = m.score >= 0.9 ? 'good' : m.score >= 0.5 ? 'warn' : 'bad';
                       return (
-                        <div key={i} className="text-center">
-                          <p className={`text-[10px] font-bold uppercase tracking-wider ${textLabel} mb-2`}>{m.label}</p>
-                          <div className={`h-1 ${pbTrack} rounded-full overflow-hidden mb-2`}>
-                            <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${pct || 10}%` }} />
-                          </div>
-                          <p className={`text-[10px] font-black ${textMain}`}>{pct ? `${pct}%` : '—'}</p>
+                        <div key={i}>
+                          <p className={`text-xs ${textLabel} mb-1`}>{m.label}</p>
+                          <BigNumber theme={themed} value={m.value} tone={tone} />
                         </div>
                       );
                     })}
                   </div>
-                </div>
 
-                {/* SIKT AI — lys variant med violet accent */}
-                <div className={`rounded-2xl p-5 relative overflow-hidden ${isLight ? 'bg-gradient-to-br from-violet-50 to-white border border-violet-100' : 'bg-slate-900/60 border border-white/5'}`}>
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-violet-500/10 rounded-full blur-3xl"></div>
-                  <div className="relative flex flex-col items-center justify-center h-full min-h-[140px] text-center">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${isLight ? 'bg-violet-600 shadow-lg shadow-violet-200' : 'bg-violet-500/20 border border-violet-500/30'}`}>
-                      <Activity size={18} className={`${isLight ? 'text-white' : 'text-violet-300'} animate-pulse`} />
+                  {expandedHomeCard === 'visibility' && (
+                    <div className={`mt-6 pt-6 border-t ${divider} space-y-4`}>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {[
+                          { label: 'Ytelse', value: perfMobile },
+                          { label: 'SEO', value: seoMobile },
+                          { label: 'Beste praksis', value: bpMobile },
+                          { label: 'Tilgjengelighet', value: a11yMobile },
+                        ].map((row, i) => {
+                          const v = row.value ?? 0;
+                          const t: 'good' | 'warn' | 'bad' = v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
+                          return (
+                            <div key={i}>
+                              <p className={`text-xs ${textLabel}`}>{row.label}</p>
+                              <BigNumber theme={themed} value={Math.round(v)} unit="/ 100" tone={t} />
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {analysisResults.mobile.opportunities && analysisResults.mobile.opportunities.length > 0 && (
+                        <div className="space-y-2">
+                          <p className={`text-sm font-medium ${textMain} mt-4`}>Forbedringsmuligheter</p>
+                          {analysisResults.mobile.opportunities.slice(0, 4).map((o: any, i: number) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setActiveSolveProblem({ raw: o, title: o.title })}
+                              className={`w-full text-left rounded-xl px-4 py-3 border ${divider} hover:border-violet-300 hover:bg-violet-50/30 transition-colors flex items-start justify-between gap-3`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-sm font-medium ${textMain}`}>{o.title}</p>
+                                {o.savings && <p className={`text-xs mt-0.5 ${textDim}`}>Spar {o.savings}</p>}
+                              </div>
+                              <ArrowRight size={14} className={`shrink-0 mt-0.5 ${textDim}`} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {scoreHistory.length >= 2 && (
+                        <div className={`pt-4 border-t ${divider}`}>
+                          <p className={`text-xs ${textLabel} mb-3`}>Utvikling over tid</p>
+                          <div className="h-32">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#e2e8f0' : '#1e293b'} />
+                                <XAxis dataKey="idx" tick={false} axisLine={false} />
+                                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: isLight ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                                <RechartsTooltip
+                                  contentStyle={{ backgroundColor: isLight ? '#fff' : '#0f172a', border: `1px solid ${isLight ? '#e2e8f0' : '#1e293b'}`, borderRadius: 12, fontSize: 12 }}
+                                  labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
+                                />
+                                <Line type="monotone" dataKey="perf" name="Ytelse" stroke="#7c3aed" strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="seo" name="SEO" stroke="#10b981" strokeWidth={2} dot={false} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isLight ? 'text-violet-600' : 'text-white/60'}`}>Sikt AI</p>
-                    <p className={`text-lg font-black mb-2 ${textMain}`}>Jobber...</p>
-                    <p className={`text-[11px] leading-relaxed max-w-[180px] ${textDim}`}>
-                      Analyserer innhold og skriver forslag til neste ukes fikser
-                    </p>
+                  )}
+                </>
+              )}
+
+              <div className={`mt-6 pt-5 border-t ${divider} flex flex-wrap items-center justify-between gap-3`}>
+                <p className={`text-sm ${textDim}`}>
+                  {!hasStandardOrHigher
+                    ? 'Basic: månedlig sjekk. Standard kjører ukentlig automatisk.'
+                    : 'Sjekk kjøres ukentlig. Du kan teste manuelt når som helst.'}
+                </p>
+                <SecondaryButton theme={themed} onClick={runRealAnalysis} disabled={isAnalyzing}>
+                  <RefreshCw size={14} /> {isAnalyzing ? 'Kjører…' : analysisResults ? 'Kjør ny test' : 'Kjør første analyse'}
+                </SecondaryButton>
+              </div>
+            </PortalCard>
+
+            {/* SØKEORD */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Synlige søk"
+                subtitle={
+                  realRankings.length > 0
+                    ? `Du rangerer på ${realRankings.length} søkeord. ${topRankings.length > 0 ? `Best: «${topRankings[0].keyword}» på plass ${topRankings[0].position}.` : ''}`
+                    : `Du sporer ${keywordsToTrack.length} av ${keywordLimit} søkeord.`
+                }
+                action={
+                  <button
+                    type="button"
+                    onClick={() => toggleHomeCard('keywords')}
+                    className={`text-sm font-medium ${textDim} hover:${textMain}`}
+                  >
+                    {expandedHomeCard === 'keywords' ? 'Skjul' : 'Vis liste'}
+                  </button>
+                }
+              />
+
+              {realRankings.length === 0 ? (
+                <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                  <p className={`text-sm ${textDim} mb-4`}>
+                    {keywordsToTrack.length === 0
+                      ? 'Legg til søkeord du vil rangere på, så sjekker Sikt Google for deg.'
+                      : 'Trykk «Sjekk rangering» for å se hvor du står på Google nå.'}
+                  </p>
+                  <PrimaryButton
+                    onClick={keywordsToTrack.length === 0 ? () => setActiveTab('settings') : handleCheckRankings}
+                    disabled={rankingLoading}
+                  >
+                    <Search size={14} />
+                    {rankingLoading ? 'Sjekker…' : keywordsToTrack.length === 0 ? 'Legg til søkeord' : 'Sjekk rangering'}
+                  </PrimaryButton>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <p className={`text-xs ${textLabel} mb-3`}>Beste plasseringer</p>
+                    <ul className="space-y-2">
+                      {topRankings.map((r: any, i: number) => (
+                        <li key={i} className={`flex items-center justify-between rounded-lg px-3 py-2 ${subtleBg}`}>
+                          <span className={`text-sm font-medium ${textMain} truncate pr-3`}>{r.keyword}</span>
+                          <span className={`text-sm font-semibold ${r.position <= 3 ? 'text-emerald-600' : r.position <= 10 ? 'text-violet-600' : textDim}`}>
+                            #{r.position}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${textLabel} mb-3`}>Trenger oppmerksomhet</p>
+                    {weakRankings.length > 0 ? (
+                      <ul className="space-y-2">
+                        {weakRankings.map((r: any, i: number) => (
+                          <li key={i} className={`flex items-center justify-between rounded-lg px-3 py-2 ${subtleBg}`}>
+                            <span className={`text-sm font-medium ${textMain} truncate pr-3`}>{r.keyword}</span>
+                            <span className={`text-sm font-semibold ${r.position > 50 ? 'text-rose-600' : 'text-amber-600'}`}>
+                              #{r.position > 100 ? '100+' : r.position}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={`text-sm ${textDim}`}>Alt på topp 10 — bra jobbet.</p>
+                    )}
                   </div>
                 </div>
+              )}
+
+              {expandedHomeCard === 'keywords' && realRankings.length > 0 && (
+                <div className={`mt-6 pt-6 border-t ${divider}`}>
+                  <ul className="space-y-1">
+                    {sortedRankings.slice(0, 20).map((r: any, i: number) => (
+                      <li key={i} className={`flex items-center justify-between py-2 px-3 rounded-lg hover:${subtleBg}`}>
+                        <span className={`text-sm ${textMain} truncate pr-3`}>{r.keyword}</span>
+                        <span className={`text-xs ${textDim}`}>{r.location} · #{r.position > 100 ? '100+' : r.position}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className={`mt-6 pt-5 border-t ${divider} flex flex-wrap items-center justify-between gap-3`}>
+                <p className={`text-sm ${textDim}`}>
+                  {currentLevel === 1
+                    ? `Basic: ${keywordLimit} søkeord. Standard sporer 15. Premium ubegrenset.`
+                    : currentLevel === 2
+                      ? `Standard: opptil ${keywordLimit} søkeord. Premium ubegrenset.`
+                      : 'Premium: ubegrenset søkeord.'}
+                </p>
+                <div className="flex gap-2">
+                  <SecondaryButton theme={themed} onClick={() => { setActiveTab('settings'); setEditingSection('keywords'); }}>
+                    Administrer
+                  </SecondaryButton>
+                  {keywordsToTrack.length > 0 && (
+                    <PrimaryButton onClick={handleCheckRankings} disabled={rankingLoading}>
+                      <Search size={14} /> {rankingLoading ? 'Sjekker…' : 'Sjekk nå'}
+                    </PrimaryButton>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })()}
+            </PortalCard>
 
-        {/* --- UKENS KVITTERING --- */}
-        {activeTab === 'receipt' && (() => {
-          // ----- Uke-beregning -----
+            {/* SIKT-LOGGEN PREVIEW */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Hva Sikt jobber med"
+                subtitle={
+                  hasAnyActions
+                    ? `${recentActions.length} ${recentActions.length === 1 ? 'handling' : 'handlinger'} de siste dagene.`
+                    : 'Ingen handlinger logget enda. Sikt begynner å jobbe så snart du har lagt inn nettsiden.'
+                }
+                action={
+                  hasAnyActions && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('log')}
+                      className="text-sm font-medium text-violet-600 hover:text-violet-500"
+                    >
+                      Se hele loggen →
+                    </button>
+                  )
+                }
+              />
+
+              {hasAnyActions ? (
+                <ul className="space-y-1">
+                  {recentActions.map((a: any) => {
+                    const meta = categoryMeta(a.category);
+                    return (
+                      <li key={a.id} className={`flex items-start gap-3 py-3 ${textMain}`}>
+                        <span className={`mt-1.5 w-2 h-2 rounded-full ${meta.dot} shrink-0`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{a.title}</p>
+                          <p className={`text-xs mt-0.5 ${textDim}`}>
+                            {meta.label} · {new Date(a.created_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className={`rounded-xl px-5 py-6 text-center ${subtleBg}`}>
+                  <p className={`text-sm ${textDim}`}>
+                    {hasStandardOrHigher ? 'Sikt fikser ting denne uken — kom tilbake i morgen.' : 'Kjør en analyse, så dukker første funn opp her.'}
+                  </p>
+                </div>
+              )}
+            </PortalCard>
+
+            {/* KONKURRENTER — tier-aware */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Konkurrenter"
+                subtitle={hasStandardOrHigher ? 'Du sover — Sikt holder øye.' : 'Få varsel når konkurrenten din endrer strategi.'}
+                action={
+                  hasStandardOrHigher && (
+                    <SecondaryButton theme={themed} onClick={loadCompetitorsFromSerp}>
+                      <Radar size={14} /> Hent fra Google
+                    </SecondaryButton>
+                  )
+                }
+              />
+
+              {!hasStandardOrHigher ? (
+                <TierTeaser
+                  theme={themed}
+                  tier="Standard"
+                  price="1 499 kr"
+                  message="Sikt overvåker konkurrentene dine 24/7 og varsler når de publiserer noe nytt"
+                  onUpgrade={handleUpgrade}
+                />
+              ) : trackedCompetitors.length === 0 ? (
+                <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                  <p className={`text-sm ${textDim} mb-2`}>
+                    Ingen konkurrenter overvåkes enda.
+                  </p>
+                  <p className={`text-xs ${textLabel}`}>
+                    Kjør «Sjekk rangering» på et søkeord først, så finner Sikt konkurrenter automatisk.
+                  </p>
+                </div>
+              ) : (
+                <ul className={`divide-y ${divider}`}>
+                  {trackedCompetitors.slice(0, 5).map((c) => (
+                    <li key={c.id} className="flex items-center justify-between py-3 gap-3">
+                      <div className="min-w-0">
+                        <p className={`text-sm font-medium ${textMain} truncate`}>{c.title || c.domain}</p>
+                        <p className={`text-xs ${textDim} truncate`}>
+                          {c.domain} {c.sourceKeyword ? `· slår deg på «${c.sourceKeyword}»` : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs ${textLabel}`}>#{c.serpRank}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeCompetitor(c.id)}
+                          aria-label="Fjern"
+                          className={`p-1.5 rounded-md ${textDim} hover:text-rose-600`}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </PortalCard>
+
+            {/* AI-SYNLIGHET (GEO) — tier-aware */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="AI-synlighet"
+                subtitle="Hvordan ser ChatGPT, Gemini og Perplexity nettsiden din?"
+              />
+
+              {!hasPremium ? (
+                <TierTeaser
+                  theme={themed}
+                  tier="Premium"
+                  price="4 999 kr"
+                  message="Vil du synes når kundene spør ChatGPT? Sikt tester deg ukentlig mot LLM-ene"
+                  onUpgrade={handleUpgrade}
+                />
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                    <div>
+                      <p className={`text-xs ${textLabel}`}>AI-treff denne uken</p>
+                      <BigNumber theme={themed} value="3 / 20" tone="warn" />
+                    </div>
+                    <div>
+                      <p className={`text-xs ${textLabel}`}>GEO-score</p>
+                      <BigNumber theme={themed} value="62" unit="/ 100" tone="warn" />
+                    </div>
+                    <div>
+                      <p className={`text-xs ${textLabel}`}>llms.txt</p>
+                      <BigNumber theme={themed} value="Aktiv" tone="good" />
+                    </div>
+                  </div>
+
+                  <div className={`rounded-xl ${subtleBg} p-4`}>
+                    <p className={`text-xs ${textLabel} mb-2`}>Test en prompt mot ChatGPT</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={geoChatInput}
+                        onChange={(e) => setGeoChatInput(e.target.value)}
+                        placeholder="F.eks. «hvilken rørlegger bør jeg bruke i Oslo?»"
+                        className={`flex-1 rounded-lg px-3 py-2 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
+                      />
+                      <PrimaryButton onClick={sendGeoChat} disabled={!geoChatInput.trim() || geoChatLoading}>
+                        {geoChatLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                      </PrimaryButton>
+                    </div>
+                    {geoChatReply && (
+                      <p className={`mt-3 text-sm whitespace-pre-wrap ${textMain}`}>{geoChatReply}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </PortalCard>
+          </div>
+        )}
+
+        {/* =============================================================== */}
+        {/* SIKT-LOGGEN — én tidslinje, filter-pills, ekspanderbare rader.  */}
+        {/* =============================================================== */}
+        {activeTab === 'log' && (() => {
           const now = new Date();
-          const currentWeekStart = new Date(now);
-          const day = currentWeekStart.getDay() || 7; // Søndag = 7, Mandag = 1
-          currentWeekStart.setDate(currentWeekStart.getDate() - (day - 1));
-          currentWeekStart.setHours(0, 0, 0, 0);
-
-          const viewedWeekStart = new Date(currentWeekStart);
-          viewedWeekStart.setDate(viewedWeekStart.getDate() + weekOffset * 7);
-          const viewedWeekEnd = new Date(viewedWeekStart);
-          viewedWeekEnd.setDate(viewedWeekEnd.getDate() + 7);
+          const weekStart = new Date(now);
+          const day = weekStart.getDay() || 7;
+          weekStart.setDate(weekStart.getDate() - (day - 1));
+          weekStart.setHours(0, 0, 0, 0);
+          const viewedStart = new Date(weekStart);
+          viewedStart.setDate(viewedStart.getDate() + weekOffset * 7);
+          const viewedEnd = new Date(viewedStart);
+          viewedEnd.setDate(viewedEnd.getDate() + 7);
 
           const getWeekNumber = (d: Date) => {
             const date = new Date(d.getTime());
@@ -5491,2926 +5483,651 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
           };
 
-          // ----- Filtrer handlinger til valgt uke + kategori -----
-          const weekActions = siktActions.filter(a => {
+          const inWeek = siktActions.filter((a) => {
             const ts = new Date(a.created_at).getTime();
-            const inWeek = ts >= viewedWeekStart.getTime() && ts < viewedWeekEnd.getTime();
-            const matchCat = receiptCategoryFilter === 'all' || a.category === receiptCategoryFilter;
-            return inWeek && matchCat;
+            return ts >= viewedStart.getTime() && ts < viewedEnd.getTime();
           });
-
-          // ----- Kategori-konfig -----
-          const categoryConfig: Record<string, { label: string; bg: string; fg: string; icon: any }> = {
-            finding:    { label: 'Funn',        bg: 'bg-violet-50',  fg: 'text-violet-700',  icon: Search },
-            suggestion: { label: 'AI-forslag',  bg: 'bg-sky-50',     fg: 'text-sky-700',     icon: PenTool },
-            fix:        { label: 'Fiks pushet', bg: 'bg-emerald-50', fg: 'text-emerald-700', icon: CheckCircle2 },
-            alert:      { label: 'Varsel',      bg: 'bg-amber-50',   fg: 'text-amber-700',   icon: Bell },
+          const filtered = receiptCategoryFilter === 'all' ? inWeek : inWeek.filter((a) => a.category === receiptCategoryFilter);
+          const counts = {
+            all: inWeek.length,
+            finding: inWeek.filter((a) => a.category === 'finding').length,
+            suggestion: inWeek.filter((a) => a.category === 'suggestion').length,
+            fix: inWeek.filter((a) => a.category === 'fix').length,
+            alert: inWeek.filter((a) => a.category === 'alert').length,
           };
 
-          // ----- Summering -----
-          const countBy = (cat: string) => weekActions.filter(a => a.category === cat).length;
-          const findings = countBy('finding');
-          const suggestions = countBy('suggestion');
-          const fixes = countBy('fix');
-          const alerts = countBy('alert');
-
-          // ----- Tier-tilpasset tekst -----
-          const receiptSubtitle = hasStandardOrHigher
-            ? 'Konkret arbeid Sikt har utført på siden din denne uken'
-            : 'Funn og AI-forslag Sikt har klargjort for deg denne uken';
-
-          const weekday = (iso: string) => {
-            const d = new Date(iso);
-            return d.toLocaleDateString('no-NO', { weekday: 'short' }).replace('.', '');
-          };
+          const filterPills: { key: typeof receiptCategoryFilter; label: string }[] = [
+            { key: 'all', label: `Alle ${counts.all}` },
+            { key: 'fix', label: `Fikser ${counts.fix}` },
+            { key: 'suggestion', label: `Forslag ${counts.suggestion}` },
+            { key: 'finding', label: `Funn ${counts.finding}` },
+            { key: 'alert', label: `Varsler ${counts.alert}` },
+          ];
 
           return (
-          <div className="animate-in fade-in duration-500 space-y-5 pb-16">
-
-            {/* Heading + uke-navigasjon */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>
-                  Uke {getWeekNumber(viewedWeekStart)} — {viewedWeekStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'long' })}
-                  {weekOffset === 0 && ' (denne uken)'}
+            <div className="space-y-6">
+              <header>
+                <p className={`text-sm ${textDim}`}>
+                  Uke {getWeekNumber(viewedStart)} · {viewedStart.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}
+                  {weekOffset === 0 ? ' (denne uken)' : ''}
                 </p>
-                <h2 className={`text-xl font-black ${portalTextMain}`}>Dette har Sikt fikset for deg</h2>
-                <p className={`text-xs mt-1 ${portalTextDim}`}>{receiptSubtitle}</p>
-              </div>
+                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight mt-2 ${textMain}`}>
+                  {hasStandardOrHigher ? 'Dette har Sikt fikset for deg' : 'Dette har Sikt funnet for deg'}
+                </h1>
+                <p className={`text-base mt-3 ${textDim}`}>
+                  {hasStandardOrHigher
+                    ? 'Konkret arbeid Sikt har utført på siden din. Hver linje er en endring du kan se og angre.'
+                    : 'Funn og AI-forslag du kan kopiere inn i CMS-en din selv. Oppgrader for å la Sikt pushe automatisk.'}
+                </p>
+              </header>
+
+              {/* Uke-navigator */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setWeekOffset(o => o - 1)}
-                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition ${portalIsLight ? 'border-slate-200 bg-white hover:bg-slate-50' : 'border-white/10 bg-slate-800'}`}
+                  type="button"
+                  onClick={() => setWeekOffset((o) => o - 1)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${divider} ${textDim} hover:${textMain}`}
                 >
-                  <ChevronLeft size={14} className={portalTextDim} />
+                  <ChevronLeft size={14} className="inline" /> Forrige uke
                 </button>
                 <button
-                  onClick={() => setWeekOffset(o => Math.min(0, o + 1))}
+                  type="button"
+                  onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
                   disabled={weekOffset >= 0}
-                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition ${portalIsLight ? 'border-slate-200 bg-white hover:bg-slate-50' : 'border-white/10 bg-slate-800'} ${weekOffset >= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  className={`px-3 py-2 rounded-lg text-sm border ${divider} ${textDim} hover:${textMain} disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  <ChevronRight size={14} className={portalTextDim} />
+                  Neste uke <ChevronRight size={14} className="inline" />
                 </button>
-              </div>
-            </div>
-
-            {/* Tier-info for Basic — forklarer forskjellen, ingen lås */}
-            {!hasStandardOrHigher && (
-              <div className={`${portalCard} rounded-2xl p-4 flex items-start gap-3`}>
-                <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center shrink-0">
-                  <Info size={14} className="text-sky-600" />
-                </div>
-                <div className="flex-1 text-xs">
-                  <p className={`font-black ${portalTextMain} mb-1`}>Basic: Funn + AI-forslag til selv-kopiering</p>
-                  <p className={portalTextDim}>
-                    Sikt finner problemer og skriver ferdige forslag (meta-tekster, alt-tekster, redirects).
-                    Du limer inn selv. <button onClick={handleUpgrade} className="text-violet-600 font-black hover:underline">Oppgrader til Standard</button> for å la Sikt pushe endringene automatisk.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Oppsummering i tall */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Funn',        value: findings,    icon: Search,        bg: 'bg-violet-50',  fg: 'text-violet-600',  key: 'finding' as const },
-                { label: 'AI-forslag',  value: suggestions, icon: PenTool,       bg: 'bg-sky-50',     fg: 'text-sky-600',     key: 'suggestion' as const },
-                { label: hasStandardOrHigher ? 'Fikser pushet' : 'Fikser pushet (Standard+)', value: fixes, icon: CheckCircle2, bg: 'bg-emerald-50', fg: 'text-emerald-600', key: 'fix' as const },
-                { label: 'Varsler',     value: alerts,      icon: Bell,          bg: 'bg-amber-50',   fg: 'text-amber-600',   key: 'alert' as const },
-              ].map((s, i) => {
-                const isActive = receiptCategoryFilter === s.key;
-                return (
+                {weekOffset !== 0 && (
                   <button
-                    key={i}
-                    onClick={() => setReceiptCategoryFilter(isActive ? 'all' : s.key)}
-                    className={`${portalCard} rounded-2xl p-5 text-left transition ${isActive ? 'ring-2 ring-violet-400' : portalIsLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}
+                    type="button"
+                    onClick={() => setWeekOffset(0)}
+                    className="ml-2 text-sm font-medium text-violet-600 hover:text-violet-500"
                   >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${s.bg} ${s.fg}`}>
-                      <s.icon size={16} />
-                    </div>
-                    <p className={`text-3xl font-black ${portalTextMain} mb-1`}>{s.value}</p>
-                    <p className={`text-[11px] ${portalTextDim}`}>{s.label}</p>
+                    Tilbake til denne uken
                   </button>
-                );
-              })}
-            </div>
-
-            {/* Filter-status */}
-            {receiptCategoryFilter !== 'all' && (
-              <div className={`flex items-center gap-2 text-xs ${portalTextDim}`}>
-                <span>Filter:</span>
-                <span className={`px-2 py-0.5 rounded-md font-black ${categoryConfig[receiptCategoryFilter].bg} ${categoryConfig[receiptCategoryFilter].fg}`}>
-                  {categoryConfig[receiptCategoryFilter].label}
-                </span>
-                <button onClick={() => setReceiptCategoryFilter('all')} className="text-violet-600 font-black hover:underline">
-                  Fjern filter
-                </button>
-              </div>
-            )}
-
-            {/* Detaljert liste */}
-            <div className={`${portalCard} rounded-2xl overflow-hidden`}>
-              <div className={`p-5 border-b ${portalDivider} flex items-center justify-between`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>
-                  {receiptCategoryFilter === 'all' ? 'Alle handlinger denne uken' : `${categoryConfig[receiptCategoryFilter].label} denne uken`}
-                </p>
-                <span className={`text-xs ${portalTextDim}`}>{weekActions.length} {weekActions.length === 1 ? 'handling' : 'handlinger'}</span>
+                )}
               </div>
 
-              {loadingReceipt ? (
-                <div className="p-12 text-center">
-                  <div className={`animate-pulse text-sm ${portalTextDim}`}>Laster kvittering...</div>
-                </div>
-              ) : weekActions.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className={`w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                    <ClipboardCheck size={20} className={portalTextDim} />
+              {/* Filter-pills */}
+              <div className="flex flex-wrap gap-2">
+                {filterPills.map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setReceiptCategoryFilter(p.key)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      receiptCategoryFilter === p.key
+                        ? isLight
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-white text-slate-900'
+                        : isLight
+                          ? 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+                          : 'bg-slate-900 border border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Logg-feed */}
+              <PortalCard theme={themed}>
+                {loadingReceipt ? (
+                  <div className={`p-12 text-center text-sm ${textDim}`}>Laster…</div>
+                ) : filtered.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <p className={`text-sm font-medium ${textMain} mb-1`}>
+                      Ingen handlinger {weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}
+                    </p>
+                    <p className={`text-sm ${textDim}`}>
+                      {weekOffset === 0 ? 'Sikt jobber i bakgrunnen — kom tilbake snart.' : 'Sikt logget ingenting i denne perioden.'}
+                    </p>
                   </div>
-                  <p className={`text-sm font-black ${portalTextMain} mb-1`}>Ingen handlinger {weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}</p>
-                  <p className={`text-xs ${portalTextDim}`}>
-                    {weekOffset === 0
-                      ? 'Kjør en analyse eller sjekk rangeringer — så dukker det opp her.'
-                      : 'Sikt har ikke logget noen handlinger for denne perioden.'}
-                  </p>
-                </div>
-              ) : (
-                <div className={`divide-y ${portalDivider}`}>
-                  {weekActions.map((a) => {
-                    const cfg = categoryConfig[a.category] || categoryConfig.finding;
-                    const CatIcon = cfg.icon;
-                    return (
-                      <div key={a.id} className={`p-5 transition flex items-start gap-4 ${portalIsLight ? 'hover:bg-slate-50/50' : 'hover:bg-white/5'}`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg}`}>
-                          <CatIcon size={14} className={cfg.fg} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${cfg.bg} ${cfg.fg}`}>{cfg.label}</span>
-                            {a.page_url && (
-                              <span className={`text-xs font-mono ${portalTextDim} truncate`}>
-                                {(() => {
-                                  try {
-                                    const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
-                                    return u.hostname + u.pathname;
-                                  } catch { return a.page_url; }
-                                })()}
-                              </span>
-                            )}
-                          </div>
-                          <p className={`text-sm font-medium ${portalTextMain}`}>{a.title}</p>
-                          {(a.before_value || a.after_value) && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                              {a.before_value && (
-                                <div className={`text-xs p-2 rounded-lg ${portalIsLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-950/30 text-rose-300'} line-through opacity-75`}>{a.before_value}</div>
+                ) : (
+                  <ul className={`divide-y ${divider}`}>
+                    {filtered.map((a) => {
+                      const meta = categoryMeta(a.category);
+                      return (
+                        <li key={a.id} className="px-6 py-5">
+                          <div className="flex items-start gap-4">
+                            <span className={`mt-2 w-2 h-2 rounded-full ${meta.dot} shrink-0`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-3 flex-wrap">
+                                <p className={`text-sm font-medium ${textMain}`}>{a.title}</p>
+                                <span className={`text-xs ${textLabel}`}>{meta.label}</span>
+                              </div>
+                              {a.page_url && (
+                                <p className={`text-xs mt-1 ${textDim} truncate font-mono`}>
+                                  {(() => {
+                                    try {
+                                      const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
+                                      return u.hostname + u.pathname;
+                                    } catch { return a.page_url; }
+                                  })()}
+                                </p>
                               )}
-                              {a.after_value && (
-                                <div className={`text-xs p-2 rounded-lg ${portalIsLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-950/30 text-emerald-300'} font-medium`}>{a.after_value}</div>
+                              {(a.before_value || a.after_value) && (
+                                <div className="grid sm:grid-cols-2 gap-2 mt-3">
+                                  {a.before_value && (
+                                    <div className={`rounded-lg px-3 py-2 text-xs ${isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-300'} line-through opacity-80`}>
+                                      {a.before_value}
+                                    </div>
+                                  )}
+                                  {a.after_value && (
+                                    <div className={`rounded-lg px-3 py-2 text-xs ${isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/10 text-emerald-300'} font-medium`}>
+                                      {a.after_value}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {a.category === 'suggestion' && a.after_value && (
+                                <button
+                                  type="button"
+                                  onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
+                                  className="mt-3 text-sm font-medium text-violet-600 hover:text-violet-500 inline-flex items-center gap-1"
+                                >
+                                  <Copy size={12} /> Kopier til utklipp
+                                </button>
                               )}
                             </div>
-                          )}
-                        </div>
-                        <span className={`text-[10px] font-mono ${portalTextLabel} shrink-0`}>{weekday(a.created_at)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                            <span className={`text-xs ${textLabel} shrink-0 font-mono`}>
+                              {new Date(a.created_at).toLocaleDateString('nb-NO', { weekday: 'short' }).replace('.', '')}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </PortalCard>
+
+              {!hasStandardOrHigher && (
+                <TierTeaser
+                  theme={themed}
+                  tier="Standard"
+                  price="1 499 kr"
+                  message="Vil du la Sikt pushe fiksene direkte til CMS-en din?"
+                  onUpgrade={handleUpgrade}
+                />
               )}
             </div>
-          </div>
           );
         })()}
 
-        {/* --- KONKURRENTER (Konkurrent-radar) --- */}
-        {activeTab === 'competitors' && (
-          <div className="animate-in fade-in duration-500 space-y-5 pb-16">
-
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Du sover — Sikt holder øye</p>
-                <h2 className={`text-xl font-black ${portalTextMain}`}>Konkurrent-radar</h2>
-              </div>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${portalIsLight ? 'bg-violet-50 text-violet-700' : 'bg-violet-500/10 text-violet-300'}`}>
-                <Bell size={12} />
-                {hasPremium ? 'Ubegrenset + AI' : hasStandardOrHigher ? '3 konkurrenter + innholdsanalyse' : '2 konkurrenter'}
-              </div>
-            </div>
-
-            <div className={`${portalCard} rounded-2xl p-5 space-y-3`}>
-              <p className={`text-sm ${portalTextDim}`}>
-                <strong className={portalTextMain}>Ekte konkurrenter</strong> hentes fra dine egne Google-resultater når du kjører <strong>«Kjør Analyse»</strong> under Søkeord.
-                Vi lister domener som ligger foran deg i SERP — ikke fiktive eksempler. Du kan fjerne treff du ikke vil følge.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={loadCompetitorsFromSerp}
-                  className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-black hover:bg-violet-500 transition"
-                >
-                  Hent / oppdater fra søkeresultater
-                </button>
-                {trackedCompetitors.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => { persistCompetitors([]); toastSuccess('Konkurrentlisten er tømt.'); }}
-                    className={`px-4 py-2 rounded-xl text-xs font-black border ${portalIsLight ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-white/10 text-slate-200 hover:bg-white/5'}`}
-                  >
-                    Tøm listen
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className={`${portalCard} rounded-2xl overflow-hidden`}>
-              <div className={`p-5 border-b ${portalDivider}`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Overvåkede konkurrenter</p>
-                <p className={`text-xs mt-1 ${portalTextDim}`}>Domene · ca. plass i Google for søket du analyserte · du kan fjerne enkeltvise treff.</p>
-              </div>
-              {trackedCompetitors.length === 0 ? (
-                <div className={`p-8 text-center ${portalTextDim} text-sm`}>
-                  Ingen lagret ennå. Kjør søkeordsanalyse først, deretter «Hent / oppdater fra søkeresultater».
-                </div>
-              ) : (
-                <div className={`divide-y ${portalDivider}`}>
-                  {trackedCompetitors.map((c) => (
-                    <div key={c.id} className="p-5 flex items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-sm font-black ${portalTextMain}`}>{c.domain}</span>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${portalIsLight ? 'bg-slate-100 text-slate-600' : 'bg-slate-800 text-slate-300'}`}>
-                            ~#{c.serpRank}
-                          </span>
-                        </div>
-                        {c.sourceKeyword && (
-                          <p className={`text-[11px] ${portalTextLabel}`}>Fra søk: «{c.sourceKeyword}»</p>
-                        )}
-                        {c.title && (
-                          <p className={`text-xs ${portalTextDim} mt-1 line-clamp-2`}>{c.title}</p>
-                        )}
-                        {c.url && (
-                          <a href={c.url} target="_blank" rel="noreferrer" className="text-[11px] text-violet-600 hover:underline mt-1 inline-flex items-center gap-1">
-                            <ExternalLink size={11} /> Åpne resultat
-                          </a>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { removeCompetitor(c.id); toastSuccess(`Fjernet ${c.domain}`); }}
-                        className={`shrink-0 p-2 rounded-lg transition ${portalIsLight ? 'text-slate-400 hover:bg-rose-50 hover:text-rose-600' : 'text-slate-500 hover:bg-white/10 hover:text-rose-400'}`}
-                        title="Fjern fra listen"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className={`${portalCard} rounded-2xl p-5`}>
-              <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel} mb-2`}>Varsler om endringer</p>
-              <p className={`text-sm ${portalTextDim}`}>
-                Automatiske «konkurrenten publiserte nytt»-varsler er ikke aktivert ennå. Her viser vi bare <strong className={portalTextMain}>data du allerede har hentet</strong> fra Google via Søkeord-fanen.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* --- AI-SYNLIGHET (Premium: ChatGPT/Gemini/Perplexity) --- */}
-        {activeTab === 'aivis' && (
-          <div className="animate-in fade-in duration-500 space-y-5 pb-16">
-
-            {!hasPremium && (
-              <div className={`${portalCard} rounded-2xl p-6 flex items-start gap-4`}>
-                <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center shrink-0">
-                  <Lock size={16} className="text-violet-600" />
-                </div>
-                <div className="flex-1">
-                  <p className={`font-black ${portalTextMain} mb-1`}>AI-synlighet er en Premium-funksjon</p>
-                  <p className={`text-sm ${portalTextDim} mb-4`}>Sikt stiller 20–50 bransjerelevante spørsmål til ChatGPT, Gemini og Perplexity hver uke, og rapporterer om — og hvordan — bedriften din nevnes.</p>
-                  <button onClick={handleUpgrade} className="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-black hover:bg-violet-700 transition">
-                    Oppgrader til Premium
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Dominér både Google og AI</p>
-              <h2 className={`text-xl font-black ${portalTextMain}`}>AI-synlighet</h2>
-            </div>
-
-            <p className={`text-xs ${portalTextDim}`}>
-              Denne siden bruker kun tall fra din faktiske konto (søkeord, analyseresultater og innholdsskann). Ingen demo-data.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className={`${portalCard} rounded-2xl p-5`}>
-                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Analyserte søkeord</p>
-                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>{keywordData.length}</p>
-                <p className={`text-xs mt-2 ${portalTextDim}`}>Antall ord med faktiske ranking-data.</p>
-              </div>
-              <div className={`${portalCard} rounded-2xl p-5`}>
-                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Synlighet topp 10</p>
-                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>
-                  {keywordData.length ? `${Math.round((keywordData.filter(k => k.position <= 10).length / keywordData.length) * 100)}%` : '0%'}
-                </p>
-                <p className={`text-xs mt-2 ${portalTextDim}`}>Andel av søkeord der du er på side 1.</p>
-              </div>
-              <div className={`${portalCard} rounded-2xl p-5`}>
-                <p className={`text-[10px] uppercase font-black tracking-widest ${portalTextLabel}`}>Snittplassering</p>
-                <p className={`text-4xl font-black mt-1 ${portalTextMain}`}>
-                  {keywordData.length
-                    ? Math.round(keywordData.reduce((sum, k) => sum + Math.min(100, Number(k.position) || 100), 0) / keywordData.length)
-                    : '—'}
-                </p>
-                <p className={`text-xs mt-2 ${portalTextDim}`}>Lavere tall er bedre (1 er best).</p>
-              </div>
-            </div>
-
-            <div className={`${portalCard} rounded-2xl overflow-hidden`}>
-              <div className={`p-5 border-b ${portalDivider} flex items-center justify-between flex-wrap gap-2`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Spørsmål Sikt testet denne uken</p>
-                <span className={`text-xs ${portalTextDim}`}>{Math.min(12, keywordData.length)} faktiske spørsmål</span>
-              </div>
-              <div className={`divide-y ${portalDivider}`}>
-                {(keywordData.slice(0, 12)).map((k, i) => {
-                  const rank = Number(k.position) || 101;
-                  const mentioned = rank <= 10;
-                  return (
-                    <div key={`${k.keyword}-${k.location}-${i}`} className="p-5 flex items-start gap-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${mentioned ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
-                        {mentioned ? <CheckCircle2 size={14} /> : <X size={14} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${portalTextMain} italic`}>"Hvem er best på {k.keyword} i {k.location || 'Norge'}?"</p>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <span className={`text-[10px] font-black uppercase tracking-wider ${portalTextLabel}`}>Datakilde: Google.no</span>
-                          {mentioned ? (
-                            <span className="text-[10px] font-black text-emerald-600">Du er synlig (plass #{rank})</span>
-                          ) : (
-                            <span className="text-[10px] font-black text-rose-600">Ikke synlig i topp 10 (plass {rank > 100 ? '100+' : rank})</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {keywordData.length === 0 && (
-                  <div className="p-10 text-center">
-                    <p className={`text-sm ${portalTextDim}`}>Ingen faktiske AI-synlighetsdata ennå. Gå til Søkeord og kjør analyse først.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Spør Sikt AI-chat (Premium) */}
-            {hasPremium && (
-              <div className={`${portalCard} rounded-2xl p-5`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
-                    <BrainCircuit size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className={`text-sm font-black ${portalTextMain}`}>Spør Sikt AI</p>
-                    <p className={`text-[11px] ${portalTextDim}`}>Stil et kort spørsmål om synlighet og innhold. Vi bruker din profil-URL og bransje som kontekst — ikke sensitive data.</p>
-                  </div>
-                </div>
-                <div className={`flex items-center gap-2 p-2 rounded-xl border ${portalIsLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800 border-white/10'}`}>
-                  <input
-                    type="text"
-                    value={geoChatInput}
-                    onChange={(e) => setGeoChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), sendGeoChat())}
-                    placeholder="F.eks. «Hvordan kan en elektriker bedre lokale søk?»"
-                    disabled={geoChatLoading}
-                    className={`flex-1 bg-transparent outline-none text-sm ${portalTextMain} placeholder:text-slate-400`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => sendGeoChat()}
-                    disabled={geoChatLoading || !geoChatInput.trim()}
-                    className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 transition disabled:opacity-50"
-                  >
-                    {geoChatLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  </button>
-                </div>
-                {geoChatReply && (
-                  <div className={`mt-4 p-4 rounded-xl text-sm leading-relaxed border ${portalIsLight ? 'bg-violet-50 border-violet-100 text-slate-800' : 'bg-white/5 border-white/10 text-slate-200'}`}>
-                    {geoChatReply}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'analysis' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 relative">
-
-            {/* --- 1. Liten popup som dukker opp når man trykker på et kort --- */}
-            {selectedPreviewProblem && !activeSolveProblem && (
-              <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                <div className={`p-4 pl-6 pr-4 rounded-2xl shadow-2xl flex items-center gap-6 border ${theme === 'light' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-white'}`}>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Valgt problem</p>
-                    <p className="font-bold">{selectedPreviewProblem.title}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const details = getProblemDetails(selectedPreviewProblem.title, selectedPreviewProblem.title);
-                      setActiveSolveProblem({ raw: selectedPreviewProblem, details });
-                      setSelectedPreviewProblem(null);
-                      setActiveTab('verksted'); // <--- DENNE KASTER DEG TIL VERKSTEDET
-                    }}
-                    className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-violet-600 hover:bg-violet-700 text-white'}`}
-                  >
-                    Gå til dybde <ArrowRight size={16} />
-                  </button>
-                  <button onClick={() => setSelectedPreviewProblem(null)} className="p-2 opacity-50 hover:opacity-100 rounded-full hover:bg-white/10"><X size={16} /></button>
-                </div>
-              </div>
-            )}
-
-            {/* --- 3. DEN VANLIGE ANALYSEN (Skjules når arbeidsrommet er åpent) --- */}
-            {!activeSolveProblem && (
-              <div className="space-y-6">
-                {isAnalyzing ? (
-                  <div className={`flex flex-col items-center justify-center py-24 rounded-2xl relative overflow-hidden ${portalCard}`}>
-                    <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
-                    <Loader2 className="w-16 h-16 text-violet-600 animate-spin mb-8 relative z-10" />
-                    <h3 className={`text-3xl font-black mb-2 ${portalTextMain}`}>{Math.round(progress)}%</h3>
-                    <p className="text-violet-600 font-medium mb-8 text-lg animate-pulse">{progressText}</p>
-                    <div className={`w-64 h-2 rounded-full overflow-hidden ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}><div className="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
-                  </div>
-                ) : (
-                  <>
-                    <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl ${portalCard}`}>
-                      <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>Live analyse</p>
-                        <p className={`text-sm mt-1 ${portalTextDim}`}>Sjekker: <span className="text-violet-600 font-bold">{formData.websiteUrl}</span></p>
-                      </div>
-                      <div className="flex gap-3 items-center flex-wrap">
-                        {analysisResults && (
-                          <div className={`flex rounded-xl p-0.5 ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                            <button onClick={() => setActiveDevice('mobile')} className={`flex gap-2 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${activeDevice === 'mobile' ? (portalIsLight ? 'bg-white shadow-sm text-slate-900' : 'bg-violet-600 text-white') : portalTextDim}`}><Smartphone size={14} /> Mobil</button>
-                            <button onClick={() => setActiveDevice('desktop')} className={`flex gap-2 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${activeDevice === 'desktop' ? (portalIsLight ? 'bg-white shadow-sm text-slate-900' : 'bg-violet-600 text-white') : portalTextDim}`}><Monitor size={14} /> Desktop</button>
-                          </div>
-                        )}
-                        <button onClick={runRealAnalysis} disabled={!formData.websiteUrl} className="bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-black flex gap-2 hover:bg-violet-700 transition disabled:opacity-50"><Zap size={14} /> Ny test</button>
-                      </div>
-                    </div>
-                    {analyzeError && <div className="p-4 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">{analyzeError}</div>}
-
-                    {analysisResults ? (
-                      <div key={activeDevice} className="animate-in fade-in zoom-in-95 space-y-5">
-                        {(() => {
-                          const v = getReminderVariant(clientData?.package_name, hostConnection);
-                          if (!v) return null;
-                          return (
-                            <AnalysisReminderBox
-                              variant={v}
-                              theme={theme}
-                              onPrimary={() => {
-                                if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
-                                else if (v === 'connect_host') setActiveTab('settings');
-                                else setActiveTab('verksted');
-                              }}
-                            />
-                          );
-                        })()}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {[{ l: 'Ytelse', s: analysisResults[activeDevice].performance }, { l: 'SEO', s: analysisResults[activeDevice].seo }, { l: 'UU', s: analysisResults[activeDevice].accessibility }, { l: 'Praksis', s: analysisResults[activeDevice].bestPractices }].map((i, idx) => {
-                            const toneClass = i.s >= 90 ? 'text-emerald-600' : i.s >= 50 ? 'text-amber-600' : 'text-rose-600';
-                            return (
-                              <div key={idx} className={`p-5 rounded-2xl ${portalCard} flex flex-col items-center justify-center`}>
-                                <div className={`text-4xl font-black mb-1 ${toneClass}`}>{i.s}</div>
-                                <div className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel}`}>{i.l}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-                          <div className={`md:col-span-1 ${portalCard} p-4 rounded-2xl flex flex-col items-center h-fit`}>
-                            <p className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel} mb-4 w-full text-center`}>Slik Google ser siden</p>
-                            {analysisResults[activeDevice].extras?.screenshot ? (
-                              <img src={analysisResults[activeDevice].extras?.screenshot} alt="Screenshot" className={`rounded-lg border w-full object-cover ${portalIsLight ? 'border-slate-100' : 'border-white/10'}`} />
-                            ) : (
-                              <div className={`w-full h-48 rounded-lg flex items-center justify-center text-xs ${portalIsLight ? 'bg-slate-50 text-slate-400' : 'bg-slate-800 text-slate-500'}`}>Ingen bilde</div>
-                            )}
-                          </div>
-                          <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                            <div className={`${portalCard} p-5 rounded-2xl`}>
-                              <h4 className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel} mb-2`}>Server Respons</h4>
-                              <p className={`text-2xl font-black ${portalTextMain}`}>{analysisResults[activeDevice].extras?.serverTime || '-'}</p>
-                            </div>
-                            <div className={`${portalCard} p-5 rounded-2xl`}>
-                              <h4 className={`text-[10px] font-black uppercase tracking-widest ${portalTextLabel} mb-2`}>Sidens Vekt</h4>
-                              <p className={`text-2xl font-black ${portalTextMain}`}>{analysisResults[activeDevice].extras?.totalWeight || '-'}</p>
-                            </div>
-                            <div className={`col-span-2 ${portalCard} p-4 rounded-2xl`}>
-                              <DetailedHealthCheck result={analysisResults[activeDevice]} theme={theme === 'light' ? 'light' : 'dark'} />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* --- TILTAK SOM GIR EFFEKT (NÅ MED LØS-PROBLEM-KNAPP) --- */}
-                        <div className="mt-4">
-                          {currentLevel >= 2 ? (
-                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                              <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><Lightbulb className="text-amber-500" /> Tiltak som gir effekt</h3>
-                              <div className="space-y-3">
-                                {analysisResults[activeDevice].opportunities?.map((o, i) => (
-                                  <div
-                                    key={i}
-                                    onClick={() => setSelectedPreviewProblem({ raw: o, title: o.title, description: o.description })}
-                                    className="group relative cursor-pointer flex justify-between items-center p-4 bg-slate-50 hover:bg-amber-50/50 rounded-xl border border-slate-100 hover:border-amber-300 transition-all duration-200 hover:shadow-sm"
-                                  >
-                                    <div>
-                                      <p className="font-bold text-sm text-slate-800 group-hover:text-amber-700 transition-colors">{o.title}</p>
-                                      <p className="text-xs text-slate-500 truncate max-w-[200px] md:max-w-xs">{o.description}</p>
-                                    </div>
-                                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded h-fit">Spar {o.savings}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : <LockedSection title="Se konkrete tiltak" description="Få listen over hva som må fikses." reqPackage="Standard" onUpgrade={handleUpgrade} color="amber" />}
-                        </div>
-
-                        {/* --- TEKNISK HELSESJEKK (NÅ MED LØS-PROBLEM-KNAPP) --- */}
-                        <div className="mt-4">
-                          {currentLevel >= 3 ? (
-                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                              <h3 className="font-bold text-slate-900 text-lg mb-4 flex gap-2"><ShieldCheck className="text-violet-500" /> Teknisk Helsesjekk</h3>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {analysisResults[activeDevice].diagnostics?.map((d, i) => (
-                                  <div
-                                    key={i}
-                                    onClick={() => !d.passed && setSelectedPreviewProblem({ raw: d, title: d.title, description: 'Teknisk feil funnet.' })}
-                                    className={`group relative flex justify-between items-center p-3 rounded-xl border transition-all duration-200 ${!d.passed ? 'cursor-pointer bg-slate-50 hover:bg-rose-50/50 border-slate-100 hover:border-rose-300' : 'bg-slate-50/50 border-slate-100 opacity-70'}`}
-                                  >
-                                    <span className={`text-sm font-medium ${!d.passed ? 'group-hover:text-rose-700 text-slate-700' : 'text-slate-500'}`}>{d.title}</span>
-                                    {d.passed ?
-                                      <span className="text-emerald-500 text-xs font-bold flex gap-1"><CheckCircle2 size={14} /> OK</span> :
-                                      <span className="text-rose-500 text-xs font-bold flex gap-1"><XCircle size={14} /> FEIL</span>
-                                    }
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : <LockedSection title="Teknisk Helsesjekk" description="Full sikkerhets- og SEO-gjennomgang." reqPackage="Premium" onUpgrade={handleUpgrade} color="violet" />}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`text-center py-20 rounded-2xl border-2 border-dashed ${portalIsLight ? 'border-slate-200 bg-white/50' : 'border-white/5 bg-slate-900/30'}`}>
-                        <Activity className={`w-10 h-10 mx-auto mb-4 ${portalTextLabel}`} />
-                        <h3 className={`font-black ${portalTextMain}`}>Klar for test</h3>
-                        <p className={`text-sm ${portalTextDim}`}>Vi sjekker både mobil og desktop.</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- INNHOLD & REVISJON (MED FUNGERENDE KNAPPER) --- */}
-        {activeTab === 'content' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
-
-            {/* 1. HEADER & HANDINGER */}
-            <div className={`flex flex-col md:flex-row justify-between items-end gap-6 p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
-              <div className="relative z-10">
-                <h1 className={`text-4xl font-black tracking-tight flex items-center gap-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  Innhold & Kvalitet
-                </h1>
-                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Totaloversikt over nettstedets innhold. Vi finner tekniske feil, tynt innhold og muligheter for bedre rangering.
-                </p>
-              </div>
-
-              <button
-                onClick={() => runContentScan(true)}
-                disabled={isScanning}
-                className="relative z-10 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-violet-500/20 flex items-center gap-3 transition-all whitespace-nowrap group"
-              >
-                {isScanning ? <Loader2 className="animate-spin" /> : <RefreshCw className="group-hover:rotate-180 transition-transform duration-500" />}
-                {isScanning ? 'Analyserer nettsiden...' : 'Skann Nettsted'}
-              </button>
-            </div>
-
-            {contentPages.length > 0 && (() => {
-              const v = getReminderVariant(clientData?.package_name, hostConnection);
-              if (!v) return null;
-              return (
-                <AnalysisReminderBox
-                  variant={v}
-                  theme={theme}
-                  onPrimary={() => {
-                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
-                    else if (v === 'connect_host') setActiveTab('settings');
-                    else setActiveTab('verksted');
-                  }}
-                />
-              );
-            })()}
-
-            {/* 2. KPI KORT */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                {
-                  label: 'Sider Funnet',
-                  val: contentPages.length > 0 ? contentPages.length : '-',
-                  icon: FileText,
-                  col: theme === 'light' ? 'text-blue-600' : 'text-blue-400',
-                  hint: 'Totalt antall sider vi fant på ditt domene.'
-                },
-                {
-                  label: 'Kritisk Innhold',
-                  val: contentPages.length > 0 ? contentPages.filter(p => p.status === 'Kritisk').length : '-',
-                  icon: AlertTriangle,
-                  col: 'text-rose-500',
-                  hint: 'Sider med alvorlige mangler som skader din SEO.'
-                },
-                {
-                  label: 'Innholdshelse',
-                  val: contentPages.length > 0 ? (currentLevel >= 2 ? Math.round(contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) + '/100' : 'Låst') : '-',
-                  icon: Activity,
-                  col: currentLevel >= 2 ? 'text-emerald-500' : 'text-slate-500',
-                  hint: 'Samlet kvalitetsscore.'
-                },
-                {
-                  label: 'Nye Muligheter',
-                  val: contentPages.length > 0 ? (currentLevel >= 3 ? 'Høy' : 'Låst') : '-',
-                  icon: Layers,
-                  col: currentLevel >= 3 ? 'text-violet-500' : 'text-slate-500',
-                  hint: 'Potensial for nye artikler.'
-                },
-              ].map((stat, i) => (
-                <div key={i} className={`p-6 rounded-2xl border relative group transition-all overflow-visible z-10 duration-300 ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}`}>
-                  <div className={`absolute top-4 right-4 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
-                  <div className="flex items-center gap-2 mb-2 relative z-20">
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</p>
-                    <InfoHint text={stat.hint} />
-                  </div>
-                  <p className={`text-3xl font-black ${stat.col} flex items-center gap-2`}>
-                    {stat.val === 'Låst' && <Lock size={16} className="text-slate-400" />}
-                    {stat.val}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[800px]">
-
-              {/* 3. HOVEDTABELL (VENSTRE SIDE) */}
-              <div className={`lg:col-span-2 rounded-3xl border shadow-xl flex flex-col overflow-hidden relative transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
-
-                <div className={`p-6 border-b flex justify-between items-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'}`}>
-                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><FileText size={18} className="text-blue-500" /> Alle Sider</h3>
-                  {contentPages.length > 0 && <span className="text-xs text-slate-500">{contentPages.length} URLer</span>}
-                </div>
-
-                <div className="flex-1 overflow-hidden relative">
-                  {contentPages.length === 0 ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                      <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 relative ${theme === 'light' ? 'bg-violet-50' : 'bg-slate-800/50'}`}>
-                        <div className="absolute inset-0 bg-violet-500/20 rounded-full animate-ping"></div>
-                        <Radar size={40} className="text-violet-500 relative z-10" />
-                      </div>
-                      <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar til å kartlegge nettstedet</h3>
-                      <p className={`text-sm max-w-sm leading-relaxed mb-8 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Klikk på <span className="font-bold">"Skann Nettsted"</span> øverst for å hente inn alle sidene dine og analysere kvaliteten.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-                      <table className="w-full text-left border-collapse">
-                        <thead className={`text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm ${theme === 'light' ? 'bg-slate-100 text-slate-500' : 'bg-slate-950 text-slate-500'}`}>
-                          <tr>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Side / Tittel <InfoHint text="Sidens tittel og URL." /></div></th>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Ord <InfoHint text="Antall ord." /></div></th>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Status <InfoHint text="Vår vurdering." /></div></th>
-                            <th className="p-4 text-right"><div className="flex items-center justify-end gap-1 cursor-help">Sist endret <InfoHint text="Dato." /></div></th>
-                          </tr>
-                        </thead>
-                        <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
-                          {contentPages.map((page, i) => (
-                            <tr
-                              key={i}
-                              onClick={() => { setSelectedPage(page); setAiResponse(null); }}
-                              className={`transition-colors group cursor-pointer 
-                                ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
-                                ${selectedPage === page ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/10 border-l-2 border-violet-500') : ''}
-                              `}
-                            >
-                              <td className="p-4">
-                                <div className={`font-bold truncate max-w-[200px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{page.title}</div>
-                                <div className="text-xs text-slate-500 truncate max-w-[200px]">{page.url}</div>
-                              </td>
-                              <td className={`p-4 font-mono text-xs ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{page.wordCount}</td>
-                              <td className="p-4">
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border flex w-fit items-center gap-1 
-                                  ${page.status === 'Bra' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
-                                    page.status === 'Advarsel' ? (theme === 'light' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20') :
-                                      (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')}
-                                `}>
-                                  {page.status === 'Bra' && <CheckCircle2 size={10} />}
-                                  {page.status === 'Advarsel' && <AlertTriangle size={10} />}
-                                  {page.status === 'Kritisk' && <AlertCircle size={10} />}
-                                  {page.status}
-                                </span>
-                              </td>
-                              <td className="p-4 text-right text-xs text-slate-500">
-                                {page.lastUpdated}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 4. AI INSPEKTØR (HØYRE SIDE) */}
-              <div className={`rounded-3xl border flex flex-col h-full relative overflow-hidden shadow-2xl transition-all duration-300 ${theme === 'light' ? 'bg-gradient-to-b from-violet-50/50 to-white border-violet-100' : 'bg-slate-900/50 border-white/5'}`}>
-
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500"></div>
-
-                <div className={`p-6 border-b ${theme === 'light' ? 'border-violet-100 bg-white' : 'border-white/5 bg-slate-900/80'}`}>
-                  <h3 className={`font-bold flex items-center gap-2 mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Sparkles size={18} className="text-violet-500" /> AI Inspektør</h3>
-                  <p className="text-xs text-slate-500">
-                    {selectedPage ? "Analyse av valgt side" : "Velg en side i tabellen for å starte."}
-                  </p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar relative">
-
-                  {!selectedPage && (
-                    <div className={`h-full flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-50' : 'opacity-40'}`}>
-                      <MousePointer2 className="w-12 h-12 mb-3 text-slate-500" />
-                      <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>Ingen side valgt</p>
-                      <p className="text-xs text-slate-500 max-w-[200px] mt-2">Klikk på en rad i tabellen til venstre for å se AI-analysen.</p>
-                    </div>
-                  )}
-
-                  {selectedPage && (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-
-                      <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-slate-950 border-white/10'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Analyserer</p>
-                          <span className={`text-[10px] px-2 py-0.5 rounded border ${theme === 'light' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-slate-900 text-slate-400 border-white/5'}`}>{selectedPage.readability} lesbarhet</span>
-                        </div>
-                        <p className={`font-bold text-base mb-1 leading-snug ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.title}</p>
-                        <a href={formData.websiteUrl + selectedPage.url} target="_blank" rel="noreferrer" className="text-xs text-violet-500 hover:text-violet-600 flex items-center gap-1 truncate mt-2">
-                          <ExternalLink size={10} /> {selectedPage.url}
-                        </a>
-                      </div>
-
-                      <div className="relative">
-                        {currentLevel < 2 && (
-                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
-                            <div className="text-center p-4">
-                              <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Standard Funksjon</p>
-                              <p className="text-xs text-slate-500 mb-3">Se konkrete feil og tiltak.</p>
-                              <button onClick={handleUpgrade} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-white text-slate-900 hover:bg-slate-200'}`}>Oppgrader</button>
-                            </div>
-                          </div>
-                        )}
-
-                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                          <Activity size={16} className="text-emerald-500" /> Kvalitetsrapport
-                        </h4>
-
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className={`flex-1 h-2 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
-                              <div className={`h-full rounded-full ${selectedPage.score > 70 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${selectedPage.score}%` }}></div>
-                            </div>
-                            <span className={`text-xs font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.score}/100</span>
-                          </div>
-
-                          {selectedPage.issues.length > 0 ? (
-                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'}`}>
-                              <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                              <div>
-                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-rose-700' : 'text-rose-400'}`}>Problemer funnet</p>
-                                <ul className={`text-xs mt-1 list-disc pl-4 space-y-1 ${theme === 'light' ? 'text-rose-600' : 'text-slate-300'}`}>
-                                  {selectedPage.issues.map((issue, idx) => (
-                                    <li key={idx}>{issue}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                              <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
-                              <div>
-                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>Alt ser bra ut</p>
-                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-emerald-600' : 'text-slate-300'}`}>Ingen kritiske tekniske feil funnet.</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={`relative pt-4 border-t ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-                        {currentLevel < 3 && (
-                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border mt-4 ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
-                            <div className="text-center p-4">
-                              <BrainCircuit className="w-8 h-8 text-fuchsia-500 mx-auto mb-2" />
-                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Premium Strategi</p>
-                              <p className="text-xs text-slate-500 mb-3">La AI skrive og planlegge innhold.</p>
-                              <button onClick={handleUpgrade} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all">Oppgrader</button>
-                            </div>
-                          </div>
-                        )}
-
-                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                          <Layers size={16} className="text-fuchsia-500" /> Strategi & Handling
-                        </h4>
-
-                        <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-gradient-to-b from-fuchsia-50/50 to-white border-fuchsia-100 shadow-sm' : 'bg-gradient-to-b from-fuchsia-900/10 to-slate-900 border-fuchsia-500/20'}`}>
-                          <div className="flex justify-between items-center mb-4">
-                            <div>
-                              <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Topic Cluster</p>
-                              <p className={`text-sm font-medium ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.topicCluster}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Anbefaling</p>
-                              <p className={`text-sm font-medium ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPage.action}</p>
-                            </div>
-                          </div>
-
-                          {aiResponse && (
-                            <div className={`mb-4 p-3 rounded-lg border animate-in slide-in-from-top-2 ${aiResponse.title === 'Feil' ? (theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/30') : (theme === 'light' ? 'bg-violet-50 border-violet-100' : 'bg-white/10 border-white/10')}`}>
-                              <p className={`text-[10px] font-bold uppercase mb-1 flex items-center gap-1 ${aiResponse.title === 'Feil' ? 'text-rose-600' : 'text-emerald-500'}`}>{aiResponse.title === 'Feil' ? <AlertTriangle size={10} /> : <Sparkles size={10} />}{aiResponse.title}</p>
-                              {aiResponse.type === 'text' ? (
-                                <p className={`text-xs leading-relaxed ${aiResponse.title === 'Feil' ? '' : 'italic'} ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>{aiResponse.title === 'Feil' ? aiResponse.content : `«${aiResponse.content}»`}</p>
-                              ) : (
-                                aiResponse.links ? (
-                                  <ul className={`text-xs space-y-1 ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>
-                                    {aiResponse.links.map((l: any, idx: number) => (
-                                      <li key={idx}>🔗 Fra <span className="font-bold">{l.fromUrl}</span></li>
-                                    ))}
-                                  </ul>
-                                ) : <p className="text-xs text-slate-500">Fant ingen andre sider å lenke fra.</p>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="space-y-2">
-                            <button onClick={() => handleAiAction('text')} disabled={aiLoading !== null} className={`w-full py-2.5 rounded text-xs font-bold border flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600' : 'bg-slate-800 border-white/10 text-white hover:bg-slate-700'}`}>
-                              {aiLoading === 'text' ? <Loader2 className="animate-spin" size={12} /> : <Edit2 size={12} />}
-                              Generer forbedret tekst (AI)
-                            </button>
-                            <button onClick={() => handleAiAction('links')} disabled={aiLoading !== null} className={`w-full py-2.5 rounded text-xs font-bold border flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600' : 'bg-slate-800 border-white/10 text-white hover:bg-slate-700'}`}>
-                              {aiLoading === 'links' ? <Loader2 className="animate-spin" size={12} /> : <Link2 size={12} />}
-                              Finn interne lenker
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* --- LENKER & STRUKTUR (LINKS PAGE) --- */}
-        {activeTab === 'links' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
-
-            <div className={`flex flex-col md:flex-row justify-between items-end gap-6 p-8 rounded-3xl border relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}`}>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
-              <div className="relative z-10">
-                <h1 className={`text-4xl font-black tracking-tight flex items-center gap-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  Lenkestruktur
-                </h1>
-                <p className={`mt-2 text-lg font-light max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Optimaliser flyten av trafikk på nettstedet ditt. Vi finner ødelagte lenker, isolerte sider og forbedrer intern struktur.
-                </p>
-              </div>
-
-              <button
-                onClick={() => runLinkScan()}
-                disabled={isScanningLinks}
-                className="relative z-10 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-violet-500/20 flex items-center gap-3 transition-all whitespace-nowrap group"
-              >
-                {isScanningLinks ? <Loader2 className="animate-spin" /> : <Link2 className="group-hover:rotate-45 transition-transform duration-500" />}
-                {isScanningLinks ? 'Kartlegger lenker...' : 'Start Lenkeanalyse'}
-              </button>
-            </div>
-
-            {linkPages.length > 0 && (() => {
-              const v = getReminderVariant(clientData?.package_name, hostConnection);
-              if (!v) return null;
-              return (
-                <AnalysisReminderBox
-                  variant={v}
-                  theme={theme}
-                  onPrimary={() => {
-                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
-                    else if (v === 'connect_host') setActiveTab('settings');
-                    else setActiveTab('verksted');
-                  }}
-                />
-              );
-            })()}
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Interne Lenker', val: linkPages.length > 0 ? linkPages.reduce((acc, p) => acc + p.inlinks, 0) : '-', icon: GitMerge, col: theme === 'light' ? 'text-blue-600' : 'text-blue-400', hint: 'Totalt antall lenker som går mellom dine egne sider.' },
-                { label: 'Isolerte Sider', val: linkPages.length > 0 ? linkPages.filter(p => p.status === 'Isolert').length : '-', icon: Unlink, col: 'text-amber-500', hint: 'Sider som ingen andre lenker til (Orphan pages).' },
-                { label: 'Ødelagte Lenker', val: linkPages.length > 0 ? linkPages.reduce((acc, p) => acc + p.brokenLinks, 0) : '-', icon: XCircle, col: 'text-rose-500', hint: 'Lenker som gir 404-feil og stopper brukeren.' },
-                { label: 'Lenke-Score', val: linkPages.length > 0 ? (currentLevel >= 2 ? Math.round(linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) + '/100' : 'Låst') : '-', icon: Activity, col: currentLevel >= 2 ? 'text-emerald-500' : 'text-slate-500', hint: 'Hvor godt nettstedet ditt er knyttet sammen.' },
-              ].map((stat, i) => (
-                <div key={i} className={`p-6 rounded-2xl border relative group transition-all overflow-visible z-10 duration-300 ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}`}>
-                  <div className={`absolute top-4 right-4 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
-                  <div className="flex items-center gap-2 mb-2 relative z-20">
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</p>
-                    <InfoHint text={stat.hint} />
-                  </div>
-                  <p className={`text-3xl font-black ${stat.col} flex items-center gap-2`}>
-                    {stat.val === 'Låst' && <Lock size={16} className="text-slate-400" />}
-                    {stat.val}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[800px]">
-
-              <div className={`lg:col-span-2 rounded-3xl border shadow-xl flex flex-col overflow-hidden relative transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
-                <div className={`p-6 border-b flex justify-between items-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'}`}>
-                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Link2 size={18} className="text-blue-500" /> Lenkestruktur</h3>
-                  {linkPages.length > 0 && <span className="text-xs text-slate-500">{linkPages.length} Sider</span>}
-                </div>
-
-                <div className="flex-1 overflow-hidden relative">
-                  {linkPages.length === 0 ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                      <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 relative ${theme === 'light' ? 'bg-blue-50' : 'bg-slate-800/50'}`}>
-                        <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-pulse"></div>
-                        <GitMerge size={40} className="text-blue-500 relative z-10" />
-                      </div>
-                      <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar for lenkeanalyse</h3>
-                      <p className={`text-sm max-w-sm leading-relaxed mb-8 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Klikk på <span className="font-bold">"Start Lenkeanalyse"</span> for å kartlegge hvordan sidene dine henger sammen.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-                      <table className="w-full text-left border-collapse">
-                        <thead className={`text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm ${theme === 'light' ? 'bg-slate-100 text-slate-500' : 'bg-slate-950 text-slate-500'}`}>
-                          <tr>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Side / URL <InfoHint text="Siden vi analyserer." /></div></th>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Innlenker <InfoHint text="Antall andre sider som peker TIL denne." /></div></th>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Utlenker <InfoHint text="Antall lenker FRA denne siden til andre." /></div></th>
-                            <th className="p-4"><div className="flex items-center gap-1 cursor-help">Status <InfoHint text="Teknisk tilstand på lenkene." /></div></th>
-                          </tr>
-                        </thead>
-                        <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
-                          {linkPages.map((page, i) => (
-                            <tr
-                              key={i}
-                              onClick={() => setSelectedLinkPage(page)}
-                              className={`transition-colors group cursor-pointer 
-                                ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
-                                ${selectedLinkPage === page ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/10 border-l-2 border-violet-500') : ''}
-                              `}
-                            >
-                              <td className="p-4">
-                                <div className={`font-bold truncate max-w-[200px] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{page.title}</div>
-                                <div className="text-xs text-slate-500 truncate max-w-[200px]">{page.url}</div>
-                              </td>
-                              <td className="p-4">
-                                <div className={`font-bold ${page.inlinks === 0 ? 'text-rose-500' : (theme === 'light' ? 'text-slate-700' : 'text-slate-300')}`}>{page.inlinks}</div>
-                              </td>
-                              <td className="p-4">
-                                <div className={`font-bold ${page.outlinks === 0 ? 'text-amber-500' : (theme === 'light' ? 'text-slate-700' : 'text-slate-300')}`}>{page.outlinks}</div>
-                              </td>
-                              <td className="p-4">
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border flex w-fit items-center gap-1 
-                                  ${page.status === 'Bra' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
-                                    page.status === 'Isolert' ? (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20') :
-                                      page.status === 'Blindvei' ? (theme === 'light' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20') :
-                                        (theme === 'light' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')}
-                                `}>
-                                  {page.status === 'Bra' && <CheckCircle2 size={10} />}
-                                  {page.status === 'Isolert' && <Unlink size={10} />}
-                                  {page.status === 'Blindvei' && <Minus size={10} />}
-                                  {page.status === 'Kritisk' && <AlertTriangle size={10} />}
-                                  {page.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 4. AI LENKE-INSPEKTØR */}
-              <div className={`rounded-3xl border flex flex-col h-full relative overflow-hidden shadow-2xl transition-all duration-300 ${theme === 'light' ? 'bg-gradient-to-b from-blue-50/50 to-white border-blue-100' : 'bg-slate-900/50 border-white/5'}`}>
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500"></div>
-
-                <div className={`p-6 border-b ${theme === 'light' ? 'border-blue-100 bg-white' : 'border-white/5 bg-slate-900/80'}`}>
-                  <h3 className={`font-bold flex items-center gap-2 mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Sparkles size={18} className="text-blue-500" /> AI Lenke-Inspektør</h3>
-                  <p className="text-xs text-slate-500">
-                    {selectedLinkPage ? "Analyse av valgt side" : "Velg en side i tabellen for å starte."}
-                  </p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar relative">
-                  {!selectedLinkPage && (
-                    <div className={`h-full flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-50' : 'opacity-40'}`}>
-                      <GitMerge className="w-12 h-12 mb-3 text-slate-500" />
-                      <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-700' : 'text-white'}`}>Ingen side valgt</p>
-                      <p className="text-xs text-slate-500 max-w-[200px] mt-2">Klikk på en rad i tabellen for å se AI-forslag til intern lenking.</p>
-                    </div>
-                  )}
-
-                  {selectedLinkPage && (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                      <div className={`p-4 rounded-xl border ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-slate-950 border-white/10'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Analyserer</p>
-                          <span className={`text-[10px] px-2 py-0.5 rounded border ${selectedLinkPage.status === 'Bra' ? (theme === 'light' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10') : (theme === 'light' ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-rose-400 border-rose-500/20 bg-rose-500/10')}`}>
-                            {selectedLinkPage.status === 'Bra' ? 'God struktur' : selectedLinkPage.status}
-                          </span>
-                        </div>
-                        <p className={`font-bold text-base mb-1 leading-snug ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedLinkPage.title}</p>
-                        <div className="text-xs text-blue-500 flex items-center gap-1 truncate mt-2">
-                          <Link2 size={10} /> {selectedLinkPage.url}
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        {currentLevel < 2 && (
-                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
-                            <div className="text-center p-4">
-                              <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Standard Funksjon</p>
-                              <p className="text-xs text-slate-500 mb-3">Se ødelagte lenker og ankertekst-feil.</p>
-                              <button onClick={handleUpgrade} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-white text-slate-900 hover:bg-slate-200'}`}>Oppgrader</button>
-                            </div>
-                          </div>
-                        )}
-
-                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                          <ShieldCheck size={16} className="text-emerald-500" /> Lenkehelse
-                        </h4>
-
-                        <div className="space-y-3">
-                          <div className={`p-3 rounded-lg border space-y-2 ${theme === 'light' ? 'bg-white shadow-sm border-slate-200' : 'bg-white/5 border-white/5'}`}>
-                            <div className="flex justify-between text-xs">
-                              <span className={theme === 'light' ? 'text-slate-600' : 'text-slate-300'}>Lenke-score</span>
-                              <span className={`font-bold ${selectedLinkPage.linkScore > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{selectedLinkPage.linkScore}/100</span>
-                            </div>
-                            <div className={`w-full h-1 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
-                              <div className={`h-full rounded-full ${selectedLinkPage.linkScore > 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${selectedLinkPage.linkScore}%` }}></div>
-                            </div>
-                          </div>
-
-                          {selectedLinkPage.brokenLinks > 0 ? (
-                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'}`}>
-                              <XCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                              <div>
-                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-rose-700' : 'text-rose-400'}`}>{selectedLinkPage.brokenLinks} ødelagte lenker</p>
-                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-rose-600' : 'text-slate-300'}`}>Disse lenkene gir 404-feil. Fjern eller oppdater dem umiddelbart.</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                              <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
-                              <div>
-                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>Ingen døde lenker</p>
-                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-emerald-600' : 'text-slate-300'}`}>Alle lenker på denne siden fungerer.</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {selectedLinkPage.status === 'Isolert' && (
-                            <div className={`flex gap-3 items-start p-3 rounded-lg border ${theme === 'light' ? 'bg-amber-50 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'}`}>
-                              <Unlink className="text-amber-500 shrink-0 mt-0.5" size={16} />
-                              <div>
-                                <p className={`text-sm font-bold ${theme === 'light' ? 'text-amber-700' : 'text-amber-400'}`}>Siden er isolert</p>
-                                <p className={`text-xs mt-1 ${theme === 'light' ? 'text-amber-600' : 'text-slate-300'}`}>Ingen andre sider lenker hit. Google kan ikke finne den.</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={`relative pt-4 border-t ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-                        {currentLevel < 3 && (
-                          <div className={`absolute inset-0 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-xl border mt-4 ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/80 border-white/5'}`}>
-                            <div className="text-center p-4">
-                              <BrainCircuit className="w-8 h-8 text-fuchsia-500 mx-auto mb-2" />
-                              <p className={`text-sm font-bold mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Premium Strategi</p>
-                              <p className="text-xs text-slate-500 mb-3">Se nøyaktig hvilke lenker du bør bygge.</p>
-                              <button onClick={handleUpgrade} className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all">Oppgrader</button>
-                            </div>
-                          </div>
-                        )}
-
-                        <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                          <GitMerge size={16} className="text-fuchsia-500" /> AI Lenkeforslag
-                        </h4>
-
-                        <div className="space-y-3">
-                          {selectedLinkPage.suggestedInlinks.length > 0 ? (
-                            selectedLinkPage.suggestedInlinks.map((s, idx) => (
-                              <div key={idx} className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-fuchsia-50/50 border-fuchsia-100' : 'bg-gradient-to-br from-slate-900 to-fuchsia-900/20 border-fuchsia-500/20'}`}>
-                                <p className={`text-[10px] font-bold uppercase mb-2 ${theme === 'light' ? 'text-fuchsia-600' : 'text-fuchsia-300'}`}>Lag lenke fra:</p>
-                                <div className={`text-xs font-mono p-1.5 rounded mb-2 truncate ${theme === 'light' ? 'bg-white border border-slate-200 text-slate-800' : 'bg-black/30 text-white'}`}>
-                                  {s.fromUrl}
-                                </div>
-                                <div className={`flex gap-2 items-center text-xs ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
-                                  <span className="text-fuchsia-500 font-bold">Ankertekst:</span> "{s.anchor}"
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className={`p-4 rounded-xl text-center border ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/50 border-white/5'}`}>
-                              <p className="text-xs text-slate-500">Ingen spesifikke lenkeforslag akkurat nå. Siden er godt integrert.</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* --- KOMPLETT SØKEORD SIDE --- */}
-        {activeTab === 'keywords' && (
-          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 pb-40">
-
-            {/* HEADER & INPUT SECTION */}
-            <div className="flex flex-col xl:flex-row justify-between items-end gap-8">
-              <div>
-                <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Søkeord & synlighet</h1>
-                <p className={`mt-2 text-lg font-light max-w-xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Skriv søkeord og sted, og trykk <strong className={theme === 'light' ? 'text-slate-800' : 'text-slate-200'}>Kjør analyse</strong> — da legges ordet inn og vi henter ekte treff fra Google.
-                </p>
-              </div>
-
-              {/* MODERNE SØKEBAR MED KVOTE */}
-              <div className="w-full xl:w-auto">
-                <div className="flex justify-between items-end mb-2 px-1">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Din Søkeordskvote</span>
-                  <span className={`text-xs font-black ${keywordsUsed >= currentKeywordLimit ? 'text-rose-500' : 'text-violet-500'}`}>
-                    {keywordsUsed} / {currentKeywordLimit} brukt
-                  </span>
-                </div>
-
-                <div className={`p-2 rounded-2xl border flex flex-col md:flex-row items-center shadow-lg transition-all
-                  ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/80 border-white/10'}
-                  ${!canAddMoreKeywords ? 'opacity-80 ring-1 ring-rose-500/50' : ''}
-                `}>
-
-                  {/* SØKEORD INPUT */}
-                  <div className={`relative w-full md:w-56 group border-b md:border-b-0 md:border-r transition-colors ${theme === 'light' ? 'border-slate-200' : 'border-white/10'}`}>
-                    <Search className={`absolute left-4 top-3 transition-colors ${!canAddMoreKeywords ? 'text-rose-400' : 'text-slate-400 group-focus-within:text-violet-500'}`} size={18} />
-                    <input
-                      value={newKeywordInput}
-                      onChange={(e) => setNewKeywordInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return;
-                        e.preventDefault();
-                        document.getElementById('kw-loc-input')?.focus();
-                      }}
-                      placeholder={canAddMoreKeywords ? "Søkeord (f.eks elektriker)" : "Kvoten er full..."}
-                      disabled={!canAddMoreKeywords}
-                      className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
-                        ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}
-                        ${!canAddMoreKeywords ? 'cursor-not-allowed' : ''}
-                      `}
-                    />
-                  </div>
-
-                  {/* KOMMUNE INPUT */}
-                  <div className="relative w-full md:w-48 group">
-                    <MapIcon className={`absolute left-4 top-3 transition-colors ${!canAddMoreKeywords ? 'text-rose-400' : 'text-slate-400 group-focus-within:text-violet-500'}`} size={18} />
-                    <input
-                      id="kw-loc-input"
-                      value={locationInput}
-                      onFocus={() => setShowSuggestions(true)}
-                      onChange={(e) => { setLocationInput(e.target.value); setShowSuggestions(true); }}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return;
-                        e.preventDefault();
-                        if (newKeywordInput.trim() && locationInput.trim() && !rankingLoading) handleCheckRankings();
-                      }}
-                      disabled={!canAddMoreKeywords}
-                      placeholder="Sted (f.eks Oslo)"
-                      className={`bg-transparent pl-12 pr-4 py-2.5 outline-none w-full font-medium transition-all
-                        ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}
-                        ${!canAddMoreKeywords ? 'cursor-not-allowed' : ''}
-                      `}
-                    />
-
-                    {/* DROPDOWN FOR KOMMUNER */}
-                    {showSuggestions && locationInput?.length > 0 && canAddMoreKeywords && (
-                      <div className={`absolute top-full left-0 w-full max-h-60 overflow-y-auto border rounded-xl mt-2 shadow-xl z-50
-                        ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'}
-                      `}>
-                        {NORWEGIAN_MUNICIPALITIES
-                          .filter(m => m.toLowerCase().startsWith(locationInput.toLowerCase()))
-                          ?.map((m) => (
-                            <button
-                              key={m}
-                              onClick={() => { setLocationInput(m); setShowSuggestions(false); }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors block
-                                ${theme === 'light' ? 'text-slate-700 hover:bg-violet-50 hover:text-violet-700' : 'text-slate-300 hover:bg-violet-600 hover:text-white'}
-                              `}
-                            >
-                              {m}
-                            </button>
-                          ))
-                        }
-                      </div>
-                    )}
-                    {showSuggestions && <div className="fixed inset-0 z-[-1]" onClick={() => setShowSuggestions(false)}></div>}
-                  </div>
-
-                  <button
-                    onClick={handleCheckRankings}
-                    disabled={
-                      rankingLoading ||
-                      (keywordsToTrack?.length === 0 && (!newKeywordInput.trim() || !locationInput.trim()))
-                    }
-                    title={
-                      keywordsToTrack?.length === 0 && (!newKeywordInput.trim() || !locationInput.trim())
-                        ? 'Fyll inn søkeord og sted, eller bruk lagrede ord'
-                        : 'Hent rangering fra Google for alle ord i listen (og eventuelt nytt ord i feltene)'
-                    }
-                    className="w-full md:w-auto bg-violet-600 hover:bg-violet-500 text-white px-8 py-2.5 rounded-xl font-bold ml-0 md:ml-2 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2 md:mt-0"
-                  >
-                    {rankingLoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
-                    {rankingLoading ? 'Søker...' : 'Kjør Analyse'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* SEKSJON 1: KEY METRICS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {[
-                { label: 'Totalt Søkeord', hint: 'Antall ord du overvåker akkurat nå.', val: hasSearched ? (keywordData?.length || 0) : '-', icon: Layers, col: 'text-violet-500' },
-                { label: 'Topp 3', hint: 'Antall ord der du er blant de 3 beste i Norge.', val: hasSearched ? (keywordData?.filter(k => k.position <= 3)?.length || 0) : '-', icon: Trophy, col: 'text-amber-500' },
-                { label: 'Topp 10', hint: 'Antall ord du har på Googles førsteside.', val: hasSearched ? (keywordData?.filter(k => k.position <= 10)?.length || 0) : '-', icon: CheckCircle2, col: 'text-emerald-500' },
-                { label: 'Synlighet', hint: 'Prosentandel av dine ord som er synlige for kunder.', val: hasSearched && keywordData?.length > 0 ? Math.round(((keywordData?.filter(k => k.position <= 50)?.length || 0) / keywordData.length) * 100) + '%' : '-', icon: Eye, col: 'text-blue-500' },
-                { label: 'Endring (30d)', hint: 'Hvordan plasseringene dine har endret seg siste måned.', val: '+0', icon: TrendingUp, col: theme === 'light' ? 'text-slate-900' : 'text-white' },
-                { label: 'Potensial', hint: 'Hvor mye mer trafikk du kan få ved å optimalisere.', val: 'Høyt', icon: Target, col: 'text-violet-500' },
-              ]?.map((stat, i) => (
-                <div key={i} className={`p-5 rounded-2xl border flex flex-col justify-between h-28 relative overflow-visible group transition-all z-10 duration-300
-                  ${theme === 'light' ? 'bg-white border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_8px_20px_-6px_rgba(6,81,237,0.1)] hover:border-violet-200' : 'bg-slate-900/50 border-white/5 hover:border-white/10'}
-                `}>
-                  <div className={`absolute top-3 right-3 opacity-20 ${stat.col}`}><stat.icon size={24} /></div>
-                  <div className="flex items-center relative z-20">
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{stat.label}</p>
-                    <InfoHint text={stat.hint} />
-                  </div>
-                  <p className={`text-3xl font-black ${stat.col}`}>{stat.val}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* GRID LAYOUT: GRAF + AI PANEL */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-              {/* SEKSJON 4: HISTORISK GRAF */}
-              <div className={`lg:col-span-2 rounded-3xl border p-6 relative overflow-hidden h-96 transition-all duration-300
-                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
-              `}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
-                  <div>
-                    <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Activity size={18} className="text-violet-500" /> Rangeringstrend</h3>
-                    <p className={`text-xs mt-1 max-w-md ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                      <strong className={theme === 'light' ? 'text-slate-700' : 'text-slate-300'}>Lavere tall er bedre</strong> (1 = øverst på Google). Grafen oppdateres når du kjører analyse på nytt — velg hvilket lagret søkeord du vil se.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {currentLevel >= 2 && keywordData?.length > 1 && (
-                      <select
-                        value={trendKeywordKey || ''}
-                        onChange={(e) => setTrendKeywordKey(e.target.value)}
-                        className={`text-xs font-bold rounded-lg border px-3 py-2 max-w-[min(100%,280px)] ${theme === 'light' ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-800 border-white/10 text-white'}`}
-                        aria-label="Velg søkeord for graf"
-                      >
-                        {keywordData.map((k) => (
-                          <option key={keywordRowKey(k)} value={keywordRowKey(k)}>{k.keyword} · {k.location}</option>
-                        ))}
-                      </select>
-                    )}
-                    {currentLevel < 2 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 w-fit ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Låst</span>}
-                  </div>
-                </div>
-
-                <div className="h-64 w-full flex items-center justify-center">
-                  {currentLevel >= 2 ? (
-                    (() => {
-                      const trendRow = keywordData?.length ? (keywordData.find((k) => keywordRowKey(k) === trendKeywordKey) || keywordData[0]) : null;
-                      const trendHistory = trendRow?.history?.length ? trendRow.history : [];
-                      const maxRank = trendHistory.length ? Math.max(...trendHistory.map((h: any) => Number(h.rank) || 0), 1) : 10;
-                      const yMax = Math.min(100, Math.max(10, maxRank + 5));
-                      return keywordData?.length > 0 && trendHistory.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={trendHistory}>
-                            <defs>
-                              <linearGradient id="colorRank" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35} />
-                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? '#e2e8f0' : '#334155'} opacity={theme === 'light' ? 0.8 : 0.3} />
-                            <XAxis dataKey="date" stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis reversed stroke={theme === 'light' ? '#94a3b8' : '#64748b'} fontSize={10} tickLine={false} axisLine={false} domain={[1, yMax]} allowDecimals={false} />
-                            <RechartsTooltip
-                              formatter={(value: number) => [`Plass ${value}`, 'Google']}
-                              contentStyle={{
-                                backgroundColor: theme === 'light' ? '#fff' : '#0f172a',
-                                borderColor: theme === 'light' ? '#e2e8f0' : '#334155',
-                                color: theme === 'light' ? '#0f172a' : '#fff',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                              }}
-                              itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
-                            />
-                            <Area type="monotone" dataKey="rank" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorRank)" dot={{ r: 3, strokeWidth: 1, fill: '#8b5cf6' }} isAnimationActive />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className={`text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm font-medium">Ingen historikk for valgt ord ennå</p>
-                          <p className="text-xs">Kjør «Kjør Analyse» i dag og kom tilbake i morgen — da får du en ny prikk og en linje mellom dagene.</p>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <div className={`absolute inset-0 flex items-center justify-center z-10 backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-900/80'}`}>
-                      <div className="text-center">
-                        <Lock className="w-8 h-8 text-violet-500 mx-auto mb-2" />
-                        <p className={`text-sm font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Oppgrader til Standard</p>
-                        <button onClick={handleUpgrade} className="bg-violet-600 text-white px-4 py-2 rounded-lg text-xs font-bold mt-2 hover:bg-violet-700">Oppgrader nå</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SEKSJON 5: AI-ANALYSE */}
-              <div className={`rounded-3xl border p-6 relative flex flex-col h-96 transition-all duration-300
-                ${theme === 'light' ? 'bg-gradient-to-b from-violet-50/50 to-white border-violet-100 shadow-sm' : 'bg-gradient-to-b from-violet-900/20 to-slate-900/50 border-violet-500/20'}
-              `}>
-                <div className="flex items-center gap-3 mb-4 shrink-0">
-                  <div className="p-2 bg-violet-600 rounded-lg text-white shadow-lg shadow-violet-500/50"><Sparkles size={18} /></div>
-                  <div>
-                    <h3 className={`font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>AI Rådgiver</h3>
-                    <p className="text-[10px] text-violet-500 font-bold uppercase tracking-wide">Forklaring av resultatet</p>
-                  </div>
-                </div>
-
-                {selectedKeyword ? (
-                  <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                    <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 border-white/10'}`}>
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="min-w-0">
-                          <p className={`font-bold truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>"{selectedKeyword.keyword}"</p>
-                          {selectedKeyword.location && (
-                            <p className={`text-[10px] mt-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{selectedKeyword.location}</p>
-                          )}
-                        </div>
-                        <span className={`text-xl font-black shrink-0 tabular-nums ${theme === 'light' ? 'text-slate-900' : 'text-white'}`} title="Organisk plassering i dette søket">
-                          {formatGoogleRankDisplay(selectedKeyword.position).short}
-                        </span>
-                      </div>
-                      <p className={`text-[11px] leading-snug mt-2 ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                        {formatGoogleRankDisplay(selectedKeyword.position).explain}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className={`text-[10px] font-bold uppercase tracking-wide ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Topp treff i Google for dette søket</p>
-                      {selectedKeyword.competitors && selectedKeyword.competitors.slice(0, 3)?.map((comp: any, i: number) => (
-                        <div key={i} className={`text-xs p-2 rounded border ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-slate-950/50 border-white/5 text-slate-300'}`}>
-                          <span className="font-bold text-violet-500">#{comp.position}</span>
-                          <span className="ml-2">{comp.title ? `${String(comp.title).slice(0, 48)}${String(comp.title).length > 48 ? '…' : ''}` : (comp.url || '')}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                      <h4 className="text-emerald-500 font-bold text-xs mb-1 flex items-center gap-2"><Lightbulb size={12} /> Neste steg</h4>
-                      <p className={`text-[10px] leading-relaxed ${theme === 'light' ? 'text-emerald-900' : 'text-slate-300'}`}>
-                        {selectedKeyword.position > 10
-                          ? <>Sammenlign tittel og ingress på dine sider med treffene over. Bruk «{selectedKeyword.keyword}» naturlig i overskrift, første avsnitt og mellomtitler — uten å fylle teksten med gjentakelser.</>
-                          : <>Du er synlig for dette søket. Hold siden oppdatert, svar på vanlige spørsmål i innholdet, og sørg for at Google forstår lokalt område (adresse, områdesider) hvis det er relevant.</>}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`flex-1 flex flex-col items-center justify-center text-center ${theme === 'light' ? 'opacity-40 text-slate-500' : 'opacity-50 text-slate-600'}`}>
-                    <MousePointer2 className="w-12 h-12 mb-2" />
-                    <p className="text-sm font-medium">Velg et søkeord i tabellen under</p>
-                    <p className="text-xs mt-1 max-w-[200px]">Da forklarer vi plasseringen og hva de øverste resultatene gjør.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* SEKSJON 2: HOVEDTABELL */}
-            <div className={`rounded-3xl border shadow-xl relative z-20 overflow-visible transition-all duration-300
-              ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/50 backdrop-blur-xl border-white/5'}
-            `}>
-              <div className="overflow-visible">
-                <table className="w-full text-left border-collapse">
-                  <thead className={`text-[10px] uppercase font-black tracking-wider ${theme === 'light' ? 'bg-slate-50 text-slate-500 border-b border-slate-200 rounded-t-3xl' : 'bg-white/5 text-slate-400'}`}>
-                    <tr>
-                      <th className="p-6 rounded-tl-3xl"><div className="flex items-center">Søkeord & Sted <InfoHint text="Hva du vil bli funnet på." /></div></th>
-                      <th className="p-6"><div className="flex items-center">Posisjon <InfoHint text="Organisk plassering i dette søket. 100+ betyr ikke blant topp 100. Lavere tall er bedre." /></div></th>
-                      <th className="p-6"><div className="flex items-center">Intent <InfoHint text="Hva brukeren egentlig vil." /></div></th>
-                      <th className="p-6"><div className="flex items-center">Resultat-type <InfoHint text="Kart, Bilder, Shopping osv." /></div></th>
-                      <th className="p-6"><div className="flex items-center">KD % <InfoHint text="Vanskelighetsgrad (0-100)." /></div></th>
-                      <th className="p-6 rounded-tr-3xl"></th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y text-sm ${theme === 'light' ? 'divide-slate-100' : 'divide-white/5'}`}>
-                    {hasSearched ? (
-                      keywordData?.length > 0 ? keywordData?.map((k, i) => (
-                        <tr
-                          key={i}
-                          onClick={() => setSelectedKeyword(k)}
-                          className={`transition-colors cursor-pointer group 
-                            ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-white/5'}
-                            ${selectedKeyword === k ? (theme === 'light' ? 'bg-violet-50/50 border-l-2 border-violet-500' : 'bg-white/5 border-l-2 border-violet-500') : ''}
-                          `}
-                        >
-                          <td className="p-6">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-bold text-base ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{k.keyword}</span>
-                              {k.location && <span className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><MapIcon size={8} /> {k.location}</span>}
-                            </div>
-                          </td>
-
-                          <td className="p-6">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border 
-                                ${k.position <= 3 ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-sm' :
-                                  k.position <= 10 ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' :
-                                    k.position > 100 ? (theme === 'light' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30') :
-                                      (theme === 'light' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700')}
-                              `}>
-                                {formatGoogleRankDisplay(k.position).short}
-                              </div>
-                              <InfoHint text={formatGoogleRankDisplay(k.position).explain} />
-                            </div>
-                          </td>
-
-                          <td className="p-6">
-                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border 
-                              ${k.intent === 'Kjøp' ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20') :
-                                k.intent === 'Lokal' ? (theme === 'light' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-blue-500/10 text-blue-400 border-blue-500/20') :
-                                  (theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-slate-700/30 text-slate-400 border-slate-700')}
-                            `}>
-                              {k.intent}
-                            </span>
-                          </td>
-
-                          <td className="p-6">
-                            <div className={`font-bold text-sm flex items-center gap-2 ${k.volume.includes("Kart") ? 'text-emerald-500' :
-                              k.volume.includes("Shopping") ? 'text-violet-500' :
-                                k.volume.includes("Bilder") ? 'text-amber-500' : (theme === 'light' ? 'text-slate-500' : 'text-slate-400')
-                              }`}>
-                              {k.volume.includes("Kart") && <MapIcon size={14} />}
-                              {k.volume.includes("Bilder") && <ImageIcon size={14} />}
-                              {k.volume.includes("Shopping") && <ShoppingBag size={14} />}
-                              {k.volume}
-                            </div>
-                          </td>
-
-                          <td className="p-6">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-slate-800'}`}>
-                                <div className={`h-full rounded-full ${k.kd > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${k.kd}%` }}></div>
-                              </div>
-                              <span className={`text-xs font-bold ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{k.kd}</span>
-                            </div>
-                          </td>
-
-                          <td className="p-6 text-right">
-                            <button onClick={(e) => { e.stopPropagation(); handleRemoveKeyword(k.keyword, k.location); }} className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${theme === 'light' ? 'text-slate-400 hover:text-rose-500 hover:bg-rose-50' : 'text-slate-600 hover:text-rose-500 hover:bg-rose-500/10'}`}>
-                              <Trash2 size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      )) : <tr><td colSpan={6} className={`p-12 text-center ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Ingen treff.</td></tr>
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="p-24 text-center">
-                          <div className={`inline-block p-4 rounded-full mb-4 animate-pulse ${theme === 'light' ? 'bg-slate-50 text-slate-400' : 'bg-slate-800 text-slate-600'}`}><Search size={32} /></div>
-                          <h3 className={`text-xl font-bold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Klar til analyse</h3>
-                          <p className={theme === 'light' ? 'text-slate-500' : 'text-slate-400'}>Legg til dine viktigste søkeord øverst for å starte.</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* SEKSJON 7 & 9: TOPIC CLUSTERS & STRATEGI */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-              {/* TOPIC CLUSTERS */}
-              <div className={`p-6 rounded-3xl border relative overflow-hidden transition-all duration-300
-                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
-              `}>
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className={`font-bold flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><Layers size={18} className="text-blue-500" /> Topic Clusters</h3>
-                  {currentLevel < 3 && <span className={`text-[10px] px-2 py-1 rounded border flex gap-1 ${theme === 'light' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-slate-700'}`}><Lock size={10} /> Premium</span>}
-                </div>
-
-                {currentLevel >= 3 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {hasSearched && keywordData?.length > 0 ?
-                      Object.entries(keywordData?.reduce((acc: any, item) => {
-                        const topic = item.keyword.split(' ')[0].toLowerCase();
-                        if (!acc[topic]) acc[topic] = [];
-                        acc[topic].push(item);
-                        return acc;
-                      }, {}) || {}).slice(0, 4)?.map(([topic, items]: any, i) => (
-                        <div key={i} className={`p-4 rounded-2xl border transition-colors ${theme === 'light' ? 'bg-slate-50 border-slate-200 hover:border-violet-300' : 'bg-slate-950 border-white/5 hover:border-violet-500/30'}`}>
-                          <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Tema</p>
-                          <h4 className={`text-lg font-bold capitalize mb-3 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{topic}</h4>
-                          <div className="space-y-1">
-                            {items?.slice(0, 3)?.map((k: any, j: number) => (
-                              <div key={j} className={`flex justify-between text-xs ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                                <span>{k.keyword}</span>
-                                <span className={k.position <= 10 ? "text-emerald-500 font-bold" : "font-bold"}>#{k.position}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                      : <div className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Ingen data å grupper enda.</div>}
-                  </div>
-                ) : (
-                  <div className={`absolute inset-0 top-14 flex items-center justify-center z-10 backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-900/80'}`}>
-                    <LockedSection title="Se dine temaer" description="Vi grupperer søkeordene dine automatisk." reqPackage="Premium" onUpgrade={handleUpgrade} color="blue" />
-                  </div>
-                )}
-              </div>
-
-              {/* AI STRATEGI */}
-              <div className={`p-6 rounded-3xl border relative overflow-hidden transition-all duration-300
-                ${theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-white/5'}
-              `}>
-                {currentLevel < 3 && <div className={`absolute inset-0 z-10 flex items-center justify-center backdrop-blur-sm ${theme === 'light' ? 'bg-white/80' : 'bg-slate-950/80'}`}><LockedSection title="AI Strategi" description="Få en konkret slagplan." reqPackage="Premium" onUpgrade={handleUpgrade} color="emerald" /></div>}
-
-                <h3 className={`font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}><BrainCircuit size={18} className="text-emerald-500" /> Neste Steg (AI)</h3>
-
-                {keywordData?.length > 0 ? (
-                  <ul className="space-y-4">
-                    {keywordData?.some(k => k.position > 3 && k.position <= 10) && (
-                      <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                        <div>
-                          <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Lavthengende frukt 🍏</span>
-                          Du har ord på side 1 (pos 4-10). Oppdater disse sidene med 200 ord ekstra tekst for å nå topp 3.
-                        </div>
-                      </li>
-                    )}
-                    {keywordData?.some(k => k.position > 20) && (
-                      <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
-                        <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
-                        <div>
-                          <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Mangler innhold 📝</span>
-                          Flere ord rangerer dårlig. Vurder å skrive dedikerte artikler for disse temaene.
-                        </div>
-                      </li>
-                    )}
-                    <li className={`flex gap-3 items-start text-sm p-3 rounded-xl border ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-700' : 'bg-white/5 border-white/5 text-slate-300'}`}>
-                      <div className="w-2 h-2 rounded-full bg-violet-500 mt-1.5 shrink-0"></div>
-                      <div>
-                        <span className={`font-bold block mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Tips for uken</span>
-                        Sjekk konkurrent-panelet (øverst til høyre) for å se hva de gjør bedre enn deg.
-                      </div>
-                    </li>
-                  </ul>
-                ) : <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>Kjør en analyse først for å få råd.</p>}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* --- RAPPORTER & STRATEGI (REPORTS PAGE) --- */}
-        {activeTab === 'reports' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-40">
-
-            {/* 1. HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-slate-900/50 p-8 rounded-3xl border border-white/5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
-              <div className="relative z-10">
-                <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
-                  Din SEO-Rapport
-                </h1>
-                <p className="text-slate-400 mt-2 text-lg font-light max-w-2xl">
-                  {new Date().toLocaleDateString('no-NO', { month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase())}
-                  &nbsp;• En samlet oversikt over din posisjon på Google.
-                </p>
-              </div>
-            </div>
-
-            {/* SJEKK OM DATA FINNES */}
-            {(!hasSearched && contentPages.length === 0 && linkPages?.length === 0) ? (
-              <div className="bg-slate-900/50 p-12 rounded-3xl border border-white/5 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6 relative">
-                  <div className="absolute inset-0 bg-violet-500/20 rounded-full animate-ping"></div>
-                  <Database size={32} className="text-violet-400 relative z-10" />
-                </div>
-                <h3 className="text-2xl font-black text-white mb-2">Vi mangler data for å bygge rapporten</h3>
-                <p className="text-slate-400 max-w-md mx-auto mb-8 leading-relaxed">
-                  Rapporten bygges automatisk basert på data fra nettsiden din. For å generere rapporten, må du først kjøre analyser i de andre fanene.
-                </p>
-                <div className="flex gap-4">
-                  <button onClick={() => setActiveTab('keywords')} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors">1. Analyser Søkeord</button>
-                  <button onClick={() => setActiveTab('content')} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors">2. Skann Innhold</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* 2. HOVEDTALL (SEO HELSE) - BASIC */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                  {/* SEO Score (Kalkulert basert på ekte data) */}
-                  <div className="bg-slate-900/50 rounded-3xl border border-white/5 p-8 flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="flex items-center gap-2 mb-6 relative z-10">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global SEO Helse</p>
-                      <InfoHint text="Gjennomsnittet av din tekniske helse, innholdskvalitet og synlighet på Google." />
-                    </div>
-
-                    <div className="relative mb-4 z-10">
-                      <svg className="w-40 h-40 transform -rotate-90">
-                        <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
-                        <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-500 transition-all duration-1000"
-                          strokeDasharray="283"
-                          strokeDashoffset={283 - (283 * (
-                            Math.round(((contentPages?.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
-                              (linkPages.length > 0 ? (linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) : 0) +
-                              (keywordData.length > 0 ? (keywordData.filter(k => k.position <= 10).length / keywordData.length * 100) : 0)) / 3) || 0
-                          )) / 100}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-5xl font-black text-white">
-                          {Math.round(((contentPages.length > 0 ? (contentPages.reduce((acc, p) => acc + p.score, 0) / contentPages.length) : 0) +
-                            (linkPages.length > 0 ? (linkPages.reduce((acc, p) => acc + p.linkScore, 0) / linkPages.length) : 0) +
-                            (keywordData.length > 0 ? (keywordData.filter(k => k.position <= 10).length / keywordData.length * 100) : 0)) / 3) || 0}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-emerald-400 relative z-10 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20">God tilstand. Klar for skalering.</p>
-                  </div>
-
-                  {/* Nøkkeltall Grid */}
-                  <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
-                      <div className="flex justify-between items-start mb-4">
-                        <Search size={20} className="text-blue-400" />
-                        <InfoHint text="Antall søkeord du for øyeblikket rangerer på side 1 for." />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Topp 10 Søkeord</p>
-                        <p className="text-3xl font-black text-white">{keywordData.filter(k => k.position <= 10).length}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
-                      <div className="flex justify-between items-start mb-4">
-                        <AlertTriangle size={20} className="text-rose-400" />
-                        <InfoHint text="Sider med alvorlige tekniske feil eller for lite tekst." />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Kritiske Feil</p>
-                        <p className="text-3xl font-black text-rose-400">{contentPages.filter(p => p.status === 'Kritisk').length}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
-                      <div className="flex justify-between items-start mb-4">
-                        <FileText size={20} className="text-amber-400" />
-                        <InfoHint text="Sider som mangler interne lenker, og dermed er 'usynlige'." />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Isolerte Sider</p>
-                        <p className="text-3xl font-black text-white">{linkPages.filter(p => p.status === 'Isolert').length}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:bg-white/5 transition-colors">
-                      <div className="flex justify-between items-start mb-4">
-                        <Link2 size={20} className="text-emerald-400" />
-                        <InfoHint text="Totalt antall lenker som binder nettsiden din sammen." />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">Interne Lenker</p>
-                        <p className="text-3xl font-black text-white">{linkPages.reduce((acc, p) => acc + p.inlinks, 0)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. OPPSUMMERINGSLISTER - BASIC */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Suksess (Det som går bra) */}
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-3xl">
-                    <h3 className="text-emerald-400 font-bold mb-4 flex items-center gap-2"><Trophy size={18} /> Dine største seiere</h3>
-                    <ul className="space-y-3">
-                      {keywordData.filter(k => k.position <= 3).slice(0, 3).map((k, i) => (
-                        <li key={i} className="flex justify-between items-center text-sm p-3 bg-slate-900/50 rounded-xl border border-white/5">
-                          <span className="text-white font-medium">"{k.keyword}"</span>
-                          <span className="text-emerald-400 font-black">Pos #{k.position}</span>
-                        </li>
-                      ))}
-                      {keywordData.filter(k => k.position <= 3).length === 0 && (
-                        <li className="text-sm text-slate-400 p-3">Ingen søkeord på topp 3 enda. Fortsett optimaliseringen!</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Tap (Det som må fikses) */}
-                  <div className="bg-rose-500/5 border border-rose-500/20 p-6 rounded-3xl">
-                    <h3 className="text-rose-400 font-bold mb-4 flex items-center gap-2"><AlertOctagon size={18} /> Krever oppmerksomhet</h3>
-                    <ul className="space-y-3">
-                      {contentPages.filter(p => p.status === 'Kritisk').slice(0, 3).map((p, i) => (
-                        <li key={i} className="flex justify-between items-center text-sm p-3 bg-slate-900/50 rounded-xl border border-white/5">
-                          <span className="text-white font-medium truncate max-w-[200px]">{p.title}</span>
-                          <span className="text-rose-400 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded">Kritisk feil</span>
-                        </li>
-                      ))}
-                      {contentPages.filter(p => p.status === 'Kritisk').length === 0 && (
-                        <li className="text-sm text-slate-400 p-3">Ingen kritiske feil funnet. Fantastisk!</li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* 4. STANDARD PAKKE - DYNAMISK AI ANALYSE */}
-                <div className="relative">
-                  {currentLevel < 2 && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 rounded-3xl flex items-center justify-center border border-white/5">
-                      <LockedSection title="AI-Forklaring av utviklingen" description="Forstå HVORFOR trafikken går opp eller ned i rent språk." reqPackage="Standard" onUpgrade={handleUpgrade} color="blue" />
-                    </div>
-                  )}
-
-                  <div className="bg-slate-900/50 border border-white/5 rounded-3xl overflow-hidden">
-                    <div className="p-6 border-b border-white/5 flex items-center gap-3 bg-gradient-to-r from-blue-900/20 to-transparent">
-                      <Sparkles className="text-blue-400" size={20} />
-                      <h3 className="text-lg font-bold text-white">AI-Analyse av dine data</h3>
-                    </div>
-
-                    {dynamicReport ? (
-                      <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <div className="space-y-6">
-                          {/* POSITIVT */}
-                          <div className="p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl relative">
-                            <div className="absolute -left-2 top-6 w-1 h-8 bg-emerald-500 rounded-r-md"></div>
-                            <p className="text-sm text-slate-300 leading-relaxed">
-                              <strong className="text-emerald-400 block mb-1">{dynamicReport.growthTitle}</strong>
-                              {dynamicReport.growthText}
-                            </p>
-                          </div>
-
-                          {/* NEGATIVT */}
-                          <div className="p-5 bg-rose-500/5 border border-rose-500/10 rounded-2xl relative">
-                            <div className="absolute -left-2 top-6 w-1 h-8 bg-rose-500 rounded-r-md"></div>
-                            <p className="text-sm text-slate-300 leading-relaxed">
-                              <strong className="text-rose-400 block mb-1">{dynamicReport.problemTitle}</strong>
-                              {dynamicReport.problemText}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* GRAF (Beholder denne som visuell referanse for nå) */}
-                        <div className="bg-slate-950 rounded-2xl p-6 border border-white/5 h-64 flex flex-col">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase">Synlighet (Simulert trend)</h4>
-                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">Positiv trend</span>
-                          </div>
-                          <div className="flex-1 w-full flex items-end gap-2 pb-2">
-                            {[40, 42, 45, 48, 55, 60, 62, 65, 70, 72, 80, 85].map((h, i) => (
-                              <div key={i} className="flex-1 bg-blue-500/20 rounded-t-sm relative group" style={{ height: `${h}%` }}></div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-8 text-center text-slate-500">Laster analyse...</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 5. PREMIUM PAKKE - DYNAMISK HANDLINGSPLAN */}
-                <div className="relative">
-                  {currentLevel < 3 && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 rounded-3xl flex items-center justify-center border border-white/5">
-                      <LockedSection title="Premium Strategi" description="Få en ferdig ukentlig arbeidsplan basert på dine faktiske feil." reqPackage="Premium" onUpgrade={handleUpgrade} color="fuchsia" />
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    {/* Ukentlig Plan - NÅ MED EKTE OPPGAVER */}
-                    <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-fuchsia-950/20 border border-fuchsia-500/20 p-8 rounded-3xl">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-black text-white flex items-center gap-2"><Target className="text-fuchsia-400" /> Din Ukentlige Handlingsplan</h3>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/20 px-3 py-1.5 rounded-full">Prioritert av AI</span>
-                      </div>
-
-                      <div className="space-y-4">
-                        {dynamicReport && dynamicReport.tasks.map((item: any, i: number) => (
-                          <div key={i} className="bg-slate-900/80 p-4 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-white/20 transition-all">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-6 h-6 rounded-full border-2 border-${item.color}-500/50 flex items-center justify-center group-hover:bg-${item.color}-500 transition-colors cursor-pointer`}></div>
-                              <div>
-                                <p className="text-sm font-bold text-white">{item.task}</p>
-                                <p className="text-xs text-slate-400">{item.desc}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className={`text-[10px] font-bold text-${item.color}-400 uppercase hidden sm:block`}>{item.impact}</span>
-                              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded whitespace-nowrap">{item.time}</span>
-                            </div>
-                          </div>
-                        ))}
-                        {dynamicReport && dynamicReport.tasks.length === 0 && (
-                          <p className="text-slate-400 text-sm">Fant ingen umiddelbare oppgaver. Godt jobbet!</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* AI Prognose */}
-                    <div className="flex flex-col gap-6">
-                      <div className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl flex-1 flex flex-col justify-center relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl"></div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><TrendingUp size={14} /> Potensial</h4>
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <span className="text-4xl font-black text-white">Høyt</span>
-                        </div>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          Basert på antall feil vi fant ({contentPages.filter(p => p.status === 'Kritisk').length}), har du stort rom for forbedring ved enkle grep.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </>
-            )}
-          </div>
-        )}
-
-
-        {/* --- Liten popup nederst på skjermen --- */}
-        {selectedPreviewProblem && !activeSolveProblem && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-            <div className={`p-4 pl-6 pr-4 rounded-2xl shadow-2xl flex items-center gap-6 border ${theme === 'light' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-white'}`}>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Valgt problem</p>
-                <p className="font-bold">{selectedPreviewProblem.title}</p>
-              </div>
-              <button
-                onClick={() => {
-                  const details = getProblemDetails(selectedPreviewProblem.title, selectedPreviewProblem.title);
-                  setActiveSolveProblem({ raw: selectedPreviewProblem, details });
-                  setSelectedPreviewProblem(null);
-                  setActiveTab('verksted'); // Gå automatisk til verkstedet!
-                }}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-violet-600 hover:bg-violet-700 text-white'}`}
-              >
-                Gå til dybde <ArrowRight size={16} />
-              </button>
-              <button onClick={() => setSelectedPreviewProblem(null)} className="p-2 opacity-50 hover:opacity-100 rounded-full hover:bg-white/10"><X size={16} /></button>
-            </div>
-          </div>
-        )}
-
-        {/* --- VERKSTED SIDEN --- */}
-        {activeTab === 'verksted' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 pb-32">
-            {!activeSolveProblem ? (
-              // TOM STAT (Hvis man ikke har valgt et problem enda)
-              <div className={`text-center p-20 mt-10 rounded-3xl border-2 border-dashed ${portalIsLight ? 'border-slate-200 bg-white/50' : 'border-white/5 bg-slate-900/30'}`}>
-                <Wrench className={`w-16 h-16 mx-auto mb-6 opacity-50 ${portalTextLabel}`} />
-                <h2 className={`text-2xl font-black mb-3 ${portalTextMain}`}>Velkommen til Verkstedet</h2>
-                <p className={`max-w-md mx-auto leading-relaxed ${portalTextDim}`}>
-                  Gå til Analyse-fanen og trykk på et problem. AI-en vil da hente det inn hit og generere en skreddersydd løsning for deg.
-                </p>
-                <button onClick={() => setActiveTab('analysis')} className="mt-8 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-black transition-colors">
-                  Gå til Analyse for å finne feil
-                </button>
-              </div>
-            ) : (
-              // AKTIVT PROBLEM (Det nye designet med AI-motor)
-              <div className="max-w-6xl mx-auto space-y-6 mt-6">
-
-                {/* Header for problemet */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <button onClick={() => setActiveSolveProblem(null)} className={`${portalTextDim} hover:text-violet-600 flex items-center gap-1 text-sm font-medium transition-colors`}><ArrowLeft size={16} /> Lukk oppgave</button>
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${portalIsLight ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>Handling kreves</span>
-                    </div>
-                    <h1 className={`text-2xl md:text-3xl font-black ${portalTextMain}`}>{activeSolveProblem.raw?.title || 'Laster problem...'}</h1>
-                  </div>
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-6 mt-8">
-
-                  {/* HOVEDKOLONNE (Arbeidsflaten) */}
-                  <div className="flex-1 space-y-6">
-                    {aiIsThinking ? (
-                      // LASTE-ANIMASJON: Slik ser det ut mens OpenAI jobber i bakgrunnen
-                      <div className={`p-12 rounded-3xl flex flex-col items-center justify-center text-center min-h-[400px] relative overflow-hidden ${portalCard}`}>
-                        <div className="absolute inset-0 bg-violet-500/5 animate-pulse"></div>
-                        <Loader2 className="w-12 h-12 text-violet-600 animate-spin mb-6 relative z-10" />
-                        <h3 className={`text-xl font-black mb-2 relative z-10 ${portalTextMain}`}>AI analyserer kildekoden...</h3>
-                        <p className={`text-sm relative z-10 ${portalTextDim}`}>Skreddersyr en løsning for nøyaktig denne feilen på din nettside.</p>
-                      </div>
-                    ) : (
-                      // FERDIG RESULTAT FRA AI
-                      <div className="animate-in fade-in duration-500 space-y-6">
-
-
-
-
-                        {/* VISUELT DATA-DASHBOARD (Ekte data fra Lighthouse) */}
-                        {activeSolveProblem?.raw && (
-                          <div className={`grid gap-4 mb-6 ${Number(activeSolveProblem.raw.numericValue) > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-
-                            {/* Graf 1: Potensiell tidsbesparelse (Vises KUN hvis den er større enn 0) */}
-                            {Number(activeSolveProblem.raw.numericValue) > 0 && (
-                              <div className={`p-5 rounded-2xl ${portalCard} relative overflow-hidden group`}>
-                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                  <Timer size={64} />
-                                </div>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-1 ${portalTextLabel}`}>Tidsbesparelse</h4>
-                                <div className="flex items-baseline gap-2 mb-4">
-                                  <span className="text-4xl font-black text-emerald-600">
-                                    {(Number(activeSolveProblem.raw.numericValue) / 1000).toFixed(2)}
-                                  </span>
-                                  <span className={`text-sm font-bold ${portalTextDim}`}>sekunder</span>
-                                </div>
-                                <div className={`w-full rounded-full h-2 ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                                  <div className="bg-emerald-500 h-2 rounded-full transition-all duration-1000" style={{ width: '75%' }}></div>
-                                </div>
-                                <p className={`text-xs mt-3 font-medium ${portalTextDim}`}>Beregnet hastighetsøkning ved fiks</p>
-                              </div>
-                            )}
-
-                            {/* Graf 2: Belastning / Wasted Bytes (Vises alltid hvis det finnes data) */}
-                            {((activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings || "").replace(/\D/g, '') || "0") !== "0" && (
-                              <div className={`p-5 rounded-2xl ${portalCard} relative overflow-hidden group`}>
-                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                  <Activity size={64} />
-                                </div>
-                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-1 ${portalTextLabel}`}>Unødvendig Data</h4>
-                                <div className="flex items-baseline gap-2 mb-4">
-                                  <span className="text-4xl font-black text-rose-600">
-                                    {(activeSolveProblem.raw.raw?.savings || activeSolveProblem.raw.savings || "").replace(/\D/g, '')}
-                                  </span>
-                                  <span className={`text-sm font-bold ${portalTextDim}`}>KB</span>
-                                </div>
-                                <div className="w-full flex gap-1 h-2">
-                                  <div className="bg-rose-500 h-full rounded-l-full transition-all duration-1000" style={{ width: '66%' }}></div>
-                                  <div className="bg-rose-400 h-full w-1/6"></div>
-                                  <div className={`h-full rounded-r-full flex-1 ${portalIsLight ? 'bg-slate-100' : 'bg-slate-800'}`}></div>
-                                </div>
-                                <p className={`text-xs mt-3 font-medium ${portalTextDim}`}>Data som blokkerer hovedtråden</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-
-
-                        {/* 1. Steg-for-steg AI-løsning */}
-                        <div className={`p-6 rounded-2xl ${portalCard}`}>
-                          <h3 className="text-[10px] font-black text-violet-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <Sparkles size={14} /> Slik fikser du problemet
-                          </h3>
-
-                          {/* PÅMINNELSE: webhost mangler eller Basic-plan — AI kan ikke finne konkret kode */}
-                          {!aiIsThinking && aiSolution && (() => {
-                            const v = getReminderVariant(clientData?.package_name, hostConnection);
-                            if (!v || v === 'open_workshop') return null;
-                            return (
-                              <div className="mb-6">
-                                <AnalysisReminderBox
-                                  variant={v}
-                                  theme={theme}
-                                  onPrimary={() => {
-                                    if (v === 'basic_upgrade') { setActiveTab('settings'); setTimeout(() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }
-                                    else setActiveTab('settings');
-                                  }}
-                                />
-                              </div>
-                            );
-                          })()}
-
-                          {!aiIsThinking && aiSolution && aiSolution.usedHtmlContext === false && (
-                            <div className={`mb-6 p-4 rounded-xl border ${portalIsLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'}`}>
-                              <p className="text-xs font-black uppercase tracking-wider mb-1">Kontekst fra nettsiden mangler</p>
-                              <p className="text-sm">
-                                Sikt fant ikke brukbar HTML fra den tilkoblede nettsiden akkurat nå, så løsningen blir mer generell.
-                                {aiSolution.htmlFetchError ? ` Feil: ${aiSolution.htmlFetchError}` : ''}
-                              </p>
-                              <p className="text-xs mt-2 opacity-80">Sjekk at nettadressen i Innstillinger er offentlig tilgjengelig og matcher hosten du har koblet.</p>
-                            </div>
-                          )}
-
-                          {/* ORIGINAL-KODE-BOKS (KUN når webhost er koblet og AI fant eksakt kode) */}
-                          {aiSolution?.originalCode && (
-                            <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-rose-50/50 border border-rose-200/60' : 'bg-rose-950/20 border border-rose-500/20'} mb-4`}>
-                              <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
-                                  <XCircle size={14} /> Fjern denne koden
-                                </h3>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(String(aiSolution.originalCode))}
-                                  className={`${portalTextDim} hover:text-rose-600 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-black transition active:scale-95`}
-                                >
-                                  <Copy size={14} /> Kopier
-                                </button>
-                              </div>
-
-                              <div className="bg-[#0D1117] p-5 rounded-xl border border-white/10 font-mono text-sm text-slate-300 overflow-x-auto relative shadow-inner">
-                                <pre className="text-rose-300 whitespace-pre-wrap">
-                                  <code>{String(aiSolution.originalCode)}</code>
-                                </pre>
-                              </div>
-
-                              {aiSolution?.fileHint && (
-                                <p className={`text-xs mt-3 leading-relaxed ${portalTextDim}`}>
-                                  <span className="font-bold">Hvor du finner den:</span> {aiSolution.fileHint}
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          {/* PATCH-BOKS (Vises når AI-en har en kodeendring å foreslå) */}
-                          {aiSolution?.codePatch && (
-                            <div className={`p-5 rounded-2xl ${portalIsLight ? 'bg-emerald-50/50 border border-emerald-200/60' : 'bg-emerald-950/20 border border-emerald-500/20'} mb-6`}>
-                              <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                                  <Code2 size={14} /> {aiSolution?.originalCode ? 'Bytt ut med' : 'Foreslått kodeendring'}
-                                </h3>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch))}
-                                  className={`${portalTextDim} hover:text-violet-600 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-black transition active:scale-95`}
-                                >
-                                  <Copy size={14} /> Kopier
-                                </button>
-                              </div>
-
-                              <div className="bg-[#0D1117] p-5 rounded-xl border border-white/10 font-mono text-sm text-slate-300 overflow-x-auto relative shadow-inner">
-                                <div className="flex gap-1.5 mb-4 opacity-50">
-                                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
-                                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                                </div>
-                                <pre className="text-emerald-400 whitespace-pre-wrap">
-                                  <code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code>
-                                </pre>
-                              </div>
-
-                              {aiSolution?.replacementExplanation ? (
-                                <p className={`text-xs mt-3 leading-relaxed ${portalTextDim}`}>
-                                  <span className="font-bold">Hvorfor:</span> {aiSolution.replacementExplanation}
-                                </p>
-                              ) : (
-                                <p className={`text-xs mt-4 leading-relaxed ${portalTextDim}`}>
-                                  Erstatt din nåværende kode med blokken over. Husk å teste siden din etter endringen.
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Timeline med AI-steg */}
-                          {Array.isArray(aiSolution?.steps) ? (
-                            <div className="space-y-2 relative">
-                              {aiSolution.steps.map((step: any, index: number) => (
-                                <div key={index} className="flex gap-4 relative">
-                                  {index !== aiSolution.steps.length - 1 && (
-                                    <div className={`absolute left-4 top-10 bottom-[-16px] w-0.5 ${portalIsLight ? 'bg-slate-200' : 'bg-white/10'}`}></div>
-                                  )}
-                                  <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${portalIsLight ? 'bg-violet-100 text-violet-700 border-2 border-white' : 'bg-violet-600/20 text-violet-400 border-2 border-slate-900'}`}>
-                                    {index + 1}
-                                  </div>
-                                  <div className="pt-1 pb-6 flex-1">
-                                    <h4 className={`font-black text-base ${portalTextMain}`}>{step.title || "Steg"}</h4>
-                                    <p className={`mt-1 text-sm leading-relaxed ${portalTextDim}`}>{step.description || step}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className={`whitespace-pre-wrap leading-relaxed ${portalTextDim}`}>
-                              {aiSolution?.steps || aiSolution?.explanation || "Kunne ikke laste løsningen på riktig format. Prøv å kjøre analysen på nytt."}
-                            </div>
-                          )}
-                        </div>
-
-                      </div>
-                    )}
-                  </div>
-
-                  {/* SIDEKOLONNE (Verktøy og Premium) */}
-                  <div className="w-full lg:w-80 space-y-6">
-
-                    {/* Verifiserings-knapp */}
-                    <div className={`p-5 rounded-2xl ${portalCard}`}>
-                      <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${portalTextLabel}`}>Verifisering</h3>
-                      <button className={`w-full py-3 rounded-xl font-black transition-all flex justify-center items-center gap-2 active:scale-95 ${portalIsLight ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'}`}>
-                        <CheckCircle2 size={16} /> Kjør ny test
-                      </button>
-                      <p className={`text-xs text-center mt-4 leading-relaxed ${portalTextDim}`}>
-                        Trykk her når du har lagt inn koden for å la Sikt bekrefte at problemet faktisk er løst.
-                      </p>
-                    </div>
-
-                    {hasPremium ? (
-                      <div className={`p-5 rounded-2xl ${portalCard}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className={`text-sm font-black flex items-center gap-2 ${portalTextMain}`}>1-Klikks Fix</h3>
-                          <span className="text-[10px] uppercase font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">Premium</span>
-                        </div>
-                        <p className={`text-xs mb-4 leading-relaxed ${portalTextDim}`}>
-                          Automatisk utrulling av kode til webhotellet krever koblet host med API/skrivetilgang. Følg stegene i Verksted og lim inn patch manuelt inntil auto-deploy er aktivert for din plattform.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('settings')}
-                          className={`w-full py-3 rounded-xl text-sm font-black transition ${portalIsLight ? 'bg-violet-600 text-white hover:bg-violet-500' : 'bg-violet-600 text-white hover:bg-violet-500'}`}
-                        >
-                          Gå til koble webhost
-                        </button>
-                      </div>
-                    ) : (
-                      <div className={`p-5 rounded-2xl ${portalCard} opacity-70 cursor-not-allowed`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className={`text-sm font-black flex items-center gap-2 ${portalTextMain}`}>1-Klikks Fix <Lock size={14} /></h3>
-                          <span className="text-[10px] uppercase font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">Premium</span>
-                        </div>
-                        <p className={`text-xs mb-6 leading-relaxed ${portalTextDim}`}>La AI pushe koden direkte til din server. Spar tid og unngå feil.</p>
-                        <button type="button" onClick={handleUpgrade} className={`w-full py-3 rounded-xl text-sm font-black ${portalIsLight ? 'bg-slate-900 text-white hover:bg-violet-600' : 'bg-violet-600 text-white hover:bg-violet-500'}`}>Oppgrader</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- INNSTILLINGER (OPPDATERT) --- */}
+        {/* =============================================================== */}
+        {/* INNSTILLINGER — vertikal liste av seksjoner.                    */}
+        {/* =============================================================== */}
         {activeTab === 'settings' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 pb-40">
-            <header className="mb-8">
-              <h1 className={`text-4xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Innstillinger</h1>
-              <p className="text-slate-400 mt-2 text-lg font-light">
-                Administrer bedriftsprofil, utseende og abonnement.
-              </p>
+          <div className="space-y-6">
+            <header>
+              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Innstillinger</h1>
+              <p className={`text-base mt-3 ${textDim}`}>Ett sted for alt — bedrift, CMS, søkeord, abonnement.</p>
             </header>
 
-            <PortalSettings
-              user={user}
-              clientData={clientData}
-              setClientData={setClientData}
-              selectedPlan={selectedPlan}
-              onNavigate={setView}
-              onSave={handleSaveSettings}
-              theme={theme}
-              setTheme={setTheme}
-              onSelectPlan={onSelectPlan}
-              hostConnection={hostConnection}
-              setHostConnection={setHostConnection}
-            />
-          </div>
+            {/* SEKSJON: Bedrift & nettside */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Bedrift og nettside"
+                subtitle="Hvem du er og hvor nettsiden din ligger."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setEditingSection(editingSection === 'profile' ? null : 'profile')}
+                    className={`text-sm font-medium ${editingSection === 'profile' ? 'text-rose-600' : 'text-violet-600'} hover:opacity-80`}
+                  >
+                    {editingSection === 'profile' ? 'Avbryt' : 'Rediger'}
+                  </button>
+                }
+              />
 
-        )}
-      </main>
-    </div>
-  );
-};
-
-
-const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavigate, onSave, theme, setTheme, onSelectPlan, hostConnection, setHostConnection }: any) => {
-  const [activeTab, setActiveTab] = useState('general');
-  const [showPlans, setShowPlans] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
-
-
-
-
-  // --- VERKSTED HUKOMMELSE ---
-  const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null);
-  const [problemHistory, setProblemHistory] = useState<any[]>([]);
-  const [pendingProblems, setPendingProblems] = useState<any[]>([]);
-  const [selectedPreviewProblem, setSelectedPreviewProblem] = useState<any>(null);
-  const [aiIsThinking, setAiIsThinking] = useState(false);
-  const [aiHasSolved, setAiHasSolved] = useState(false);
-
-
-  const seoDictionary: Record<string, any> = {
-    'meta-description': {
-      title: 'Mangler Meta-beskrivelse',
-      what: 'Siden din mangler den lille teksten som vises under den blå lenken på Google.',
-      why: 'Uten denne teksten lar du Google gjette hva siden handler om. En god tekst her fungerer som en reklameplakat som får folk til å klikke.',
-      steps: ['Logg inn på nettsiden din sin redigeringsmodus.', 'Finn SEO-innstillingene for den spesifikke siden.', 'Skriv en selgende tekst på 150 tegn som forteller nøyaktig hva kunden får her.'],
-      aiPrompt: 'rewrite'
-    },
-    'unused-javascript': {
-      title: 'Fjern ubrukt kode (JavaScript)',
-      what: 'Nettleseren må laste ned og lese kode som egentlig ikke brukes på denne siden.',
-      why: 'Dette gjør at nettsiden din laster tregere på mobil. Trege sider mister kunder og straffes av Google.',
-      steps: ['Finn ut hvilke plugins/utvidelser du ikke bruker, og slett dem.', 'Bruk et optimaliseringsverktøy for å "forsinke" kode.', 'Test siden på nytt for å se at den laster raskere.'],
-      aiPrompt: 'code'
-    },
-    'default': {
-      title: 'Teknisk feil funnet',
-      what: 'Vi har funnet et teknisk hinder som gjør at Google ikke forstår siden din optimalt.',
-      why: 'Ved å fikse dette, sender du et sterkt signal til søkemotorene om at siden din er profesjonell og rask.',
-      steps: ['Gjennomgå ressursene som er flagget i analysen.', 'Oppdater innstillingene i ditt publiseringssystem.', 'Trykk på "Ny test" for å bekrefte at det er løst.'],
-      aiPrompt: 'optimize'
-    }
-  };
-
-  const getProblemDetails = (problemId: string, rawTitle: string) => {
-    const match = Object.keys(seoDictionary).find(key => problemId.toLowerCase().includes(key) || rawTitle.toLowerCase().includes(key));
-    return match ? seoDictionary[match] : { ...seoDictionary['default'], title: rawTitle };
-  };
-
-
-  // SIKRING: Man må trykke "Rediger" for å endre noe
-
-  const [formData, setFormData] = useState({
-    companyName: clientData?.companyName || 'Min Bedrift AS',
-    websiteUrl: clientData?.websiteUrl || '',
-    email: clientData?.email || user?.email || '',
-    industry: clientData?.industry || '',
-    targetAudience: clientData?.targetAudience || ''
-  });
-
-  // Hold formData i synk hvis clientData oppdateres (f.eks. etter fetch)
-  useEffect(() => {
-    if (!clientData) return;
-    setFormData((prev: any) => ({
-      ...prev,
-      companyName: clientData.companyName ?? prev.companyName,
-      websiteUrl: clientData.websiteUrl ?? prev.websiteUrl,
-      email: clientData.email ?? prev.email,
-      industry: clientData.industry ?? prev.industry,
-      targetAudience: clientData.targetAudience ?? prev.targetAudience,
-    }));
-  }, [clientData]);
-
-  // Ukentlig lås for URL. Låsen er aktiv fra siste endring og i 7 dager fremover.
-  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
-  const urlLastChangedMs = clientData?.urlLastChangedAt ? new Date(clientData.urlLastChangedAt).getTime() : 0;
-  const urlMsUntilUnlock = urlLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - urlLastChangedMs)) : 0;
-  const urlLocked = urlMsUntilUnlock > 0;
-  const urlDaysLeft = Math.ceil(urlMsUntilUnlock / (24 * 60 * 60 * 1000));
-
-  // Tier — for å avgjøre om "Koble til webhost"-seksjonen skal vises
-  const tierPlan = (clientData?.package_name || selectedPlan || '').toString().toUpperCase();
-  const tierIsBasic = !tierPlan.includes('STANDARD') && !tierPlan.includes('PREMIUM');
-  const hostMode: string = hostConnection?.connectionMode || 'none';
-  // Ukentlig lås gjelder KUN etter at host faktisk er koblet til (light/full).
-  // Hvis kunden bare har hoppet over eller ikke gjort noe, skal de kunne koble til når som helst.
-  const hostIsConnected = hostMode === 'light' || hostMode === 'full';
-  const hostLastChangedMs = (hostIsConnected && hostConnection?.lastChangedAt)
-    ? new Date(hostConnection.lastChangedAt).getTime() : 0;
-  const hostMsUntilUnlock = hostLastChangedMs ? Math.max(0, MS_WEEK - (Date.now() - hostLastChangedMs)) : 0;
-  const hostLocked = hostMsUntilUnlock > 0;
-  const hostDaysLeft = Math.ceil(hostMsUntilUnlock / (24 * 60 * 60 * 1000));
-
-  // State for "Koble til webhost"-modal inne i innstillinger
-  const [showHostConnectModal, setShowHostConnectModal] = useState(false);
-  const [hostPlatform, setHostPlatform] = useState<string>('');
-  const [hostInputValue, setHostInputValue] = useState<string>('');
-  const [hostSaving, setHostSaving] = useState(false);
-
-  // --- PLAN-BYTTE ---
-  const [confirmPlanChange, setConfirmPlanChange] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
-  const [switchingPlan, setSwitchingPlan] = useState(false);
-  const [planSwitchMessage, setPlanSwitchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  // Dev-modus: localhost eller ?dev=1 — lar oss bytte plan uten Stripe for å teste tier-gating
-  const isDevMode = typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    new URLSearchParams(window.location.search).get('dev') === '1'
-  );
-
-  const [notifications, setNotifications] = useState({
-    weeklyReport: true,
-    criticalAlerts: true,
-    rankChanges: false
-  });
-
-  // ABONNEMENT LOGIKK
-  const plans: Record<string, { name: string, price: string, desc: string }> = {
-    'BASIC': { name: 'Basic', price: '599 kr', desc: 'Få kontroll på grunnmuren.' },
-    'STANDARD': { name: 'Standard', price: '1 499 kr', desc: 'Vekst og innholdsdominans.' },
-    'PREMIUM': { name: 'Premium', price: '4 999 kr', desc: 'Total dominans.' }
-  };
-
-  // Sjekker databasen (clientData) og finner riktig pakke uansett hvordan det er skrevet
-  const getActivePlanKey = () => {
-    const dbPlan = clientData?.package_name?.toUpperCase() || '';
-    if (dbPlan.includes('PREMIUM')) return 'PREMIUM';
-    if (dbPlan.includes('STANDARD')) return 'STANDARD';
-    return 'BASIC';
-  };
-
-  const currentPlan = plans[getActivePlanKey()];
-
-  // Avgjør om planendring er oppgradering eller nedgradering
-  const planOrder: Record<string, number> = { BASIC: 1, STANDARD: 2, PREMIUM: 3 };
-  const getPlanChangeType = (targetKey: string): 'upgrade' | 'downgrade' => {
-    return (planOrder[targetKey] ?? 0) > (planOrder[getActivePlanKey()] ?? 0) ? 'upgrade' : 'downgrade';
-  };
-
-  // Send til Stripe (produksjons-flyt)
-  const handleConfirmPlanChange = () => {
-    if (!confirmPlanChange) return;
-    setSwitchingPlan(true);
-    onSelectPlan(confirmPlanChange.name); // handlePlanSelect i App håndterer Stripe-redirect
-  };
-
-  // Dev-modus: bytt plan direkte i Supabase uten Stripe (for testing av tier-gating)
-  // For mock-bruker (dev-bypass): oppdater in-memory + localStorage i stedet for DB
-  const isMockUser =
-    user?.id === 'dev-mock-user-id' ||
-    user?.app_metadata?.provider === 'dev' ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user?.id || '');
-
-  const handleDevPlanSwitch = async () => {
-    if (!confirmPlanChange || !user?.id) return;
-    setSwitchingPlan(true);
-    setPlanSwitchMessage(null);
-    try {
-      if (isMockUser) {
-        // Mock-bruker har ingen rad i Supabase — oppdater kun klientstaten + localStorage
-        if (typeof setClientData === 'function') {
-          setClientData((prev: any) => ({ ...(prev || {}), package_name: confirmPlanChange.name }));
-        }
-        try {
-          localStorage.setItem('sikt_dev_plan', confirmPlanChange.name);
-        } catch { /* ignore */ }
-        setPlanSwitchMessage({ type: 'success', text: `Byttet til ${confirmPlanChange.name} (dev-modus, kun lokalt).` });
-        setConfirmPlanChange(null);
-      } else {
-        await supabaseRest(`clients?user_id=eq.${user.id}`, {
-          method: 'PATCH',
-          body: { package_name: confirmPlanChange.name },
-          headers: { Prefer: 'return=representation' },
-        });
-        setPlanSwitchMessage({ type: 'success', text: `Byttet til ${confirmPlanChange.name}. Laster på nytt...` });
-        setConfirmPlanChange(null);
-        setTimeout(() => window.location.reload(), 800);
-      }
-    } catch (err: any) {
-      setPlanSwitchMessage({ type: 'error', text: `Feil: ${err.message}` });
-    } finally {
-      setSwitchingPlan(false);
-    }
-  };
-
-  const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      setIsEditing(false); // Lås skjemaet igjen etter lagring
-      onSave(formData);
-      // Her bør du legge til en Toast notification
-    }, 800);
-  };
-
-  const toggleNotif = (key: string) => setNotifications(prev => ({ ...prev, [key as keyof typeof notifications]: !prev[key as keyof typeof notifications] }));
-
-  // Hjelpekomponenter
-  const SectionHeader = ({ title, desc }: { title: string, desc: string }) => (
-    <div className={`mb-8 pb-6 border-b ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-      <h2 className={`text-xl font-medium tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</h2>
-      <p className="text-sm text-slate-400 mt-1">{desc}</p>
-    </div>
-  );
-
-  const InputField = ({ label, value, onChange, disabled = false, icon: Icon, placeholder = '', forceLock = false }: any) => (
-    <div className="group">
-      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 group-focus-within:text-violet-400 transition-colors">
-        {label}
-      </label>
-      <div className={`flex items-center border transition-all duration-200 rounded-xl px-4 py-3 
-        ${theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}
-        ${(disabled || forceLock) ? 'opacity-60 bg-slate-100 dark:bg-slate-900/50 cursor-not-allowed' : 'group-focus-within:border-violet-500/50 group-focus-within:ring-1 group-focus-within:ring-violet-500/20 shadow-sm'}
-      `}>
-        {Icon && <Icon size={16} className={`mr-3 ${disabled ? 'text-slate-500' : 'text-slate-400 group-focus-within:text-violet-400'}`} />}
-        <input
-          value={value}
-          onChange={onChange}
-          disabled={disabled || forceLock}
-          placeholder={placeholder}
-          className={`bg-transparent w-full text-sm outline-none font-medium ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-600'}`}
-        />
-        {forceLock && <Lock size={12} className="ml-2 text-rose-500" title="Dette feltet kan ikke endres" />}
-        {!forceLock && disabled && <Lock size={12} className="ml-2 text-slate-500" />}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className={`flex flex-col lg:flex-row min-h-[600px] rounded-3xl border overflow-hidden backdrop-blur-sm transition-colors duration-300
-      ${theme === 'light' ? 'bg-white/80 border-slate-200 shadow-xl' : 'bg-slate-900/40 border-white/5'}
-    `}>
-
-      {/* 1. SIDEBAR */}
-      <div className={`w-full lg:w-64 border-r p-4 flex flex-col gap-1 shrink-0 ${theme === 'light' ? 'bg-slate-50/50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
-        <div className="px-4 py-4 mb-2">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konto</p>
-        </div>
-        {[
-          { id: 'general', label: 'Generelt', icon: User },
-          { id: 'notifications', label: 'Varslinger', icon: MessageCircle },
-          { id: 'appearance', label: 'Utseende', icon: Sun },
-          { id: 'billing', label: 'Abonnement', icon: CreditCard },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-left ${activeTab === item.id
-              ? 'bg-violet-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-slate-600 hover:bg-black/5 dark:hover:text-white dark:hover:bg-white/5'
-              }`}
-          >
-            <item.icon size={16} className={activeTab === item.id ? 'text-white' : 'opacity-70'} />
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 2. MAIN CONTENT */}
-      <div className="flex-1 p-8 lg:p-12 overflow-y-auto custom-scrollbar">
-
-        {/* --- TAB: GENERELT (MED SIKRING) --- */}
-        {activeTab === 'general' && (
-          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex justify-between items-start mb-6">
-              <SectionHeader title="Bedriftsprofil" desc="Administrer din bedriftsinformasjon." />
-
-              {/* SIKRINGS-KNAPP */}
-              {!isEditing ? (
-                <button onClick={() => setIsEditing(true)} className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/20">
-                  Rediger Profil
-                </button>
-              ) : (
-                <button onClick={() => setIsEditing(false)} className="text-xs font-bold text-rose-500 hover:text-rose-600 px-3 py-1.5 transition-colors">
-                  Avbryt
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              {/* URL: kan endres én gang per uke */}
-              <div>
-                <InputField
-                  label={`Nettside URL${urlLocked ? ` (låst i ${urlDaysLeft} dag${urlDaysLeft === 1 ? '' : 'er'})` : ''}`}
-                  value={formData.websiteUrl}
-                  onChange={(e: any) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                  disabled={!isEditing || urlLocked}
-                  forceLock={urlLocked}
-                  icon={Globe}
-                  placeholder="https://minbedrift.no"
-                />
-                {!urlLocked ? (
-                  <p className="text-[11px] text-amber-500 mt-2 ml-1 font-medium">
-                    Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-slate-400 mt-2 ml-1">
-                    Kan endres på nytt om {urlDaysLeft} dag{urlDaysLeft === 1 ? '' : 'er'}.
-                  </p>
-                )}
-              </div>
-
-              {/* WEBHOST — egen seksjon, ikke del av vanlige "lagre"-skjemaet */}
-              {!tierIsBasic && (
-                <div className={`rounded-2xl border p-5 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Server size={16} className={theme === 'light' ? 'text-slate-700' : 'text-white'} />
-                        <h3 className={`text-sm font-black ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Webhost-tilkobling</h3>
-                        {(hostMode === 'light' || hostMode === 'full') && (
-                          <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-600 px-2 py-0.5 rounded-full">KOBLET</span>
-                        )}
-                        {hostMode === 'skipped' && (
-                          <span className="text-[9px] font-bold bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">HOPPET OVER</span>
-                        )}
-                      </div>
-                      <p className={`text-xs leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                        {(hostMode === 'light' || hostMode === 'full') ? (
-                          <>
-                            Plattform: <strong>{hostConnection?.platform || 'ukjent'}</strong>
-                            {hostConnection?.repoUrl && <> · {hostConnection.repoUrl}</>}
-                            {hostConnection?.adminUrl && !hostConnection?.repoUrl && <> · {hostConnection.adminUrl}</>}
-                          </>
-                        ) : (
-                          <>Koble til hvor nettsiden din ligger, så kan AI-en vise eksakt hvilken kode-linje du må fjerne og hva du skal erstatte den med.</>
-                        )}
-                      </p>
-                      {hostLocked && (
-                        <p className="text-[11px] text-slate-400 mt-2">
-                          Kan endres på nytt om {hostDaysLeft} dag{hostDaysLeft === 1 ? '' : 'er'}.
-                        </p>
-                      )}
+              {editingSection !== 'profile' ? (
+                <dl className={`divide-y ${divider}`}>
+                  {[
+                    { label: 'Bedrift', value: clientData?.companyName || '—' },
+                    { label: 'Kontaktperson', value: clientData?.contactPerson || '—' },
+                    { label: 'E-post', value: clientData?.email || user?.email || '—' },
+                    { label: 'Telefon', value: clientData?.phone || '—' },
+                    { label: 'Nettside', value: websiteUrl || '—' },
+                    { label: 'Bransje', value: clientData?.industry || '—' },
+                    { label: 'Målgruppe', value: clientData?.targetAudience || '—' },
+                  ].map((row) => (
+                    <div key={row.label} className="flex items-baseline justify-between py-3 gap-4">
+                      <dt className={`text-sm ${textDim}`}>{row.label}</dt>
+                      <dd className={`text-sm font-medium ${textMain} text-right truncate max-w-xs`}>{row.value}</dd>
                     </div>
-                    <button
-                      type="button"
-                      disabled={hostLocked}
+                  ))}
+                </dl>
+              ) : (
+                <div className="space-y-4">
+                  {[
+                    { key: 'companyName', label: 'Bedrift', placeholder: 'Min Bedrift AS' },
+                    { key: 'contactPerson', label: 'Kontaktperson', placeholder: 'Ola Nordmann' },
+                    { key: 'email', label: 'E-post', placeholder: 'ola@bedrift.no' },
+                    { key: 'phone', label: 'Telefon', placeholder: '+47 ...' },
+                    { key: 'industry', label: 'Bransje', placeholder: 'F.eks. rørlegger' },
+                  ].map((f) => (
+                    <div key={f.key}>
+                      <label className={`block text-sm ${textDim} mb-1`}>{f.label}</label>
+                      <input
+                        type="text"
+                        value={formData[f.key] ?? ''}
+                        onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                        placeholder={f.placeholder}
+                        className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
+                      />
+                    </div>
+                  ))}
+
+                  <div>
+                    <label className={`block text-sm ${textDim} mb-1`}>
+                      Nettside {urlLocked && <span className={textLabel}>(låst i {urlDaysLeft} dag{urlDaysLeft === 1 ? '' : 'er'})</span>}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.websiteUrl ?? ''}
+                      onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                      placeholder="https://minbedrift.no"
+                      disabled={urlLocked}
+                      className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 disabled:opacity-60 disabled:cursor-not-allowed`}
+                    />
+                    <p className={`text-xs mt-1.5 ${textLabel}`}>
+                      Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm ${textDim} mb-1`}>Målgruppe</label>
+                    <textarea
+                      value={formData.targetAudience ?? ''}
+                      onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                      placeholder="Hvem vil du nå?"
+                      rows={3}
+                      className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 resize-none`}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <SecondaryButton theme={themed} onClick={() => setEditingSection(null)}>Avbryt</SecondaryButton>
+                    <PrimaryButton onClick={async () => { await handleSaveSettings(formData); setEditingSection(null); }} disabled={saving}>
+                      {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      Lagre
+                    </PrimaryButton>
+                  </div>
+                </div>
+              )}
+            </PortalCard>
+
+            {/* SEKSJON: CMS-tilkobling */}
+            {!(/basic/i.test(planBundle) && !hasStandardOrHigher) && (
+              <PortalCard theme={themed} className="p-6 sm:p-8">
+                <CardHeader
+                  theme={themed}
+                  title="CMS-tilkobling"
+                  subtitle="Koble til der nettsiden din ligger, så pusher Sikt fikser automatisk."
+                  action={
+                    <SecondaryButton
+                      theme={themed}
                       onClick={() => {
                         setHostPlatform(hostConnection?.platform || '');
                         setHostInputValue(hostConnection?.repoUrl || hostConnection?.adminUrl || hostConnection?.notes || '');
-                        setShowHostConnectModal(true);
+                        setShowHostModal(true);
                       }}
-                      className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
-                        hostLocked
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-violet-600 hover:bg-violet-500 text-white shadow-sm'
-                      }`}
                     >
-                      <Server size={14} /> {(hostMode === 'light' || hostMode === 'full') ? 'Endre' : 'Koble til'}
-                    </button>
+                      <Server size={14} /> {hostIsConnected ? 'Endre' : 'Koble til'}
+                    </SecondaryButton>
+                  }
+                />
+                {hostIsConnected ? (
+                  <div className="space-y-2">
+                    <p className={`text-sm ${textMain}`}>
+                      <span className="font-medium">{hostConnection?.platform}</span>
+                      {hostConnection?.repoUrl && <span className={textDim}> · {hostConnection.repoUrl}</span>}
+                      {hostConnection?.adminUrl && !hostConnection?.repoUrl && <span className={textDim}> · {hostConnection.adminUrl}</span>}
+                    </p>
+                    <p className={`text-sm ${textDim}`}>
+                      <CheckCircle2 size={14} className="inline text-emerald-600 mr-1" />
+                      Sikt har lese-tilgang. Auto-fiks aktivt.
+                    </p>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className={`text-sm ${textDim}`}>
+                    Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
+                  </p>
+                )}
+              </PortalCard>
+            )}
 
-              <InputField
-                label="E-post adresse"
-                value={formData.email}
-                onChange={(e: any) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!isEditing}
-                icon={Mail}
+            {/* SEKSJON: Søkeord */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Søkeord du sporer"
+                subtitle={`${keywordsToTrack.length} av ${keywordLimit === Infinity ? 'ubegrenset' : keywordLimit} ord. Sjekk Google-rangering når som helst.`}
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <InputField
-                  label="Bedriftsnavn"
-                  value={formData.companyName}
-                  onChange={(e: any) => setFormData({ ...formData, companyName: e.target.value })}
-                  disabled={!isEditing}
+              <ul className={`divide-y ${divider} mb-4`}>
+                {keywordsToTrack.length === 0 && (
+                  <li className={`py-3 text-sm ${textDim}`}>Ingen søkeord lagt til enda.</li>
+                )}
+                {keywordsToTrack.map((k: any, i: number) => (
+                  <li key={i} className="flex items-center justify-between py-3 gap-3">
+                    <div>
+                      <p className={`text-sm font-medium ${textMain}`}>{k.keyword}</p>
+                      <p className={`text-xs ${textDim}`}>{k.location}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveKeyword(k.keyword, k.location)}
+                      className={`text-sm ${textDim} hover:text-rose-600`}
+                    >
+                      Fjern
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              {canAddMoreKeywords ? (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={newKeywordInput}
+                    onChange={(e) => setNewKeywordInput(e.target.value)}
+                    placeholder="F.eks. «rørlegger oslo»"
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
+                  />
+                  <input
+                    type="text"
+                    value={locationInput}
+                    onChange={(e) => setLocationInput(e.target.value)}
+                    placeholder="Sted"
+                    className={`sm:w-32 rounded-lg px-3 py-2 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
+                  />
+                  <PrimaryButton onClick={handleAddKeyword}>
+                    <Plus size={14} /> Legg til
+                  </PrimaryButton>
+                </div>
+              ) : (
+                <TierTeaser
+                  theme={themed}
+                  tier={currentLevel === 1 ? 'Standard' : 'Premium'}
+                  price={currentLevel === 1 ? '1 499 kr' : '4 999 kr'}
+                  message={`Du har nådd grensen på ${keywordLimit} søkeord`}
+                  onUpgrade={handleUpgrade}
                 />
-                <InputField
-                  label="Bransje"
-                  value={formData.industry}
-                  onChange={(e: any) => setFormData({ ...formData, industry: e.target.value })}
-                  placeholder="F.eks. Rørlegger"
-                  disabled={!isEditing}
-                />
-              </div>
+              )}
+            </PortalCard>
 
-              <div className="group">
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Målgruppe</label>
-                <textarea
-                  value={formData.targetAudience}
-                  onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                  placeholder="Beskriv hvem du vil nå..."
-                  disabled={!isEditing}
-                  className={`w-full h-24 rounded-xl px-4 py-3 text-sm font-medium outline-none border transition-all resize-none
-                    ${theme === 'light'
-                      ? 'bg-white border-slate-200 text-slate-900 focus:border-violet-500'
-                      : 'bg-slate-950 border-white/10 text-white placeholder-slate-600 focus:border-violet-500/50'
-                    }
-                    ${!isEditing ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/50' : ''}
-                  `}
-                />
-              </div>
-            </div>
+            {/* SEKSJON: Abonnement */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader
+                theme={themed}
+                title="Abonnement"
+                subtitle={`${planNames[activePlanKey]} · ${planPrices[activePlanKey]}/mnd`}
+              />
 
-            {/* LAGRE KNAPP - KUN SYNLIG NÅR REDIGERER */}
-            {isEditing && (
-              <div className="mt-8 flex justify-end animate-in fade-in slide-in-from-bottom-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-slate-900 text-white hover:bg-violet-600 dark:bg-white dark:text-slate-950 dark:hover:bg-violet-50 px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
-                >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14} /> Lagre Endringer</>}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- TAB: UTSEENDE (FUNKSJONELL!) --- */}
-        {activeTab === 'appearance' && (
-          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SectionHeader title="Utseende" desc="Velg din foretrukne visning." />
-
-            <div className="grid grid-cols-2 gap-6">
-              {/* Light Mode Button */}
-              <button
-                onClick={() => setTheme('light')}
-                className={`p-4 rounded-2xl border-2 transition-all text-left group ${theme === 'light' ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
-              >
-                <div className="w-full h-24 bg-slate-100 rounded-lg mb-4 border border-slate-200 relative overflow-hidden">
-                  <div className="absolute top-2 left-2 w-16 h-4 bg-white rounded shadow-sm"></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className={`font-bold text-sm ${theme === 'light' ? 'text-violet-700' : 'text-slate-700'}`}>Lys Modus</span>
-                  {theme === 'light' && <Check size={16} className="text-violet-600" />}
-                </div>
-              </button>
-
-              {/* Dark Mode Button */}
-              <button
-                onClick={() => setTheme('dark')}
-                className={`p-4 rounded-2xl border-2 transition-all text-left group ${theme === 'dark' ? 'border-violet-500 bg-slate-800 ring-2 ring-violet-500/20' : 'border-slate-700 hover:border-slate-600 bg-slate-900'}`}
-              >
-                <div className="w-full h-24 bg-slate-950 rounded-lg mb-4 border border-slate-800 relative overflow-hidden">
-                  <div className="absolute top-2 left-2 w-16 h-4 bg-slate-800 rounded"></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className={`font-bold text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-400'}`}>Mørk Modus</span>
-                  {theme === 'dark' && <Check size={16} className="text-white" />}
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* --- TAB: VARSLINGER --- */}
-        {activeTab === 'notifications' && (
-          <div className="max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SectionHeader title="Varslingspreferanser" desc="Bestem hva du vil motta på e-post." />
-            <div className={`space-y-1 rounded-2xl border overflow-hidden ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
-              {[
-                { id: 'weeklyReport', label: 'Ukentlig Rapport', desc: 'Sammendrag av vekst og nye muligheter.' },
-                { id: 'criticalAlerts', label: 'Kritiske Alarmer', desc: 'Umiddelbar beskjed hvis nettsiden går ned.' },
-                { id: 'rankChanges', label: 'Posisjonsendringer', desc: 'Når du går opp eller ned på topp 3.' },
-              ].map((item, i) => (
-                <div key={item.id} className={`flex items-center justify-between p-5 ${i !== 0 ? (theme === 'light' ? 'border-t border-slate-200' : 'border-t border-white/5') : ''}`}>
-                  <div className="pr-8">
-                    <p className={`text-sm font-bold mb-0.5 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{item.label}</p>
-                    <p className="text-xs text-slate-500">{item.desc}</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotif(item.id)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notifications[item.id as keyof typeof notifications] ? 'bg-violet-600' : 'bg-slate-700'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ${notifications[item.id as keyof typeof notifications] ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* --- TAB: ABONNEMENT --- */}
-        {activeTab === 'billing' && (
-          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SectionHeader title="Ditt abonnement" desc="Bytt pakke eller administrer betalingsmetoder." />
-
-            {/* Status-melding etter dev-bytte */}
-            {planSwitchMessage && (
-              <div className={`mb-6 rounded-xl p-4 flex items-start gap-3 border ${planSwitchMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'}`}>
-                {planSwitchMessage.type === 'success' ? <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
-                <div className="flex-1 text-sm">{planSwitchMessage.text}</div>
-                <button onClick={() => setPlanSwitchMessage(null)} className="opacity-60 hover:opacity-100"><X size={14} /></button>
-              </div>
-            )}
-
-            {/* Aktiv plan-kort */}
-            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl shadow-violet-900/20 mb-8">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full">
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Aktiv plan</span>
-                  </div>
-                  <span className="text-2xl font-bold text-white">{currentPlan.price}<span className="text-sm text-white/60 font-medium">/mnd</span></span>
-                </div>
-
-                <h3 className="text-4xl font-black text-white mb-2">{currentPlan.name}</h3>
-                <p className="text-indigo-100 text-sm mb-6 max-w-md">{currentPlan.desc}</p>
-
-                <button
-                  className="bg-white text-indigo-900 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg inline-flex items-center gap-2"
-                  onClick={() => toastInfo('Åpner Stripe Customer Portal (må kobles opp på backend)')}
-                >
-                  <CreditCard size={13} /> Administrer betaling
-                </button>
-              </div>
-            </div>
-
-            {/* Plan-velger */}
-            <div>
-              <h4 className={`text-xs font-bold uppercase tracking-widest mb-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Bytt plan</h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Object.entries(plans).map(([key, plan]) => {
-                  const isCurrent = getActivePlanKey() === key;
-                  const changeType = getPlanChangeType(key);
-                  const isPremium = key === 'PREMIUM';
-
+              <div className="grid sm:grid-cols-3 gap-3">
+                {(['BASIC', 'STANDARD', 'PREMIUM'] as const).map((key) => {
+                  const isCurrent = activePlanKey === key;
+                  const order: Record<string, number> = { BASIC: 1, STANDARD: 2, PREMIUM: 3 };
+                  const type: 'upgrade' | 'downgrade' = order[key] > order[activePlanKey] ? 'upgrade' : 'downgrade';
                   return (
                     <div
                       key={key}
-                      className={`relative rounded-2xl border-2 p-5 flex flex-col transition-all ${
+                      className={`rounded-xl p-5 border ${
                         isCurrent
-                          ? theme === 'light' ? 'bg-violet-50 border-violet-500' : 'bg-violet-900/20 border-violet-500'
-                          : theme === 'light' ? 'bg-white border-slate-200 hover:border-violet-300' : 'bg-slate-900/40 border-white/10 hover:border-violet-500/40'
+                          ? isLight ? 'border-violet-300 bg-violet-50/50' : 'border-violet-500/40 bg-violet-500/10'
+                          : divider
                       }`}
                     >
-                      {isPremium && !isCurrent && (
-                        <span className="absolute -top-2 right-4 bg-amber-400 text-amber-900 text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Populær</span>
-                      )}
-
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className={`font-black text-lg ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{plan.name}</h4>
-                        {isCurrent && <span className="bg-violet-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Aktiv</span>}
-                      </div>
-                      <p className={`text-xs mb-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>{plan.desc}</p>
-                      <p className={`text-2xl font-black mb-4 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                        {plan.price}<span className={`text-xs font-medium ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>/mnd</span>
+                      <p className={`text-sm font-semibold ${textMain}`}>{planNames[key]}</p>
+                      <p className={`text-2xl font-semibold mt-2 ${textMain}`}>
+                        {planPrices[key]}<span className={`text-xs font-normal ${textDim}`}>/mnd</span>
                       </p>
-
-                      <div className="mt-auto">
-                        {isCurrent ? (
-                          <div className={`w-full py-2.5 rounded-lg text-xs font-black text-center ${theme === 'light' ? 'bg-slate-100 text-slate-500' : 'bg-slate-800 text-slate-400'}`}>
-                            Din nåværende plan
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmPlanChange({ key, name: plan.name, price: plan.price, type: changeType })}
-                            className={`w-full py-2.5 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 ${
-                              changeType === 'upgrade'
-                                ? 'bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-200'
-                                : theme === 'light' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                            }`}
-                          >
-                            {changeType === 'upgrade' ? <><ArrowUpCircle size={14} /> Oppgrader</> : <><ArrowDownCircle size={14} /> Nedgrader</>}
-                          </button>
-                        )}
-                      </div>
+                      {isCurrent ? (
+                        <p className={`mt-4 text-xs font-medium text-violet-600`}>Aktiv plan</p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPlanChangeTarget({ key, name: planNames[key], price: planPrices[key], type })}
+                          className={`mt-4 text-sm font-medium ${type === 'upgrade' ? 'text-violet-600 hover:text-violet-500' : `${textDim} hover:${textMain}`}`}
+                        >
+                          {type === 'upgrade' ? 'Oppgrader →' : 'Nedgrader'}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </PortalCard>
 
-            {/* Fakturahistorikk */}
-            <div className="mt-10">
-              <h4 className={`text-xs font-bold uppercase tracking-widest mb-4 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Fakturahistorikk</h4>
-              <div className={`border rounded-xl p-8 text-center ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/30 border-white/5'}`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${theme === 'light' ? 'bg-white text-slate-400' : 'bg-slate-900 text-slate-600'}`}>
-                  <FileText size={20} />
-                </div>
-                <p className="text-sm text-slate-400">Ingen fakturaer tilgjengelig ennå.</p>
-              </div>
-            </div>
-
-            {/* Bekreftelses-dialog */}
-            {confirmPlanChange && (
-              <div
-                className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-                onClick={() => !switchingPlan && setConfirmPlanChange(null)}
-              >
-                <div
-                  className={`max-w-md w-full rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200 ${theme === 'light' ? 'bg-white' : 'bg-slate-900 border border-white/10'}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-start gap-4 mb-5">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${confirmPlanChange.type === 'upgrade' ? 'bg-violet-100 text-violet-600' : 'bg-amber-100 text-amber-600'}`}>
-                      {confirmPlanChange.type === 'upgrade' ? <ArrowUpCircle size={24} /> : <ArrowDownCircle size={24} />}
+            {/* SEKSJON: Varsler */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader theme={themed} title="Varsler" subtitle="Hva Sikt skal sende deg på e-post." />
+              <ul className={`divide-y ${divider}`}>
+                {[
+                  { id: 'weeklyReport' as const, label: hasStandardOrHigher ? 'Ukentlig rapport' : 'Månedlig rapport', desc: 'Sammendrag av fikser, funn og rangeringer.' },
+                  { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
+                  { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
+                ].map((item) => (
+                  <li key={item.id} className="flex items-start justify-between py-4 gap-4">
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium ${textMain}`}>{item.label}</p>
+                      <p className={`text-xs mt-0.5 ${textDim}`}>{item.desc}</p>
                     </div>
-                    <div className="flex-1">
-                      <h3 className={`text-lg font-black mb-1 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                        {confirmPlanChange.type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'} til {confirmPlanChange.name}?
-                      </h3>
-                      <p className={`text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
-                        {confirmPlanChange.type === 'upgrade'
-                          ? `Du får tilgang til alt i ${confirmPlanChange.name}-pakken umiddelbart. Nytt beløp på ${confirmPlanChange.price}/mnd belastes ved neste faktureringsperiode.`
-                          : `Du beholder nåværende funksjoner ut faktureringsperioden, deretter byttes du til ${confirmPlanChange.name} (${confirmPlanChange.price}/mnd).`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {isDevMode && (
-                    <div className={`rounded-xl p-3 mb-5 text-xs flex items-start gap-2 ${theme === 'light' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-amber-950/30 text-amber-300 border border-amber-900/40'}`}>
-                      <Info size={14} className="shrink-0 mt-0.5" />
-                      <div>
-                        <strong>Dev-modus oppdaget.</strong> Du kan bytte direkte i databasen uten Stripe for å teste tier-gating.
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
-                      onClick={() => setConfirmPlanChange(null)}
-                      disabled={switchingPlan}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-black transition-colors ${theme === 'light' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                      type="button"
+                      onClick={() => toggleNotif(item.id)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                        notifPrefs[item.id] ? 'bg-violet-600' : isLight ? 'bg-slate-200' : 'bg-slate-700'
+                      }`}
                     >
-                      Avbryt
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${notifPrefs[item.id] ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
-                    {isDevMode && (
-                      <button
-                        onClick={handleDevPlanSwitch}
-                        disabled={switchingPlan}
-                        className="flex-1 py-2.5 rounded-lg text-sm font-black bg-amber-500 text-white hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                      >
-                        {switchingPlan ? <><Loader2 size={14} className="animate-spin" /> Bytter...</> : <>Bytt direkte (dev)</>}
-                      </button>
-                    )}
-                    <button
-                      onClick={handleConfirmPlanChange}
-                      disabled={switchingPlan}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-black bg-violet-600 text-white hover:bg-violet-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {switchingPlan ? <><Loader2 size={14} className="animate-spin" /> Sender...</> : <>Fortsett til Stripe <ArrowRight size={14} /></>}
-                    </button>
-                  </div>
-                </div>
+                  </li>
+                ))}
+              </ul>
+            </PortalCard>
+
+            {/* SEKSJON: Utseende */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              <CardHeader theme={themed} title="Utseende" subtitle="Velg hvordan portalen skal se ut." />
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'light' as const, label: 'Lys' },
+                  { id: 'dark' as const, label: 'Mørk' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setTheme(opt.id)}
+                    className={`px-5 py-4 rounded-xl border text-sm font-medium transition-colors ${
+                      theme === opt.id
+                        ? isLight ? 'border-violet-300 bg-violet-50 text-slate-900' : 'border-violet-500/40 bg-violet-500/10 text-white'
+                        : `${divider} ${textDim} hover:${textMain}`
+                    }`}
+                  >
+                    {opt.id === 'light' ? <Sun size={16} className="inline mr-2" /> : <Moon size={16} className="inline mr-2" />}
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </PortalCard>
           </div>
         )}
 
-        {/* --- KOBLE-TIL-HOST MODAL (inne i innstillinger) --- */}
-        {showHostConnectModal && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-            <div className={`border rounded-2xl p-6 w-full max-w-md shadow-2xl ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'}`}>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className={`text-lg font-black flex items-center gap-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  <Server size={18} /> Koble til webhost
-                </h3>
-                <button onClick={() => setShowHostConnectModal(false)} className={theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-slate-400 hover:text-white'}>
-                  <X size={20} />
-                </button>
-              </div>
+      </main>
 
-              <div className="mb-4">
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>Plattform</label>
+      {/* =============================================================== */}
+      {/* WORKSHOP DRAWER — overlay for AI-løsning på et problem.          */}
+      {/* =============================================================== */}
+      {activeSolveProblem && (
+        <div className="fixed inset-0 z-40 flex justify-end">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={() => setActiveSolveProblem(null)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+          />
+          <aside className={`relative w-full max-w-xl h-full overflow-y-auto ${isLight ? 'bg-white' : 'bg-slate-900'} shadow-2xl`}>
+            <header className={`sticky top-0 z-10 px-6 py-4 border-b ${divider} ${isLight ? 'bg-white/95' : 'bg-slate-900/95'} backdrop-blur flex items-center justify-between gap-3`}>
+              <div className="min-w-0">
+                <p className={`text-xs ${textLabel}`}>Verksted</p>
+                <p className={`text-sm font-semibold truncate ${textMain}`}>
+                  {activeSolveProblem.raw?.title || activeSolveProblem.title || 'Løs problemet'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveSolveProblem(null)}
+                className={`p-2 rounded-lg ${textDim} hover:${textMain}`}
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            <div className="p-6 space-y-6">
+              {!hasStandardOrHigher && (
+                <TierTeaser
+                  theme={themed}
+                  tier="Standard"
+                  price="1 499 kr"
+                  message="Med Standard leser Sikt HTML-en fra siden din og viser eksakt kode-linje å fjerne"
+                  onUpgrade={handleUpgrade}
+                />
+              )}
+              {hasStandardOrHigher && !hostIsConnected && (
+                <div className={`rounded-xl px-4 py-3 ${subtleBg}`}>
+                  <p className={`text-sm font-medium ${textMain} mb-1`}>CMS ikke koblet til</p>
+                  <p className={`text-sm ${textDim} mb-3`}>
+                    Koble til der nettsiden din ligger, så finner Sikt eksakt kode-linje.
+                  </p>
+                  <SecondaryButton theme={themed} onClick={() => { setActiveSolveProblem(null); setActiveTab('settings'); setShowHostModal(true); }}>
+                    <Server size={14} /> Koble til CMS
+                  </SecondaryButton>
+                </div>
+              )}
+
+              {aiIsThinking ? (
+                <div className={`rounded-xl px-5 py-12 text-center ${subtleBg}`}>
+                  <Loader2 className="w-6 h-6 mx-auto mb-3 text-violet-600 animate-spin" />
+                  <p className={`text-sm font-medium ${textMain}`}>AI analyserer kildekoden…</p>
+                  <p className={`text-xs mt-1 ${textDim}`}>Dette tar normalt 5–15 sekunder.</p>
+                </div>
+              ) : aiSolution ? (
+                <>
+                  {aiSolution.originalCode && (
+                    <section>
+                      <p className={`text-sm font-medium ${textMain} mb-2`}>Fjern denne koden</p>
+                      <div className="rounded-xl bg-slate-950 p-4 font-mono text-xs overflow-x-auto">
+                        <pre className="text-rose-300 whitespace-pre-wrap"><code>{String(aiSolution.originalCode)}</code></pre>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { navigator.clipboard?.writeText(String(aiSolution.originalCode)); toastSuccess('Kopiert.'); }}
+                        className={`mt-2 text-sm font-medium text-violet-600 hover:text-violet-500 inline-flex items-center gap-1`}
+                      >
+                        <Copy size={12} /> Kopier
+                      </button>
+                      {aiSolution.fileHint && (
+                        <p className={`text-xs mt-2 ${textDim}`}>Hvor: {aiSolution.fileHint}</p>
+                      )}
+                    </section>
+                  )}
+
+                  {aiSolution.codePatch && (
+                    <section>
+                      <p className={`text-sm font-medium ${textMain} mb-2`}>
+                        {aiSolution.originalCode ? 'Bytt ut med' : 'Foreslått kode'}
+                      </p>
+                      <div className="rounded-xl bg-slate-950 p-4 font-mono text-xs overflow-x-auto">
+                        <pre className="text-emerald-300 whitespace-pre-wrap"><code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code></pre>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { navigator.clipboard?.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch)); toastSuccess('Kopiert.'); }}
+                        className="mt-2 text-sm font-medium text-violet-600 hover:text-violet-500 inline-flex items-center gap-1"
+                      >
+                        <Copy size={12} /> Kopier
+                      </button>
+                      {aiSolution.replacementExplanation && (
+                        <p className={`text-xs mt-2 ${textDim}`}>Hvorfor: {aiSolution.replacementExplanation}</p>
+                      )}
+                    </section>
+                  )}
+
+                  {Array.isArray(aiSolution.steps) && aiSolution.steps.length > 0 && (
+                    <section>
+                      <p className={`text-sm font-medium ${textMain} mb-3`}>Slik fikser du det</p>
+                      <ol className="space-y-3">
+                        {aiSolution.steps.map((step: any, i: number) => (
+                          <li key={i} className="flex gap-3">
+                            <span className={`shrink-0 w-6 h-6 rounded-full ${isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-500/20 text-violet-300'} text-xs font-semibold flex items-center justify-center`}>
+                              {i + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className={`text-sm font-medium ${textMain}`}>{step.title || `Steg ${i + 1}`}</p>
+                              {step.description && <p className={`text-sm mt-0.5 ${textDim}`}>{step.description}</p>}
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+                </>
+              ) : (
+                <div className={`rounded-xl px-5 py-8 text-center text-sm ${textDim} ${subtleBg}`}>
+                  Ingen løsning generert.
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* =============================================================== */}
+      {/* HOST CONNECT MODAL                                              */}
+      {/* =============================================================== */}
+      {showHostModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={() => setShowHostModal(false)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+          />
+          <div className={`relative w-full max-w-md rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6`}>
+            <header className="flex items-center justify-between mb-5">
+              <h3 className={`text-base font-semibold ${textMain}`}>Koble til CMS</h3>
+              <button type="button" onClick={() => setShowHostModal(false)} className={`p-1.5 rounded-md ${textDim} hover:${textMain}`}>
+                <X size={16} />
+              </button>
+            </header>
+
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm ${textDim} mb-1.5`}>Plattform</label>
                 <select
                   value={hostPlatform}
                   onChange={(e) => setHostPlatform(e.target.value)}
-                  className={`w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}`}
+                  className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
                 >
-                  <option value="">Velg plattform...</option>
+                  <option value="">Velg plattform…</option>
                   <option value="github">GitHub (repo)</option>
                   <option value="wordpress">WordPress</option>
                   <option value="shopify">Shopify</option>
                   <option value="wix">Wix</option>
                   <option value="webflow">Webflow</option>
                   <option value="vercel">Vercel</option>
-                  <option value="custom">Eget webhotell / annet</option>
+                  <option value="custom">Annet (eget webhotell)</option>
                 </select>
               </div>
 
               {hostPlatform && (
-                <div className="mb-6">
-                  <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {hostPlatform === 'github' ? 'URL til repository' : hostPlatform === 'custom' ? 'Beskrivelse' : 'URL til siden / admin'}
+                <div>
+                  <label className={`block text-sm ${textDim} mb-1.5`}>
+                    {hostPlatform === 'github' ? 'URL til repository' : hostPlatform === 'custom' ? 'Beskrivelse' : 'URL til admin/side'}
                   </label>
                   <input
                     type="text"
@@ -8420,66 +6137,77 @@ const PortalSettings = ({ user, clientData, setClientData, selectedPlan, onNavig
                       hostPlatform === 'github' ? 'https://github.com/brukernavn/repo' :
                       hostPlatform === 'wordpress' ? 'https://dinside.no/wp-admin' :
                       hostPlatform === 'shopify' ? 'https://dinside.myshopify.com' :
-                      hostPlatform === 'custom' ? 'F.eks. one.com, Bluehost cPanel…' :
-                      'https://...'
+                      hostPlatform === 'custom' ? 'F.eks. one.com cPanel' :
+                      'https://…'
                     }
-                    className={`w-full rounded-xl px-4 py-3 border focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950 border-white/10 text-white'}`}
+                    className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
                   />
                 </div>
               )}
 
-              <button
-                disabled={!hostPlatform || !hostInputValue.trim() || hostSaving}
-                onClick={async () => {
-                  setHostSaving(true);
-                  try {
-                    const body: any = {
-                      user_id: user.id,
-                      platform: hostPlatform,
-                      connection_mode: 'light',
-                      repo_url: hostPlatform === 'github' ? hostInputValue.trim() : null,
-                      admin_url: (hostPlatform !== 'github' && hostPlatform !== 'custom') ? hostInputValue.trim() : null,
-                      notes: hostPlatform === 'custom' ? hostInputValue.trim() : null,
-                      last_changed_at: new Date().toISOString(),
-                    };
-                    await supabaseRest('client_hosts?on_conflict=user_id', {
-                      method: 'POST',
-                      body,
-                      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-                    });
-                    // Oppdater lokalt
-                    if (typeof setHostConnection === 'function') {
-                      setHostConnection({
-                        platform: body.platform,
-                        connectionMode: 'light',
-                        repoUrl: body.repo_url || '',
-                        adminUrl: body.admin_url || '',
-                        notes: body.notes || '',
-                        lastChangedAt: body.last_changed_at,
-                      });
-                    }
-                    toastSuccess('Webhost koblet til. Låst i 7 dager.');
-                    setShowHostConnectModal(false);
-                  } catch (err: any) {
-                    console.error('[Settings] Kunne ikke lagre host:', err);
-                    toastError('Kunne ikke lagre: ' + (err?.message || 'ukjent feil'));
-                  } finally {
-                    setHostSaving(false);
-                  }
-                }}
-                className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-all flex justify-center items-center gap-2"
-              >
-                {hostSaving ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={14} /> Lagre tilkobling</>}
-              </button>
-
-              <p className={`text-[11px] mt-4 text-center ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
-                URL-en brukes kun som kontekst for AI-analyse. Sikt får ikke skrive-tilgang.
+              <p className={`text-xs ${textLabel}`}>
+                URL-en brukes som kontekst for AI-analyse. Sikt får ikke skrive-tilgang.
               </p>
+
+              <PrimaryButton
+                onClick={saveHostConnection}
+                disabled={!hostPlatform || !hostInputValue.trim() || hostSaving}
+                className="w-full"
+                size="lg"
+              >
+                {hostSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                Lagre tilkobling
+              </PrimaryButton>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      </div>
+      {/* =============================================================== */}
+      {/* PLAN CHANGE MODAL                                               */}
+      {/* =============================================================== */}
+      {planChangeTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={() => !switchingPlan && setPlanChangeTarget(null)}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+          />
+          <div className={`relative w-full max-w-md rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6`}>
+            <h3 className={`text-base font-semibold ${textMain} mb-2`}>
+              {planChangeTarget.type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'} til {planChangeTarget.name}?
+            </h3>
+            <p className={`text-sm ${textDim} mb-5`}>
+              {planChangeTarget.type === 'upgrade'
+                ? `Du får tilgang til alt i ${planChangeTarget.name} umiddelbart. Nytt beløp ${planChangeTarget.price}/mnd belastes ved neste faktura.`
+                : `Du beholder nåværende funksjoner ut faktureringsperioden, deretter byttes du til ${planChangeTarget.name} (${planChangeTarget.price}/mnd).`}
+            </p>
+
+            {isDevMode && (
+              <div className={`rounded-lg px-3 py-2 mb-4 text-xs ${isLight ? 'bg-amber-50 text-amber-800' : 'bg-amber-500/10 text-amber-300'}`}>
+                Dev-modus: kan bytte direkte uten Stripe.
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <SecondaryButton theme={themed} onClick={() => setPlanChangeTarget(null)} className="flex-1" disabled={switchingPlan}>
+                Avbryt
+              </SecondaryButton>
+              {isDevMode ? (
+                <PrimaryButton onClick={performPlanChange} disabled={switchingPlan} className="flex-1">
+                  {switchingPlan ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Bytt direkte
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton onClick={() => onSelectPlan(planChangeTarget.name)} disabled={switchingPlan} className="flex-1">
+                  Fortsett til Stripe <ArrowRight size={14} />
+                </PrimaryButton>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
