@@ -3896,6 +3896,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [weekOffset, setWeekOffset] = useState(0); // 0 = denne uken, -1 = forrige, osv.
   const [receiptCategoryFilter, setReceiptCategoryFilter] = useState<'all' | 'finding' | 'suggestion' | 'fix' | 'alert'>('all');
 
+  // --- OVERSIKT-KORT (Besøkende + Synlighet) — periode-velger paa Hjem ---
+  const [overviewPeriod, setOverviewPeriod] = useState<'1M' | '2M' | '3M'>('1M');
+
   // --- HUKOMMELSE FOR "LØS PROBLEMET" - ARBEIDSROMMET ---
   // Brukes av WorkshopDrawer-overlayet i Hjem-fanen.
   const [activeSolveProblem, setActiveSolveProblem] = useState<any>(null);
@@ -5640,6 +5643,115 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </p>
               </div>
             )}
+
+            {/* OVERSIKT-KORT — Besøkende + Synlighet med periode-velger */}
+            {(() => {
+              // Besøkende: ingen GA-kobling ennå — klar for ekte data fra Google Analytics API.
+              // Synlighet: bruker visibilityScore (ekte data fra søkeordrangeringer).
+              const periodLabel = overviewPeriod === '1M' ? '1 måned' : overviewPeriod === '2M' ? '2 måneder' : '3 måneder';
+
+              // Endrings-pil for synlighet basert paa scoreHistory (mobileSeo-trenden).
+              const synlighetDelta: number | null = (() => {
+                if (scoreHistory.length < 2) return null;
+                const latest = scoreHistory[scoreHistory.length - 1].mobileSeo;
+                // finn referansepunkt basert paa periode
+                const months = overviewPeriod === '1M' ? 1 : overviewPeriod === '2M' ? 2 : 3;
+                const msBack = months * 30 * 24 * 60 * 60 * 1000;
+                const ref = [...scoreHistory].reverse().find((h) => Date.now() - new Date(h.at).getTime() >= msBack);
+                if (!ref) return null;
+                return Math.round(latest - ref.mobileSeo);
+              })();
+
+              const visDeltaColor = synlighetDelta == null ? textLabel
+                : synlighetDelta > 0 ? 'text-emerald-600'
+                : synlighetDelta < 0 ? 'text-rose-600'
+                : textLabel;
+
+              return (
+                <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/40'} px-5 py-5 sm:px-6`}>
+                  {/* Header rad */}
+                  <div className="flex items-center justify-between gap-3 mb-5">
+                    <div>
+                      <h2 className={`text-sm font-semibold uppercase tracking-wide ${textLabel}`}>Din oversikt</h2>
+                    </div>
+                    {/* Periode-velger */}
+                    <div className={`inline-flex rounded-lg border ${divider} p-0.5 gap-0.5`}>
+                      {(['1M', '2M', '3M'] as const).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setOverviewPeriod(p)}
+                          className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                            overviewPeriod === p
+                              ? (isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900')
+                              : `${textDim} hover:${textMain}`
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* To KPI-bokser side om side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {/* BESØKENDE */}
+                    <div className={`rounded-xl border ${isLight ? 'border-slate-100 bg-slate-50/60' : 'border-white/8 bg-slate-800/40'} p-4`}>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel}`}>Besøkende</span>
+                        <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400'}`}>
+                          <Users size={12} />
+                        </span>
+                      </div>
+                      {/* Ingen GA-data ennå */}
+                      <p className={`text-3xl font-semibold ${textMain} leading-none mb-1`}>—</p>
+                      <p className={`text-xs ${textDim}`}>
+                        Koble til Google Analytics for å se besøkende de siste{' '}
+                        <button
+                          type="button"
+                          onClick={() => { setActiveTab('settings'); }}
+                          className="text-violet-600 hover:text-violet-500 font-medium underline underline-offset-2"
+                        >
+                          {periodLabel}
+                        </button>
+                      </p>
+                    </div>
+
+                    {/* SYNLIGHET */}
+                    <div className={`rounded-xl border ${isLight ? 'border-slate-100 bg-slate-50/60' : 'border-white/8 bg-slate-800/40'} p-4`}>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel}`}>Synlighet</span>
+                        <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                          <Search size={12} />
+                        </span>
+                      </div>
+                      <div className="flex items-end gap-2 mb-1">
+                        <p className={`text-3xl font-semibold ${textMain} leading-none`}>
+                          {visibilityScore != null ? `${visibilityScore}` : '—'}
+                        </p>
+                        {visibilityScore != null && (
+                          <span className={`text-sm ${textDim} mb-0.5`}>/ 100</span>
+                        )}
+                        {synlighetDelta != null && synlighetDelta !== 0 && (
+                          <span className={`text-sm font-semibold mb-0.5 ${visDeltaColor}`}>
+                            {synlighetDelta > 0 ? `+${synlighetDelta}` : synlighetDelta}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-xs ${textDim}`}>
+                        {visibilityScore == null
+                          ? 'Kjør søkeordsjekk for å måle synlighet'
+                          : synlighetDelta == null
+                            ? `Basert på ${realRankings.length} sporede søkeord`
+                            : `${synlighetDelta >= 0 ? 'Økt' : 'Redusert'} siste ${periodLabel} · ${realRankings.length} søkeord`}
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* KPI-RAD — fire tiles med subtile fargeaksenter + sparklines. */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
