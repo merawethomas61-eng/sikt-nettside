@@ -1,7 +1,7 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
@@ -3736,6 +3736,691 @@ const categoryMeta = (
   }
 };
 
+// ============================================================
+// KONKURRENTER — Interfaces, hook, og KonkurrenterPage
+// ============================================================
+
+interface Competitor {
+  id: string;
+  user_id: string;
+  domain: string;
+  avg_position: number | null;
+  keyword_count: number;
+  competitor_type: 'main' | 'local' | 'rising';
+  avatar_color: string | null;
+  created_at: string;
+  last_scanned_at: string | null;
+}
+
+interface KeywordOpportunity {
+  id: string;
+  user_id: string;
+  keyword: string;
+  search_volume: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  recommendation_type: 'new_page' | 'faq' | 'expand_existing';
+  recommendation_text: string;
+  estimated_traffic: number;
+  competitor_ids: string[];
+  discovered_at: string;
+  generated_at: string | null;
+}
+
+interface CompetitorKeywordRanking {
+  id: string;
+  competitor_id: string;
+  keyword: string;
+  position: number;
+  url: string;
+  checked_at: string;
+}
+
+// Deterministisk fargevalg basert på domenenavn
+function getAvatarColor(domain: string): string {
+  const palette = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626', '#0891b2', '#be185d'];
+  let hash = 0;
+  for (let i = 0; i < domain.length; i++) hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+  return palette[Math.abs(hash) % palette.length];
+}
+
+function formatVolume(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'k';
+  return String(n);
+}
+
+// Custom hook — henter konkurrenter + muligheter fra Supabase med real-time
+function useCompetitorData(userId: string | null) {
+  const [competitors, setCompetitors] = useState<Competitor[]>([]);
+  const [opportunities, setOpportunities] = useState<KeywordOpportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!userId) { setLoading(false); return; }
+    setError(null);
+    try {
+      const [compRows, oppRows] = await Promise.all([
+        supabaseRest<Competitor[]>(`competitors?user_id=eq.${userId}&select=*&order=created_at.asc`),
+        supabaseRest<KeywordOpportunity[]>(`keyword_opportunities?user_id=eq.${userId}&select=*&order=estimated_traffic.desc`),
+      ]);
+      setCompetitors(Array.isArray(compRows) ? compRows : []);
+      setOpportunities(Array.isArray(oppRows) ? oppRows : []);
+    } catch (e: any) {
+      setError(e?.message || 'Ukjent feil');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchData();
+    if (!userId) return;
+    // Real-time oppdateringer
+    const channel = supabase
+      .channel(`competitors-rt-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `user_id=eq.${userId}` }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `user_id=eq.${userId}` }, fetchData)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, fetchData]);
+
+  return { competitors, opportunities, loading, error, refetch: fetchData };
+}
+
+// ============================================================
+// KonkurrenterPage
+// ============================================================
+const KonkurrenterPage: React.FC<{
+  user: any;
+  theme: PortalTheme;
+  hasStandardOrHigher: boolean;
+  hasPremium: boolean;
+  onUpgrade: () => void;
+}> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
+  const isLight = theme === 'light';
+  const textMain = portalTextMainClass(theme);
+  const textDim = portalTextDimClass(theme);
+  const textLabel = portalTextLabelClass(theme);
+  const divider = portalDividerClass(theme);
+  const subtleBg = portalSubtleBgClass(theme);
+
+  const { competitors, opportunities, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+
+  // --- Modal-tilstander ---
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addDomain, setAddDomain] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const [scanningId, setScanningId] = useState<string | null>(null);
+
+  const [selectedComp, setSelectedComp] = useState<Competitor | null>(null);
+  const [compRankings, setCompRankings] = useState<CompetitorKeywordRanking[]>([]);
+  const [rankingsLoading, setRankingsLoading] = useState(false);
+
+  const [oppFilter, setOppFilter] = useState<'all' | 'easy' | 'high_value'>('all');
+
+  const [generateTarget, setGenerateTarget] = useState<KeywordOpportunity | null>(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
+
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+
+  // --- Avledede tall ---
+  const maxCompetitors = hasPremium ? 99 : 3;
+  const totalTraffic = opportunities.reduce((s, o) => s + (o.estimated_traffic || 0), 0);
+  const easyCount = opportunities.filter((o) => o.difficulty === 'easy').length;
+  const highValueCount = opportunities.filter((o) => o.estimated_traffic > 500).length;
+
+  const filteredOpps = opportunities.filter((o) => {
+    if (oppFilter === 'easy') return o.difficulty === 'easy';
+    if (oppFilter === 'high_value') return o.estimated_traffic > 500;
+    return true;
+  });
+
+  // --- Legg til konkurrent ---
+  const handleAddCompetitor = async () => {
+    const raw = addDomain.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0];
+    if (!/^[a-z0-9][a-z0-9\-\.]{1,60}[a-z0-9](\.[a-z]{2,})$/i.test(raw)) {
+      setAddError('Ugyldig domenenavn. Skriv f.eks. «konkurrent.no».');
+      return;
+    }
+    if (competitors.length >= maxCompetitors) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+    setAddLoading(true);
+    setAddError(null);
+    try {
+      // 1. Lag raden i Supabase
+      const color = getAvatarColor(raw);
+      const newRows = await supabaseRest<Competitor[]>('competitors', {
+        method: 'POST',
+        body: { user_id: user.id, domain: raw, avatar_color: color, competitor_type: 'main' },
+        headers: { Prefer: 'return=representation' },
+      });
+      const newComp: Competitor = Array.isArray(newRows) ? newRows[0] : (newRows as any);
+      setShowAddModal(false);
+      setAddDomain('');
+      toastInfo(`Analyserer ${raw}… Dette tar 1–2 minutter.`);
+      // 2. Kjør scan umiddelbart i bakgrunnen
+      setScanningId(newComp.id);
+      const token = getStoredAccessToken();
+      const scanRes = await fetch('/api/scan-competitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ competitor_id: newComp.id }),
+      });
+      const scanData = await scanRes.json().catch(() => ({}));
+      if (!scanRes.ok) toastError(scanData?.error || 'Scanning feilet — prøv igjen om litt.');
+      else toastSuccess(scanData?.message || `${raw} er lagt til og skannet.`);
+      await refetch();
+    } catch (e: any) {
+      setAddError(e?.message || 'Kunne ikke legge til konkurrenten.');
+    } finally {
+      setAddLoading(false);
+      setScanningId(null);
+    }
+  };
+
+  // --- Skann på nytt ---
+  const handleRescan = async (comp: Competitor) => {
+    setScanningId(comp.id);
+    try {
+      const token = getStoredAccessToken();
+      const res = await fetch('/api/scan-competitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ competitor_id: comp.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) toastError(data?.error || 'Scanning feilet.');
+      else toastSuccess(data?.message || 'Scanning fullført.');
+      await refetch();
+    } finally {
+      setScanningId(null);
+    }
+  };
+
+  // --- Last detaljer for valgt konkurrent ---
+  const handleSelectCompetitor = async (comp: Competitor) => {
+    setSelectedComp(comp);
+    setRankingsLoading(true);
+    try {
+      const rows = await supabaseRest<CompetitorKeywordRanking[]>(
+        `competitor_keyword_rankings?competitor_id=eq.${comp.id}&select=*&order=position.asc&limit=50`,
+      );
+      setCompRankings(Array.isArray(rows) ? rows : []);
+    } catch { setCompRankings([]); } finally { setRankingsLoading(false); }
+  };
+
+  // --- Generer side ---
+  const handleGeneratePage = async () => {
+    if (!generateTarget) return;
+    setGenerateLoading(true);
+    try {
+      const token = getStoredAccessToken();
+      const res = await fetch('/api/generate-page-from-keyword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ keyword_opportunity_id: generateTarget.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toastError(data?.error || 'Kunne ikke generere siden.');
+      } else {
+        if (data?.url) toastSuccess(`Siden er publisert! ${data.url}`);
+        else toastSuccess('Innholdet er generert. Publiser via din CMS-integrasjon.');
+        await refetch();
+      }
+    } finally {
+      setGenerateLoading(false);
+      setGenerateTarget(null);
+    }
+  };
+
+  // === BASIC — Låst tilstand ===
+  if (!hasStandardOrHigher) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
+        </header>
+        <PortalCard theme={theme} className="p-8 sm:p-12 flex flex-col items-center text-center gap-4">
+          <span className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
+            <Lock size={24} className={textLabel} />
+          </span>
+          <div>
+            <h2 className={`text-lg font-semibold ${textMain}`}>Konkurrent-analyse er låst</h2>
+            <p className={`text-sm mt-2 max-w-sm ${textDim}`}>
+              Se hvilke søkeord konkurrentene rangerer på som du mangler. Tilgjengelig i Standard og oppover.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onUpgrade}
+            className="mt-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+          >
+            <Sparkles size={14} /> Oppgrader til Standard
+          </button>
+        </PortalCard>
+      </div>
+    );
+  }
+
+  // === STANDARD / PREMIUM — Fullversjon ===
+  return (
+    <div className="space-y-6">
+      {/* ---- HEADER ---- */}
+      <header>
+        <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
+        <p className={`text-base mt-2 ${textDim}`}>
+          {loading ? 'Laster…'
+            : `${competitors.length} konkurrenter overvåkes · ${opportunities.length} søkeord-gap funnet`}
+        </p>
+      </header>
+
+      {error && (
+        <div className={`rounded-xl px-4 py-3 text-sm border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'}`}>
+          {error}
+        </div>
+      )}
+
+      {/* ---- STATS-RAD ---- */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          {
+            label: 'Konkurrenter overvåket',
+            value: competitors.length,
+            icon: <Radar size={15} />,
+            accent: isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400',
+            valColor: textMain,
+          },
+          {
+            label: 'Søkeord-gap funnet',
+            value: opportunities.length,
+            icon: <Search size={15} />,
+            accent: isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400',
+            valColor: isLight ? 'text-violet-700' : 'text-violet-300',
+          },
+          {
+            label: 'Estimert trafikk-potensial',
+            value: totalTraffic > 0 ? `+${formatVolume(totalTraffic)} besøk/mnd` : '—',
+            icon: <TrendingUp size={15} />,
+            accent: isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400',
+            valColor: isLight ? 'text-emerald-700' : 'text-emerald-400',
+          },
+        ].map((s, i) => (
+          <div key={i} className={`rounded-xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/40'} p-4 flex items-start gap-3`}>
+            <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${s.accent}`}>{s.icon}</span>
+            <div className="min-w-0">
+              <p className={`text-xs ${textLabel} truncate`}>{s.label}</p>
+              <p className={`text-xl font-semibold mt-0.5 ${s.valColor}`}>{s.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ---- KONKURRENT-LISTE ---- */}
+      <PortalCard theme={theme} className="p-6 sm:p-8">
+        <CardHeader
+          theme={theme}
+          icon={<Radar size={16} />}
+          accent="rose"
+          title="Aktive konkurrenter"
+          subtitle="Klikk for detaljert analyse"
+          action={
+            <SecondaryButton
+              theme={theme}
+              onClick={() => {
+                if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; }
+                setShowAddModal(true);
+              }}
+            >
+              <Plus size={14} /> Legg til konkurrent
+            </SecondaryButton>
+          }
+        />
+
+        {loading ? (
+          <div className="py-8 flex items-center justify-center gap-3">
+            <Loader2 size={16} className="text-violet-600 animate-spin" />
+            <span className={`text-sm ${textDim}`}>Laster konkurrenter…</span>
+          </div>
+        ) : competitors.length === 0 ? (
+          <div className={`rounded-xl px-5 py-10 text-center ${subtleBg}`}>
+            <Globe2 size={28} className={`mx-auto mb-3 ${textLabel}`} />
+            <p className={`text-sm font-medium ${textMain} mb-1`}>Du har ikke lagt til konkurrenter ennå</p>
+            <p className={`text-xs ${textDim} mb-4`}>Legg til opptil {maxCompetitors} konkurrenter for å se hvilke søkeord du mangler</p>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+            >
+              <Plus size={14} /> Legg til din første konkurrent
+            </button>
+          </div>
+        ) : (
+          <ul className={`divide-y ${divider}`}>
+            {competitors.map((c) => {
+              const color = c.avatar_color || getAvatarColor(c.domain);
+              const initials = c.domain.replace(/^www\./i, '').slice(0, 2).toUpperCase();
+              const isScanning = scanningId === c.id;
+              return (
+                <li key={c.id} className="flex items-center gap-3 py-3">
+                  {/* Avatar */}
+                  <span
+                    className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: color }}
+                  >
+                    {initials}
+                  </span>
+
+                  {/* Info */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectCompetitor(c)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p className={`text-sm font-medium ${textMain} truncate`} style={{ maxWidth: '16rem' }}>{c.domain}</p>
+                    <p className={`text-[11px] ${textLabel} truncate`}>
+                      {c.keyword_count > 0
+                        ? `${c.keyword_count} søkeord · snitt pos. ${c.avg_position ?? '?'}`
+                        : isScanning ? 'Analyserer…' : 'Ikke skannet ennå'}
+                    </p>
+                  </button>
+
+                  {/* Handlinger */}
+                  <div className="shrink-0 flex items-center gap-2">
+                    {isScanning ? (
+                      <Loader2 size={14} className="text-violet-600 animate-spin" />
+                    ) : (
+                      <button
+                        type="button"
+                        title="Skann på nytt"
+                        onClick={() => handleRescan(c)}
+                        className={`p-1.5 rounded-md ${textLabel} hover:${textMain} transition-colors`}
+                      >
+                        <RefreshCw size={13} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCompetitor(c)}
+                      className={`text-xs font-medium border rounded-lg px-3 py-1 transition-colors ${
+                        isLight
+                          ? 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                          : 'border-white/10 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      Detaljer ↗
+                    </button>
+                    <button
+                      type="button"
+                      title="Fjern"
+                      onClick={async () => {
+                        await supabaseRest(`competitors?id=eq.${c.id}`, { method: 'DELETE' });
+                        refetch();
+                      }}
+                      className={`p-1.5 rounded-md ${textLabel} hover:text-rose-600 transition-colors`}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {/* Standard-grense hint */}
+        {!hasPremium && competitors.length >= 3 && (
+          <div className={`mt-4 pt-4 border-t ${divider}`}>
+            <TierTeaser
+              theme={theme}
+              tier="Premium"
+              price="4 999 kr"
+              message="Overvåk ubegrenset antall konkurrenter"
+              onUpgrade={onUpgrade}
+            />
+          </div>
+        )}
+      </PortalCard>
+
+      {/* ---- SØKEORD-MULIGHETER ---- */}
+      <PortalCard theme={theme} className="p-6 sm:p-8">
+        <CardHeader
+          theme={theme}
+          icon={<TrendingUp size={16} />}
+          accent="violet"
+          title="Topp søkeord-muligheter"
+          subtitle="Konkurrenter rangerer på disse — du mangler dem"
+        />
+
+        {/* Filter-knapper */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {([
+            { key: 'all' as const, label: `Alle ${opportunities.length}` },
+            { key: 'easy' as const, label: `Lave-hengende ${easyCount}` },
+            { key: 'high_value' as const, label: `Høy verdi ${highValueCount}` },
+          ]).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setOppFilter(f.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                oppFilter === f.key
+                  ? 'bg-violet-600 text-white'
+                  : isLight
+                    ? 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+                    : 'bg-slate-900 border border-white/10 text-slate-400 hover:border-white/20'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="py-6 flex items-center justify-center gap-3">
+            <Loader2 size={16} className="text-violet-600 animate-spin" />
+            <span className={`text-sm ${textDim}`}>Analyserer…</span>
+          </div>
+        ) : filteredOpps.length === 0 ? (
+          <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+            <p className={`text-sm ${textDim}`}>
+              {opportunities.length === 0
+                ? 'Vi analyserer fortsatt konkurrentene dine. Sjekk tilbake om noen minutter.'
+                : 'Ingen muligheter i dette filteret.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto -mx-6 sm:-mx-8">
+            <ul className={`min-w-[480px] divide-y ${divider} mx-6 sm:mx-8`}>
+              {filteredOpps.map((opp) => {
+                const diffLabel = opp.difficulty === 'easy' ? 'Lett' : opp.difficulty === 'medium' ? 'Middels' : 'Vanskelig';
+                const diffColor = opp.difficulty === 'easy'
+                  ? (isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/10 text-emerald-300')
+                  : opp.difficulty === 'medium'
+                    ? (isLight ? 'bg-amber-50 text-amber-700' : 'bg-amber-500/10 text-amber-300')
+                    : (isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-300');
+                return (
+                  <li key={opp.id} className="py-3 flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className={`text-sm font-medium ${textMain}`}>{opp.keyword}</span>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${diffColor}`}>{diffLabel}</span>
+                      </div>
+                      <p className={`text-xs ${textLabel}`}>{formatVolume(opp.search_volume)} søk/mnd · +{opp.estimated_traffic} est. besøk</p>
+                      <p className={`text-xs mt-0.5 ${textDim}`}>{opp.recommendation_text}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setGenerateTarget(opp)}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors"
+                    >
+                      <Sparkles size={11} /> Generer side
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </PortalCard>
+
+      {/* ========================= MODALER ========================= */}
+
+      {/* LEGG TIL KONKURRENT */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }} />
+          <div className={`relative w-full max-w-md rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl`}>
+            <h3 className={`text-base font-semibold ${textMain} mb-1`}>Legg til konkurrent</h3>
+            <p className={`text-sm ${textDim} mb-4`}>Skriv inn domenenavnet uten «https://» eller «www.»</p>
+            <input
+              type="text"
+              value={addDomain}
+              onChange={(e) => setAddDomain(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCompetitor()}
+              placeholder="konkurrent.no"
+              className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 mb-2`}
+              autoFocus
+            />
+            {addError && <p className="text-xs text-rose-600 mb-3">{addError}</p>}
+            <div className="flex gap-2 mt-4">
+              <PrimaryButton onClick={handleAddCompetitor} disabled={addLoading || !addDomain.trim()} className="flex-1">
+                {addLoading ? <><Loader2 size={13} className="animate-spin" /> Analyserer…</> : 'Legg til og skann'}
+              </PrimaryButton>
+              <SecondaryButton theme={theme} onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }}>
+                Avbryt
+              </SecondaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KONKURRENT-DETALJER */}
+      {selectedComp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedComp(null)} />
+          <div className={`relative w-full max-w-lg rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl max-h-[80vh] overflow-y-auto`}>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <span
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                  style={{ backgroundColor: selectedComp.avatar_color || getAvatarColor(selectedComp.domain) }}
+                >
+                  {selectedComp.domain.slice(0, 2).toUpperCase()}
+                </span>
+                <div>
+                  <h3 className={`text-base font-semibold ${textMain}`}>{selectedComp.domain}</h3>
+                  <p className={`text-xs ${textLabel}`}>
+                    {selectedComp.last_scanned_at
+                      ? `Sist skannet ${new Date(selectedComp.last_scanned_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`
+                      : 'Aldri skannet'}
+                  </p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setSelectedComp(null)} className={`p-1.5 rounded-md ${textLabel} hover:${textMain}`}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              <SecondaryButton
+                theme={theme}
+                onClick={() => { handleRescan(selectedComp); setSelectedComp(null); }}
+                disabled={scanningId === selectedComp.id}
+              >
+                {scanningId === selectedComp.id
+                  ? <><Loader2 size={13} className="animate-spin" /> Skanner…</>
+                  : <><RefreshCw size={13} /> Skann på nytt</>}
+              </SecondaryButton>
+            </div>
+
+            {rankingsLoading ? (
+              <div className="py-6 flex items-center justify-center gap-2">
+                <Loader2 size={14} className="text-violet-600 animate-spin" />
+                <span className={`text-sm ${textDim}`}>Laster rangeringer…</span>
+              </div>
+            ) : compRankings.length === 0 ? (
+              <p className={`text-sm ${textDim} py-4 text-center`}>Ingen rangeringer ennå — trykk «Skann på nytt».</p>
+            ) : (
+              <ul className={`divide-y ${divider}`}>
+                {compRankings.slice(0, 20).map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <p className={`text-sm ${textMain} truncate flex-1`}>{r.keyword}</p>
+                    <span className={`text-xs font-semibold tabular-nums ${r.position <= 3 ? 'text-emerald-600' : r.position <= 10 ? 'text-amber-600' : textLabel}`}>
+                      #{r.position}
+                    </span>
+                    {r.url && (
+                      <a href={r.url} target="_blank" rel="noreferrer" className={`p-1 ${textLabel} hover:${textMain}`}>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* GENERER SIDE — bekreftelse */}
+      {generateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => !generateLoading && setGenerateTarget(null)} />
+          <div className={`relative w-full max-w-md rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl`}>
+            <h3 className={`text-base font-semibold ${textMain} mb-2`}>
+              Vil du la AI generere en side for «{generateTarget.keyword}»?
+            </h3>
+            <div className={`rounded-xl px-4 py-3 ${subtleBg} mb-4`}>
+              <ul className={`text-xs ${textDim} space-y-1.5`}>
+                <li>✦ AI skriver SEO-optimalisert innhold på 800–1200 ord</li>
+                <li>✦ Optimaliserer meta-tittel og meta-beskrivelse</li>
+                {generateTarget.recommendation_type === 'faq' && <li>✦ Strukturerer som FAQ med schema markup</li>}
+                <li>✦ Publiserer via din CMS-integrasjon (hvis tilkoblet)</li>
+              </ul>
+            </div>
+            <div className="flex gap-2">
+              <PrimaryButton onClick={handleGeneratePage} disabled={generateLoading} className="flex-1">
+                {generateLoading
+                  ? <><Loader2 size={13} className="animate-spin" /> AI skriver innholdet…</>
+                  : <><Sparkles size={13} /> Ja, generer</>}
+              </PrimaryButton>
+              <SecondaryButton theme={theme} onClick={() => setGenerateTarget(null)} disabled={generateLoading}>
+                Avbryt
+              </SecondaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OPPGRADER PROMPT (Standard → Premium) */}
+      {showUpgradePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowUpgradePrompt(false)} />
+          <div className={`relative w-full max-w-sm rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl text-center`}>
+            <span className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${isLight ? 'bg-violet-50' : 'bg-violet-500/10'}`}>
+              <Sparkles size={20} className="text-violet-600" />
+            </span>
+            <h3 className={`text-base font-semibold ${textMain} mb-2`}>Grense nådd</h3>
+            <p className={`text-sm ${textDim} mb-4`}>
+              Du har nådd grensen på 3 konkurrenter med Standard. Oppgrader til Premium for ubegrenset overvåkning.
+            </p>
+            <div className="flex gap-2">
+              <PrimaryButton onClick={() => { setShowUpgradePrompt(false); onUpgrade(); }} className="flex-1">
+                Oppgrader til Premium
+              </PrimaryButton>
+              <SecondaryButton theme={theme} onClick={() => setShowUpgradePrompt(false)}>Lukk</SecondaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- HOVEDKOMPONENT: CLIENT PORTAL ---
 // Her tar vi imot ALLE verktøyene fra App (theme, setView, selectedPlan osv.)
 // Vi døper om 'clientData' til 'startData' midlertidig her oppe:
@@ -6396,92 +7081,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         )}
 
         {/* =============================================================== */}
-        {/* KONKURRENTER — alltid synlig, TierTeaser for Basic.             */}
+        {/* KONKURRENTER — KonkurrenterPage (egen komponent)              */}
         {/* =============================================================== */}
         {activeTab === 'competitors' && (
-          <div className="space-y-6">
-            <header>
-              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
-              <p className={`text-base mt-3 ${textDim}`}>
-                {hasStandardOrHigher
-                  ? 'Du sover — Sikt holder øye på de som rangerer over deg.'
-                  : 'Få varsel når konkurrentene endrer strategi.'}
-              </p>
-            </header>
-
-            {!hasStandardOrHigher ? (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <TierTeaser
-                  theme={themed}
-                  tier="Standard"
-                  price="1 499 kr"
-                  message="Sikt overvåker konkurrentene dine 24/7 og varsler når de publiserer noe nytt"
-                  onUpgrade={handleUpgrade}
-                />
-              </PortalCard>
-            ) : (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader
-                  theme={themed}
-                  icon={<Radar size={16} />}
-                  accent="rose"
-                  title="Sporede konkurrenter"
-                  subtitle={trackedCompetitors.length > 0 ? `${trackedCompetitors.length} domener overvåkes.` : 'Ingen konkurrenter overvåkes enda.'}
-                  action={
-                    <SecondaryButton theme={themed} onClick={loadCompetitorsFromSerp}>
-                      <Radar size={14} /> Hent fra Google
-                    </SecondaryButton>
-                  }
-                />
-
-                {trackedCompetitors.length === 0 ? (
-                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-                    <p className={`text-sm ${textDim} mb-2`}>
-                      Trykk «Hent fra Google» — Sikt finner de som rangerer over deg på dine søkeord.
-                    </p>
-                    <p className={`text-xs ${textLabel}`}>
-                      Krever at du har lagt til minst ett søkeord under «Søkeord».
-                    </p>
-                  </div>
-                ) : (
-                  <ul className={`divide-y ${divider}`}>
-                    {trackedCompetitors.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between py-3 gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-sm font-medium ${textMain} truncate`}>{c.title || c.domain}</p>
-                          <p className={`text-xs ${textDim} truncate`}>
-                            {c.domain} {c.sourceKeyword ? `· slår deg på «${c.sourceKeyword}»` : ''}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className={`text-xs ${textLabel}`}>#{c.serpRank}</span>
-                          {c.url && (
-                            <a
-                              href={c.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`p-1.5 rounded-md ${textDim} hover:${textMain}`}
-                              aria-label="Åpne side"
-                            >
-                              <ExternalLink size={14} />
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeCompetitor(c.id)}
-                            aria-label="Fjern"
-                            className={`p-1.5 rounded-md ${textDim} hover:text-rose-600`}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </PortalCard>
-            )}
-          </div>
+          <KonkurrenterPage
+            user={user}
+            theme={themed}
+            hasStandardOrHigher={hasStandardOrHigher}
+            hasPremium={hasPremium}
+            onUpgrade={handleUpgrade}
+          />
         )}
 
         {/* =============================================================== */}
