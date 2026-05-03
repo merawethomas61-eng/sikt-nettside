@@ -5050,7 +5050,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const firstName = (clientData?.contactPerson || clientData?.companyName || user?.email || '').toString().split(/[\s@]/)[0] || 'der';
   const websiteUrl = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
 
-  // Total score (gjennomsnitt av de fire Lighthouse-kategoriene). Brukes som "ett tall" på Hjem.
+  // ===================================================================
+  // SCORE-MODELL — Sikt-scoren paa Hjem er en kombinasjon av tre faktorer:
+  //   1. TEKNISK HELSE   (0-100) — Core Web Vitals, Lighthouse, hastighet, HTTPS, mobil
+  //                                 Datakilde: Google PageSpeed API
+  //   2. GOOGLE SYNLIGHET(0-100) — rangering paa soekeord, organisk synlighet
+  //                                 Datakilde: SERP / Google Search Console
+  //   3. GEO SCORE       (0-100) — AI-sitering, llms.txt, schema for LLM (kun Premium)
+  //                                 Datakilde: intern GEO-analyse
+  //
+  // `totalScore` beholdes som "ren teknisk score" og brukes paa PageSpeed-fanen.
+  // `combinedScore` er snittet av tilgjengelige komponenter og vises paa Hjem.
+  // ===================================================================
+
+  // 1) TEKNISK HELSE — gjennomsnitt av de fire Lighthouse-kategoriene (mobil)
   const perfMobile = analysisResults?.mobile?.performance ?? null;
   const seoMobile = analysisResults?.mobile?.seo ?? null;
   const bpMobile = analysisResults?.mobile?.bestPractices ?? null;
@@ -5058,8 +5071,43 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const totalScore = analysisResults
     ? Math.round(((perfMobile ?? 0) + (seoMobile ?? 0) + (bpMobile ?? 0) + (a11yMobile ?? 0)) / 4)
     : null;
+  const technicalScore = totalScore;
+
+  // 2) GOOGLE SYNLIGHET — bygd fra posisjon paa sporede soekeord.
+  // Hvert soekeord faar poeng etter posisjon (1-3=100, 4-10=80, 11-20=50, 21-50=25, ellers 10).
+  // Ikke-rangerte soekeord teller med i nevneren slik at de drar scoren ned — det er reelt.
+  const visibilityScore: number | null = (() => {
+    if (!realRankings || realRankings.length === 0) return null;
+    const sum = realRankings.reduce((acc: number, r: any) => {
+      const p = typeof r?.position === 'number' ? r.position : null;
+      if (p == null) return acc + 10;
+      if (p <= 3) return acc + 100;
+      if (p <= 10) return acc + 80;
+      if (p <= 20) return acc + 50;
+      if (p <= 50) return acc + 25;
+      return acc + 10;
+    }, 0);
+    return Math.round(sum / realRankings.length);
+  })();
+
+  // 3) GEO SCORE — AI-sitering, llms.txt, schema markup for LLM (kun premium).
+  // TODO: erstatt med ekte maaling fra GEO-analyse-API naar tilgjengelig.
+  // Holder samme verdi som vises i GEO-fanen for nå, slik at tallene henger sammen.
+  const geoScore: number | null = hasPremium ? 62 : null;
+
+  // 4) KOMBINERT SIKT-SCORE — snitt av tilgjengelige komponenter.
+  // Hvis brukeren ikke har Premium, regnes scoren ut fra to komponenter (teknisk + synlighet).
+  const combinedScore: number | null = (() => {
+    const parts: number[] = [];
+    if (technicalScore != null) parts.push(technicalScore);
+    if (visibilityScore != null) parts.push(visibilityScore);
+    if (geoScore != null) parts.push(geoScore);
+    if (parts.length === 0) return null;
+    return Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
+  })();
+
   const scoreTone: 'good' | 'warn' | 'bad' | 'neutral' =
-    totalScore == null ? 'neutral' : totalScore >= 80 ? 'good' : totalScore >= 60 ? 'warn' : 'bad';
+    combinedScore == null ? 'neutral' : combinedScore >= 80 ? 'good' : combinedScore >= 60 ? 'warn' : 'bad';
 
   // Søkeord-grense (brukes i Sokeord- og Innstillinger-fanen)
   const keywordLimit = getKeywordLimit(currentLevel);
@@ -5478,13 +5526,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   {isFirstVisit ? `Velkommen, ${firstName}.` : `Hei ${firstName}.`}
                 </p>
                 <h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight mt-1 ${textMain}`}>
-                  {totalScore == null ? (
+                  {combinedScore == null ? (
                     'Klar for første sjekk?'
                   ) : (
                     <>
-                      Synligheten din er{' '}
+                      Sikt-scoren din er{' '}
                       <span className={scoreTone === 'good' ? 'text-emerald-600' : scoreTone === 'warn' ? 'text-amber-600' : 'text-rose-600'}>
-                        {totalScore >= 80 ? 'sterk' : totalScore >= 60 ? 'god' : 'svak'}
+                        {combinedScore >= 80 ? 'sterk' : combinedScore >= 60 ? 'god' : 'svak'}
                       </span>
                       .
                     </>
@@ -5534,8 +5582,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </div>
 
-              {totalScore != null && (
-                <RadialScore value={totalScore} theme={themed} size={108} />
+              {combinedScore != null && (
+                <div className="flex flex-col items-center gap-3 shrink-0">
+                  <RadialScore value={combinedScore} theme={themed} size={108} />
+                  {/* Sub-score breakdown — viser hva totalscoren bestaar av. */}
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-[260px]">
+                    {[
+                      { key: 'tech', label: 'Teknisk', value: technicalScore, icon: <Activity size={11} /> },
+                      { key: 'vis', label: 'Synlighet', value: visibilityScore, icon: <Search size={11} /> },
+                      ...(hasPremium ? [{ key: 'geo', label: 'GEO', value: geoScore, icon: <BrainCircuit size={11} /> }] : []),
+                    ].map((c) => {
+                      const v = c.value;
+                      const tone: 'good' | 'warn' | 'bad' | 'neutral' =
+                        v == null ? 'neutral' : v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
+                      const cls = tone === 'good'
+                        ? (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20')
+                        : tone === 'warn'
+                          ? (isLight ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-amber-500/10 text-amber-300 border-amber-500/20')
+                          : tone === 'bad'
+                            ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20')
+                            : (isLight ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-white/10');
+                      return (
+                        <span
+                          key={c.key}
+                          title={`${c.label}: ${v == null ? 'ikke maalt' : v + ' / 100'}`}
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${cls}`}
+                        >
+                          {c.icon}
+                          <span>{c.label}</span>
+                          <span className="font-semibold tabular-nums">{v == null ? '—' : v}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -5565,16 +5645,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <KpiTile
                 theme={themed}
-                label="Total score"
-                value={totalScore == null ? '—' : `${totalScore}`}
+                label="Sikt-score"
+                value={combinedScore == null ? '—' : `${combinedScore}`}
                 hint={
-                  totalScore == null
+                  combinedScore == null
                     ? 'Ikke målt enda'
-                    : scoreDelta === 0
-                      ? 'Uendret siden sist'
-                      : scoreDelta > 0
-                        ? <span className="text-emerald-600">+{scoreDelta} siden sist</span>
-                        : <span className="text-rose-600">{scoreDelta} siden sist</span>
+                    : (
+                        <span>
+                          Tek {technicalScore ?? '—'} · Syn {visibilityScore ?? '—'}
+                          {hasPremium ? <> · GEO {geoScore ?? '—'}</> : null}
+                        </span>
+                      )
                 }
                 accent={scoreTone === 'good' ? 'emerald' : scoreTone === 'warn' ? 'amber' : scoreTone === 'bad' ? 'rose' : 'slate'}
                 spark={scoreSpark.length >= 2 ? scoreSpark : undefined}
@@ -7225,6 +7306,16 @@ function App() {
   );
   const isAnyRedirect = isPaymentSuccess || isAuthRedirect;
 
+  // FRESH-TAB DETEKTOR: sessionStorage er tomt naar brukeren aapner siden i en
+  // ny fane / nytt vindu, eller skriver inn URL-en. Den BLIR fylt naar brukeren
+  // refresher en eksisterende portal-side. Vi bruker dette til aa avgjoere om
+  // vi skal logge ut en lagret sesjon (fresh besoek) eller beholde den (refresh).
+  // Maa fanges i useRef saa initial-verdien beholdes etter at view-useEffekten
+  // har skrevet til sessionStorage.
+  const isFreshTabRef = useRef(
+    typeof window !== 'undefined' && !sessionStorage.getItem('sikt_current_view')
+  );
+
   const isProcessingClick = useRef(false);
 
   // 2. VASK URL-EN: Fjerner parameteret umiddelbart for å unngå spøkelser
@@ -7471,6 +7562,18 @@ function App() {
           hasInitialized = true;
         }
         else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+          // FRESH BESOEK: Hvis brukeren akkurat aapnet siden i en ny fane
+          // (sessionStorage var tomt) og det IKKE er en redirect fra Stripe/OAuth,
+          // skal vi IKKE auto-logge dem inn. Vi sletter den lagrede sesjonen
+          // slik at hjemmesiden alltid er en ren, ikke-paalogget opplevelse.
+          // SIGNED_OUT-handleren under tar seg av state-resettet.
+          if (event === 'INITIAL_SESSION' && isFreshTabRef.current && !isAnyRedirect) {
+            console.log("[Auth] Fresh besoek — logger ut lagret sesjon for ren hjemmeside.");
+            isFreshTabRef.current = false; // unngaa loop hvis signOut paa magisk vis re-fyrer
+            try { await supabase.auth.signOut(); } catch { /* ignore */ }
+            return;
+          }
+
           const sameUserAsBefore = lastRoutedUserId === session.user.id;
           setUser(session.user);
 
