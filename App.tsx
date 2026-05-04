@@ -5576,11 +5576,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           await new Promise(r => setTimeout(r, 1200 * attempt));
         }
 
-        const res = await fetch('/api/pagespeed', {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({ url: formattedUrl }),
         });
