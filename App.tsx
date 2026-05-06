@@ -3309,16 +3309,18 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
 
 // --- LOGIN PAGE (KUN GOOGLE) ---
 const LoginPage = ({ onBack }: { onBack: () => void }) => {
+  const [email, setEmail] = useState('');
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
-      // Henter kun den rene hovedadressen (f.eks. https://sikt-nettside.vercel.app)
       const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: cleanUrl, // <-- HER ER MAGIEN! Ingen payment_success her.
+          redirectTo: cleanUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -3332,31 +3334,55 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toastError('Skriv inn en gyldig e-postadresse.');
+      return;
+    }
+
+    setMagicLinkLoading(true);
+    try {
+      const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: {
+          emailRedirectTo: cleanUrl,
+        },
+      });
+      if (error) throw error;
+      setMagicLinkSent(true);
+      toastSuccess('Sjekk e-posten din for innloggings-lenke.');
+    } catch (error: any) {
+      toastError('Kunne ikke sende lenke: ' + (error?.message || 'ukjent feil'));
+    } finally {
+      setMagicLinkLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfcfd] flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
-      {/* Bakgrunnsdekorasjon */}
       <div className="absolute inset-0 grid-pattern opacity-[0.04] pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-100/40 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
 
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-500">
 
-        {/* Ikon / Header */}
         <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200 rotate-3 hover:rotate-6 transition-transform">
           <Sparkles className="text-white w-8 h-8" />
         </div>
 
         <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Velkommen</h2>
-        <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-          Logg inn for å få tilgang til analysen din. <br /> Vi bruker Google for maksimal sikkerhet.
+        <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+          Logg inn for å få tilgang til analysen din.
         </p>
 
-        {/* GOOGLE KNAPP (Eneste valg) */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-violet-200 hover:bg-violet-50 text-slate-700 font-bold py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md group transform active:scale-95"
         >
-          {/* Google Logo SVG */}
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -3378,7 +3404,61 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
           <span className="group-hover:text-violet-700 transition-colors">Fortsett med Google</span>
         </button>
 
-        {/* TILBAKE KNAPP */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">eller</span>
+          <div className="flex-1 h-px bg-slate-200"></div>
+        </div>
+
+        {magicLinkSent ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <Mail size={18} className="text-emerald-600" />
+              <p className="text-sm font-bold text-emerald-900">Lenke sendt</p>
+            </div>
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              Vi sendte en innloggings-lenke til <strong>{email}</strong>. Åpne e-posten på samme enhet for å logge inn.
+            </p>
+            <button
+              onClick={() => { setMagicLinkSent(false); setEmail(''); }}
+              className="mt-3 text-xs font-bold text-emerald-700 hover:text-emerald-900 underline"
+            >
+              Prøv en annen e-post
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleMagicLink} className="space-y-3 text-left">
+            <label className="text-xs font-bold text-slate-500 block">Logg inn med e-post (uten passord)</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="din@bedrift.no"
+              className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-600 focus:border-transparent outline-none text-sm"
+              disabled={magicLinkLoading}
+            />
+            <button
+              type="submit"
+              disabled={magicLinkLoading || !email.trim()}
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md transform active:scale-95"
+            >
+              {magicLinkLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Sender lenke…
+                </>
+              ) : (
+                <>
+                  <Mail size={16} /> Send innloggings-lenke
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-slate-400 text-center pt-1">
+              Vi sender en engangs-lenke til e-posten din. Ingen passord å huske på.
+            </p>
+          </form>
+        )}
+
         <button
           onClick={onBack}
           className="mt-8 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center gap-2 mx-auto"
@@ -3388,7 +3468,6 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
       </div>
 
-      {/* Sikkerhets-footer */}
       <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-slate-300 uppercase tracking-widest">
         <span className="flex items-center gap-1"><ShieldCheck size={12} /> Sikker innlogging</span>
         <span className="flex items-center gap-1"><Key size={12} /> Kryptert</span>
@@ -5582,7 +5661,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ url: formattedUrl }),
+          body: JSON.stringify({ url: formattedUrl, user_id: user.id }),
         });
 
         const errBody = await res.json().catch(() => ({}));
@@ -5817,12 +5896,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const urlLocked = urlMsUntilUnlock > 0;
   const urlDaysLeft = Math.ceil(urlMsUntilUnlock / (24 * 60 * 60 * 1000));
 
-  // Dev-modus for plan-bytte
-  const isDevMode = typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    new URLSearchParams(window.location.search).get('dev') === '1'
-  );
+  // Dev-modus for plan-bytte (kun lokal `vite dev`)
+  const isDevMode = import.meta.env.DEV;
   const isMockUser = user?.id === 'dev-mock-user-id' || user?.app_metadata?.provider === 'dev' ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user?.id || '');
 
@@ -8077,14 +8152,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  // --- DEV BYPASS (kun localhost eller ?dev=1) ---
+  // --- DEV BYPASS (kun lokal `vite dev`) ---
   // Lar oss jobbe med innloggede sider uten å gå gjennom Google OAuth.
-  // Aldri aktiv i produksjon.
-  const isDevMode = typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost'
-    || window.location.hostname === '127.0.0.1'
-    || new URLSearchParams(window.location.search).has('dev')
-  );
+  // import.meta.env.DEV er KUN true under `vite dev`. I prod-bygget tree-shakes
+  // Vite hele dev-grenen bort, så panelet kan aldri aktiveres på siktseo.no.
+  const isDevMode = import.meta.env.DEV;
 
   const handleDevBypass = (target: DevTarget) => {
     const MOCK_USER = {
@@ -8389,7 +8461,9 @@ function App() {
       }
 
       console.log("6. Sender til Stripe nå...");
-      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(currentUser.email || '')}`;
+      // VIKTIG: client_reference_id må med — webhook bruker dette til å koble
+      // betalingen mot riktig bruker. Uten dette står kunden fast etter betaling.
+      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(currentUser.email || '')}&client_reference_id=${encodeURIComponent(currentUser.id)}`;
       window.location.href = checkoutUrl;
 
     } catch (err: any) {
