@@ -5858,9 +5858,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   })();
 
   // 3) GEO SCORE — AI-sitering, llms.txt, schema markup for LLM (kun premium).
-  // TODO: erstatt med ekte maaling fra GEO-analyse-API naar tilgjengelig.
-  // Holder samme verdi som vises i GEO-fanen for nå, slik at tallene henger sammen.
-  const geoScore: number | null = hasPremium ? 62 : null;
+  // Ikke implementert ennå — null betyr at den ikke regnes med i kombinert score.
+  const geoScore: number | null = null;
 
   // 4) KOMBINERT SIKT-SCORE — snitt av tilgjengelige komponenter.
   // Hvis brukeren ikke har Premium, regnes scoren ut fra to komponenter (teknisk + synlighet).
@@ -7191,19 +7190,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             ) : (
               <>
                 <PortalCard theme={themed} className="p-6 sm:p-8">
-                  <CardHeader theme={themed} title="GEO-status" subtitle="Hvor ofte LLM-er nevner deg, og hvor godt du er strukturert for dem." />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                    <div>
-                      <p className={`text-xs ${textLabel}`}>AI-treff denne uken</p>
-                      <BigNumber theme={themed} value="3 / 20" tone="warn" />
+                  <CardHeader theme={themed} title="GEO-status" subtitle="Automatisk ukentlig testing av din synlighet i ChatGPT, Gemini og Perplexity." />
+                  <div className={`rounded-xl px-5 py-6 ${isLight ? 'bg-violet-50 border border-violet-100' : 'bg-violet-500/10 border border-violet-500/20'} flex items-start gap-4`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isLight ? 'bg-violet-100' : 'bg-violet-500/20'}`}>
+                      <BrainCircuit size={18} className="text-violet-600" />
                     </div>
                     <div>
-                      <p className={`text-xs ${textLabel}`}>GEO-score</p>
-                      <BigNumber theme={themed} value="62" unit="/ 100" tone="warn" />
-                    </div>
-                    <div>
-                      <p className={`text-xs ${textLabel}`}>llms.txt</p>
-                      <BigNumber theme={themed} value="Aktiv" tone="good" />
+                      <p className={`text-sm font-semibold ${textMain} mb-1`}>Automatisk GEO-analyse aktiveres snart</p>
+                      <p className={`text-xs leading-relaxed ${textDim}`}>
+                        Vi setter opp ukentlig testing av om ChatGPT, Gemini og Perplexity nevner bedriften din. Når analysen er klar, vil du se AI-treff, GEO-score og konkrete forbedringstips her.
+                      </p>
                     </div>
                   </div>
                 </PortalCard>
@@ -8249,14 +8245,15 @@ function App() {
       const justPaid = isPaymentSuccess;
 
       try {
-        // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen
+        // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen.
+        // VIKTIG: Vi skriver kun til databasen hvis brukeren faktisk kom tilbake
+        // fra Stripe (?payment_success=true). Uten denne sjekken ville en bruker
+        // som valgte pakke og deretter logget inn uten å betale bli feilaktig
+        // ruter til onboarding-skjemaet.
         const savedPlan = localStorage.getItem('sikt_pending_plan');
-        if (savedPlan) {
+        if (savedPlan && justPaid) {
           localStorage.removeItem('sikt_pending_plan');
           try {
-            // UPSERT slik at raden opprettes hvis den ikke finnes fra før
-            // (f.eks. første gang brukeren kommer tilbake fra Stripe og
-            // ennå ikke har sendt inn onboarding-skjemaet).
             await supabaseRest('clients?on_conflict=user_id', {
               method: 'POST',
               body: { user_id: user.id, package_name: savedPlan },
@@ -8266,6 +8263,11 @@ function App() {
           } catch (e: any) {
             console.error('[Routing] Kunne ikke lagre pakke:', e?.message || e);
           }
+          setSelectedPlan(savedPlan);
+        } else if (savedPlan && !justPaid) {
+          // Brukeren valgte pakke men betalte ikke — behold lappen i localStorage
+          // slik at vi kan preutfylle valget når de faktisk betaler.
+          console.log('[Routing] sikt_pending_plan funnet, men ingen betaling — beholder lappen.');
           setSelectedPlan(savedPlan);
         }
 

@@ -310,7 +310,42 @@ create policy "keyword_opp_delete_own" on public.keyword_opportunities for delet
   using (auth.uid() = user_id);
 
 -- =====================================================================
--- 8. COMPETITOR_KEYWORD_RANKINGS
+-- 8. USER_KEYWORDS — sporede søkeord med historikk og siste rangering
+-- =====================================================================
+create table if not exists public.user_keywords (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  keyword text not null,
+  location text not null default 'Oslo',
+  -- Hele rangerings-objektet lagres som JSONB (posisjon, historikk, konkurrenter osv.)
+  keyword_data jsonb,
+  last_checked_at timestamptz default now(),
+  created_at timestamptz not null default now(),
+  unique (user_id, keyword, location)
+);
+
+create index if not exists user_keywords_user_idx on public.user_keywords (user_id);
+
+alter table public.user_keywords enable row level security;
+
+drop policy if exists "user_keywords_select_own" on public.user_keywords;
+create policy "user_keywords_select_own" on public.user_keywords for select to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "user_keywords_insert_own" on public.user_keywords;
+create policy "user_keywords_insert_own" on public.user_keywords for insert to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "user_keywords_update_own" on public.user_keywords;
+create policy "user_keywords_update_own" on public.user_keywords for update to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "user_keywords_delete_own" on public.user_keywords;
+create policy "user_keywords_delete_own" on public.user_keywords for delete to authenticated
+  using (auth.uid() = user_id);
+
+-- =====================================================================
+-- 9. COMPETITOR_KEYWORD_RANKINGS
 -- =====================================================================
 create table if not exists public.competitor_keyword_rankings (
   id uuid primary key default gen_random_uuid(),
