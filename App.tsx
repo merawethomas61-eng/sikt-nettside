@@ -1243,6 +1243,7 @@ const BRANSJER = [
 
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
+  const [prefillLoading, setPrefillLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     companyName: '', contactPerson: '', email: '', phone: '',
@@ -1252,8 +1253,80 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Preutfyll skjemaet med eksisterende data hvis brukeren har vært her før.
+  // Dette gjør at en bruker som betalte og fylte ut delvis kan fortsette der
+  // de slapp i stedet for å begynne på nytt.
+  useEffect(() => {
+    let cancelled = false;
+    const loadDraft = async () => {
+      if (!user?.id) {
+        setPrefillLoading(false);
+        return;
+      }
+      try {
+        const rows = await supabaseRest<any[]>(
+          `clients?user_id=eq.${user.id}&select=company_name,contact_person,email,phone,website_url,industry,target_audience&limit=1`,
+        );
+        if (cancelled) return;
+        const existing = Array.isArray(rows) && rows.length ? rows[0] : null;
+        if (existing) {
+          setFormData({
+            companyName: existing.company_name || '',
+            contactPerson: existing.contact_person || '',
+            email: existing.email || user.email || '',
+            phone: existing.phone || '',
+            websiteUrl: existing.website_url || '',
+            industry: existing.industry || '',
+            targetAudience: existing.target_audience || '',
+          });
+        } else if (user.email) {
+          // Førstegangs-bruker: bare preutfyll e-post fra Google-kontoen
+          setFormData(prev => ({ ...prev, email: user.email }));
+        }
+      } catch (err: any) {
+        console.warn('[Onboarding] Kunne ikke hente eksisterende data:', err?.message || err);
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    loadDraft();
+    return () => { cancelled = true; };
+  }, [user?.id, user?.email]);
+
+  // Lagrer en kladd til databasen uten å sette onboarding_completed=true.
+  // Kalles når et felt forlates, slik at brukeren ikke mister fremgangen
+  // hvis de lukker fanen midt i utfyllingen.
+  const saveDraft = async (latest: typeof formData) => {
+    if (!user?.id) return;
+    // Hopp over hvis alt er tomt (unngå å skrive en tom rad)
+    const hasAnyValue = Object.values(latest).some(v => String(v || '').trim().length > 0);
+    if (!hasAnyValue) return;
+    try {
+      await supabaseRest('clients?on_conflict=user_id', {
+        method: 'POST',
+        body: {
+          user_id: user.id,
+          company_name: latest.companyName || null,
+          contact_person: latest.contactPerson || null,
+          email: latest.email || null,
+          phone: latest.phone || null,
+          website_url: latest.websiteUrl || null,
+          industry: latest.industry || null,
+          target_audience: latest.targetAudience || null,
+        },
+        headers: { Prefer: 'resolution=merge-duplicates' },
+      });
+    } catch (err: any) {
+      console.warn('[Onboarding] Kunne ikke lagre kladd:', err?.message || err);
+    }
+  };
+
   const handleSelectIndustry = (industry: string) => {
-    setFormData(prev => ({ ...prev, industry: industry }));
+    setFormData(prev => {
+      const next = { ...prev, industry };
+      saveDraft(next);
+      return next;
+    });
     setShowSuggestions(false);
   };
 
@@ -1261,10 +1334,8 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    // Sjekk om det er bransje-feltet som skrives i
     if (name === 'industry') {
       if (value.length > 0) {
-        // HER ER ENDRINGEN: Vi bruker startsWith igjen for å matche første bokstav
         const filtered = BRANSJER.filter(item =>
           item.toLowerCase().startsWith(value.toLowerCase())
         );
@@ -1274,6 +1345,11 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         setShowSuggestions(false);
       }
     }
+  };
+
+  const handleBlur = (_e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // Lagre kladd når et felt forlates (debounce-fri og pålitelig)
+    saveDraft(formData);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1411,36 +1487,43 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   return (
     <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
-        <h1 className="text-3xl font-black text-slate-950 mb-8">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
+        <h1 className="text-3xl font-black text-slate-950 mb-2">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
+        <p className="text-sm text-slate-500 mb-8">
+          {prefillLoading
+            ? 'Henter dine opplysninger…'
+            : (formData.companyName || formData.websiteUrl)
+              ? 'Vi har lagret det du fylte ut sist. Du kan fortsette der du slapp.'
+              : 'Vi lagrer fremgangen din automatisk når du forlater et felt.'}
+        </p>
 
         <form
           onSubmit={handleSubmit}
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
-            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} onBlur={handleBlur} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required type="email" name="email" value={formData.email} onChange={handleChange} placeholder="E-post" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
-            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
           </div>
-          <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} onBlur={handleBlur} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
 
-          {/* 3. CRITICAL FIX: UI for Bransjeforslag */}
           <div className="relative">
             <input
               required
               name="industry"
               value={formData.industry}
               onChange={handleChange}
-              // Lukk listen hvis brukeren klikker utenfor (enkelt hack: onBlur med delay)
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onBlur={(e) => {
+                handleBlur(e);
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
               placeholder="Bransje (Begynn å skrive...)"
               className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none"
             />
 
-            {/* Dette er listen som manglet: */}
             {showSuggestions && suggestions.length > 0 && (
               <ul className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
                 {suggestions.map((suggestion, index) => (
@@ -1456,7 +1539,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             )}
           </div>
 
-          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
 
           <button
             type="submit"
