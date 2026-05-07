@@ -12,7 +12,7 @@ import {
   Home, Linkedin, Twitter, Mail, ShieldCheck, Wrench, Globe2, Stars, Frown, Radar, FileBarChart, AlertOctagon,
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
-  Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink,
+  Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink, Circle,
   ClipboardCheck, Bell, Sparkle, Bot, Send, Plus, Info
 } from 'lucide-react';
 
@@ -1240,11 +1240,91 @@ const BRANSJER = [
   "Vann og Avløp", "Vaskeri", "Vedlikehold", "Veidrift", "Verksted", "Webutvikling og Design", "Yrkeshygiene", "Økonomi og Administrasjon"
 ].sort();
 
+interface GscPreCheckProps {
+  onConfirm: () => void;
+  onCancel: () => void;
+  theme?: any;
+}
+
+const GscPreCheck: React.FC<GscPreCheckProps> = ({ onConfirm, onCancel, theme = 'light' }) => {
+  const [verified, setVerified] = useState(false);
+  const [sameAccount, setSameAccount] = useState(false);
+  const canProceed = verified && sameAccount;
+  const isLight = theme === 'light';
+  const textMain = isLight ? 'text-slate-900' : 'text-slate-100';
+  const textDim = isLight ? 'text-slate-600' : 'text-slate-300';
+  const divider = isLight ? 'border-slate-200' : 'border-white/10';
+  const cardBg = isLight ? 'bg-slate-50' : 'bg-slate-900/40';
+
+  return (
+    <div className={`rounded-xl border ${divider} ${cardBg} p-5`}>
+      <h3 className={`text-lg font-semibold ${textMain}`}>Før du kobler til Google</h3>
+      <p className={`text-sm mt-2 ${textDim}`}>
+        For at Sikt skal kunne hente søkeorddata for nettsiden din, må disse to tingene være på plass:
+      </p>
+
+      <div className="mt-4 space-y-4">
+        <div>
+          <button
+            type="button"
+            onClick={() => setVerified((v) => !v)}
+            className="w-full text-left flex items-start gap-2"
+          >
+            {verified ? <CheckCircle2 size={18} className="text-emerald-600 mt-0.5 shrink-0" /> : <Circle size={18} className={`mt-0.5 shrink-0 ${textDim}`} />}
+            <span className={`text-sm ${textMain}`}>Jeg har verifisert nettsiden min i Google Search Console</span>
+          </button>
+          <a
+            href="https://support.google.com/webmasters/answer/9008080"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 ml-7 inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-500 underline underline-offset-2"
+          >
+            Har du ikke gjort det ennå? Slik gjør du det <ExternalLink size={12} />
+          </a>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            onClick={() => setSameAccount((v) => !v)}
+            className="w-full text-left flex items-start gap-2"
+          >
+            {sameAccount ? <CheckCircle2 size={18} className="text-emerald-600 mt-0.5 shrink-0" /> : <Circle size={18} className={`mt-0.5 shrink-0 ${textDim}`} />}
+            <span className={`text-sm ${textMain}`}>Jeg vil koble til med samme Google-konto som eier nettsiden i Search Console</span>
+          </button>
+          <p className={`mt-1 ml-7 text-xs ${textDim}`}>
+            Hvis nettsiden er verifisert med jobbkonto, logg inn med jobbkonto.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={!canProceed}
+          className={`w-full py-3 rounded-xl font-semibold transition-colors ${canProceed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
+        >
+          {canProceed ? 'Koble til Google Search Console' : 'Bekreft begge punkter for å fortsette'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className={`text-sm ${textDim} hover:${textMain} underline underline-offset-2`}
+        >
+          Avbryt
+        </button>
+      </div>
+    </div>
+  );
+};
+
 
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
   const [showGscStep, setShowGscStep] = useState(false);
+  const [showGscPreCheck, setShowGscPreCheck] = useState(false);
   const [websiteUrlStatus, setWebsiteUrlStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
 
   const [formData, setFormData] = useState({
@@ -1530,14 +1610,24 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             Koble til Google Search Console for å hente dine søkeorddata automatisk.
           </p>
 
-          <button
-            type="button"
-            onClick={handleConnectSearchConsole}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-7 rounded-xl transition-all shadow-lg"
-          >
-            <Search size={18} />
-            Koble til Google Search Console
-          </button>
+          {!showGscPreCheck ? (
+            <button
+              type="button"
+              onClick={() => setShowGscPreCheck(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-7 rounded-xl transition-all shadow-lg"
+            >
+              <Search size={18} />
+              Koble til Google Search Console
+            </button>
+          ) : (
+            <div className="text-left">
+              <GscPreCheck
+                onConfirm={handleConnectSearchConsole}
+                onCancel={() => setShowGscPreCheck(false)}
+                theme="light"
+              />
+            </div>
+          )}
 
           <button
             type="button"
@@ -5015,6 +5105,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [gscConnected, setGscConnected] = useState(false);
   const [gscLoading, setGscLoading] = useState(false);
   const [gscKeywords, setGscKeywords] = useState<any[]>([]);
+  const [showGscPreCheck, setShowGscPreCheck] = useState(false);
+  const [scores, setScores] = useState<{ technical: number | null; visibility: number | null }>({
+    technical: null,
+    visibility: null,
+  });
 
   // Sjekk om GSC allerede er koblet til
   useEffect(() => {
@@ -5029,6 +5124,44 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       if (data) setGscConnected(true);
     };
     checkGscConnection();
+  }, [user?.id]);
+
+  useEffect(() => {
+    const fetchScores = async () => {
+      if (!user?.id) return;
+
+      const { data: site } = await supabase
+        .from('sites')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!site?.id) return;
+
+      const { data: techCheck } = await supabase
+        .from('health_checks')
+        .select('technical_score')
+        .eq('site_id', site.id)
+        .not('technical_score', 'is', null)
+        .order('checked_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: visCheck } = await supabase
+        .from('health_checks')
+        .select('visibility_score')
+        .eq('site_id', site.id)
+        .not('visibility_score', 'is', null)
+        .order('checked_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setScores({
+        technical: techCheck?.technical_score ?? null,
+        visibility: visCheck?.visibility_score ?? null,
+      });
+    };
+    fetchScores();
   }, [user?.id]);
 
   // Hent GSC-søkeord fra databasen
@@ -6680,41 +6813,78 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </div>
 
-              {combinedScore != null && (
-                <div className="flex flex-col items-center gap-3 shrink-0">
-                  <RadialScore value={combinedScore} theme={themed} size={108} />
-                  {/* Sub-score breakdown — viser hva totalscoren bestaar av. */}
-                  <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-[260px]">
-                    {[
-                      { key: 'tech', label: 'Teknisk', value: technicalScore, icon: <Activity size={11} /> },
-                      { key: 'vis', label: 'Synlighet', value: visibilityScore, icon: <Search size={11} /> },
-                      ...(hasPremium ? [{ key: 'geo', label: 'GEO', value: geoScore, icon: <BrainCircuit size={11} /> }] : []),
-                    ].map((c) => {
-                      const v = c.value;
-                      const tone: 'good' | 'warn' | 'bad' | 'neutral' =
-                        v == null ? 'neutral' : v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
-                      const cls = tone === 'good'
-                        ? (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20')
-                        : tone === 'warn'
-                          ? (isLight ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-amber-500/10 text-amber-300 border-amber-500/20')
-                          : tone === 'bad'
-                            ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20')
-                            : (isLight ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-white/10');
+              <div className="flex flex-col items-center gap-3 shrink-0">
+                  <RadialScore value={combinedScore ?? 0} theme={themed} size={108} />
+                  {/* Sub-score breakdown — viser hva totalscoren består av med tydelig fallback */}
+                  <div className="flex flex-wrap items-start justify-center gap-2 max-w-[300px]">
+                    {(() => {
+                      const tech = scores.technical;
+                      const vis = scores.visibility;
+                      const toneClass = (v: number | null) => {
+                        const tone: 'good' | 'warn' | 'bad' | 'neutral' =
+                          v == null ? 'neutral' : v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
+                        return tone === 'good'
+                          ? (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20')
+                          : tone === 'warn'
+                            ? (isLight ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-amber-500/10 text-amber-300 border-amber-500/20')
+                            : tone === 'bad'
+                              ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20')
+                              : (isLight ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800 text-slate-400 border-white/10');
+                      };
+
                       return (
-                        <span
-                          key={c.key}
-                          title={`${c.label}: ${v == null ? 'ikke maalt' : v + ' / 100'}`}
-                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${cls}`}
-                        >
-                          {c.icon}
-                          <span>{c.label}</span>
-                          <span className="font-semibold tabular-nums">{v == null ? '—' : v}</span>
-                        </span>
+                        <>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(tech)}`}>
+                              <Activity size={11} />
+                              <span>Teknisk</span>
+                              <span className="font-semibold tabular-nums">{tech == null ? '—' : tech}</span>
+                            </span>
+                            {tech == null && (
+                              <button
+                                type="button"
+                                onClick={() => runRealAnalysis()}
+                                className="text-[11px] text-violet-600 hover:text-violet-500 underline underline-offset-2"
+                              >
+                                Kjør analyse
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(vis)}`}>
+                              {!gscConnected ? <Link2 size={11} /> : <Search size={11} />}
+                              <span>Synlighet</span>
+                              <span className="font-semibold tabular-nums">{vis == null ? '—' : vis}</span>
+                            </span>
+                            {!gscConnected ? (
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab('keywords')}
+                                className="text-[11px] text-violet-600 hover:text-violet-500 underline underline-offset-2"
+                              >
+                                Koble til
+                              </button>
+                            ) : vis == null ? (
+                              <span className={`text-[11px] ${textDim}`}>Henter data...</span>
+                            ) : null}
+                          </div>
+
+                          {hasPremium && (
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(null)}`}>
+                                <BrainCircuit size={11} />
+                                <span>GEO</span>
+                                <span className="font-semibold tabular-nums">—</span>
+                              </span>
+                              <span className={`text-[11px] ${textDim}`}>Kommer snart</span>
+                            </div>
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 </div>
-              )}
             </div>
 
             {analyzeError && (
@@ -7366,7 +7536,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             {/* GOOGLE SEARCH CONSOLE */}
             <PortalCard theme={themed} className="p-6 sm:p-8">
               {!gscConnected ? (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                <div className="flex flex-col gap-5">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isLight ? 'bg-emerald-50' : 'bg-emerald-500/10'}`}>
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -7381,18 +7551,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <p className={`text-xs mt-0.5 ${textDim}`}>Hent dine faktiske søkeord, posisjoner, klikk og visninger direkte fra Google.</p>
                     </div>
                   </div>
-                  <button
-                    onClick={handleConnectGsc}
-                    className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white" opacity="0.9" />
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.9" />
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="white" opacity="0.9" />
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white" opacity="0.9" />
-                    </svg>
-                    Koble til Google
-                  </button>
+                  {!showGscPreCheck ? (
+                    <button
+                      onClick={() => setShowGscPreCheck(true)}
+                      className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white" opacity="0.9" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.9" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="white" opacity="0.9" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white" opacity="0.9" />
+                      </svg>
+                      Koble til Google
+                    </button>
+                  ) : (
+                    <GscPreCheck
+                      onConfirm={handleConnectGsc}
+                      onCancel={() => setShowGscPreCheck(false)}
+                      theme={themed}
+                    />
+                  )}
                 </div>
               ) : gscKeywords.length > 0 ? (
                 <>
