@@ -4886,6 +4886,119 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [, setHasSearched] = useState(false);
   const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
 
+  // GOOGLE SEARCH CONSOLE STATE
+  const [gscConnected, setGscConnected] = useState(false);
+  const [gscLoading, setGscLoading] = useState(false);
+  const [gscKeywords, setGscKeywords] = useState<any[]>([]);
+
+  // Sjekk om GSC allerede er koblet til
+  useEffect(() => {
+    const checkGscConnection = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('api_credentials')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('service_name', 'google_search_console')
+        .maybeSingle();
+      if (data) setGscConnected(true);
+    };
+    checkGscConnection();
+  }, [user?.id]);
+
+  // Hent GSC-søkeord fra databasen
+  const handleFetchGscKeywords = async () => {
+    if (!user?.id) return;
+    setGscLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const { data: site } = await supabase
+        .from('sites')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!site?.id) {
+        toastError('Ingen nettside funnet. Kjør en PageSpeed-analyse først.');
+        return;
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-search-console`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ site_id: site.id }),
+        }
+      );
+
+      const result = await res.json();
+
+      if (result.success) {
+        const { data: keywords } = await supabase
+          .from('keywords')
+          .select('keyword, position, clicks, impressions, ctr')
+          .eq('site_id', site.id)
+          .order('clicks', { ascending: false })
+          .limit(50);
+
+        if (keywords && keywords.length > 0) {
+          setGscKeywords(keywords);
+          toastSuccess(`Hentet ${keywords.length} søkeord fra Google Search Console!`);
+        } else {
+          toastSuccess('Tilkoblet! Ingen søkeorddata ennå — dette tar noen uker for nye nettsider.');
+        }
+      } else {
+        toastError('Kunne ikke hente søkeorddata: ' + (result.error || 'ukjent feil'));
+      }
+    } catch (err: any) {
+      toastError('Noe gikk galt: ' + (err?.message || 'ukjent feil'));
+    } finally {
+      setGscLoading(false);
+    }
+  };
+
+  // Start OAuth-flyt for Google Search Console
+  const handleConnectGsc = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUri = `${supabaseUrl}/functions/v1/google-oauth-callback`;
+    const scope = 'https://www.googleapis.com/auth/webmasters.readonly';
+
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&state=${encodeURIComponent(user?.id || '')}`;
+
+    window.location.href = oauthUrl;
+  };
+
+  // Håndter redirect tilbake fra Google OAuth.
+  // Kjører på nytt når user?.id blir tilgjengelig slik at vi ikke prøver å
+  // hente data eller navigere til fane før brukeren er logget inn.
+  useEffect(() => {
+    if (!user?.id) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('gsc') === 'connected') {
+      setGscConnected(true);
+      setActiveTab('keywords');
+      toastSuccess('Google Search Console koblet til! Henter søkeorddata...');
+      window.history.replaceState({}, '', window.location.pathname);
+      handleFetchGscKeywords();
+    } else if (params.get('gsc_error')) {
+      toastError('Kunne ikke koble til Google Search Console. Prøv igjen.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [user?.id]);
+
   // --- VIKTIG: VARIABLER & HJELPERE (Må defineres FØR de brukes) ---
   const getPackageLevel = (pkgName: string) => {
     const name = pkgName?.toLowerCase() || '';
@@ -7109,6 +7222,96 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </PrimaryButton>
               )}
             </header>
+
+            {/* GOOGLE SEARCH CONSOLE */}
+            <PortalCard theme={themed} className="p-6 sm:p-8">
+              {!gscConnected ? (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isLight ? 'bg-emerald-50' : 'bg-emerald-500/10'}`}>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${textMain}`}>Koble til Google Search Console</p>
+                      <p className={`text-xs mt-0.5 ${textDim}`}>Hent dine faktiske søkeord, posisjoner, klikk og visninger direkte fra Google.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleConnectGsc}
+                    className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white" opacity="0.9" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.9" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="white" opacity="0.9" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white" opacity="0.9" />
+                    </svg>
+                    Koble til Google
+                  </button>
+                </div>
+              ) : gscKeywords.length > 0 ? (
+                <>
+                  <CardHeader
+                    theme={themed}
+                    icon={<CheckCircle size={16} className="text-emerald-500" />}
+                    accent="violet"
+                    title="Google Search Console"
+                    subtitle={`${gscKeywords.length} søkeord hentet fra Google`}
+                  />
+                  <div className={`rounded-xl overflow-hidden border ${divider}`}>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className={`${subtleBg} border-b ${divider}`}>
+                          <th className={`text-left px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Søkeord</th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Pos.</th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Klikk</th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>Visninger</th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>CTR</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${divider}`}>
+                        {gscKeywords.slice(0, 10).map((kw: any, i: number) => (
+                          <tr key={i} className={`${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'} transition-colors`}>
+                            <td className={`px-4 py-2.5 ${textMain} truncate max-w-[200px]`}>{kw.keyword}</td>
+                            <td className={`px-4 py-2.5 text-right font-semibold tabular-nums ${kw.position <= 3 ? 'text-emerald-600' : kw.position <= 10 ? 'text-violet-600' : textDim}`}>
+                              {kw.position ? `#${Math.round(kw.position)}` : '—'}
+                            </td>
+                            <td className={`px-4 py-2.5 text-right tabular-nums ${textMain}`}>{(kw.clicks ?? 0).toLocaleString('no-NO')}</td>
+                            <td className={`px-4 py-2.5 text-right tabular-nums ${textDim} hidden sm:table-cell`}>{(kw.impressions ?? 0).toLocaleString('no-NO')}</td>
+                            <td className={`px-4 py-2.5 text-right tabular-nums ${textDim} hidden sm:table-cell`}>
+                              {kw.ctr != null ? `${(kw.ctr * 100).toFixed(1)}%` : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {gscKeywords.length > 10 && (
+                    <p className={`mt-3 text-xs ${textDim}`}>
+                      Viser 10 av {gscKeywords.length} søkeord — de resterende er tilgjengelig i søkeordlisten nedenfor.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <CheckCircle size={20} className="text-emerald-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${textMain}`}>Google Search Console tilkoblet</p>
+                      <p className={`text-xs mt-0.5 ${textDim}`}>Hent dine søkeord, klikk og posisjoner fra Google.</p>
+                    </div>
+                  </div>
+                  <PrimaryButton onClick={handleFetchGscKeywords} disabled={gscLoading} className="shrink-0">
+                    {gscLoading ? <><Loader2 size={14} className="animate-spin" /> Henter…</> : <><RefreshCw size={14} /> Hent søkeorddata nå</>}
+                  </PrimaryButton>
+                </div>
+              )}
+            </PortalCard>
 
             {/* POSISJON-FORDELING — oversiktsbar med fargekodede grupper. */}
             {realRankings.length > 0 && (
