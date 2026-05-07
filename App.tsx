@@ -1244,6 +1244,8 @@ const BRANSJER = [
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
+  const [showGscStep, setShowGscStep] = useState(false);
+  const [websiteUrlStatus, setWebsiteUrlStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
 
   const [formData, setFormData] = useState({
     companyName: '', contactPerson: '', email: '', phone: '',
@@ -1350,6 +1352,42 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   const handleBlur = (_e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     // Lagre kladd når et felt forlates (debounce-fri og pålitelig)
     saveDraft(formData);
+  };
+
+  const handleWebsiteUrlBlur = () => {
+    const raw = String(formData.websiteUrl || '').trim();
+    if (!raw) {
+      setWebsiteUrlStatus('idle');
+      saveDraft(formData);
+      return;
+    }
+
+    let normalized = raw;
+    if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
+    normalized = normalized.replace(/\/+$/, '');
+
+    const next = { ...formData, websiteUrl: normalized };
+    setFormData(next);
+    setWebsiteUrlStatus(/^https?:\/\/.+\..+/.test(normalized) ? 'valid' : 'invalid');
+    saveDraft(next);
+  };
+
+  const handleConnectSearchConsole = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUri = `${supabaseUrl}/functions/v1/google-oauth-callback`;
+    const scope = 'https://www.googleapis.com/auth/webmasters.readonly';
+
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&state=${encodeURIComponent(user?.id || '')}`;
+
+    window.location.href = oauthUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1463,13 +1501,8 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk INSERT/UPDATE-policy på clients-tabellen.");
       }
 
-      console.log("[Onboarding] 4/5 Kaller onComplete() for å gå til neste steg");
-
-      if (typeof onComplete === 'function') {
-        onComplete();
-      } else {
-        console.error("[Onboarding] onComplete er ikke en funksjon!", onComplete);
-      }
+      console.log("[Onboarding] 4/5 Viser Search Console-steg");
+      setShowGscStep(true);
 
       console.log("[Onboarding] 5/5 Ferdig");
 
@@ -1484,6 +1517,40 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       setLoading(false);
     }
   };
+
+  if (showGscStep) {
+    return (
+      <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 border border-slate-100 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={26} />
+          </div>
+          <h2 className="text-3xl font-black text-slate-900 mb-3">Siste steg!</h2>
+          <p className="text-slate-600 mb-8">
+            Koble til Google Search Console for å hente dine søkeorddata automatisk.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleConnectSearchConsole}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-7 rounded-xl transition-all shadow-lg"
+          >
+            <Search size={18} />
+            Koble til Google Search Console
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onComplete()}
+            className="block mx-auto mt-5 text-sm font-semibold text-slate-500 hover:text-slate-700 underline underline-offset-4"
+          >
+            Hopp over for nå — jeg gjør dette senere
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
@@ -1508,7 +1575,29 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
             <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
           </div>
-          <input required type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} onBlur={handleBlur} placeholder="Nettside URL (https://...)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          <div>
+            <div className="relative">
+              <input
+                required
+                type="url"
+                name="websiteUrl"
+                value={formData.websiteUrl}
+                onChange={handleChange}
+                onBlur={handleWebsiteUrlBlur}
+                placeholder="Nettside URL (https://...)"
+                className={`w-full p-4 pr-11 bg-slate-50 rounded-xl border ${websiteUrlStatus === 'valid' ? 'border-emerald-300' : websiteUrlStatus === 'invalid' ? 'border-rose-300' : 'border-slate-200'} focus:ring-2 focus:ring-violet-600 outline-none`}
+              />
+              {websiteUrlStatus === 'valid' && (
+                <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+              )}
+              {websiteUrlStatus === 'invalid' && (
+                <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-600" />
+              )}
+            </div>
+            {websiteUrlStatus === 'invalid' && (
+              <p className="text-xs text-rose-600 mt-2">URL ser ugyldig ut. Husk å bruke et domenenavn med punktum.</p>
+            )}
+          </div>
 
           <div className="relative">
             <input
@@ -4858,6 +4947,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     } catch { /* ignore */ }
   }, [user?.id]);
 
+  const [showFirstAnalysisBanner, setShowFirstAnalysisBanner] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    const checkFirstAnalysis = async () => {
+      try {
+        const siteRows = await supabaseRest<any[]>(
+          `sites?user_id=eq.${user.id}&select=id&limit=1`,
+        );
+        const site = Array.isArray(siteRows) && siteRows.length ? siteRows[0] : null;
+
+        if (!site?.id) {
+          if (!cancelled) setShowFirstAnalysisBanner(true);
+          return;
+        }
+
+        const healthRows = await supabaseRest<any[]>(
+          `health_checks?site_id=eq.${site.id}&select=id&limit=1`,
+        );
+        if (!cancelled) setShowFirstAnalysisBanner(!(Array.isArray(healthRows) && healthRows.length > 0));
+      } catch {
+        if (!cancelled) setShowFirstAnalysisBanner(false);
+      }
+    };
+
+    checkFirstAnalysis();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!showFirstAnalysisBanner) return;
+    const timer = setTimeout(() => setShowFirstAnalysisBanner(false), 60000);
+    return () => clearTimeout(timer);
+  }, [showFirstAnalysisBanner]);
+
   // Gjenopprett siste analyse fra cache (samme domene som i profilen)
   useEffect(() => {
     if (!user?.id) return;
@@ -6474,6 +6599,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'home' && (
           <div className="space-y-6">
+            {showFirstAnalysisBanner && (
+              <div className={`rounded-xl border ${divider} ${isLight ? 'bg-violet-50' : 'bg-violet-950/30'} px-4 py-3 flex items-start justify-between gap-3`}>
+                <p className={`text-sm ${textMain}`}>
+                  👋 Velkommen til Sikt! Vi analyserer nettsiden din nå. Resultatene vises her om 30-60 sekunder.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowFirstAnalysisBanner(false)}
+                  className={`shrink-0 p-1 rounded-md ${textDim} hover:${textMain}`}
+                  aria-label="Lukk velkomstmelding"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
 
             {/* HERO — radial-score + greeting + neste handling. Subtil violet aksent. */}
             <div
@@ -8433,6 +8573,7 @@ function App() {
   const [hasAccess, setHasAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [justCompletedOnboarding, setJustCompletedOnboarding] = useState(false);
 
   // --- DEV BYPASS (kun lokal `vite dev`) ---
   // Lar oss jobbe med innloggede sider uten å gå gjennom Google OAuth.
@@ -8690,6 +8831,44 @@ function App() {
       if (subscription) subscription.unsubscribe();
     };
   }, []);
+
+  // Når onboarding nettopp er fullført, kjør en første PageSpeed-analyse i bakgrunnen.
+  useEffect(() => {
+    if (!justCompletedOnboarding || !hasAccess || !user?.id) return;
+    let cancelled = false;
+
+    const runFirstAnalysis = async () => {
+      try {
+        const rows = await supabaseRest<any[]>(
+          `clients?user_id=eq.${user.id}&select=website_url&limit=1`,
+        );
+        const client = Array.isArray(rows) && rows.length ? rows[0] : null;
+        if (!client?.website_url) return;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        toastInfo('Vi kjører en første analyse av nettsiden din i bakgrunnen...');
+
+        void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            url: client.website_url,
+            user_id: user.id,
+          }),
+        }).catch((err) => console.error('[first-analysis] scan-pagespeed feilet:', err));
+      } catch (err: any) {
+        console.error('[first-analysis] Kunne ikke starte analyse:', err?.message || err);
+      } finally {
+        if (!cancelled) setJustCompletedOnboarding(false);
+      }
+    };
+
+    runFirstAnalysis();
+    return () => { cancelled = true; };
+  }, [justCompletedOnboarding, hasAccess, user?.id]);
 
   const handleLoginTrigger = () => setView('login');
   const handleBack = () => setView('home');
@@ -8954,11 +9133,21 @@ function App() {
     return 'BASIC';
   };
 
-  // 1. Skjemaet etter betaling. Basic-brukere går RETT til success (hopper over host-steget).
+  // 1. Skjemaet etter betaling + valgfri GSC-kobling før første portalbesøk.
   if (view === 'onboarding') {
-    return <>{devOverlay}<OnboardingPage user={user} onComplete={() => {
-      const nextView = getTier() === 'BASIC' ? 'success' : 'setup';
-      setView(nextView);
+    return <>{devOverlay}<OnboardingPage user={user} onComplete={async () => {
+      setJustCompletedOnboarding(true);
+      try {
+        setView('dashboard');
+        setIsLoading(true);
+        await new Promise(resolve => setTimeout(resolve, PORTAL_ENTRY_DELAY_MS));
+        setHasAccess(true);
+      } catch (err: any) {
+        console.error("Feil ved inngang til portal fra onboarding:", err?.message || err);
+        setHasAccess(true);
+      } finally {
+        setIsLoading(false);
+      }
     }} /></>;
   }
 
