@@ -3923,6 +3923,15 @@ const TierTeaser: React.FC<{
   </div>
 );
 
+const HoverTooltip: React.FC<{ text: string }> = ({ text }) => (
+  <div className="relative group inline-flex">
+    <Info className="w-4 h-4 text-gray-400 cursor-help" />
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+      {text}
+    </div>
+  </div>
+);
+
 // Sparkline — bittesmå linjer for trend-data (score-historikk, klikk-trend osv.).
 // Bruker Recharts med ingen aksene/grid for et minimalistisk uttrykk.
 const Sparkline: React.FC<{
@@ -4122,6 +4131,7 @@ function useCompetitorData(userId: string | null) {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [opportunities, setOpportunities] = useState<KeywordOpportunity[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const [hasSite, setHasSite] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -4129,12 +4139,16 @@ function useCompetitorData(userId: string | null) {
     if (!userId) { setLoading(false); return; }
     setError(null);
     try {
-      const siteRows = await supabaseRest<{ id: string }[]>(
-        `sites?user_id=eq.${userId}&select=id&limit=1`,
-      );
-      const site = Array.isArray(siteRows) && siteRows.length ? siteRows[0] : null;
+      const { data: site, error: siteError } = await supabase
+        .from('sites')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (siteError) throw siteError;
       const resolvedSiteId = site?.id ?? null;
       setSiteId(resolvedSiteId);
+      setHasSite(!!resolvedSiteId);
 
       if (!resolvedSiteId) {
         setCompetitors([]);
@@ -4142,12 +4156,24 @@ function useCompetitorData(userId: string | null) {
         return;
       }
 
-      const [compRows, oppRows] = await Promise.all([
-        supabaseRest<Competitor[]>(`competitors?site_id=eq.${resolvedSiteId}&select=*&order=created_at.asc`),
-        supabaseRest<KeywordOpportunity[]>(`keyword_opportunities?user_id=eq.${userId}&select=*&order=estimated_traffic.desc`),
+      const [{ data: compRows, error: compError }, { data: oppRows, error: oppError }] = await Promise.all([
+        supabase
+          .from('competitors')
+          .select('*')
+          .eq('site_id', resolvedSiteId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('keyword_opportunities')
+          .select('*')
+          .eq('user_id', userId)
+          .order('estimated_traffic', { ascending: false }),
       ]);
-      setCompetitors(Array.isArray(compRows) ? compRows : []);
-      setOpportunities(Array.isArray(oppRows) ? oppRows : []);
+
+      if (compError) throw compError;
+      if (oppError) throw oppError;
+
+      setCompetitors(compRows || []);
+      setOpportunities(oppRows || []);
     } catch (e: any) {
       setError(e?.message || 'Ukjent feil');
     } finally {
@@ -4167,7 +4193,7 @@ function useCompetitorData(userId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, siteId, fetchData]);
 
-  return { competitors, opportunities, siteId, loading, error, refetch: fetchData };
+  return { competitors, opportunities, siteId, hasSite, loading, error, refetch: fetchData };
 }
 
 // ============================================================
@@ -4187,7 +4213,7 @@ const KonkurrenterPage: React.FC<{
   const divider = portalDividerClass(theme);
   const subtleBg = portalSubtleBgClass(theme);
 
-  const { competitors, opportunities, siteId, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+  const { competitors, opportunities, siteId, hasSite, loading, error, refetch } = useCompetitorData(user?.id ?? null);
 
   // --- Modal-tilstander ---
   const [showAddModal, setShowAddModal] = useState(false);
@@ -4237,12 +4263,12 @@ const KonkurrenterPage: React.FC<{
       // 1. Lag raden i Supabase
       const color = getAvatarColor(raw);
       if (!siteId) throw new Error('Fant ingen site for brukeren. Kjør analyse først.');
-      const newRows = await supabaseRest<Competitor[]>('competitors', {
-        method: 'POST',
-        body: { site_id: siteId, domain: raw, avatar_color: color, competitor_type: 'main' },
-        headers: { Prefer: 'return=representation' },
-      });
-      const newComp: Competitor = Array.isArray(newRows) ? newRows[0] : (newRows as any);
+      const { data: newComp, error: insertError } = await supabase
+        .from('competitors')
+        .insert({ site_id: siteId, domain: raw, avatar_color: color, competitor_type: 'main' })
+        .select('*')
+        .single();
+      if (insertError || !newComp) throw insertError || new Error('Klarte ikke å opprette konkurrent');
       setShowAddModal(false);
       setAddDomain('');
       toastInfo(`Analyserer ${raw}… Dette tar 1–2 minutter.`);
@@ -4431,16 +4457,23 @@ const KonkurrenterPage: React.FC<{
             <span className={`text-sm ${textDim}`}>Laster konkurrenter…</span>
           </div>
         ) : competitors.length === 0 ? (
-          <div className={`rounded-xl px-5 py-10 text-center ${subtleBg}`}>
-            <Globe2 size={28} className={`mx-auto mb-3 ${textLabel}`} />
-            <p className={`text-sm font-medium ${textMain} mb-1`}>Du har ikke lagt til konkurrenter ennå</p>
-            <p className={`text-xs ${textDim} mb-4`}>Legg til opptil {maxCompetitors} konkurrenter for å se hvilke søkeord du mangler</p>
+          <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <Users className="w-16 h-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              Ingen konkurrenter lagt til
+            </h3>
+            <p className="text-gray-600 text-center max-w-md mb-6">
+              {hasSite
+                ? 'Legg til konkurrenter for å sammenligne din prestasjon og se hvor du kan forbedre deg.'
+                : 'Kjør en første analyse slik at vi oppretter en site før du legger til konkurrenter.'}
+            </p>
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+              disabled={!hasSite}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Plus size={14} /> Legg til din første konkurrent
+              Legg til din første konkurrent
             </button>
           </div>
         ) : (
@@ -4502,7 +4535,14 @@ const KonkurrenterPage: React.FC<{
                       type="button"
                       title="Fjern"
                       onClick={async () => {
-                        await supabaseRest(`competitors?id=eq.${c.id}`, { method: 'DELETE' });
+                        const { error: deleteError } = await supabase
+                          .from('competitors')
+                          .delete()
+                          .eq('id', c.id);
+                        if (deleteError) {
+                          toastError('Kunne ikke fjerne konkurrenten.');
+                          return;
+                        }
                         refetch();
                       }}
                       className={`p-1.5 rounded-md ${textLabel} hover:text-rose-600 transition-colors`}
@@ -5109,10 +5149,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [gscLoading, setGscLoading] = useState(false);
   const [gscKeywords, setGscKeywords] = useState<any[]>([]);
   const [showGscPreCheck, setShowGscPreCheck] = useState(false);
+  const [showFaqModal, setShowFaqModal] = useState(false);
   const [scores, setScores] = useState<{ technical: number | null; visibility: number | null }>({
     technical: null,
     visibility: null,
   });
+  const [scoresLoading, setScoresLoading] = useState(false);
+
+  const getScoreColor = (score: number) => {
+    if (score >= 86) return { color: 'text-green-600', label: 'Utmerket', emoji: '🟢' };
+    if (score >= 71) return { color: 'text-blue-600', label: 'Bra', emoji: '✓' };
+    if (score >= 51) return { color: 'text-yellow-600', label: 'Trenger forbedring', emoji: '🟡' };
+    return { color: 'text-red-600', label: 'Kritisk', emoji: '🔴' };
+  };
 
   // Sjekk om GSC allerede er koblet til
   useEffect(() => {
@@ -5132,37 +5181,47 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   useEffect(() => {
     const fetchScores = async () => {
       if (!user?.id) return;
+      setScoresLoading(true);
+      try {
+        const { data: site } = await supabase
+          .from('sites')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      const { data: site } = await supabase
-        .from('sites')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        if (!site?.id) {
+          setScores({ technical: null, visibility: null });
+          return;
+        }
 
-      if (!site?.id) return;
+        const { data: techCheck } = await supabase
+          .from('health_checks')
+          .select('technical_score')
+          .eq('site_id', site.id)
+          .not('technical_score', 'is', null)
+          .order('checked_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const { data: techCheck } = await supabase
-        .from('health_checks')
-        .select('technical_score')
-        .eq('site_id', site.id)
-        .not('technical_score', 'is', null)
-        .order('checked_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        const { data: visCheck } = await supabase
+          .from('health_checks')
+          .select('visibility_score')
+          .eq('site_id', site.id)
+          .not('visibility_score', 'is', null)
+          .order('checked_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const { data: visCheck } = await supabase
-        .from('health_checks')
-        .select('visibility_score')
-        .eq('site_id', site.id)
-        .not('visibility_score', 'is', null)
-        .order('checked_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      setScores({
-        technical: techCheck?.technical_score ?? null,
-        visibility: visCheck?.visibility_score ?? null,
-      });
+        setScores({
+          technical: techCheck?.technical_score ?? null,
+          visibility: visCheck?.visibility_score ?? null,
+        });
+      } catch (err) {
+        console.error('Error:', err);
+        toastError('Kunne ikke hente data. Prøv igjen senere.');
+      } finally {
+        setScoresLoading(false);
+      }
     };
     fetchScores();
   }, [user?.id]);
@@ -5478,13 +5537,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   };
 
   const handleUpgrade = (targetPlan?: 'Basic' | 'Standard' | 'Premium') => {
-    const fallbackPlan: 'Standard' | 'Premium' = currentLevel <= 1 ? 'Standard' : 'Premium';
-    const selectedTarget = targetPlan || fallbackPlan;
-    if (typeof onSelectPlan === 'function') {
-      onSelectPlan(selectedTarget);
-      return;
+    try {
+      const fallbackPlan: 'Standard' | 'Premium' = currentLevel <= 1 ? 'Standard' : 'Premium';
+      const selectedTarget = (targetPlan || fallbackPlan).toUpperCase();
+      const stripeUrls: Record<string, string> = {
+        BASIC: 'https://buy.stripe.com/test_eVq5kE870g2WeFL84Ads400',
+        STANDARD: 'https://buy.stripe.com/test_4gMcN63QKbMG55b1Gcds401',
+        PREMIUM: 'https://buy.stripe.com/test_5kQfZievo3gaeFL84Ads402',
+      };
+      const stripeBaseUrl = stripeUrls[selectedTarget];
+      if (!stripeBaseUrl) {
+        toastError('Fant ikke riktig planlenke. Prøv igjen.');
+        return;
+      }
+      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(user?.email || '')}&client_reference_id=${encodeURIComponent(user?.id || '')}`;
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error('Error:', err);
+      if (typeof onSelectPlan === 'function') onSelectPlan(targetPlan || 'Standard');
+      else toastError('Kunne ikke starte betaling. Prøv igjen senere.');
     }
-    toastError('Fant ikke betalingsflyt. Oppdater siden og prøv igjen.');
   };
 
   const sendGeoChat = async () => {
@@ -5626,7 +5698,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             const rowTs = new Date(row.created_at).getTime();
             return index === arr.findIndex((candidate: any) => {
               const candidateTs = new Date(candidate.created_at).getTime();
-              return candidate.action_type === row.action_type
+              const candidateAction = candidate.action || candidate.action_type || '';
+              const rowAction = row.action || row.action_type || '';
+              return candidateAction === rowAction
                 && Math.abs(candidateTs - rowTs) < 60000;
             });
           });
@@ -6857,51 +6931,80 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       return (
                         <>
                           <div className="flex flex-col items-center gap-1">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(tech)}`}>
-                              <Activity size={11} />
-                              <span>Teknisk</span>
-                              <span className="font-semibold tabular-nums">{tech == null ? '—' : tech}</span>
-                            </span>
-                            {tech == null && (
-                              <button
-                                type="button"
-                                onClick={() => runRealAnalysis()}
-                                className="text-[11px] text-violet-600 hover:text-violet-500 underline underline-offset-2"
-                              >
-                                Kjør analyse
-                              </button>
-                            )}
+                            <div className={`rounded-lg border px-2 py-1 text-center ${toneClass(tech)}`}>
+                              <div className="flex items-center justify-center gap-1 mb-1">
+                                <span className="text-[11px] font-medium">Technical Score</span>
+                                <HoverTooltip text="Score fra 0-100 basert på lastetid, mobile-vennlighet, sikkerhet og SEO-teknisk." />
+                              </div>
+                              {scoresLoading ? (
+                                <div className="flex items-center justify-center p-2">
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                </div>
+                              ) : tech == null ? (
+                                <div className="text-center">
+                                  <div className="text-4xl font-bold text-gray-400">—</div>
+                                  <button
+                                    onClick={() => runRealAnalysis()}
+                                    className="mt-2 text-sm text-blue-600 hover:underline"
+                                  >
+                                    Kjør analyse
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-2xl font-bold ${getScoreColor(tech).color}`}>{tech}</span>
+                                  <span className="text-[11px] text-gray-600">{getScoreColor(tech).emoji} {getScoreColor(tech).label}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex flex-col items-center gap-1">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(vis)}`}>
-                              {!gscConnected ? <Link2 size={11} /> : <Search size={11} />}
-                              <span>Synlighet</span>
-                              <span className="font-semibold tabular-nums">{vis == null ? '—' : vis}</span>
-                            </span>
-                            {!gscConnected ? (
-                              <button
-                                type="button"
-                                onClick={() => setActiveTab('keywords')}
-                                className="text-[11px] text-violet-600 hover:text-violet-500 underline underline-offset-2"
-                              >
-                                Koble til
-                              </button>
-                            ) : vis == null ? (
-                              <span className={`text-[11px] ${textDim}`}>Henter data...</span>
-                            ) : null}
+                            <div className={`rounded-lg border px-2 py-1 text-center ${toneClass(vis)}`}>
+                              <div className="flex items-center justify-center gap-1 mb-1">
+                                <span className="text-[11px] font-medium">Visibility Score</span>
+                                <HoverTooltip text="Synlighetsscore fra 0-100 basert på søkeordsdata fra Google Search Console." />
+                              </div>
+                              {!gscConnected ? (
+                                <div className="text-center">
+                                  <Link2 className="w-8 h-8 text-gray-400 mb-2 mx-auto" />
+                                  <button
+                                    onClick={() => setActiveTab('keywords')}
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    Koble til
+                                  </button>
+                                </div>
+                              ) : scoresLoading ? (
+                                <div className="flex items-center justify-center p-2">
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                </div>
+                              ) : vis == null ? (
+                                <div className="text-center">
+                                  <div className="text-4xl font-bold text-gray-400">—</div>
+                                  <div className="text-xs text-gray-500 mt-1">Henter data...</div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-2xl font-bold ${getScoreColor(vis).color}`}>{vis}</span>
+                                  <span className="text-[11px] text-gray-600">{getScoreColor(vis).emoji} {getScoreColor(vis).label}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          {hasPremium && (
-                            <div className="flex flex-col items-center gap-1">
-                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass(null)}`}>
-                                <BrainCircuit size={11} />
-                                <span>GEO</span>
-                                <span className="font-semibold tabular-nums">—</span>
-                              </span>
-                              <span className={`text-[11px] ${textDim}`}>Kommer snart</span>
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={`rounded-lg border px-2 py-1 text-center ${toneClass(null)}`}>
+                              <div className="flex items-center justify-center gap-1 mb-1">
+                                <span className="text-[11px] font-medium">GEO</span>
+                                <HoverTooltip text="GEO viser synlighet i AI-søk. Full automatisk scoring lanseres i Q3 2026." />
+                              </div>
+                              <div className="text-center">
+                                <div className="text-4xl font-bold text-gray-400">—</div>
+                                <div className="text-xs text-gray-500 mt-1">Kommer Q3 2026</div>
+                              </div>
                             </div>
-                          )}
+                          </div>
                         </>
                       );
                     })()}
@@ -7607,11 +7710,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <table className="w-full text-sm">
                       <thead>
                         <tr className={`${subtleBg} border-b ${divider}`}>
-                          <th className={`text-left px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Søkeord</th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Pos.</th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>Klikk</th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>Visninger</th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>CTR</th>
+                          <th className={`text-left px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
+                            <span className="inline-flex items-center gap-1">Søkeord <HoverTooltip text="Søkeord hentet fra Google Search Console." /></span>
+                          </th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
+                            <span className="inline-flex items-center gap-1">Pos. <HoverTooltip text="Gjennomsnittlig plassering i Google." /></span>
+                          </th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
+                            <span className="inline-flex items-center gap-1">Klikk <HoverTooltip text="Antall klikk fra organisk søk." /></span>
+                          </th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>
+                            <span className="inline-flex items-center gap-1">Visninger <HoverTooltip text="Hvor mange ganger siden er vist i søkeresultater." /></span>
+                          </th>
+                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>
+                            <span className="inline-flex items-center gap-1">CTR <HoverTooltip text="Klikkrate: klikk delt på visninger." /></span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y ${divider}`}>
@@ -7638,17 +7751,45 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   )}
                 </>
               ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <CheckCircle size={20} className="text-emerald-500 shrink-0" />
-                    <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${textMain}`}>Google Search Console tilkoblet</p>
-                      <p className={`text-xs mt-0.5 ${textDim}`}>Hent dine søkeord, klikk og posisjoner fra Google.</p>
+                <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  {gscLoading ? (
+                    <div className="flex items-center justify-center p-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
-                  </div>
-                  <PrimaryButton onClick={handleFetchGscKeywords} disabled={gscLoading} className="shrink-0">
-                    {gscLoading ? <><Loader2 size={14} className="animate-spin" /> Henter…</> : <><RefreshCw size={14} /> Hent søkeorddata nå</>}
-                  </PrimaryButton>
+                  ) : (
+                    <>
+                      <Search className="w-16 h-16 text-gray-400 mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                        Ingen søkeord ennå
+                      </h3>
+                      <p className="text-gray-600 text-center max-w-md mb-4">
+                        Google Search Console trenger 7-14 dager med data før vi kan vise søkeord.
+                      </p>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span>Sjekk at Google har indeksert siden din</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span>Send inn sitemap.xml</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span>Publiser nytt innhold</span>
+                        </div>
+                      </div>
+                      <a
+                        href="https://support.google.com/webmasters/answer/9008080"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        Se guide: Kom i gang med GSC
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
             </PortalCard>
@@ -8543,6 +8684,74 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           </div>
         )}
 
+            <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
+              <p>
+                Trenger du hjelp?
+                <a href="mailto:support@siktseo.com" className="text-blue-600 hover:underline ml-1">
+                  support@siktseo.com
+                </a>
+              </p>
+              <p className="mt-2">
+                <button
+                  onClick={() => setShowFaqModal(true)}
+                  className="text-blue-600 hover:underline"
+                >
+                  Se vanlige spørsmål
+                </button>
+              </p>
+            </footer>
+
+            {showFaqModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <button
+                  type="button"
+                  aria-label="Lukk FAQ"
+                  onClick={() => setShowFaqModal(false)}
+                  className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                />
+                <div className={`relative w-full max-w-2xl rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6 max-h-[80vh] overflow-y-auto`}>
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className={`text-lg font-semibold ${textMain}`}>Vanlige spørsmål</h3>
+                    <button type="button" onClick={() => setShowFaqModal(false)} className={`p-1.5 rounded-md ${textDim} hover:${textMain}`}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        q: 'Hvor raskt ser jeg resultater i Sikt?',
+                        a: 'Teknisk analyse vises vanligvis innen 30-60 sekunder, mens søkeordsdata fra GSC kan ta 7-14 dager.',
+                      },
+                      {
+                        q: 'Hvorfor vises ingen søkeord ennå?',
+                        a: 'Google Search Console trenger historikk før data vises. Sørg for at siden er verifisert og indeksert.',
+                      },
+                      {
+                        q: 'Hvordan oppgraderer jeg abonnementet?',
+                        a: 'Trykk på «Oppgrader» i portalen. Du sendes direkte til Stripe checkout for valgt plan.',
+                      },
+                      {
+                        q: 'Kan jeg koble flere nettsider?',
+                        a: 'Per nå støtter portalen én hovedside per bruker. Kontakt support for fler-domene oppsett.',
+                      },
+                      {
+                        q: 'Hva betyr Technical Score?',
+                        a: 'Scoren vurderer lastetid, mobilvennlighet, sikkerhet og SEO-tekniske signaler på en skala fra 0 til 100.',
+                      },
+                      {
+                        q: 'Hvordan fungerer GEO-fanen?',
+                        a: 'Du kan teste synlighet manuelt i AI-søk nå. Automatisk GEO-sporing lanseres i Q3 2026.',
+                      },
+                    ].map((item, idx) => (
+                      <div key={idx} className={`rounded-lg border ${divider} p-4`}>
+                        <p className={`text-sm font-semibold ${textMain}`}>{item.q}</p>
+                        <p className={`text-sm mt-1 ${textDim}`}>{item.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>
