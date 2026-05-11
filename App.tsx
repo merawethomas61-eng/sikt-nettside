@@ -3899,7 +3899,7 @@ const TierTeaser: React.FC<{
   tier: 'Standard' | 'Premium';
   price: string;
   message: string;
-  onUpgrade: () => void;
+  onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ theme, tier, price, message, onUpgrade }) => (
   <div
     className={`rounded-xl px-4 py-3 flex items-center gap-3 ${
@@ -3915,7 +3915,7 @@ const TierTeaser: React.FC<{
     </p>
     <button
       type="button"
-      onClick={onUpgrade}
+      onClick={() => onUpgrade(tier)}
       className="text-sm font-medium text-violet-600 hover:text-violet-500 shrink-0"
     >
       Lås opp →
@@ -4071,7 +4071,7 @@ const categoryMeta = (
 
 interface Competitor {
   id: string;
-  user_id: string;
+  site_id: string;
   domain: string;
   avg_position: number | null;
   keyword_count: number;
@@ -4121,6 +4121,7 @@ function formatVolume(n: number): string {
 function useCompetitorData(userId: string | null) {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [opportunities, setOpportunities] = useState<KeywordOpportunity[]>([]);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -4128,8 +4129,21 @@ function useCompetitorData(userId: string | null) {
     if (!userId) { setLoading(false); return; }
     setError(null);
     try {
+      const siteRows = await supabaseRest<{ id: string }[]>(
+        `sites?user_id=eq.${userId}&select=id&limit=1`,
+      );
+      const site = Array.isArray(siteRows) && siteRows.length ? siteRows[0] : null;
+      const resolvedSiteId = site?.id ?? null;
+      setSiteId(resolvedSiteId);
+
+      if (!resolvedSiteId) {
+        setCompetitors([]);
+        setOpportunities([]);
+        return;
+      }
+
       const [compRows, oppRows] = await Promise.all([
-        supabaseRest<Competitor[]>(`competitors?user_id=eq.${userId}&select=*&order=created_at.asc`),
+        supabaseRest<Competitor[]>(`competitors?site_id=eq.${resolvedSiteId}&select=*&order=created_at.asc`),
         supabaseRest<KeywordOpportunity[]>(`keyword_opportunities?user_id=eq.${userId}&select=*&order=estimated_traffic.desc`),
       ]);
       setCompetitors(Array.isArray(compRows) ? compRows : []);
@@ -4143,17 +4157,17 @@ function useCompetitorData(userId: string | null) {
 
   useEffect(() => {
     fetchData();
-    if (!userId) return;
+    if (!userId || !siteId) return;
     // Real-time oppdateringer
     const channel = supabase
-      .channel(`competitors-rt-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `user_id=eq.${userId}` }, fetchData)
+      .channel(`competitors-rt-${siteId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `site_id=eq.${siteId}` }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `user_id=eq.${userId}` }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [userId, fetchData]);
+  }, [userId, siteId, fetchData]);
 
-  return { competitors, opportunities, loading, error, refetch: fetchData };
+  return { competitors, opportunities, siteId, loading, error, refetch: fetchData };
 }
 
 // ============================================================
@@ -4164,7 +4178,7 @@ const KonkurrenterPage: React.FC<{
   theme: PortalTheme;
   hasStandardOrHigher: boolean;
   hasPremium: boolean;
-  onUpgrade: () => void;
+  onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
   const isLight = theme === 'light';
   const textMain = portalTextMainClass(theme);
@@ -4173,7 +4187,7 @@ const KonkurrenterPage: React.FC<{
   const divider = portalDividerClass(theme);
   const subtleBg = portalSubtleBgClass(theme);
 
-  const { competitors, opportunities, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+  const { competitors, opportunities, siteId, loading, error, refetch } = useCompetitorData(user?.id ?? null);
 
   // --- Modal-tilstander ---
   const [showAddModal, setShowAddModal] = useState(false);
@@ -4222,9 +4236,10 @@ const KonkurrenterPage: React.FC<{
     try {
       // 1. Lag raden i Supabase
       const color = getAvatarColor(raw);
+      if (!siteId) throw new Error('Fant ingen site for brukeren. Kjør analyse først.');
       const newRows = await supabaseRest<Competitor[]>('competitors', {
         method: 'POST',
-        body: { user_id: user.id, domain: raw, avatar_color: color, competitor_type: 'main' },
+        body: { site_id: siteId, domain: raw, avatar_color: color, competitor_type: 'main' },
         headers: { Prefer: 'return=representation' },
       });
       const newComp: Competitor = Array.isArray(newRows) ? newRows[0] : (newRows as any);
@@ -4326,7 +4341,7 @@ const KonkurrenterPage: React.FC<{
           </div>
           <button
             type="button"
-            onClick={onUpgrade}
+            onClick={() => onUpgrade('Standard')}
             className="mt-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
           >
             <Sparkles size={14} /> Oppgrader til Standard
@@ -4738,7 +4753,7 @@ const KonkurrenterPage: React.FC<{
               Du har nådd grensen på 3 konkurrenter med Standard. Oppgrader til Premium for ubegrenset overvåkning.
             </p>
             <div className="flex gap-2">
-              <PrimaryButton onClick={() => { setShowUpgradePrompt(false); onUpgrade(); }} className="flex-1">
+              <PrimaryButton onClick={() => { setShowUpgradePrompt(false); onUpgrade('Premium'); }} className="flex-1">
                 Oppgrader til Premium
               </PrimaryButton>
               <SecondaryButton theme={theme} onClick={() => setShowUpgradePrompt(false)}>Lukk</SecondaryButton>
@@ -5462,10 +5477,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   };
 
-  const handleUpgrade = () => {
-    // Legger til kundens ID helt på slutten av lenken!
-    const stripeLenke = "https://buy.stripe.com/test_din_stripe_lenke";
-    window.location.href = `${stripeLenke}?client_reference_id=${user.id}`;
+  const handleUpgrade = (targetPlan?: 'Basic' | 'Standard' | 'Premium') => {
+    const fallbackPlan: 'Standard' | 'Premium' = currentLevel <= 1 ? 'Standard' : 'Premium';
+    const selectedTarget = targetPlan || fallbackPlan;
+    if (typeof onSelectPlan === 'function') {
+      onSelectPlan(selectedTarget);
+      return;
+    }
+    toastError('Fant ikke betalingsflyt. Oppdater siden og prøv igjen.');
   };
 
   const sendGeoChat = async () => {
@@ -5594,14 +5613,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           .select('*')
           .eq('user_id', user.id)
           .gte('created_at', sixtyDaysAgo.toISOString())
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(200);
 
         if (error) {
           // Tabellen finnes trolig ikke ennå — vis tom tilstand
           console.warn('sikt_actions ikke tilgjengelig:', error.message);
           setSiktActions([]);
         } else {
-          setSiktActions(data || []);
+          const rows = Array.isArray(data) ? data : [];
+          const deduped = rows.filter((row: any, index: number, arr: any[]) => {
+            const rowTs = new Date(row.created_at).getTime();
+            const rowMinute = Math.floor(rowTs / 60000);
+            return index === arr.findIndex((candidate: any) => {
+              const candidateTs = new Date(candidate.created_at).getTime();
+              const candidateMinute = Math.floor(candidateTs / 60000);
+              return candidate.action_type === row.action_type
+                && candidateMinute === rowMinute
+                && (candidate.title || '') === (row.title || '');
+            });
+          });
+          setSiktActions(deduped.slice(0, 50));
         }
       } catch (err) {
         console.error('Feil ved henting av handlinger:', err);
@@ -6097,13 +6129,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           await new Promise(r => setTimeout(r, 1200 * attempt));
         }
 
+        const { data: { session } } = await supabase.auth.getSession();
+
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ url: formattedUrl, user_id: user.id }),
+          body: JSON.stringify({
+            url: formattedUrl,
+            user_id: user?.id
+          }),
         });
 
         const errBody = await res.json().catch(() => ({}));
