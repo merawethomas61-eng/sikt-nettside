@@ -1240,79 +1240,100 @@ const BRANSJER = [
   "Vann og Avløp", "Vaskeri", "Vedlikehold", "Veidrift", "Verksted", "Webutvikling og Design", "Yrkeshygiene", "Økonomi og Administrasjon"
 ].sort();
 
-interface GscPreCheckProps {
+const GscPreCheck = ({ onConfirm, onCancel, theme }: {
   onConfirm: () => void;
   onCancel: () => void;
   theme?: any;
-}
-
-const GscPreCheck: React.FC<GscPreCheckProps> = ({ onConfirm, onCancel, theme = 'light' }) => {
+}) => {
   const [verified, setVerified] = useState(false);
   const [sameAccount, setSameAccount] = useState(false);
   const canProceed = verified && sameAccount;
-  const isLight = theme === 'light';
-  const textMain = isLight ? 'text-slate-900' : 'text-slate-100';
-  const textDim = isLight ? 'text-slate-600' : 'text-slate-300';
-  const divider = isLight ? 'border-slate-200' : 'border-white/10';
-  const cardBg = isLight ? 'bg-slate-50' : 'bg-slate-900/40';
 
   return (
-    <div className={`rounded-xl border ${divider} ${cardBg} p-5`}>
-      <h3 className={`text-lg font-semibold ${textMain}`}>Før du kobler til Google</h3>
-      <p className={`text-sm mt-2 ${textDim}`}>
+    <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
+      <h2 className="text-2xl font-bold text-slate-900 mb-2">
+        Før du kobler til Google
+      </h2>
+      <p className="text-slate-600 mb-6">
         For at Sikt skal kunne hente søkeorddata for nettsiden din, må disse to tingene være på plass:
       </p>
 
-      <div className="mt-4 space-y-4">
-        <div>
-          <button
-            type="button"
-            onClick={() => setVerified((v) => !v)}
-            className="w-full text-left flex items-start gap-2"
-          >
-            {verified ? <CheckCircle2 size={18} className="text-emerald-600 mt-0.5 shrink-0" /> : <Circle size={18} className={`mt-0.5 shrink-0 ${textDim}`} />}
-            <span className={`text-sm ${textMain}`}>Jeg har verifisert nettsiden min i Google Search Console</span>
-          </button>
-          <a
-            href="https://support.google.com/webmasters/answer/9008080"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1 ml-7 inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-500 underline underline-offset-2"
-          >
-            Har du ikke gjort det ennå? Slik gjør du det <ExternalLink size={12} />
-          </a>
+      {/* Sjekkliste */}
+      <div className="space-y-4 mb-6">
+        {/* Punkt 1 */}
+        <div
+          onClick={() => setVerified(!verified)}
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-slate-200 hover:border-violet-300 cursor-pointer transition-colors"
+        >
+          <div className="pt-0.5">
+            {verified ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            ) : (
+              <Circle className="w-5 h-5 text-slate-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-slate-900 mb-1">
+              Jeg har verifisert nettsiden min i Google Search Console
+            </p>
+            <a
+              href="https://support.google.com/webmasters/answer/9008080"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Har du ikke gjort det ennå? Slik gjør du det
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
 
-        <div>
-          <button
-            type="button"
-            onClick={() => setSameAccount((v) => !v)}
-            className="w-full text-left flex items-start gap-2"
-          >
-            {sameAccount ? <CheckCircle2 size={18} className="text-emerald-600 mt-0.5 shrink-0" /> : <Circle size={18} className={`mt-0.5 shrink-0 ${textDim}`} />}
-            <span className={`text-sm ${textMain}`}>Jeg vil koble til med samme Google-konto som eier nettsiden i Search Console</span>
-          </button>
-          <p className={`mt-1 ml-7 text-xs ${textDim}`}>
-            Hvis nettsiden er verifisert med jobbkonto, logg inn med jobbkonto.
-          </p>
+        {/* Punkt 2 */}
+        <div
+          onClick={() => setSameAccount(!sameAccount)}
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-slate-200 hover:border-violet-300 cursor-pointer transition-colors"
+        >
+          <div className="pt-0.5">
+            {sameAccount ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            ) : (
+              <Circle className="w-5 h-5 text-slate-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-slate-900 mb-1">
+              Jeg vil koble til med samme Google-konto som eier nettsiden
+            </p>
+            <p className="text-sm text-slate-600">
+              Hvis nettsiden er verifisert med jobbkonto, logg inn med jobbkonto.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col gap-2">
+      {/* Knapper */}
+      <div className="space-y-3">
         <button
-          type="button"
           onClick={onConfirm}
           disabled={!canProceed}
-          className={`w-full py-3 rounded-xl font-semibold transition-colors ${canProceed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
+          className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+            canProceed
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+          }`}
         >
-          {canProceed ? 'Koble til Google Search Console' : 'Bekreft begge punkter for å fortsette'}
+          {canProceed
+            ? 'Koble til Google Search Console'
+            : 'Bekreft begge punkter for å fortsette'
+          }
         </button>
+
         <button
-          type="button"
           onClick={onCancel}
-          className={`text-sm ${textDim} hover:${textMain} underline underline-offset-2`}
+          className="w-full py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
         >
-          Avbryt
+          Hopp over for nå — jeg gjør dette senere
         </button>
       </div>
     </div>
@@ -1324,7 +1345,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
   const [showGscStep, setShowGscStep] = useState(false);
-  const [showGscPreCheck, setShowGscPreCheck] = useState(false);
   const [websiteUrlStatus, setWebsiteUrlStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
 
   const [formData, setFormData] = useState({
@@ -1600,44 +1620,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   if (showGscStep) {
     return (
-      <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
-        <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 border border-slate-100 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={26} />
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-3">Siste steg!</h2>
-          <p className="text-slate-600 mb-8">
-            Koble til Google Search Console for å hente dine søkeorddata automatisk.
-          </p>
-
-          {!showGscPreCheck ? (
-            <button
-              type="button"
-              onClick={() => setShowGscPreCheck(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-7 rounded-xl transition-all shadow-lg"
-            >
-              <Search size={18} />
-              Koble til Google Search Console
-            </button>
-          ) : (
-            <div className="text-left">
-              <GscPreCheck
-                onConfirm={handleConnectSearchConsole}
-                onCancel={() => setShowGscPreCheck(false)}
-                theme="light"
-              />
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onComplete()}
-            className="block mx-auto mt-5 text-sm font-semibold text-slate-500 hover:text-slate-700 underline underline-offset-4"
-          >
-            Hopp over for nå — jeg gjør dette senere
-          </button>
-        </div>
-      </section>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex items-center justify-center p-4">
+        <GscPreCheck
+          onConfirm={handleConnectSearchConsole}
+          onCancel={onComplete}
+        />
+      </div>
     );
   }
 
@@ -8900,10 +8888,12 @@ function App() {
 
         if (harBetalt && !harFyltUtSkjema) {
           // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
+          setHasAccess(false);
           setView('onboarding');
         }
         else if (!harBetalt) {
           // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
+          setHasAccess(false);
           setView('home');
           // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
           if (isExplicitAction) {
