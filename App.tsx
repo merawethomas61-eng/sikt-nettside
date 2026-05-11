@@ -13,7 +13,7 @@ import {
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2,
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink, Circle,
-  ClipboardCheck, Bell, Sparkle, Bot, Send, Plus, Info
+  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info
 } from 'lucide-react';
 
 
@@ -5614,7 +5614,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           .eq('user_id', user.id)
           .gte('created_at', sixtyDaysAgo.toISOString())
           .order('created_at', { ascending: false })
-          .limit(200);
+          .limit(50);
 
         if (error) {
           // Tabellen finnes trolig ikke ennå — vis tom tilstand
@@ -5624,16 +5624,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const rows = Array.isArray(data) ? data : [];
           const deduped = rows.filter((row: any, index: number, arr: any[]) => {
             const rowTs = new Date(row.created_at).getTime();
-            const rowMinute = Math.floor(rowTs / 60000);
             return index === arr.findIndex((candidate: any) => {
               const candidateTs = new Date(candidate.created_at).getTime();
-              const candidateMinute = Math.floor(candidateTs / 60000);
               return candidate.action_type === row.action_type
-                && candidateMinute === rowMinute
-                && (candidate.title || '') === (row.title || '');
+                && Math.abs(candidateTs - rowTs) < 60000;
             });
           });
-          setSiktActions(deduped.slice(0, 50));
+          setSiktActions(deduped);
         }
       } catch (err) {
         console.error('Feil ved henting av handlinger:', err);
@@ -7801,62 +7798,107 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'geo' && (
           <div className="space-y-6">
-            <header>
-              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>AI-synlighet</h1>
-              <p className={`text-base mt-3 ${textDim}`}>Hvordan ser ChatGPT, Gemini og Perplexity nettsiden din?</p>
-            </header>
+            {/* Hero-seksjon */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-8 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-3 mb-4">
+                <Bot className="w-8 h-8 text-purple-600" />
+                <h2 className="text-2xl font-bold">GEO - Synlighet i AI-søk</h2>
+              </div>
+              <p className="text-lg text-gray-700">
+                95% av nordmenn bruker ChatGPT til å finne bedrifter. <strong>Er du synlig der?</strong>
+              </p>
+            </div>
 
-            {!hasPremium ? (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <TierTeaser
-                  theme={themed}
-                  tier="Premium"
-                  price="4 999 kr"
-                  message="Vil du synes når kundene spør ChatGPT? Sikt tester deg ukentlig mot LLM-ene"
-                  onUpgrade={handleUpgrade}
-                />
-              </PortalCard>
-            ) : (
-              <>
-                <PortalCard theme={themed} className="p-6 sm:p-8">
-                  <CardHeader theme={themed} title="GEO-status" subtitle="Automatisk ukentlig testing av din synlighet i ChatGPT, Gemini og Perplexity." />
-                  <div className={`rounded-xl px-5 py-6 ${isLight ? 'bg-violet-50 border border-violet-100' : 'bg-violet-500/10 border border-violet-500/20'} flex items-start gap-4`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isLight ? 'bg-violet-100' : 'bg-violet-500/20'}`}>
-                      <BrainCircuit size={18} className="text-violet-600" />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-semibold ${textMain} mb-1`}>Automatisk GEO-analyse aktiveres snart</p>
-                      <p className={`text-xs leading-relaxed ${textDim}`}>
-                        Vi setter opp ukentlig testing av om ChatGPT, Gemini og Perplexity nevner bedriften din. Når analysen er klar, vil du se AI-treff, GEO-score og konkrete forbedringstips her.
-                      </p>
-                    </div>
-                  </div>
-                </PortalCard>
+            {/* Hvorfor viktig */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-xl font-semibold mb-4">Hvorfor GEO er viktig</h3>
+              <div className="space-y-3 text-gray-700">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>ChatGPT har 200 millioner brukere</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Perplexity erstatter Google for mange</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Gemini er integrert i Chrome</span>
+                </div>
+              </div>
+              <p className="mt-4 text-gray-600 italic">
+                Hvis du ikke er der, går kunden til konkurrenten.
+              </p>
+            </div>
 
-                <PortalCard theme={themed} className="p-6 sm:p-8">
-                  <CardHeader theme={themed} title="Test en prompt" subtitle="Spør LLM-en som om du var kunden — se om du nevnes." />
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={geoChatInput}
-                      onChange={(e) => setGeoChatInput(e.target.value)}
-                      placeholder="F.eks. «hvilken rørlegger bør jeg bruke i Oslo?»"
-                      className={`flex-1 rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
-                    />
-                    <PrimaryButton onClick={sendGeoChat} disabled={!geoChatInput.trim() || geoChatLoading}>
-                      {geoChatLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                      Send
-                    </PrimaryButton>
-                  </div>
-                  {geoChatReply && (
-                    <div className={`mt-4 rounded-xl ${subtleBg} p-4`}>
-                      <p className={`text-xs ${textLabel} mb-2`}>Svar fra modellen</p>
-                      <p className={`text-sm whitespace-pre-wrap ${textMain}`}>{geoChatReply}</p>
-                    </div>
-                  )}
-                </PortalCard>
-              </>
-            )}
+            {/* Prompt-tester */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <Microscope className="w-6 h-6 text-blue-600" />
+                <h3 className="text-xl font-semibold">Test din synlighet nå</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Skriv en prompt:</label>
+                  <input
+                    type="text"
+                    placeholder="Hvilken rørlegger i Oslo anbefaler du?"
+                    className="w-full p-3 border border-gray-300 rounded-lg"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => window.open('https://chatgpt.com', '_blank')}
+                    className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium"
+                  >
+                    Test i ChatGPT
+                  </button>
+                  <button
+                    onClick={() => window.open('https://www.perplexity.ai', '_blank')}
+                    className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    Test i Perplexity
+                  </button>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ Du må sjekke manuelt om bedriften din nevnes. Automatisk sporing kommer snart.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Roadmap */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-4">
+                <Rocket className="w-6 h-6 text-blue-600" />
+                <h3 className="text-xl font-semibold">Automatisk GEO-sporing (Kommer Q3 2026)</h3>
+              </div>
+
+              <p className="text-gray-700 mb-4">Når dette aktiveres får du:</p>
+
+              <div className="space-y-2 text-gray-700 mb-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600">•</span>
+                  <span>Daglig sporing av 50+ relevante prompts</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600">•</span>
+                  <span>Konkurrent-sammenligning</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600">•</span>
+                  <span>Varsler når du faller ut av AI-svar</span>
+                </div>
+              </div>
+
+              <button className="bg-white border border-blue-300 text-blue-700 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium">
+                Bli varslet når det lanseres →
+              </button>
+            </div>
           </div>
         )}
 
