@@ -1,4 +1,5 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
+import { DashboardHome } from './DashboardHome';
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -135,43 +136,42 @@ const InfoHint = ({ text }: { text: string }) => (
 
 // --- GLOBAL SMART LOGIN FUNKSJON (Oppdatert) ---
 export const handleLogin = async () => {
-  console.log("Starter innlogging...");
-
   if (!supabase) {
     toastError("Supabase mangler oppsett i supabaseClient.ts");
     return;
   }
 
-  // 1. SJEKK OM BRUKER ALLEREDE ER INNE
-  const { data: { session } } = await supabase.auth.getSession();
+  try {
+    // 1. SJEKK OM BRUKER ALLEREDE ER INNE
+    const { data: { session } } = await supabase.auth.getSession();
 
-  if (session) {
-    // Hvis bruker allerede er logget inn i appen, send dem til dashboard/priser
-    console.log("Bruker er allerede logget inn.");
-    const pricingSection = document.getElementById('priser');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    return;
-  }
-
-  // 2. START GOOGLE LOGIN (Med tvungen kontovalg)
-  console.log("Starter OAuth...");
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin,
-      queryParams: {
-        // VIKTIG: Dette tvinger Google til å vise "Velg konto" hver gang!
-        access_type: 'offline',
-        prompt: 'select_account'
+    if (session) {
+      // Hvis bruker allerede er logget inn i appen, send dem til dashboard/priser
+      const pricingSection = document.getElementById('priser');
+      if (pricingSection) {
+        pricingSection.scrollIntoView({ behavior: 'smooth' });
       }
+      return;
     }
-  });
 
-  if (error) {
-    console.error("Supabase Error:", error);
-    toastError("Feil ved innlogging: " + error.message);
+    // 2. START GOOGLE LOGIN (Med tvungen kontovalg)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: {
+          // VIKTIG: Dette tvinger Google til å vise "Velg konto" hver gang!
+          access_type: 'offline',
+          prompt: 'select_account'
+        }
+      }
+    });
+
+    if (error) {
+      toastError("Feil ved innlogging: " + error.message);
+    }
+  } catch (error: any) {
+    toastError("Feil ved innlogging: " + (error?.message || 'ukjent feil'));
   }
 };
 
@@ -1492,7 +1492,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Onboarding] 1/5 handleSubmit startet. User prop:", user?.id || "(tom)");
     setLoading(true);
 
     // Selvbergning: Hvis user-prop mangler (timing-race ved redirect fra Stripe
@@ -1529,8 +1528,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         target_audience: formData.targetAudience
       };
 
-      console.log("[Onboarding] 2/5 Forbereder upsert...", dataTilDatabase);
-
       // Vi bruker rå fetch mot Supabase REST API i stedet for supabase-js-klienten.
       // Årsak: klienten henger av og til ved ugyldig sesjonstilstand (auth-lock-deadlock).
       // Dette gir oss full kontroll og synlige feilmeldinger.
@@ -1551,7 +1548,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       };
 
       const accessToken = getStoredAccessToken();
-      console.log("[Onboarding] 2a/5 Token funnet i localStorage?", !!accessToken, accessToken?.slice(0, 20) + '...');
 
       if (!accessToken) {
         throw new Error("Ingen gyldig sesjon i localStorage. Logg ut og logg inn på nytt.");
@@ -1559,8 +1555,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      console.log("[Onboarding] 2b/5 Sender POST til /rest/v1/clients (raw fetch)...");
 
       const fetchController = new AbortController();
       const fetchTimeout = setTimeout(() => fetchController.abort(), 15000);
@@ -1586,12 +1580,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       let responseJson: any = null;
       try { responseJson = responseText ? JSON.parse(responseText) : null; } catch { /* ikke json */ }
 
-      console.log("[Onboarding] 3/5 Svar fra Supabase", {
-        status: response.status,
-        ok: response.ok,
-        body: responseJson ?? responseText,
-      });
-
       if (!response.ok) {
         const details = responseJson?.message || responseJson?.error || responseText || `HTTP ${response.status}`;
         throw new Error(`Supabase avviste: ${details}`);
@@ -1601,10 +1589,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk INSERT/UPDATE-policy på clients-tabellen.");
       }
 
-      console.log("[Onboarding] 4/5 Viser Search Console-steg");
       setShowGscStep(true);
-
-      console.log("[Onboarding] 5/5 Ferdig");
 
     } catch (error: any) {
       const rawMsg = error?.message || String(error);
@@ -2614,16 +2599,19 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
 
 
 const velgPakke = async (pakkeNavn) => {
-  console.log("Bruker valgte:", pakkeNavn);
+  try {
+    // 1. Lagre valget i Supabase (hvis bruker er logget inn)
+    const { data: { user } } = await supabase.auth.getUser();
 
-  // 1. Lagre valget i Supabase (hvis bruker er logget inn)
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (user) {
-    await supabase
-      .from('clients')
-      .update({ package_name: pakkeNavn })
-      .eq('user_id', user.id);
+    if (user) {
+      const { error } = await supabase
+        .from('clients')
+        .update({ package_name: pakkeNavn })
+        .eq('user_id', user.id);
+      if (error) throw error;
+    }
+  } catch (error: any) {
+    toastWarning(error?.message || 'Kunne ikke lagre pakkevalget, men du kan fortsatt gå videre.');
   }
 
   // 2. Send brukeren til riktig betalingsside (Stripe/Vipps)
@@ -3932,6 +3920,53 @@ const HoverTooltip: React.FC<{ text: string }> = ({ text }) => (
   </div>
 );
 
+const InlineLoading: React.FC<{ text: string; theme: PortalTheme; className?: string }> = ({ text, theme, className = '' }) => (
+  <div className={`py-8 flex items-center justify-center gap-3 ${className}`}>
+    <Loader2 size={16} className="text-violet-600 animate-spin shrink-0" />
+    <span className={`text-sm ${portalTextDimClass(theme)}`}>{text}</span>
+  </div>
+);
+
+const EmptyState: React.FC<{
+  theme: PortalTheme;
+  icon?: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}> = ({ theme, icon, title, description, action }) => (
+  <div className={`rounded-xl px-5 py-10 text-center ${portalSubtleBgClass(theme)}`}>
+    {icon && <div className="mb-4 flex justify-center text-slate-400">{icon}</div>}
+    <p className={`text-sm font-medium ${portalTextMainClass(theme)} mb-1`}>{title}</p>
+    <p className={`text-sm ${portalTextDimClass(theme)} max-w-md mx-auto`}>{description}</p>
+    {action && <div className="mt-5">{action}</div>}
+  </div>
+);
+
+const scoreStatus = (score: number | null) => {
+  if (score == null) return { label: 'Ikke målt', shortLabel: 'Mangler data', color: '#64748b', textClass: 'text-slate-500' };
+  if (score >= 80) return { label: 'Sterk score', shortLabel: 'Bra', color: '#10b981', textClass: 'text-emerald-600' };
+  if (score >= 60) return { label: 'God, men kan løftes', shortLabel: 'OK', color: '#f59e0b', textClass: 'text-amber-600' };
+  return { label: 'Trenger forbedring', shortLabel: 'Svak', color: '#f43f5e', textClass: 'text-rose-600' };
+};
+
+const dedupeSiktActions = (rows: any[]) => {
+  const seen = new Set<string>();
+  return rows.filter((row: any) => {
+    const ts = new Date(row.created_at).getTime();
+    const minuteBucket = Number.isFinite(ts) ? Math.floor(ts / 60000) : 0;
+    const key = [
+      row.action_type || row.action || '',
+      row.category || '',
+      row.title || '',
+      row.page_url || '',
+      minuteBucket,
+    ].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 // Sparkline — bittesmå linjer for trend-data (score-historikk, klikk-trend osv.).
 // Bruker Recharts med ingen aksene/grid for et minimalistisk uttrykk.
 const Sparkline: React.FC<{
@@ -3972,12 +4007,14 @@ const Sparkline: React.FC<{
 // RadialScore — donut-stil maaler 0-100 med farge basert paa score.
 // Brukes til total-score paa Hjem og PageSpeed.
 const RadialScore: React.FC<{
-  value: number;
+  value: number | null;
   size?: number;
   theme: PortalTheme;
 }> = ({ value, size = 96, theme }) => {
-  const v = Math.max(0, Math.min(100, value));
-  const color = v >= 80 ? '#10b981' : v >= 60 ? '#f59e0b' : '#f43f5e';
+  const hasValue = value != null;
+  const v = hasValue ? Math.max(0, Math.min(100, value)) : 0;
+  const meta = scoreStatus(hasValue ? v : null);
+  const color = meta.color;
   const trackColor = theme === 'light' ? '#f1f5f9' : '#1e293b';
   const data = [{ name: 'score', value: v, fill: color }];
   return (
@@ -4000,9 +4037,10 @@ const RadialScore: React.FC<{
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-          {Math.round(v)}
+          {hasValue ? Math.round(v) : '—'}
         </span>
         <span className={`text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>/ 100</span>
+        <span className={`text-[10px] font-medium mt-0.5 ${meta.textClass}`}>{meta.shortLabel}</span>
       </div>
     </div>
   );
@@ -4014,10 +4052,11 @@ const KpiTile: React.FC<{
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
+  tooltip?: string;
   accent?: 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
   spark?: number[];
   icon?: React.ReactNode;
-}> = ({ theme, label, value, hint, accent = 'slate', spark, icon }) => {
+}> = ({ theme, label, value, hint, tooltip, accent = 'slate', spark, icon }) => {
   const isLight = theme === 'light';
   const accentColors: Record<string, { ring: string; dot: string; spark: string; iconBg: string; iconFg: string }> = {
     violet: { ring: 'border-violet-200', dot: 'bg-violet-500', spark: '#7c3aed', iconBg: isLight ? 'bg-violet-50' : 'bg-violet-500/10', iconFg: 'text-violet-600' },
@@ -4039,6 +4078,7 @@ const KpiTile: React.FC<{
           <span className={`text-xs font-medium uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-slate-400'} truncate`}>
             {label}
           </span>
+          {tooltip && <HoverTooltip text={tooltip} />}
         </div>
       </div>
       <div className={`text-2xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'} leading-none`}>
@@ -4092,7 +4132,7 @@ interface Competitor {
 
 interface KeywordOpportunity {
   id: string;
-  user_id: string;
+  site_id: string;
   keyword: string;
   search_volume: number;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -4136,7 +4176,14 @@ function useCompetitorData(userId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setCompetitors([]);
+      setOpportunities([]);
+      setSiteId(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     setError(null);
     try {
       const { data: site, error: siteError } = await supabase
@@ -4165,7 +4212,7 @@ function useCompetitorData(userId: string | null) {
         supabase
           .from('keyword_opportunities')
           .select('*')
-          .eq('user_id', userId)
+          .eq('site_id', resolvedSiteId)
           .order('estimated_traffic', { ascending: false }),
       ]);
 
@@ -4188,7 +4235,7 @@ function useCompetitorData(userId: string | null) {
     const channel = supabase
       .channel(`competitors-rt-${siteId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `site_id=eq.${siteId}` }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `user_id=eq.${userId}` }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `site_id=eq.${siteId}` }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, siteId, fetchData]);
@@ -4306,6 +4353,8 @@ const KonkurrenterPage: React.FC<{
       if (!res.ok) toastError(data?.error || 'Scanning feilet.');
       else toastSuccess(data?.message || 'Scanning fullført.');
       await refetch();
+    } catch (e: any) {
+      toastError(e?.message || 'Kunne ikke skanne konkurrenten akkurat nå.');
     } finally {
       setScanningId(null);
     }
@@ -4342,6 +4391,8 @@ const KonkurrenterPage: React.FC<{
         else toastSuccess('Innholdet er generert. Publiser via din CMS-integrasjon.');
         await refetch();
       }
+    } catch (e: any) {
+      toastError(e?.message || 'Kunne ikke generere siden akkurat nå.');
     } finally {
       setGenerateLoading(false);
       setGenerateTarget(null);
@@ -4390,8 +4441,11 @@ const KonkurrenterPage: React.FC<{
       </header>
 
       {error && (
-        <div className={`rounded-xl px-4 py-3 text-sm border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'}`}>
-          {error}
+        <div className={`rounded-xl px-4 py-3 text-sm border flex items-center justify-between gap-3 ${isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'}`}>
+          <span>{error}</span>
+          <button type="button" onClick={refetch} className="font-medium underline underline-offset-2">
+            Prøv igjen
+          </button>
         </div>
       )}
 
@@ -4452,30 +4506,21 @@ const KonkurrenterPage: React.FC<{
         />
 
         {loading ? (
-          <div className="py-8 flex items-center justify-center gap-3">
-            <Loader2 size={16} className="text-violet-600 animate-spin" />
-            <span className={`text-sm ${textDim}`}>Laster konkurrenter…</span>
-          </div>
+          <InlineLoading theme={theme} text="Laster konkurrenter…" />
         ) : competitors.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <Users className="w-16 h-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              Ingen konkurrenter lagt til
-            </h3>
-            <p className="text-gray-600 text-center max-w-md mb-6">
-              {hasSite
-                ? 'Legg til konkurrenter for å sammenligne din prestasjon og se hvor du kan forbedre deg.'
-                : 'Kjør en første analyse slik at vi oppretter en site før du legger til konkurrenter.'}
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              disabled={!hasSite}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Legg til din første konkurrent
-            </button>
-          </div>
+          <EmptyState
+            theme={theme}
+            icon={<Users className="w-12 h-12" />}
+            title={hasSite ? 'Ingen konkurrenter lagt til' : 'Ingen nettside funnet enda'}
+            description={hasSite
+              ? 'Legg til konkurrenter for å sammenligne prestasjonen din og finne gap du kan utnytte.'
+              : 'Kjør en første analyse slik at Sikt oppretter site før konkurrenter knyttes til den.'}
+            action={
+              <PrimaryButton onClick={() => setShowAddModal(true)} disabled={!hasSite}>
+                Legg til din første konkurrent
+              </PrimaryButton>
+            }
+          />
         ) : (
           <ul className={`divide-y ${divider}`}>
             {competitors.map((c) => {
@@ -4535,15 +4580,17 @@ const KonkurrenterPage: React.FC<{
                       type="button"
                       title="Fjern"
                       onClick={async () => {
-                        const { error: deleteError } = await supabase
-                          .from('competitors')
-                          .delete()
-                          .eq('id', c.id);
-                        if (deleteError) {
-                          toastError('Kunne ikke fjerne konkurrenten.');
-                          return;
+                        try {
+                          const { error: deleteError } = await supabase
+                            .from('competitors')
+                            .delete()
+                            .eq('id', c.id);
+                          if (deleteError) throw deleteError;
+                          await refetch();
+                          toastSuccess('Konkurrent fjernet.');
+                        } catch (e: any) {
+                          toastError(e?.message || 'Kunne ikke fjerne konkurrenten.');
                         }
-                        refetch();
                       }}
                       className={`p-1.5 rounded-md ${textLabel} hover:text-rose-600 transition-colors`}
                     >
@@ -4605,18 +4652,16 @@ const KonkurrenterPage: React.FC<{
         </div>
 
         {loading ? (
-          <div className="py-6 flex items-center justify-center gap-3">
-            <Loader2 size={16} className="text-violet-600 animate-spin" />
-            <span className={`text-sm ${textDim}`}>Analyserer…</span>
-          </div>
+          <InlineLoading theme={theme} text="Analyserer søkeord-gap…" />
         ) : filteredOpps.length === 0 ? (
-          <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-            <p className={`text-sm ${textDim}`}>
-              {opportunities.length === 0
-                ? 'Vi analyserer fortsatt konkurrentene dine. Sjekk tilbake om noen minutter.'
-                : 'Ingen muligheter i dette filteret.'}
-            </p>
-          </div>
+          <EmptyState
+            theme={theme}
+            icon={<Search className="w-10 h-10" />}
+            title={opportunities.length === 0 ? 'Ingen søkeord-gap funnet' : 'Ingen treff i dette filteret'}
+            description={opportunities.length === 0
+              ? 'Legg til eller skann konkurrenter. Når Sikt finner søkeord de rangerer på og du mangler, vises de her.'
+              : 'Bytt filter for å se andre muligheter.'}
+          />
         ) : (
           <div className="overflow-x-auto -mx-6 sm:-mx-8">
             <ul className={`min-w-[480px] divide-y ${divider} mx-6 sm:mx-8`}>
@@ -5167,13 +5212,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   useEffect(() => {
     const checkGscConnection = async () => {
       if (!user?.id) return;
-      const { data } = await supabase
-        .from('api_credentials')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('service_name', 'google_search_console')
-        .maybeSingle();
-      if (data) setGscConnected(true);
+      try {
+        const { data, error } = await supabase
+          .from('api_credentials')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('service_name', 'google_search_console')
+          .maybeSingle();
+        if (error) throw error;
+        if (data) setGscConnected(true);
+      } catch {
+        setGscConnected(false);
+      }
     };
     checkGscConnection();
   }, [user?.id]);
@@ -5256,15 +5306,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         }
       );
 
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
 
       if (result.success) {
-        const { data: keywords } = await supabase
+        const { data: keywords, error: keywordsError } = await supabase
           .from('keywords')
           .select('keyword, position, clicks, impressions, ctr')
           .eq('site_id', site.id)
           .order('clicks', { ascending: false })
           .limit(50);
+        if (keywordsError) throw keywordsError;
 
         if (keywords && keywords.length > 0) {
           setGscKeywords(keywords);
@@ -5602,8 +5653,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setIsScanning(true);
     setIsScanningLinks(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/scan-website', {
         method: 'POST',
         headers: {
@@ -5613,9 +5664,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         body: JSON.stringify({ url: formData.websiteUrl })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (data.error) {
+      if (!response.ok || data.error) {
         toastError("Feil ved skanning: " + data.error);
         return;
       }
@@ -5656,9 +5707,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         toastWarning("Fant ingen sider på dette domenet. Er URL-en riktig?");
       }
 
-    } catch (error) {
-      console.error(error);
-      toastError("Nettverksfeil under skanning.");
+    } catch (error: any) {
+      toastError(error?.message || "Nettverksfeil under skanning.");
     } finally {
       setIsScanning(false);
       setIsScanningLinks(false);
@@ -5693,21 +5743,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           console.warn('sikt_actions ikke tilgjengelig:', error.message);
           setSiktActions([]);
         } else {
-          const rows = Array.isArray(data) ? data : [];
-          const deduped = rows.filter((row: any, index: number, arr: any[]) => {
-            const rowTs = new Date(row.created_at).getTime();
-            return index === arr.findIndex((candidate: any) => {
-              const candidateTs = new Date(candidate.created_at).getTime();
-              const candidateAction = candidate.action || candidate.action_type || '';
-              const rowAction = row.action || row.action_type || '';
-              return candidateAction === rowAction
-                && Math.abs(candidateTs - rowTs) < 60000;
-            });
-          });
-          setSiktActions(deduped);
+          setSiktActions(dedupeSiktActions(Array.isArray(data) ? data : []));
         }
-      } catch (err) {
-        console.error('Feil ved henting av handlinger:', err);
+      } catch {
         setSiktActions([]);
       } finally {
         setLoadingReceipt(false);
@@ -5723,8 +5761,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     setIsScanningLinks(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/scan-website', {
         method: 'POST',
         headers: {
@@ -5734,9 +5772,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         body: JSON.stringify({ url: formData.websiteUrl })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (data.error) {
+      if (!response.ok || data.error) {
         toastError("Feil ved skanning: " + data.error);
         return;
       }
@@ -5778,9 +5816,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         toastWarning("Fant ingen lesbare sider på dette domenet.");
       }
 
-    } catch (error) {
-      console.error("Feil ved lenkeskanning:", error);
-      toastError("Nettverksfeil under lenkeskanning.");
+    } catch (error: any) {
+      toastError(error?.message || "Nettverksfeil under lenkeskanning.");
     } finally {
       setIsScanningLinks(false);
     }
@@ -5938,10 +5975,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             body: JSON.stringify({ keyword, location })
           });
 
-          const data = await response.json();
+          const data = await response.json().catch(() => ({}));
 
-          if (data.error) {
-            console.error("Server svarte med feil:", data.error);
+          if (!response.ok || data.error) {
             return null; // Hopper over dette ordet hvis serveren feiler
           }
 
@@ -6013,8 +6049,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             competitors: extractedCompetitors
           } as any;
 
-        } catch (err) {
-          console.error(err);
+        } catch {
           return null;
         }
       });
@@ -6041,23 +6076,25 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       // --- 3. LAGRE TIL SUPABASE (ERSTATTER LOCALSTORAGE) ---
       for (const result of results) {
         // 1. Sjekk om ordet allerede finnes i databasen for denne kunden
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('user_keywords')
           .select('id')
           .eq('user_id', user.id)
           .eq('keyword', result.keyword)
           .eq('location', result.location)
-          .single();
+          .maybeSingle();
+        if (existingError) throw existingError;
 
         if (existing) {
           // 2. Hvis det finnes, oppdaterer vi grafen og historikken
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_keywords')
             .update({ keyword_data: result })
             .eq('id', existing.id);
+          if (updateError) throw updateError;
         } else {
           // 3. Hvis det er helt nytt, legger vi det inn i databasen
-          await supabase
+          const { error: insertError } = await supabase
             .from('user_keywords')
             .insert({
               user_id: user.id,
@@ -6065,6 +6102,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               location: result.location,
               keyword_data: result
             });
+          if (insertError) throw insertError;
         }
       }
 
@@ -6072,8 +6110,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       localStorage.setItem(`keywords_${user.id}`, JSON.stringify(activeList));
       localStorage.setItem(`rankings_${user.id}`, JSON.stringify(results));
 
-    } catch (error) {
-      toastError("Feil ved henting av data.");
+    } catch (error: any) {
+      toastError(error?.message || "Feil ved henting av data.");
     } finally {
       setRankingLoading(false);
     }
@@ -6622,7 +6660,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const moreTodos = todos.slice(3);
 
   // Aktivitetsfeed paa Hjem - siste 8 sikt_actions
-  const homeFeedActions = (siktActions || []).slice(0, 8);
+  const homeFeedActions = dedupeSiktActions(siktActions || []).slice(0, 8);
 
   // KPI-data for Hjem-tilene
   const top10Count = realRankings.filter((r: any) => r.position && r.position <= 10).length;
@@ -6669,7 +6707,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
-        <div className={`text-sm ${textDim}`}>Laster portalen…</div>
+        <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/60'} px-6 py-5 shadow-sm flex items-center gap-3`}>
+          <Loader2 size={18} className="text-violet-600 animate-spin" />
+          <div>
+            <p className={`text-sm font-medium ${textMain}`}>Laster portalen</p>
+            <p className={`text-xs ${textDim}`}>Henter profil, score og siste aktivitet.</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -6827,6 +6871,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
         {/* =============================================================== */}
         {activeTab === 'home' && (
+          <DashboardHome
+            user={user}
+            clientData={clientData}
+            formData={formData}
+            onRunAnalysis={runRealAnalysis}
+            onNavigate={setActiveTab}
+          />
+        )}
+        {false && activeTab === 'home' && (
           <div className="space-y-6">
             {showFirstAnalysisBanner && (
               <div className={`rounded-xl border ${divider} ${isLight ? 'bg-violet-50' : 'bg-violet-950/30'} px-4 py-3 flex items-start justify-between gap-3`}>
@@ -6910,7 +6963,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
 
               <div className="flex flex-col items-center gap-3 shrink-0">
-                  <RadialScore value={combinedScore ?? 0} theme={themed} size={108} />
+                  <RadialScore value={combinedScore} theme={themed} size={108} />
                   {/* Sub-score breakdown — viser hva totalscoren består av med tydelig fallback */}
                   <div className="flex flex-wrap items-start justify-center gap-2 max-w-[300px]">
                     {(() => {
@@ -7089,7 +7142,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     {/* BESØKENDE */}
                     <div className={`rounded-xl border ${isLight ? 'border-slate-100 bg-slate-50/60' : 'border-white/8 bg-slate-800/40'} p-4`}>
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel}`}>Besøkende</span>
+                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel} inline-flex items-center gap-1`}>
+                          Besøkende
+                          <HoverTooltip text="Antall brukere fra Google Analytics for valgt periode. Vises når Analytics er koblet til." />
+                        </span>
                         <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400'}`}>
                           <Users size={12} />
                         </span>
@@ -7111,7 +7167,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     {/* SYNLIGHET */}
                     <div className={`rounded-xl border ${isLight ? 'border-slate-100 bg-slate-50/60' : 'border-white/8 bg-slate-800/40'} p-4`}>
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel}`}>Synlighet</span>
+                        <span className={`text-xs font-medium uppercase tracking-wide ${textLabel} inline-flex items-center gap-1`}>
+                          Synlighet
+                          <HoverTooltip text="0-100 basert på plasseringene dine for sporede søkeord. Topp 3 gir mest poeng." />
+                        </span>
                         <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400'}`}>
                           <Search size={12} />
                         </span>
@@ -7162,6 +7221,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 accent={scoreTone === 'good' ? 'emerald' : scoreTone === 'warn' ? 'amber' : scoreTone === 'bad' ? 'rose' : 'slate'}
                 spark={scoreSpark.length >= 2 ? scoreSpark : undefined}
                 icon={<Activity size={14} />}
+                tooltip="Samlet score fra teknisk helse, søkesynlighet og GEO når tilgjengelig. Høyere betyr bedre."
               />
               <KpiTile
                 theme={themed}
@@ -7176,6 +7236,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 }
                 accent={top10Count > 0 ? 'violet' : 'slate'}
                 icon={<Search size={14} />}
+                tooltip="Antall sporede søkeord der siden din vises blant topp 10 i Google-resultatene."
               />
               <KpiTile
                 theme={themed}
@@ -7185,6 +7246,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 accent={actionsLast7d > 0 ? 'emerald' : 'slate'}
                 spark={activityByDay.some((v) => v > 0) ? activityByDay : undefined}
                 icon={<Sparkles size={14} />}
+                tooltip="Antall funn, forslag, varsler og fikser Sikt har registrert de siste 7 dagene."
               />
               <KpiTile
                 theme={themed}
@@ -7193,6 +7255,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 hint={todos.length === 0 ? 'Alt på stell' : <>{todayTodos.length} prioritert</>}
                 accent={todos.length > 5 ? 'amber' : todos.length > 0 ? 'violet' : 'emerald'}
                 icon={<Wrench size={14} />}
+                tooltip="Antall prioriterte oppgaver Sikt mener bør løses basert på analyser og søkeordsdata."
               />
             </div>
 
@@ -8036,7 +8099,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </div>
 
-              <button className="bg-white border border-blue-300 text-blue-700 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium">
+              <button
+                type="button"
+                onClick={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')}
+                className="bg-white border border-blue-300 text-blue-700 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium"
+              >
                 Bli varslet når det lanseres →
               </button>
             </div>
@@ -8364,16 +8431,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               {/* Logg-feed */}
               <PortalCard theme={themed}>
                 {loadingReceipt ? (
-                  <div className={`p-12 text-center text-sm ${textDim}`}>Laster…</div>
+                  <InlineLoading theme={themed} text="Laster aktivitetsloggen…" />
                 ) : filtered.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <p className={`text-sm font-medium ${textMain} mb-1`}>
-                      Ingen handlinger {weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}
-                    </p>
-                    <p className={`text-sm ${textDim}`}>
-                      {weekOffset === 0 ? 'Sikt jobber i bakgrunnen — kom tilbake snart.' : 'Sikt logget ingenting i denne perioden.'}
-                    </p>
-                  </div>
+                  <EmptyState
+                    theme={themed}
+                    icon={<ClipboardCheck className="w-10 h-10" />}
+                    title={`Ingen handlinger ${weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}`}
+                    description={weekOffset === 0 ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.' : 'Sikt logget ingenting i denne perioden.'}
+                    action={weekOffset === 0 ? (
+                      <SecondaryButton theme={themed} onClick={() => setActiveTab('home')}>
+                        Gå til Hjem
+                      </SecondaryButton>
+                    ) : undefined}
+                  />
                 ) : (
                   <ul className={`divide-y ${divider}`}>
                     {filtered.map((a) => {
@@ -8684,17 +8754,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           </div>
         )}
 
-            <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
-              <p>
-                Trenger du hjelp?
-                <a href="mailto:support@siktseo.com" className="text-blue-600 hover:underline ml-1">
+            <footer className={`mt-12 pt-6 border-t ${divider} text-center text-sm ${textDim}`}>
+              <p className="inline-flex items-center justify-center gap-2 flex-wrap">
+                <LifeBuoy size={14} className="text-violet-600" />
+                <span>Support-kanal:</span>
+                <a href="mailto:support@siktseo.com?subject=Support%20fra%20Sikt-portalen" className="text-violet-600 hover:text-violet-500 font-medium underline underline-offset-2">
                   support@siktseo.com
                 </a>
+                <span className={textLabel}>Svar normalt innen én arbeidsdag.</span>
               </p>
               <p className="mt-2">
                 <button
+                  type="button"
                   onClick={() => setShowFaqModal(true)}
-                  className="text-blue-600 hover:underline"
+                  className="text-violet-600 hover:text-violet-500 underline underline-offset-2"
                 >
                   Se vanlige spørsmål
                 </button>
@@ -8995,7 +9068,6 @@ function App() {
     if (isPaymentSuccess && typeof window !== 'undefined') {
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: newUrl }, '', newUrl);
-      console.log("URL vasket: Betalings-parameter fjernet.");
     }
   }, [isPaymentSuccess]);
 
@@ -9140,7 +9212,6 @@ function App() {
               body: { user_id: user.id, package_name: savedPlan },
               headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
             });
-            console.log('[Routing] Pakke lagret i clients:', savedPlan);
           } catch (e: any) {
             console.error('[Routing] Kunne ikke lagre pakke:', e?.message || e);
           }
@@ -9148,7 +9219,6 @@ function App() {
         } else if (savedPlan && !justPaid) {
           // Brukeren valgte pakke men betalte ikke — behold lappen i localStorage
           // slik at vi kan preutfylle valget når de faktisk betaler.
-          console.log('[Routing] sikt_pending_plan funnet, men ingen betaling — beholder lappen.');
           setSelectedPlan(savedPlan);
         }
 
@@ -9216,20 +9286,16 @@ function App() {
       // Viktig: Vi bruker den FØRFANGEDE isAnyRedirect i stedet for å lese
       // URL-en på nytt, fordi URL-vasken rekker å kjøre før denne init-en.
       if (isAnyRedirect) {
-        console.log("[Auth] Redirect oppdaget (Stripe/OAuth) — beholder sesjonen.");
       } else {
-        console.log("[Auth] Normal visning: beholder sesjon om gyldig token finnes.");
       }
 
       if (!isMounted) return;
 
-      console.log("[Auth] Starter å lytte på auth-events.");
 
       const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!isMounted) return;
         if (event === 'TOKEN_REFRESHED') return;
 
-        console.log("[Auth] Event:", event, "Har session:", !!session);
 
         if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -9246,7 +9312,6 @@ function App() {
           // slik at hjemmesiden alltid er en ren, ikke-paalogget opplevelse.
           // SIGNED_OUT-handleren under tar seg av state-resettet.
           if (event === 'INITIAL_SESSION' && isFreshTabRef.current && !isAnyRedirect) {
-            console.log("[Auth] Fresh besoek — logger ut lagret sesjon for ren hjemmeside.");
             isFreshTabRef.current = false; // unngaa loop hvis signOut paa magisk vis re-fyrer
             try { await supabase.auth.signOut(); } catch { /* ignore */ }
             return;
@@ -9260,7 +9325,6 @@ function App() {
           // supabase fyrer SIGNED_IN på nytt etter token-refresh, og uten denne
           // sjekken ville vi flyttet brukeren ut av onboarding / settings / verksted.
           if (event === 'SIGNED_IN' && hasInitialized && sameUserAsBefore) {
-            console.log("[Auth] Tab-refokus / token-refresh — beholder nåværende view.");
             hasInitialized = true;
             return;
           }
@@ -9332,25 +9396,21 @@ function App() {
   const handlePlanSelect = async (plan: string) => {
     // 0. SKJOLDET: Hvis funksjonen allerede kjører, avbryt umiddelbart!
     if (isProcessingClick.current) {
-      console.log("Skjold aktivert: Ignorerer ekstra klikk for pakke:", plan);
       return;
     }
 
     try {
       // Lås døren!
       isProcessingClick.current = true;
-      console.log("1. Knapp trykket for pakke:", plan);
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('sikt_pending_plan', plan);
-        console.log("2. Plan midlertidig lagret i husk:", plan);
       }
 
       if (typeof setSelectedPlan === 'function') {
         setSelectedPlan(plan);
       }
 
-      console.log("3. Sjekker om bruker er logget inn...");
 
       // NB: Vi bruker IKKE supabase.auth.getSession() her — den kan henge
       // på grunn av auth-lock-deadlock i supabase-js. Vi sjekker i stedet
@@ -9359,7 +9419,6 @@ function App() {
       const currentUser = hasToken ? user : null;
 
       if (!currentUser) {
-        console.log("4b. INGEN bruker logget inn. Tvinger skjerm til toppen og bytter til 'login'.");
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (typeof setView === 'function') {
@@ -9368,8 +9427,6 @@ function App() {
         return; // Vi beholder låsen på frem til siden er byttet
       }
 
-      console.log("4c. Bruker ER logget inn:", currentUser.email);
-      console.log("5. Finner riktig Stripe-lenke...");
 
       const planNavn = plan.toUpperCase();
       let stripeBaseUrl = "";
@@ -9383,7 +9440,6 @@ function App() {
         return;
       }
 
-      console.log("6. Sender til Stripe nå...");
       // VIKTIG: client_reference_id må med — webhook bruker dette til å koble
       // betalingen mot riktig bruker. Uten dette står kunden fast etter betaling.
       const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(currentUser.email || '')}&client_reference_id=${encodeURIComponent(currentUser.id)}`;

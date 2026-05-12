@@ -1,0 +1,1 @@
+npx skills add Leonxlnx/taste-skill
