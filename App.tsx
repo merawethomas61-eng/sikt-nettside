@@ -6875,6 +6875,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             user={user}
             clientData={clientData}
             formData={formData}
+            analysisResults={analysisResults}
+            scoreHistory={scoreHistory}
+            siktActions={siktActions}
+            realRankings={realRankings}
+            gscConnected={gscConnected}
+            gscKeywords={gscKeywords}
+            isAnalyzing={isAnalyzing}
             onRunAnalysis={runRealAnalysis}
             onNavigate={setActiveTab}
           />

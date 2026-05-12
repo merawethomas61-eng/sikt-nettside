@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
-import { supabase } from './supabaseClient';
 
 type PortalTab = 'home' | 'visibility' | 'keywords' | 'competitors' | 'geo' | 'workshop' | 'log' | 'settings';
 
@@ -9,16 +8,15 @@ type DashboardHomeProps = {
   user: any;
   clientData: any;
   formData?: any;
+  analysisResults?: any | null;
+  scoreHistory?: { at: string; mobilePerf: number; mobileSeo: number; desktopPerf: number }[];
+  siktActions?: any[];
+  realRankings?: any[];
+  gscConnected?: boolean;
+  gscKeywords?: any[];
+  isAnalyzing?: boolean;
   onRunAnalysis: () => void;
   onNavigate: (tab: PortalTab) => void;
-};
-
-type HealthCheck = {
-  id?: string;
-  technical_score?: number | null;
-  technical_data?: any;
-  checked_at?: string;
-  created_at?: string;
 };
 
 type PriorityTask = {
@@ -32,6 +30,8 @@ type PriorityTask = {
 type ActivityLog = {
   id?: string;
   action?: string;
+  action_type?: string;
+  title?: string;
   details?: any;
   created_at?: string;
 };
@@ -80,7 +80,7 @@ const dedupeLogs = (rows: ActivityLog[]) => {
   return rows.filter((row) => {
     const ts = new Date(row.created_at || '').getTime();
     const minute = Number.isFinite(ts) ? Math.floor(ts / 60000) : 0;
-    const key = `${row.action || ''}|${minute}`;
+    const key = `${row.action || row.action_type || row.title || ''}|${minute}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -88,8 +88,9 @@ const dedupeLogs = (rows: ActivityLog[]) => {
 };
 
 const readableAction = (log: ActivityLog) => {
-  const action = log.action || '';
+  const action = log.action || (log as any).action_type || '';
   const details = log.details || {};
+  if ((log as any).title) return (log as any).title;
   if (action === 'analysis_run') {
     const score = details.technical_score ?? details.mobile_score ?? details.score;
     return `Analyse fullført${score != null ? ` · Teknisk score ${score}` : ''}`;
@@ -104,21 +105,20 @@ const readableAction = (log: ActivityLog) => {
     : 'Hendelse registrert';
 };
 
-const extractTasks = (latest?: HealthCheck | null): PriorityTask[] => {
-  const audits = latest?.technical_data?.lighthouseResult?.audits;
-  if (!audits) return [];
+const extractTasks = (analysisResults?: any | null): PriorityTask[] => {
+  const opportunities = analysisResults?.mobile?.opportunities;
+  if (!Array.isArray(opportunities)) return [];
 
-  return Object.entries(audits)
-    .filter(([, audit]: any) => audit && audit.score !== 1 && audit.score !== null)
-    .map(([id, audit]: any) => ({
+  return opportunities.slice(0, 6).map((audit: any, index: number) => {
+    const id = audit.id || audit.title || `task-${index}`;
+    return {
       id,
       title: audit.title || id,
-      displayValue: audit.displayValue,
+      displayValue: audit.savings || audit.displayValue,
       priority: highPriorityAudits.has(id) ? 'høy' as const : 'middels' as const,
       category: mediumPriorityAudits.has(id) ? 'Teknisk' : 'PageSpeed',
-    }))
-    .sort((a) => (a.priority === 'høy' ? -1 : 1))
-    .slice(0, 6);
+    };
+  });
 };
 
 const SmallPeriodSwitch = ({
@@ -201,146 +201,79 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   user,
   clientData,
   formData,
+  analysisResults,
+  scoreHistory = [],
+  siktActions = [],
+  realRankings = [],
+  gscConnected = false,
+  gscKeywords = [],
+  isAnalyzing = false,
   onRunAnalysis,
   onNavigate,
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
-  const [gscConnected, setGscConnected] = useState(false);
-  const [clicks, setClicks] = useState(0);
-  const [impressions, setImpressions] = useState(0);
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [chartPeriod, setChartPeriod] = useState(30);
   const [technicalPeriod, setTechnicalPeriod] = useState(30);
   const [visibilityPeriod, setVisibilityPeriod] = useState(30);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadDashboard = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const { data: siteRows, error: siteError } = await supabase
-          .from('sites')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1);
-        if (siteError) throw siteError;
-
-        const siteId = siteRows?.[0]?.id ?? null;
-        let checks: HealthCheck[] = [];
-        let hasGsc = false;
-
-        if (siteId) {
-          const { data: healthRows, error: healthError } = await supabase
-            .from('health_checks')
-            .select('*')
-            .eq('site_id', siteId)
-            .order('checked_at', { ascending: false })
-            .limit(90);
-          if (healthError) throw healthError;
-          checks = Array.isArray(healthRows) ? healthRows : [];
-        }
-
-        const { data: credentials, error: credentialError } = await supabase
-          .from('api_credentials')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('service_name', 'google_search_console')
-          .limit(1);
-        if (credentialError) throw credentialError;
-        hasGsc = !!credentials?.length;
-
-        let totalClicks = 0;
-        let totalImpressions = 0;
-        if (siteId && hasGsc) {
-          const { data: keywordRows, error: keywordError } = await supabase
-            .from('keywords')
-            .select('clicks,impressions,avg_position')
-            .eq('site_id', siteId);
-          if (keywordError) throw keywordError;
-          for (const row of keywordRows || []) {
-            totalClicks += Number(row.clicks || 0);
-            totalImpressions += Number(row.impressions || 0);
-          }
-        }
-
-        const { data: activityRows, error: activityError } = await supabase
-          .from('activity_logs')
-          .select('id,action,details,created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-        if (activityError) throw activityError;
-
-        if (!cancelled) {
-          setHealthChecks(checks);
-          setGscConnected(hasGsc);
-          setClicks(totalClicks);
-          setImpressions(totalImpressions);
-          setLogs(dedupeLogs(Array.isArray(activityRows) ? activityRows : []).slice(0, 7));
-        }
-      } catch {
-        if (!cancelled) {
-          setHealthChecks([]);
-          setGscConnected(false);
-          setClicks(0);
-          setImpressions(0);
-          setLogs([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    loadDashboard();
-    return () => { cancelled = true; };
-  }, [user?.id]);
-
-  const latest = healthChecks[0] ?? null;
-  const technicalScore = typeof latest?.technical_score === 'number' ? latest.technical_score : null;
-  const visibilityScore = latest?.technical_data?.lighthouseResult?.categories?.seo?.score != null
-    ? Math.round(latest.technical_data.lighthouseResult.categories.seo.score * 100)
+  const technicalScore = analysisResults
+    ? Math.round((
+        (analysisResults.mobile?.performance ?? 0)
+        + (analysisResults.mobile?.seo ?? 0)
+        + (analysisResults.mobile?.bestPractices ?? 0)
+        + (analysisResults.mobile?.accessibility ?? 0)
+      ) / 4)
     : null;
+
+  const visibilityScore: number | null = (() => {
+    if (!realRankings.length) return analysisResults?.mobile?.seo ?? null;
+    const sum = realRankings.reduce((acc: number, row: any) => {
+      const position = typeof row?.position === 'number' ? row.position : null;
+      if (position == null) return acc + 10;
+      if (position <= 3) return acc + 100;
+      if (position <= 10) return acc + 80;
+      if (position <= 20) return acc + 50;
+      if (position <= 50) return acc + 25;
+      return acc + 10;
+    }, 0);
+    return Math.round(sum / realRankings.length);
+  })();
+
   const combinedScore = technicalScore != null && visibilityScore != null
     ? Math.round((technicalScore + visibilityScore) / 2)
     : technicalScore ?? visibilityScore;
 
   const allTrendData = useMemo(
-    () => healthChecks.slice(0, chartPeriod).reverse().map((check) => ({ v: Number(check.technical_score || 0) })),
-    [healthChecks, chartPeriod],
+    () => scoreHistory.slice(-chartPeriod).map((row) => ({ v: Math.round(((row.mobilePerf ?? 0) + (row.mobileSeo ?? 0)) / 2) })),
+    [scoreHistory, chartPeriod],
   );
   const technicalTrend = useMemo(
-    () => healthChecks.slice(0, technicalPeriod).reverse().map((check) => ({ v: Number(check.technical_score || 0) })),
-    [healthChecks, technicalPeriod],
+    () => scoreHistory.slice(-technicalPeriod).map((row) => ({ v: row.mobilePerf ?? 0 })),
+    [scoreHistory, technicalPeriod],
   );
   const visibilityTrend = useMemo(
-    () => healthChecks.slice(0, visibilityPeriod).reverse().map((check) => ({
-      v: Math.round((check.technical_data?.lighthouseResult?.categories?.seo?.score ?? 0) * 100),
-    })),
-    [healthChecks, visibilityPeriod],
+    () => scoreHistory.slice(-visibilityPeriod).map((row) => ({ v: row.mobileSeo ?? 0 })),
+    [scoreHistory, visibilityPeriod],
   );
 
   const weekDelta = useMemo(() => {
-    if (technicalScore == null || healthChecks.length < 2) return null;
-    const latestDate = new Date(latest?.checked_at || latest?.created_at || '').getTime();
+    if (technicalScore == null || scoreHistory.length < 2) return null;
+    const latestDate = new Date(scoreHistory[scoreHistory.length - 1]?.at || '').getTime();
     const sevenDaysAgo = Number.isFinite(latestDate) ? latestDate - 7 * 24 * 60 * 60 * 1000 : Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const reference = healthChecks.find((check) => new Date(check.checked_at || check.created_at || '').getTime() <= sevenDaysAgo)
-      || healthChecks[Math.min(healthChecks.length - 1, 7)];
-    if (typeof reference?.technical_score !== 'number') return null;
-    return technicalScore - reference.technical_score;
-  }, [healthChecks, latest?.checked_at, latest?.created_at, technicalScore]);
+    const reference = [...scoreHistory].reverse().find((row) => new Date(row.at).getTime() <= sevenDaysAgo)
+      || scoreHistory[Math.max(0, scoreHistory.length - 2)];
+    if (!reference) return null;
+    const referenceScore = Math.round(((reference.mobilePerf ?? 0) + (reference.mobileSeo ?? 0)) / 2);
+    return combinedScore != null ? combinedScore - referenceScore : null;
+  }, [combinedScore, scoreHistory, technicalScore]);
 
-  const tasks = useMemo(() => extractTasks(latest), [latest]);
+  const tasks = useMemo(() => extractTasks(analysisResults), [analysisResults]);
   const domain = getDomain(formData?.websiteUrl || clientData?.websiteUrl || clientData?.website_url || '');
-  const latestAt = latest?.checked_at || latest?.created_at;
+  const latestAt = scoreHistory[scoreHistory.length - 1]?.at;
+  const clicks = gscKeywords.reduce((sum: number, row: any) => sum + Number(row.clicks || 0), 0);
+  const impressions = gscKeywords.reduce((sum: number, row: any) => sum + Number(row.impressions || 0), 0);
+  const logs = dedupeLogs(siktActions as ActivityLog[]).slice(0, 7);
 
-  if (loading) {
+  if (isAnalyzing && !analysisResults) {
     return (
       <div className="mx-auto flex min-h-[420px] max-w-5xl items-center justify-center bg-[#F7F7F5] font-['DM_Sans',sans-serif]">
         <div className="inline-flex items-center gap-3 rounded-xl border border-[#E5E5E3] bg-white p-5 shadow-none">
@@ -360,7 +293,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               Slik står det til med {domain}
             </h1>
             <p className="mt-2 text-sm font-normal text-slate-600">
-              Siste analyse: {relativeTime(latestAt)} · {healthChecks.length} målinger i historikk
+            Siste analyse: {relativeTime(latestAt)} · {scoreHistory.length} målinger i historikk
             </p>
           </div>
           <button
@@ -469,7 +402,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <span className="text-xs font-normal text-slate-500">Sortér: prioritet ↓</span>
           </div>
 
-          {!latest ? (
+          {!analysisResults ? (
             <div className="rounded-xl border border-[#E5E5E3] bg-[#F7F7F5] p-5 text-center">
               <p className="text-sm font-medium text-slate-800">Kjør analyse for å se oppgaver</p>
               <button
