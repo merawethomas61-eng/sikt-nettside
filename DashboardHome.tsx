@@ -275,10 +275,12 @@ const PeriodSwitch = ({
   dark?: boolean;
 }) => (
   <div
-    className={`inline-flex rounded-md ${
+    role="group"
+    aria-label="Tidsperiode for trend"
+    className={`inline-flex ${
       dark
-        ? 'border border-white/20'
-        : 'border border-[#E2DFD5] bg-[#F6F5EF]'
+        ? 'gap-0.5 rounded-full border border-white/20 bg-black/25 p-0.5'
+        : 'rounded-md border border-[#E2DFD5] bg-[#F6F5EF]'
     }`}
   >
     {periodOptions.map((o) => (
@@ -286,14 +288,16 @@ const PeriodSwitch = ({
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+        className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
           dark
-            ? value === o.value
-              ? 'bg-white/10 text-white'
-              : 'text-white/55 hover:text-white/80'
+            ? `rounded-full ${
+                value === o.value
+                  ? 'border border-white text-white'
+                  : 'border border-transparent text-white/45 hover:text-white/70'
+              }`
             : value === o.value
-              ? 'bg-white text-[#1C1C1F] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-              : 'text-[#A09E94] hover:text-[#6B6A60]'
+              ? 'rounded-md bg-white text-[#1C1C1F] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+              : 'rounded-md text-[#A09E94] hover:text-[#6B6A60]'
         }`}
       >
         {o.label}
@@ -577,80 +581,70 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* ── SAMLET SCORE (dark card) ────────────────────────────────── */}
-      <section
-        className="rounded-[12px] border border-white/10 bg-[#111211] px-6 py-6 text-white shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
-        style={{ backgroundColor: '#111211' }}
-      >
-        <div className="flex min-h-[126px] flex-col gap-6 lg:flex-row lg:items-center lg:gap-0">
+      <section className="rounded-[14px] border border-white/[0.08] bg-[#121212] px-6 py-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+        <div className="flex min-h-[118px] flex-col gap-5 md:flex-row md:items-center md:gap-0">
           {/* Left: score */}
-          <div className="lg:w-[326px]">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8F89]">
+          <div className="shrink-0 md:w-[min(100%,320px)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#888888]">
               Samlet score
             </p>
-            <div className="mt-2 flex items-end gap-2">
-              <span className="text-[78px] font-bold leading-[0.8] tracking-[-0.065em] text-[#F7F6F0]">
+            <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
+              <span className="text-[76px] font-bold leading-[0.82] tracking-[-0.055em] text-white">
                 {combinedScore ?? '—'}
               </span>
-              <span className="pb-1.5 text-[22px] font-normal text-white/40">
+              <span className="pb-[10px] text-[20px] font-normal text-[#888888]">
                 /100
               </span>
-              {weekDelta != null && (
+              {weekDelta != null && weekDelta !== 0 && (
                 <span
-                  className={`mb-2 ml-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold ${
+                  className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                     weekDelta >= 0
-                      ? 'bg-[#DDECE1] text-[#2A6B42]'
-                      : 'bg-[#FDF2F2] text-[#C53030]'
+                      ? 'bg-[#064E3B] text-[#A7F3D0]'
+                      : 'bg-[#7F1D1D] text-[#FECACA]'
                   }`}
                 >
-                  {weekDelta >= 0 ? '↑' : '↓'} {weekDelta >= 0 ? '+' : ''}
+                  <span aria-hidden>{weekDelta >= 0 ? '↑' : '↓'}</span>
+                  {weekDelta >= 0 ? '+' : ''}
                   {weekDelta} siste uke
                 </span>
               )}
             </div>
-            <p className="mt-4 text-[11px] font-medium leading-none text-white/40">
+            <p className="mt-3 text-[11px] font-medium leading-snug text-[#888888]">
               Basert på Lighthouse-teknisk · siste kjøring{' '}
               {formatLastAnalysis(latestAt)}
             </p>
           </div>
 
-          <div className="hidden h-[88px] w-px bg-white/10 lg:block" />
+          <div
+            className="hidden h-[88px] w-px shrink-0 bg-white/10 md:mx-6 md:block md:self-center"
+            aria-hidden
+          />
 
-          {/* Right: trend chart */}
-          <div className="flex flex-1 flex-col gap-4 lg:ml-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="w-full lg:w-[352px]">
-              <p className="mb-3 text-[12px] font-medium text-white/40">
+          {/* Right: trend + chart + period (én horisontal rad fra md+) */}
+          <div className="flex min-w-0 flex-1 flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-5">
+            <div className="w-full min-w-0 md:flex-1">
+              <p className="mb-2.5 text-[12px] font-medium text-[#888888]">
                 Trend siste {allTrendData.length} målinger
               </p>
-              <div className="h-[78px]">
+              <div className="h-[84px] w-full">
                 {allTrendData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={allTrendData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+                    <AreaChart
+                      data={allTrendData}
+                      margin={{ top: 4, right: 2, bottom: 0, left: 0 }}
+                    >
                       <defs>
-                        <linearGradient
-                          id="heroGrad"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="#8FC0A5"
-                            stopOpacity={0.32}
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor="#111211"
-                            stopOpacity={0.05}
-                          />
+                        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#065F46" stopOpacity={0.55} />
+                          <stop offset="100%" stopColor="#121212" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <YAxis hide domain={[0, 100]} />
                       <Area
                         type="monotone"
                         dataKey="v"
-                        stroke="#9ACDB3"
-                        strokeWidth={2}
+                        stroke="#A7F3D0"
+                        strokeWidth={1.5}
                         fill="url(#heroGrad)"
                         dot={false}
                         isAnimationActive={false}
@@ -658,19 +652,15 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-white/30">
+                  <div className="flex h-full items-center justify-center text-[13px] text-white/35">
                     Kjør en analyse for å se data
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="lg:mr-0">
-              <PeriodSwitch
-                value={chartPeriod}
-                onChange={setChartPeriod}
-                dark
-              />
+            <div className="flex shrink-0 justify-start md:justify-end md:self-center">
+              <PeriodSwitch value={chartPeriod} onChange={setChartPeriod} dark />
             </div>
           </div>
         </div>
