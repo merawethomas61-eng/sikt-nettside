@@ -288,7 +288,7 @@ const PeriodSwitch = ({
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
+        className={`px-2.5 py-1 text-[11px] font-medium ${
           dark
             ? `rounded-full ${
                 value === o.value
@@ -299,6 +299,9 @@ const PeriodSwitch = ({
               ? 'rounded-md bg-white text-[#1C1C1F] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
               : 'rounded-md text-[#A09E94] hover:text-[#6B6A60]'
         }`}
+        style={{
+          transition: 'color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out',
+        }}
       >
         {o.label}
       </button>
@@ -324,7 +327,14 @@ const ScoreCard = ({
   setPeriod: (v: number) => void;
   gradientId: string;
 }) => (
-  <div className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
+  <div
+    className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]"
+    style={{
+      transition: 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1)',
+    }}
+    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(28,28,24,0.08)'; }}
+    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(28,28,24,0.04)'; }}
+  >
     <div className="flex items-center justify-between gap-2">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8880]">
         {label}
@@ -533,6 +543,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
     <div className="mx-auto flex max-w-[960px] flex-col gap-5 bg-[#F4F3ED] px-5 py-4 font-['DM_Sans',sans-serif] text-[#1C1C1F]">
+      {/* Emil Kowalski: stagger entry + custom easing CSS */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes dashFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dash-stagger { animation: dashFadeIn 350ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+        .dash-stagger-1 { animation-delay: 0ms; }
+        .dash-stagger-2 { animation-delay: 60ms; }
+        .dash-stagger-3 { animation-delay: 120ms; }
+        .dash-stagger-4 { animation-delay: 180ms; }
+        .dash-stagger-5 { animation-delay: 240ms; }
+      `}} />
       {/* ── Navbar ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-baseline gap-2.5">
@@ -550,7 +573,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <button
             type="button"
             onClick={onRunAnalysis}
-            className="grid h-8 w-8 place-items-center rounded-lg border border-[#E2DFD5] bg-[#FFFDF8] text-[#8A8880] transition-[transform,color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:text-[#1C1C1F] active:scale-[0.97]"
+            className="grid h-8 w-8 place-items-center rounded-lg border border-[#E2DFD5] bg-[#FFFDF8] text-[#8A8880] hover:text-[#1C1C1F] active:scale-[0.97]"
+            style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), color 150ms ease-out' }}
             aria-label="Kjør ny analyse"
           >
             <RefreshCw size={13} />
@@ -560,7 +584,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* ── Heading ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="dash-stagger dash-stagger-1 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-[#1C1C1F]">
             Slik står det til med {domain}
@@ -573,7 +597,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         <button
           type="button"
           onClick={onRunAnalysis}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#1C1C1F] px-5 py-3 text-[13px] font-medium text-white transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#2A2A2D] active:scale-[0.97]"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#1C1C1F] px-5 py-3 text-[13px] font-medium text-white hover:bg-[#2A2A2D] active:scale-[0.97]"
+          style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
         >
           <RefreshCw size={13} />
           Kjør ny analyse
@@ -581,7 +606,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* ── SAMLET SCORE (dark card) ────────────────────────────────── */}
-      <section className="rounded-[14px] border border-white/[0.08] bg-[#121212] px-6 py-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+      <section className="dash-stagger dash-stagger-2 rounded-[14px] border border-white/[0.08] bg-[#121212] px-6 py-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
         <div className="flex min-h-[118px] flex-col gap-5 md:flex-row md:items-center md:gap-0">
           {/* Left: score */}
           <div className="shrink-0 md:w-[min(100%,320px)]">
@@ -667,7 +692,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </section>
 
       {/* ── Four metric cards ───────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className="dash-stagger dash-stagger-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <ScoreCard
           label="Teknisk"
           score={technicalScore}
@@ -748,7 +773,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </section>
 
       {/* ── Bottom grid: tasks + events ─────────────────────────────── */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         {/* Prioriterte oppgaver */}
         <div className="flex flex-col rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
           <div className="mb-4 flex items-center justify-between">
@@ -773,7 +798,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               <button
                 type="button"
                 onClick={onRunAnalysis}
-                className="mt-4 rounded-lg bg-[#1C1C1F] px-4 py-2 text-[13px] font-medium text-white transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#2A2A2D] active:scale-[0.97]"
+                className="mt-4 rounded-lg bg-[#1C1C1F] px-4 py-2 text-[13px] font-medium text-white hover:bg-[#2A2A2D] active:scale-[0.97]"
+                style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
               >
                 Kjør analyse
               </button>
@@ -792,7 +818,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     key={t.id}
                     type="button"
                     onClick={() => onNavigate('visibility')}
-                    className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-4 text-left transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#F6F5EF] active:scale-[0.99]"
+                    className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-4 text-left hover:bg-[#F6F5EF] active:scale-[0.97]"
+                    style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span
@@ -830,7 +857,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('visibility')}
-                  className="mt-4 self-start text-[13px] font-medium text-[#8A8880] transition-colors hover:text-[#1C1C1F]"
+                  className="mt-4 self-start text-[13px] font-medium text-[#8A8880] hover:text-[#1C1C1F]"
+                  style={{ transition: 'color 150ms ease-out' }}
                 >
                   Vis alle {tasks.length} →
                 </button>
@@ -884,7 +912,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('log')}
-            className="mt-4 self-start text-[13px] font-medium text-[#8A8880] transition-colors hover:text-[#1C1C1F]"
+            className="mt-4 self-start text-[13px] font-medium text-[#8A8880] hover:text-[#1C1C1F]"
+            style={{ transition: 'color 150ms ease-out' }}
           >
             Se alle hendelser →
           </button>

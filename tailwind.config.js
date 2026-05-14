@@ -4,6 +4,7 @@ export default {
     './index.html',
     './index.tsx',
     './App.tsx',
+    './DashboardHome.tsx',
     './CodeIntegrationStep.tsx',
     './src/**/*.{ts,tsx}',
   ],
