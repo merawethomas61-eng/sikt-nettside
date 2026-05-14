@@ -119,6 +119,20 @@ const formatLastAnalysis = (iso?: string) => {
   return `${sameDay ? 'i dag' : d.toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit' })}, ${time}`;
 };
 
+const filterHistoryByDays = (
+  rows: { at: string; mobilePerf: number; mobileSeo: number; desktopPerf: number }[],
+  days: number,
+) => {
+  if (!rows.length) return [];
+  const latest = new Date(rows[rows.length - 1]?.at || '').getTime();
+  const now = Number.isFinite(latest) ? latest : Date.now();
+  const cutoff = now - days * 86_400_000;
+  return rows.filter((row) => {
+    const ts = new Date(row.at || '').getTime();
+    return Number.isFinite(ts) && ts >= cutoff;
+  });
+};
+
 const dedupeLogs = (rows: ActivityLog[]) => {
   const seen = new Set<string>();
   return rows.filter((row) => {
@@ -276,7 +290,7 @@ const PeriodSwitch = ({
           dark
             ? value === o.value
               ? 'bg-white/10 text-white'
-              : 'text-white/30 hover:text-white/60'
+              : 'text-white/55 hover:text-white/80'
             : value === o.value
               ? 'bg-white text-[#1C1C1F] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
               : 'text-[#A09E94] hover:text-[#6B6A60]'
@@ -418,8 +432,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
   const allTrendData = useMemo(
     () =>
-      scoreHistory
-        .slice(-chartPeriod)
+      filterHistoryByDays(scoreHistory, chartPeriod)
         .map((r) => ({
           v: Math.round(((r.mobilePerf ?? 0) + (r.mobileSeo ?? 0)) / 2),
         })),
@@ -427,15 +440,13 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   );
   const techTrend = useMemo(
     () =>
-      scoreHistory
-        .slice(-techPeriod)
+      filterHistoryByDays(scoreHistory, techPeriod)
         .map((r) => ({ v: r.mobilePerf ?? 0 })),
     [scoreHistory, techPeriod],
   );
   const visTrend = useMemo(
     () =>
-      scoreHistory
-        .slice(-visPeriod)
+      filterHistoryByDays(scoreHistory, visPeriod)
         .map((r) => ({ v: r.mobileSeo ?? 0 })),
     [scoreHistory, visPeriod],
   );
@@ -566,93 +577,100 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* ── SAMLET SCORE (dark card) ────────────────────────────────── */}
-      <section className="rounded-xl bg-[#1A1A18] p-6 text-white">
-        <div className="grid items-end gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+      <section
+        className="rounded-[12px] border border-white/10 bg-[#111211] px-6 py-6 text-white shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
+        style={{ backgroundColor: '#111211' }}
+      >
+        <div className="flex min-h-[126px] flex-col gap-6 lg:flex-row lg:items-center lg:gap-0">
           {/* Left: score */}
-          <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#B5B3AA]">
+          <div className="lg:w-[326px]">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8F89]">
               Samlet score
             </p>
-            <div className="flex items-end gap-2">
-              <span className="text-[76px] font-bold leading-[0.82] tracking-[-0.06em]">
+            <div className="mt-2 flex items-end gap-2">
+              <span className="text-[78px] font-bold leading-[0.8] tracking-[-0.065em] text-[#F7F6F0]">
                 {combinedScore ?? '—'}
               </span>
               <span className="pb-1.5 text-[22px] font-normal text-white/40">
                 /100
               </span>
+              {weekDelta != null && (
+                <span
+                  className={`mb-2 ml-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold ${
+                    weekDelta >= 0
+                      ? 'bg-[#DDECE1] text-[#2A6B42]'
+                      : 'bg-[#FDF2F2] text-[#C53030]'
+                  }`}
+                >
+                  {weekDelta >= 0 ? '↑' : '↓'} {weekDelta >= 0 ? '+' : ''}
+                  {weekDelta} siste uke
+                </span>
+              )}
             </div>
-            {weekDelta != null && (
-              <span
-                className={`mt-4 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                  weekDelta >= 0
-                    ? 'bg-[#E6F2EA] text-[#2A6B42]'
-                    : 'bg-[#FDF2F2] text-[#C53030]'
-                }`}
-              >
-                {weekDelta >= 0 ? '↑' : '↓'} {weekDelta >= 0 ? '+' : ''}
-                {weekDelta} siste uke
-              </span>
-            )}
-            <p className="mt-4 text-[11px] leading-relaxed text-white/35">
+            <p className="mt-4 text-[11px] font-medium leading-none text-white/40">
               Basert på Lighthouse-teknisk · siste kjøring{' '}
               {formatLastAnalysis(latestAt)}
             </p>
           </div>
 
+          <div className="hidden h-[88px] w-px bg-white/10 lg:block" />
+
           {/* Right: trend chart */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium text-white/40">
+          <div className="flex flex-1 flex-col gap-4 lg:ml-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="w-full lg:w-[352px]">
+              <p className="mb-3 text-[12px] font-medium text-white/40">
                 Trend siste {allTrendData.length} målinger
               </p>
+              <div className="h-[78px]">
+                {allTrendData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={allTrendData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient
+                          id="heroGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="#8FC0A5"
+                            stopOpacity={0.32}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="#111211"
+                            stopOpacity={0.05}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <YAxis hide domain={[0, 100]} />
+                      <Area
+                        type="monotone"
+                        dataKey="v"
+                        stroke="#9ACDB3"
+                        strokeWidth={2}
+                        fill="url(#heroGrad)"
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-white/30">
+                    Kjør en analyse for å se data
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="lg:mr-0">
               <PeriodSwitch
                 value={chartPeriod}
                 onChange={setChartPeriod}
                 dark
               />
-            </div>
-            <div className="h-28">
-              {allTrendData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={allTrendData}>
-                    <defs>
-                      <linearGradient
-                        id="heroGrad"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#7BAB8E"
-                          stopOpacity={0.45}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#1A1A18"
-                          stopOpacity={0.9}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <YAxis hide domain={[0, 100]} />
-                    <Tooltip cursor={false} />
-                    <Area
-                      type="monotone"
-                      dataKey="v"
-                      stroke="#8EB6A3"
-                      strokeWidth={2}
-                      fill="url(#heroGrad)"
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-white/30">
-                  Kjør en analyse for å se data
-                </div>
-              )}
             </div>
           </div>
         </div>
