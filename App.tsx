@@ -7436,382 +7436,282 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {/* SYNLIGHET — sub-faner: PageSpeed, Innhold, Lenker.              */}
         {/* =============================================================== */}
-        {activeTab === 'visibility' && (() => {
-          const palette = {
-            bg: '#F5F5F0',
-            card: '#FFFFFF',
-            ink: '#1A1A1A',
-            muted: '#808080',
-            border: '#EBEBE6',
-            success: '#52A447',
-            successBg: '#EAF4E8',
-            warn: '#B57A1A',
-            warnBg: '#F8F0DE',
-            danger: '#C75353',
-            dangerBg: '#FBECEC',
-          };
-          const tabItems = [
-            { id: 'pagespeed', label: 'PageSpeed' },
-            { id: 'content', label: 'Innhold' },
-            { id: 'links', label: 'Lenker' },
-          ] as const;
-          const latestRun = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1] : null;
-          const latestLabel = latestRun
-            ? new Date(latestRun.at).toLocaleString('nb-NO', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-            : 'Ingen analyse ennå';
-          const totalTone = totalScore == null ? 'n/a' : totalScore >= 80 ? 'God' : totalScore >= 60 ? 'Advarsel' : 'Svak';
-          const contentCriticalCount = contentPages.filter((p: any) => p?.status === 'Kritisk').length;
-          const linksIsolatedCount = linkPages.filter((p: any) => p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated).length;
+        {activeTab === 'visibility' && (
+          <div className="space-y-6">
+            <header>
+              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Synlighet</h1>
+              <p className={`text-base mt-3 ${textDim}`}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
+            </header>
 
-          const metricTone = (score: number): 'good' | 'warn' | 'bad' => (score >= 0.9 ? 'good' : score >= 0.5 ? 'warn' : 'bad');
-          const scoreTone = (value: number): 'good' | 'warn' | 'bad' => (value >= 80 ? 'good' : value >= 60 ? 'warn' : 'bad');
-          const tonePill = (tone: 'good' | 'warn' | 'bad') => {
-            if (tone === 'good') return { bg: palette.successBg, fg: palette.success, label: 'God' };
-            if (tone === 'warn') return { bg: palette.warnBg, fg: palette.warn, label: 'Advarsel' };
-            return { bg: palette.dangerBg, fg: palette.danger, label: 'Dårlig' };
-          };
-
-          return (
-            <div className="space-y-5 px-2 sm:px-3 py-1" style={{ background: palette.bg, color: palette.ink }}>
-              <header className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
-                <p className="text-base" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
-              </header>
-
-              <div className="border-b pb-3 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: palette.border }}>
-                <div className="inline-flex items-center gap-2">
-                  {tabItems.map((sub) => {
-                    const active = visibilitySubTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        type="button"
-                        onClick={() => setVisibilitySubTab(sub.id)}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                        style={{
-                          border: active ? `2px solid ${palette.ink}` : '2px solid transparent',
-                          background: active ? palette.card : 'transparent',
-                          color: active ? palette.ink : palette.muted,
-                        }}
-                      >
-                        {sub.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {visibilitySubTab === 'pagespeed' && (
-                  <button
-                    type="button"
-                    onClick={runRealAnalysis}
-                    disabled={isAnalyzing}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isAnalyzing ? 'animate-spin' : ''} />
-                    {isAnalyzing ? 'Kjører test…' : analysisResults ? 'Kjør ny test' : 'Kjør første test'}
-                  </button>
-                )}
-
-                {visibilitySubTab === 'content' && (
-                  <button
-                    type="button"
-                    onClick={() => runContentScan(contentPages.length > 0)}
-                    disabled={isScanning}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
-                    {isScanning ? 'Skanner…' : contentPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                  </button>
-                )}
-
-                {visibilitySubTab === 'links' && (
-                  <button
-                    type="button"
-                    onClick={runLinkScan}
-                    disabled={isScanningLinks}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isScanningLinks ? 'animate-spin' : ''} />
-                    {isScanningLinks ? 'Skanner…' : linkPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                  </button>
-                )}
-              </div>
-
-              {visibilitySubTab === 'pagespeed' && (
-                <section className="space-y-4">
-                  <div className="flex items-center gap-4 text-sm flex-wrap" style={{ color: palette.muted }}>
-                    <span>Siste analyse: <strong style={{ color: palette.ink }}>{latestLabel}</strong></span>
-                    <span>Mobil Lighthouse</span>
-                  </div>
-
-                  {!analysisResults ? (
-                    <div className="rounded-xl p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
-                      Trykk «Kjør første test», så henter vi resultatene på ca. 30 sekunder.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <article className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: palette.muted }}>Total score</p>
-                          <p className="text-5xl font-semibold mt-2 leading-none" style={{ color: palette.ink }}>{totalScore ?? '—'}</p>
-                          <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold" style={{ background: totalScore != null && totalScore >= 60 ? palette.successBg : palette.warnBg, color: totalScore != null && totalScore >= 60 ? palette.success : palette.warn }}>
-                            {totalTone}
-                          </div>
-                          <p className="text-xs mt-2" style={{ color: palette.muted }}>av 4 Lighthouse-kategorier</p>
-                        </article>
-
-                        {[
-                          { label: 'Fart', metric: 'LCP', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
-                          { label: 'Respons', metric: 'TBT', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
-                          { label: 'Stabilitet', metric: 'CLS', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
-                        ].map((m, i) => {
-                          const tone = tonePill(metricTone(m.score));
-                          return (
-                            <article key={i} className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                              <div className="flex items-center justify-between gap-2 mb-2">
-                                <p className="text-sm font-semibold" style={{ color: palette.ink }}>{m.label}</p>
-                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                  {tone.label}
-                                </span>
-                              </div>
-                              <p className="text-xs mb-2" style={{ color: palette.muted }}>{m.metric}</p>
-                              <p className="text-4xl font-semibold leading-none" style={{ color: palette.ink }}>{m.value}</p>
-                            </article>
-                          );
-                        })}
-                      </div>
-
-                      <div className="rounded-xl p-4 space-y-3" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: palette.ink }}>Lighthouse-kategorier</p>
-                          <span className="text-xs" style={{ color: palette.muted }}>Mobilversjon /100</span>
-                        </div>
-                        {[
-                          { label: 'Ytelse', value: Math.round(perfMobile ?? 0) },
-                          { label: 'SEO', value: Math.round(seoMobile ?? 0) },
-                          { label: 'Beste praksis', value: Math.round(bpMobile ?? 0) },
-                          { label: 'Tilgjengelighet', value: Math.round(a11yMobile ?? 0) },
-                        ].map((row, i) => {
-                          const tone = tonePill(scoreTone(row.value));
-                          return (
-                            <div key={i} className="space-y-1">
-                              <div className="flex items-center justify-between gap-2 text-sm">
-                                <span style={{ color: palette.ink }}>{row.label}</span>
-                                <div className="inline-flex items-center gap-2">
-                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                    {tone.label}
-                                  </span>
-                                  <span className="font-semibold" style={{ color: palette.ink }}>{row.value}</span>
-                                </div>
-                              </div>
-                              <div className="h-2 rounded-full overflow-hidden" style={{ background: palette.border }}>
-                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${row.value}%`, background: scoreTone(row.value) === 'good' ? palette.success : scoreTone(row.value) === 'warn' ? palette.warn : palette.danger }} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Forbedringsmuligheter</p>
-                            <span className="text-xs" style={{ color: palette.muted }}>Klikk for å åpne Verksted</span>
-                          </div>
-
-                          {(analysisResults.mobile.opportunities || []).length === 0 ? (
-                            <p className="text-sm" style={{ color: palette.muted }}>Ingen konkrete forslag funnet i siste kjøring.</p>
-                          ) : (
-                            <div className="space-y-1.5">
-                              {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveSolveProblem({ raw: o, title: o.title });
-                                    setActiveTab('workshop');
-                                    setExpandedWorkshopProblem(`ps-${o.title}`);
-                                  }}
-                                  className="w-full rounded-lg px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
-                                  style={{ border: `1px solid ${palette.border}` }}
-                                >
-                                  <span className="inline-flex items-start gap-2 min-w-0">
-                                    <AlertTriangle size={13} style={{ color: palette.warn }} className="shrink-0 mt-0.5" />
-                                    <span className="min-w-0">
-                                      <span className="block text-sm font-medium truncate" style={{ color: palette.ink }}>{o.title}</span>
-                                      {o.savings ? <span className="block text-xs" style={{ color: palette.muted }}>{o.savings}</span> : null}
-                                    </span>
-                                  </span>
-                                  <ArrowRight size={14} style={{ color: palette.muted }} className="shrink-0" />
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Utvikling over tid</p>
-                            <div className="text-xs flex items-center gap-3" style={{ color: palette.muted }}>
-                              <span className="inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full" style={{ background: palette.success }} />
-                                Ytelse
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full" style={{ background: palette.ink }} />
-                                SEO
-                              </span>
-                            </div>
-                          </div>
-
-                          {scoreHistory.length < 2 ? (
-                            <p className="text-sm" style={{ color: palette.muted }}>Grafen vises når du har minst to målepunkter.</p>
-                          ) : (
-                            <div className="h-52">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <LineChart
-                                  data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))}
-                                  margin={{ top: 6, right: 6, bottom: 0, left: -20 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={palette.border} />
-                                  <XAxis dataKey="idx" tick={false} axisLine={false} tickLine={false} />
-                                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} />
-                                  <RechartsTooltip
-                                    contentStyle={{ background: '#fff', border: `1px solid ${palette.border}`, borderRadius: 10, fontSize: 12 }}
-                                    labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
-                                  />
-                                  <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} />
-                                  <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} />
-                                </LineChart>
-                              </ResponsiveContainer>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {visibilitySubTab === 'content' && (
-                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span style={{ color: palette.ink }}><strong>{contentPages.length}</strong> sider skannet</span>
-                      <span style={{ color: contentCriticalCount > 0 ? palette.danger : palette.muted }}>
-                        {contentCriticalCount} kritiske
-                      </span>
-                    </div>
-                  </div>
-
-                  {contentPages.length === 0 ? (
-                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
-                      Trykk «Start skann», så går vi gjennom sider for meta, overskrifter og alt-tekster.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[760px]">
-                        <thead>
-                          <tr style={{ background: palette.bg, color: palette.muted }}>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">URL</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">FUNN</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {contentPages.slice(0, 30).map((p: any, i: number) => {
-                            const issues = (p.issues || []).length;
-                            const critical = p?.status === 'Kritisk' || issues >= 3;
-                            const warn = issues > 0 && !critical;
-                            return (
-                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
-                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                <td className="px-4 py-3 text-sm font-mono" style={{ color: palette.muted }}>{p.url}</td>
-                                <td className="px-4 py-3 text-right">
-                                  <span
-                                    className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
-                                    style={{
-                                      background: issues === 0 ? palette.successBg : critical ? palette.dangerBg : palette.warnBg,
-                                      color: issues === 0 ? palette.success : critical ? palette.danger : palette.warn,
-                                    }}
-                                  >
-                                    {issues === 0 ? 'OK' : warn ? `${issues} funn` : `${issues} funn`}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {visibilitySubTab === 'links' && (
-                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span style={{ color: palette.ink }}><strong>{linkPages.length}</strong> sider</span>
-                      <span style={{ color: linksIsolatedCount > 0 ? palette.warn : palette.muted }}>
-                        {linksIsolatedCount} isolert
-                      </span>
-                    </div>
-                  </div>
-
-                  {linkPages.length === 0 ? (
-                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
-                      Trykk «Start skann», så kartlegger vi interne/eksterne lenker per side.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[760px]">
-                        <thead>
-                          <tr style={{ background: palette.bg, color: palette.muted }}>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">INN</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">UT</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">STATUS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {linkPages.slice(0, 30).map((p: any, i: number) => {
-                            const brokenCount = Array.isArray(p.brokenLinks) ? p.brokenLinks.length : Number(p.brokenLinks || 0);
-                            const isolated = p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated;
-                            const statusText = isolated ? 'Isolert' : brokenCount > 0 ? `${brokenCount} brutte` : 'Bra';
-                            const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
-                            const tone = tonePill(statusTone);
-                            return (
-                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
-                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
-                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
-                                <td className="px-4 py-3 text-right">
-                                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                    {statusText}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
-              )}
+            {/* Sub-fane-pills */}
+            <div className={`inline-flex rounded-lg border ${divider} p-1`}>
+              {([
+                { id: 'pagespeed', label: 'PageSpeed' },
+                { id: 'content', label: 'Innhold' },
+                { id: 'links', label: 'Lenker' },
+              ] as const).map((sub) => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setVisibilitySubTab(sub.id)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    visibilitySubTab === sub.id
+                      ? isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
+                      : `${textDim} hover:${textMain}`
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
             </div>
-          );
-        })()}
+
+            {/* SUB: PAGESPEED */}
+            {visibilitySubTab === 'pagespeed' && (
+              <PortalCard theme={themed} className="p-6 sm:p-8">
+                <CardHeader
+                  theme={themed}
+                  icon={<Zap size={16} />}
+                  accent={totalScore == null ? 'slate' : totalScore >= 80 ? 'emerald' : totalScore >= 60 ? 'amber' : 'rose'}
+                  title="PageSpeed (Lighthouse)"
+                  subtitle={analysisResults ? 'Mobil-resultat fra siste sjekk.' : 'Ingen sjekk kjørt enda.'}
+                  action={
+                    <SecondaryButton theme={themed} onClick={runRealAnalysis} disabled={isAnalyzing}>
+                      <RefreshCw size={14} /> {isAnalyzing ? 'Kjører…' : analysisResults ? 'Kjør ny test' : 'Kjør første test'}
+                    </SecondaryButton>
+                  }
+                />
+
+                {!analysisResults ? (
+                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                    <p className={`text-sm ${textDim}`}>
+                      Trykk «Kjør første test» — Sikt henter Lighthouse-resultatet på 30 sekunder.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Total-score radial + Core Web Vitals */}
+                    <div className="grid grid-cols-1 sm:grid-cols-[auto,1fr] gap-6 sm:gap-8 items-center">
+                      <div className="flex items-center gap-4">
+                        <RadialScore value={totalScore ?? 0} theme={themed} size={120} />
+                        <div>
+                          <p className={`text-xs ${textLabel}`}>Snitt</p>
+                          <p className={`text-sm font-medium ${textMain}`}>
+                            {totalScore == null ? '—' : totalScore >= 80 ? 'Sterk' : totalScore >= 60 ? 'God' : 'Svak'}
+                          </p>
+                          <p className={`text-xs ${textDim} mt-1`}>av 4 Lighthouse-kategorier</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { label: 'Fart (LCP)', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
+                          { label: 'Respons (TBT)', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
+                          { label: 'Stabilitet (CLS)', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
+                        ].map((m, i) => {
+                          const tone: 'good' | 'warn' | 'bad' = m.score >= 0.9 ? 'good' : m.score >= 0.5 ? 'warn' : 'bad';
+                          const tonePill = tone === 'good'
+                            ? (isLight ? 'bg-emerald-50 border-emerald-100' : 'bg-emerald-500/10 border-emerald-500/20')
+                            : tone === 'warn'
+                              ? (isLight ? 'bg-amber-50 border-amber-100' : 'bg-amber-500/10 border-amber-500/20')
+                              : (isLight ? 'bg-rose-50 border-rose-100' : 'bg-rose-500/10 border-rose-500/20');
+                          return (
+                            <div key={i} className={`rounded-lg border ${tonePill} p-3`}>
+                              <p className={`text-xs ${textLabel}`}>{m.label}</p>
+                              <BigNumber theme={themed} value={m.value} tone={tone} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Lighthouse score-kategorier som horisontale bars */}
+                    <div className={`pt-6 border-t ${divider} space-y-3`}>
+                      {[
+                        { label: 'Ytelse', value: perfMobile, color: '#7c3aed' },
+                        { label: 'SEO', value: seoMobile, color: '#10b981' },
+                        { label: 'Beste praksis', value: bpMobile, color: '#f59e0b' },
+                        { label: 'Tilgjengelighet', value: a11yMobile, color: '#0ea5e9' },
+                      ].map((row, i) => {
+                        const v = Math.round(row.value ?? 0);
+                        const t: 'good' | 'warn' | 'bad' = v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
+                        const valueColor = t === 'good' ? 'text-emerald-600' : t === 'warn' ? 'text-amber-600' : 'text-rose-600';
+                        return (
+                          <div key={i}>
+                            <div className="flex items-baseline justify-between gap-2 mb-1">
+                              <span className={`text-sm ${textMain}`}>{row.label}</span>
+                              <span className={`text-sm font-semibold ${valueColor}`}>{v}<span className={`text-xs font-normal ${textDim}`}> / 100</span></span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ width: `${v}%`, backgroundColor: row.color }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Forbedringsmuligheter -> Verksted */}
+                    {analysisResults.mobile.opportunities && analysisResults.mobile.opportunities.length > 0 && (
+                      <div className={`pt-6 border-t ${divider} space-y-2`}>
+                        <p className={`text-sm font-medium ${textMain}`}>Forbedringsmuligheter</p>
+                        {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              setActiveSolveProblem({ raw: o, title: o.title });
+                              setActiveTab('workshop');
+                              setExpandedWorkshopProblem(`ps-${o.title}`);
+                            }}
+                            className={`w-full text-left rounded-xl px-4 py-3 border ${divider} hover:border-violet-300 hover:bg-violet-50/30 transition-colors flex items-start justify-between gap-3`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-medium ${textMain}`}>{o.title}</p>
+                              {o.savings && <p className={`text-xs mt-0.5 ${textDim}`}>Spar {o.savings}</p>}
+                            </div>
+                            <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium text-violet-600`}>
+                              Åpne i Verksted <ArrowRight size={12} />
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Utvikling */}
+                    {scoreHistory.length >= 2 && (
+                      <div className={`pt-6 border-t ${divider}`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <p className={`text-sm font-medium ${textMain}`}>Utvikling over tid</p>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="inline-flex items-center gap-1.5 text-violet-700">
+                              <span className="w-2 h-2 rounded-full bg-violet-600" /> Ytelse
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" /> SEO
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-40">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
+                              <defs>
+                                <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.3} />
+                                  <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="seoGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
+                                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#e2e8f0' : '#1e293b'} />
+                              <XAxis dataKey="idx" tick={false} axisLine={false} />
+                              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: isLight ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                              <RechartsTooltip
+                                contentStyle={{ backgroundColor: isLight ? '#fff' : '#0f172a', border: `1px solid ${isLight ? '#e2e8f0' : '#1e293b'}`, borderRadius: 12, fontSize: 12 }}
+                                labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
+                              />
+                              <Area type="monotone" dataKey="perf" name="Ytelse" stroke="#7c3aed" strokeWidth={2} fill="url(#perfGrad)" isAnimationActive={false} />
+                              <Area type="monotone" dataKey="seo" name="SEO" stroke="#10b981" strokeWidth={2} fill="url(#seoGrad)" isAnimationActive={false} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </PortalCard>
+            )}
+
+            {/* SUB: INNHOLD */}
+            {visibilitySubTab === 'content' && (
+              <PortalCard theme={themed} className="p-6 sm:p-8">
+                <CardHeader
+                  theme={themed}
+                  icon={<FileText size={16} />}
+                  accent="violet"
+                  title="Innholds-skann"
+                  subtitle={contentPages.length > 0 ? `${contentPages.length} sider sjekket — meta, headings, alt-tekster.` : 'Ikke kjørt enda. Sikt går gjennom hver side og finner mangler.'}
+                  action={
+                    <SecondaryButton theme={themed} onClick={() => runContentScan(true)}>
+                      <RefreshCw size={14} /> {contentPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
+                    </SecondaryButton>
+                  }
+                />
+
+                {contentPages.length === 0 ? (
+                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                    <p className={`text-sm ${textDim}`}>
+                      Trykk «Start skann» — Sikt henter alle sider og rapporterer hva som mangler.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className={`divide-y ${divider}`}>
+                    {contentPages.slice(0, 30).map((p: any, i: number) => {
+                      const issues = (p.issues || []).length;
+                      return (
+                        <li key={i} className="flex items-start justify-between py-3 gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-medium ${textMain} truncate`}>{p.title || p.url}</p>
+                            <p className={`text-xs mt-0.5 ${textDim} truncate font-mono`}>{p.url}</p>
+                          </div>
+                          <span className={`shrink-0 text-xs font-medium ${issues === 0 ? 'text-emerald-600' : issues < 3 ? 'text-amber-600' : 'text-rose-600'}`}>
+                            {issues === 0 ? 'OK' : `${issues} ${issues === 1 ? 'funn' : 'funn'}`}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </PortalCard>
+            )}
+
+            {/* SUB: LENKER */}
+            {visibilitySubTab === 'links' && (
+              <PortalCard theme={themed} className="p-6 sm:p-8">
+                <CardHeader
+                  theme={themed}
+                  icon={<Link2 size={16} />}
+                  accent="sky"
+                  title="Lenke-skann"
+                  subtitle={linkPages.length > 0 ? `${linkPages.length} sider sjekket — interne, eksterne og brutte lenker.` : 'Ikke kjørt enda. Sikt finner brutte og isolerte sider.'}
+                  action={
+                    <SecondaryButton theme={themed} onClick={runLinkScan}>
+                      <RefreshCw size={14} /> {linkPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
+                    </SecondaryButton>
+                  }
+                />
+
+                {linkPages.length === 0 ? (
+                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
+                    <p className={`text-sm ${textDim}`}>
+                      Trykk «Start skann» — Sikt går gjennom alle lenker og rapporterer brudd.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className={`divide-y ${divider}`}>
+                    {linkPages.slice(0, 30).map((p: any, i: number) => {
+                      const broken = (p.brokenLinks || []).length;
+                      const isolated = !!p.isolated;
+                      return (
+                        <li key={i} className="flex items-start justify-between py-3 gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-medium ${textMain} truncate`}>{p.title || p.url}</p>
+                            <p className={`text-xs mt-0.5 ${textDim} truncate font-mono`}>{p.url}</p>
+                          </div>
+                          <span className={`shrink-0 text-xs font-medium ${broken === 0 && !isolated ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {isolated ? 'Isolert' : broken > 0 ? `${broken} brutte` : 'OK'}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </PortalCard>
+            )}
+          </div>
+        )}
 
         {/* =============================================================== */}
         {/* SOKEORD — egen fane.                                            */}
