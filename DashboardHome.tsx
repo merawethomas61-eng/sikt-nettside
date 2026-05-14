@@ -280,7 +280,7 @@ const PeriodSwitch = ({
     className={`inline-flex ${
       dark
         ? 'gap-0.5 rounded-full border border-white/20 bg-black/25 p-0.5'
-        : 'rounded-md border border-[#E2DFD5] bg-[#F6F5EF]'
+        : 'rounded-md border border-slate-200 bg-slate-100'
     }`}
   >
     {periodOptions.map((o) => (
@@ -288,7 +288,7 @@ const PeriodSwitch = ({
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={`px-2.5 py-1 text-[11px] font-medium ${
+        className={`period-btn px-2.5 py-1 text-[11px] font-medium ${
           dark
             ? `rounded-full ${
                 value === o.value
@@ -296,12 +296,9 @@ const PeriodSwitch = ({
                   : 'border border-transparent text-white/45 hover:text-white/70'
               }`
             : value === o.value
-              ? 'rounded-md bg-white text-[#1C1C1F] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-              : 'rounded-md text-[#A09E94] hover:text-[#6B6A60]'
+              ? 'rounded-md bg-white text-slate-900 shadow-sm'
+              : 'rounded-md text-slate-400 hover:text-slate-600'
         }`}
-        style={{
-          transition: 'color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out',
-        }}
       >
         {o.label}
       </button>
@@ -327,32 +324,25 @@ const ScoreCard = ({
   setPeriod: (v: number) => void;
   gradientId: string;
 }) => (
-  <div
-    className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]"
-    style={{
-      transition: 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1)',
-    }}
-    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(28,28,24,0.08)'; }}
-    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(28,28,24,0.04)'; }}
-  >
+  <div className="score-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-center justify-between gap-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8880]">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
         {label}
       </p>
       <PeriodSwitch value={period} onChange={setPeriod} />
     </div>
 
     <div className="mb-3 mt-5 flex items-baseline gap-1.5">
-      <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-[#1C1C1F]">
+      <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
         {score ?? '—'}
       </span>
-      <span className="text-base font-normal text-[#B5B3AA]">/100</span>
+      <span className="text-base font-normal text-slate-300">/100</span>
       {delta != null && delta !== 0 && (
         <span
           className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${
             delta > 0
-              ? 'bg-[#EAF4ED] text-[#2F6F46]'
-              : 'bg-[#FDF2F2] text-[#C53030]'
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-red-50 text-red-700'
           }`}
         >
           {delta > 0 ? '↑' : '↓'}{Math.abs(delta)}
@@ -384,14 +374,14 @@ const ScoreCard = ({
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-[#F4F3ED] text-[10px] text-[#A09E94]">
+        <div className="flex h-full items-center justify-center rounded-lg bg-slate-100 text-[10px] text-slate-400">
           Kjør en analyse for å se data
         </div>
       )}
     </div>
 
-    <p className="mt-2.5 text-[10px] font-medium text-[#B5B3AA]">
-      health_checks · siste rad
+    <p className="mt-2.5 text-[10px] font-medium text-slate-300">
+      {data.length > 0 ? `${data.length} målinger · siste ${data.length > 1 ? `${data.length} analyser` : 'analyse'}` : 'Ingen data ennå'}
     </p>
   </div>
 );
@@ -529,10 +519,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   /* ── Loading state ──────────────────────────────────────────────── */
   if (isAnalyzing && !analysisResults) {
     return (
-      <div className="mx-auto flex min-h-[420px] max-w-5xl items-center justify-center bg-[#F4F3ED] font-['DM_Sans',sans-serif]">
-        <div className="inline-flex items-center gap-3 rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] px-6 py-4">
-          <Loader2 size={18} className="animate-spin text-[#1C1C1F]" />
-          <span className="text-sm text-[#6B6A60]">
+      <div className="flex min-h-[420px] w-full items-center justify-center font-['DM_Sans',sans-serif]">
+        <div className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-4">
+          <Loader2 size={18} className="animate-spin text-slate-900" />
+          <span className="text-sm text-slate-500">
             Henter dashboard-data…
           </span>
         </div>
@@ -542,54 +532,110 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
-    <div className="mx-auto flex max-w-[960px] flex-col gap-5 bg-[#F4F3ED] px-5 py-4 font-['DM_Sans',sans-serif] text-[#1C1C1F]">
+    <div className="flex w-full flex-col gap-5 font-['DM_Sans',sans-serif] text-slate-900">
       {/* Emil Kowalski: stagger entry + custom easing CSS */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes dashFadeIn {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .dash-stagger { animation: dashFadeIn 350ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+        .dash-stagger { animation: dashFadeIn 280ms cubic-bezier(0.23, 1, 0.32, 1) both; }
         .dash-stagger-1 { animation-delay: 0ms; }
         .dash-stagger-2 { animation-delay: 60ms; }
         .dash-stagger-3 { animation-delay: 120ms; }
         .dash-stagger-4 { animation-delay: 180ms; }
         .dash-stagger-5 { animation-delay: 240ms; }
+
+        .score-card {
+          transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .score-card:hover { transform: translateY(-2px); }
+        }
+
+        .period-btn {
+          transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      background-color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      border-color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .period-btn:active { transform: scale(0.95); }
+
+        .nav-btn {
+          transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+                      color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .nav-btn:hover { color: rgb(15 23 42); }
+        }
+        .nav-btn:active { transform: scale(0.97); }
+
+        .cta-btn {
+          transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+                      background-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .cta-btn:hover { background-color: rgb(30 41 59); }
+        }
+        .cta-btn:active { transform: scale(0.97); }
+
+        .task-card {
+          transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+                      background-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .task-card:hover { background-color: rgb(241 245 249); }
+        }
+        .task-card:active { transform: scale(0.97); }
+
+        .link-btn {
+          transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .link-btn:hover { color: rgb(15 23 42); }
+        }
+        .link-btn:active { transform: scale(0.97); }
+
+        .gsc-btn {
+          transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+                      transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .gsc-btn:hover { color: rgb(15 23 42); }
+        }
+        .gsc-btn:active { transform: scale(0.97); }
       `}} />
       {/* ── Navbar ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-baseline gap-2.5">
-          <span className="text-sm font-semibold text-[#1C1C1F]">
+          <span className="text-sm font-semibold text-slate-900">
             Dashboard
           </span>
-          <span className="text-xs font-medium text-[#A09E94]">
+          <span className="text-xs font-medium text-slate-400">
             {domain}
           </span>
         </div>
-        <div className="hidden items-center gap-3 sm:flex">
-          <div className="w-64 rounded-lg border border-[#E2DFD5] bg-[#FFFDF8] px-3 py-2 text-xs text-[#B5B3AA]">
-            Søk eller hopp til …
-          </div>
+        <div className="hidden items-center gap-2 sm:flex">
           <button
             type="button"
             onClick={onRunAnalysis}
-            className="grid h-8 w-8 place-items-center rounded-lg border border-[#E2DFD5] bg-[#FFFDF8] text-[#8A8880] hover:text-[#1C1C1F] active:scale-[0.97]"
-            style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), color 150ms ease-out' }}
+            className="nav-btn grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-400"
             aria-label="Kjør ny analyse"
           >
             <RefreshCw size={13} />
           </button>
-          <div className="h-8 w-8 rounded-full bg-[#E7E4DA]" />
         </div>
       </div>
 
       {/* ── Heading ─────────────────────────────────────────────────── */}
       <div className="dash-stagger dash-stagger-1 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-[#1C1C1F]">
+          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-slate-900">
             Slik står det til med {domain}
           </h1>
-          <p className="mt-1.5 text-[13px] text-[#8A8880]">
+          <p className="mt-1.5 text-[13px] text-slate-400">
             Siste analyse: {formatLastAnalysis(latestAt)} ·{' '}
             {scoreHistory.length} målinger i historikk
           </p>
@@ -597,8 +643,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         <button
           type="button"
           onClick={onRunAnalysis}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#1C1C1F] px-5 py-3 text-[13px] font-medium text-white hover:bg-[#2A2A2D] active:scale-[0.97]"
-          style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
+          className="cta-btn inline-flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-[13px] font-medium text-white"
         >
           <RefreshCw size={13} />
           Kjør ny analyse
@@ -713,17 +758,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         />
 
         {/* Search Console */}
-        <div className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase leading-tight tracking-wider text-[#8A8880]">
+            <p className="text-[11px] font-semibold uppercase leading-tight tracking-wider text-slate-400">
               Search
               <br />
               Console
             </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E2DFD5] bg-[#F6F5EF] px-2.5 py-1 text-[11px] font-medium text-[#6B6A60]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
-                  gscConnected ? 'bg-[#3D9A5A]' : 'bg-[#C4C3BB]'
+                  gscConnected ? 'bg-emerald-500' : 'bg-slate-300'
                 }`}
               />
               {gscConnected ? 'tilkoblet' : 'ikke koblet'}
@@ -732,13 +777,13 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {gscConnected ? (
             <>
-              <p className="mt-4 text-[11px] font-medium text-[#B5B3AA]">
+              <p className="mt-4 text-[11px] font-medium text-slate-300">
                 Klikk · 28d
               </p>
-              <p className="mt-2 text-[40px] font-semibold leading-none tracking-[-0.04em] text-[#1C1C1F]">
+              <p className="mt-2 text-[40px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
                 {formatNumber(clicks)}
               </p>
-              <p className="mt-2 text-xs text-[#A09E94]">
+              <p className="mt-2 text-xs text-slate-400">
                 {formatNumber(impressions)} visninger
               </p>
             </>
@@ -746,7 +791,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('settings')}
-              className="mt-5 text-[13px] font-medium text-[#6B6A60] transition-colors hover:text-[#1C1C1F]"
+              className="gsc-btn mt-5 text-[13px] font-medium text-slate-500"
             >
               Koble til GSC →
             </button>
@@ -754,19 +799,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* GEO */}
-        <div className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 opacity-70 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 opacity-70 shadow-sm">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8880]">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               GEO
             </p>
-            <span className="inline-flex items-center rounded-full border border-[#E2DFD5] bg-[#F6F5EF] px-2.5 py-1 text-[11px] font-medium text-[#A09E94]">
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400">
               Kommer
             </span>
           </div>
-          <p className="mt-6 text-[40px] font-semibold leading-none tracking-[-0.04em] text-[#D0CECC]">
+          <p className="mt-6 text-[40px] font-semibold leading-none tracking-[-0.04em] text-slate-300">
             —
           </p>
-          <p className="mt-4 text-[12px] leading-relaxed text-[#A09E94]">
+          <p className="mt-4 text-[12px] leading-relaxed text-slate-400">
             AI-synlighet i ChatGPT, Perplexity og Gemini. Lansering Q3.
           </p>
         </div>
@@ -775,38 +820,37 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       {/* ── Bottom grid: tasks + events ─────────────────────────────── */}
       <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         {/* Prioriterte oppgaver */}
-        <div className="flex flex-col rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
+        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8880]">
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Prioriterte oppgaver
               </h2>
-              <span className="rounded-full border border-[#E2DFD5] bg-[#F6F5EF] px-2.5 py-0.5 text-[11px] font-medium text-[#6B6A60]">
+              <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
                 {tasks.length} totalt
               </span>
             </div>
-            <span className="text-[11px] font-medium text-[#A09E94]">
+            <span className="text-[11px] font-medium text-slate-400">
               Sortér: prioritet ↓
             </span>
           </div>
 
           {!analysisResults && !realRankings.length ? (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-[#E7E4DA] bg-[#F4F3ED] p-8 text-center">
-              <p className="text-sm font-medium text-[#6B6A60]">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
+              <p className="text-sm font-medium text-slate-500">
                 Kjør analyse for å se oppgaver
               </p>
               <button
                 type="button"
                 onClick={onRunAnalysis}
-                className="mt-4 rounded-lg bg-[#1C1C1F] px-4 py-2 text-[13px] font-medium text-white hover:bg-[#2A2A2D] active:scale-[0.97]"
-                style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
+                className="cta-btn mt-4 rounded-lg bg-slate-900 px-4 py-2 text-[13px] font-medium text-white"
               >
                 Kjør analyse
               </button>
             </div>
           ) : tasks.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-xl border border-[#E7E4DA] bg-[#F4F3ED] p-8 text-center">
-              <p className="text-sm font-medium text-[#6B6A60]">
+            <div className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
+              <p className="text-sm font-medium text-slate-500">
                 Alt ser bra ut!
               </p>
             </div>
@@ -818,35 +862,34 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     key={t.id}
                     type="button"
                     onClick={() => onNavigate('visibility')}
-                    className="rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-4 text-left hover:bg-[#F6F5EF] active:scale-[0.97]"
-                    style={{ transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease-out' }}
+                    className="task-card rounded-xl border border-slate-200 bg-white p-4 text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           t.priority === 'høy'
-                            ? 'bg-[#FFF3E8] text-[#C05621]'
-                            : 'bg-[#F0F2E6] text-[#5F6B2F]'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-emerald-50 text-emerald-700'
                         }`}
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${
                             t.priority === 'høy'
-                              ? 'bg-[#DD6B20]'
-                              : 'bg-[#8B9A3C]'
+                              ? 'bg-amber-500'
+                              : 'bg-emerald-500'
                           }`}
                         />
                         {t.priority}
                       </span>
-                      <span className="text-[10px] font-medium text-[#B5B3AA]">
+                      <span className="text-[10px] font-medium text-slate-300">
                         {t.category}
                       </span>
                     </div>
-                    <p className="mt-3 text-[13px] font-semibold leading-snug text-[#1C1C1F]">
+                    <p className="mt-3 text-[13px] font-semibold leading-snug text-slate-900">
                       {t.title}
                     </p>
                     {t.displayValue && (
-                      <p className="mt-1 text-[11px] text-[#A09E94]">
+                      <p className="mt-1 text-[11px] text-slate-400">
                         {t.displayValue}
                       </p>
                     )}
@@ -857,8 +900,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('visibility')}
-                  className="mt-4 self-start text-[13px] font-medium text-[#8A8880] hover:text-[#1C1C1F]"
-                  style={{ transition: 'color 150ms ease-out' }}
+                  className="link-btn mt-4 self-start text-[13px] font-medium text-slate-400"
                 >
                   Vis alle {tasks.length} →
                 </button>
@@ -868,14 +910,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* Siste hendelser */}
-        <div className="flex flex-col rounded-xl border border-[#E7E4DA] bg-[#FFFDF8] p-5 shadow-[0_1px_2px_rgba(28,28,24,0.04)]">
-          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-[#8A8880]">
+        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Siste hendelser
           </h2>
 
           {logs.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-xl border border-[#E7E4DA] bg-[#F4F3ED] p-8 text-center">
-              <p className="text-sm text-[#8A8880]">
+            <div className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
+              <p className="text-sm text-slate-400">
                 Ingen hendelser ennå
               </p>
             </div>
@@ -889,17 +931,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   <li
                     key={log.id || `${log.action}-${i}`}
                     className={`flex gap-3 py-3 ${
-                      i > 0 ? 'border-t border-[#EBE9E0]' : ''
+                      i > 0 ? 'border-t border-slate-100' : ''
                     }`}
                   >
-                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F0EDDF]">
-                      <Icon size={13} className="text-[#7B7455]" />
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100">
+                      <Icon size={13} className="text-slate-500" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold leading-snug text-[#1C1C1F]">
+                      <p className="text-[13px] font-semibold leading-snug text-slate-900">
                         {readableAction(log)}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[#A09E94]">
+                      <p className="mt-0.5 text-[11px] text-slate-400">
                         {[detail, time].filter(Boolean).join(' · ')}
                       </p>
                     </div>
@@ -912,8 +954,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('log')}
-            className="mt-4 self-start text-[13px] font-medium text-[#8A8880] hover:text-[#1C1C1F]"
-            style={{ transition: 'color 150ms ease-out' }}
+            className="link-btn mt-4 self-start text-[13px] font-medium text-slate-400"
           >
             Se alle hendelser →
           </button>

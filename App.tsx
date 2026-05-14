@@ -6865,7 +6865,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div className="w-8" />
           </header>
 
-          <main className="mx-auto w-full max-w-5xl px-4 sm:px-8 py-8 sm:py-12">
+          <main className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* =============================================================== */}
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
