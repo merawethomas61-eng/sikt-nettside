@@ -150,13 +150,13 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={onFinish}
-              className="px-6 py-3 rounded-xl bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 transition-all font-bold text-sm"
+              className="px-6 py-3 rounded-xl bg-white/5 text-slate-300 border border-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/10 transition-[background-color,border-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] font-bold text-sm"
             >
               Gå til dashbord
             </button>
             <button
               onClick={onUpgrade}
-              className="px-6 py-3 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-500/30"
+              className="px-6 py-3 rounded-xl bg-violet-500 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-400 text-white font-bold text-sm transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-violet-500/30"
             >
               <Zap size={14} fill="currentColor" /> Oppgrader plan
             </button>
@@ -197,7 +197,7 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
             </div>
             <button
               onClick={() => setShowFullModePrompt(true)}
-              className="text-left p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-all"
+              className="text-left p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-500/10 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest">Full integrasjon</span>
@@ -218,7 +218,7 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
               <button
                 key={p.id}
                 onClick={() => { setActivePlatform(p.id); setInputValue(''); }}
-                className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all text-left"
+                className="flex flex-col items-start p-4 rounded-2xl bg-white/5 border border-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-500/50 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] text-left"
               >
                 <p.icon className="text-white mb-3" size={22} />
                 <h4 className="text-white font-semibold text-sm">{p.name}</h4>
@@ -274,7 +274,7 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={p.placeholder}
-                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
                       />
                       <p className="text-[11px] text-slate-500 mt-2">
                         Denne URL-en brukes kun som kontekst til AI-analyse. Sikt får ikke skrive-tilgang.
@@ -286,7 +286,7 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
                 <button
                   type="submit"
                   disabled={saving || !inputValue.trim()}
-                  className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-all flex justify-center items-center gap-2"
+                  className="w-full bg-violet-600 enabled:hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-[background-color,opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:enabled:scale-[0.98] flex justify-center items-center gap-2"
                 >
                   {saving ? <Loader2 size={18} className="animate-spin" /> : (<><CheckCircle2 size={16} /> Koble til</>)}
                 </button>
@@ -311,13 +311,13 @@ export const CodeIntegrationStep: React.FC<Props> = ({ userId, tier, onFinish, o
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowFullModePrompt(false)}
-                  className="flex-1 px-5 py-3 rounded-xl bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 transition-all font-bold text-sm"
+                  className="flex-1 px-5 py-3 rounded-xl bg-white/5 text-slate-300 border border-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/10 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] font-bold text-sm"
                 >
                   Lukk
                 </button>
                 <button
                   onClick={() => setShowFullModePrompt(false)}
-                  className="flex-1 px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+                  className="flex-1 px-5 py-3 rounded-xl bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-500 text-white font-bold text-sm transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   Bruk lett tilkobling <ArrowRight size={14} />
                 </button>

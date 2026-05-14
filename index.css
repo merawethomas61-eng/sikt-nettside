@@ -5,6 +5,10 @@
 :root {
   --font-main: 'Inter', sans-serif;
   --font-display: 'Plus Jakarta Sans', sans-serif;
+  /* Public UI motion (explicit easing — avoids weak built-ins) */
+  --ease-ui-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-ui-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-ui: 200ms;
 }
 
 body {
@@ -43,25 +47,40 @@ h4 {
 /* Premium Cards */
 .premium-card {
   border: 1px solid rgba(0, 0, 0, 0.03);
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform var(--dur-ui) var(--ease-ui-out),
+    border-color var(--dur-ui) var(--ease-ui-out),
+    box-shadow var(--dur-ui) var(--ease-ui-out),
+    background-color var(--dur-ui) var(--ease-ui-out),
+    z-index 0s;
   position: relative;
   z-index: 1;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
 }
 
-.premium-card:hover {
-  transform: translateY(-8px);
-  border-color: rgba(124, 58, 237, 0.15);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.03), 0 0 30px -5px rgba(124, 58, 237, 0.05);
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.9);
+@media (hover: hover) and (pointer: fine) {
+  .premium-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(124, 58, 237, 0.15);
+    box-shadow:
+      0 20px 40px -10px rgba(0, 0, 0, 0.03),
+      0 0 30px -5px rgba(124, 58, 237, 0.05);
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.premium-card:active {
+  transform: scale(0.99);
 }
 
 /* Scroll Reveal Animations (Used by App.tsx helper) */
 .reveal {
   opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.45s var(--ease-ui-out),
+    transform 0.5s var(--ease-ui-out);
 }
 
 .reveal-up {
@@ -162,7 +181,7 @@ h4 {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.35s var(--ease-ui-out) forwards;
 }
 
 @keyframes scan-tech {
@@ -246,7 +265,7 @@ h4 {
 }
 
 .sikt-toast.out {
-  animation: toast-out 0.2s ease-in forwards;
+  animation: toast-out 0.18s var(--ease-ui-out) forwards;
 }
 
 @keyframes toast-in {
@@ -264,5 +283,74 @@ h4 {
   to {
     opacity: 0;
     transform: translateX(40px);
+  }
+}
+
+/* --- Public marketing/auth UI motion (App.tsx before ClientPortal) --- */
+.ui-motion {
+  transition:
+    transform var(--dur-ui) var(--ease-ui-out),
+    background-color var(--dur-ui) var(--ease-ui-out),
+    box-shadow var(--dur-ui) var(--ease-ui-out),
+    border-color var(--dur-ui) var(--ease-ui-out),
+    color var(--dur-ui) var(--ease-ui-out),
+    opacity var(--dur-ui) var(--ease-ui-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-motion.ui-lift:hover:not(:active) {
+    transform: translateY(-3px);
+  }
+  .ui-motion.ui-lift-sm:hover:not(:active) {
+    transform: translateY(-1px);
+  }
+}
+
+.ui-motion:active {
+  transform: scale(0.97);
+}
+
+.navbar-shell-t {
+  transition:
+    padding 280ms var(--ease-ui-out),
+    background-color 280ms var(--ease-ui-out),
+    border-color 280ms var(--ease-ui-out),
+    box-shadow 280ms var(--ease-ui-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.visible {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .reveal-up,
+  .reveal-down,
+  .reveal-left,
+  .reveal-right,
+  .reveal-scale {
+    transform: none !important;
+  }
+  .reveal.visible {
+    opacity: 1;
+  }
+  .premium-card:active {
+    transform: none;
+  }
+  .ui-motion,
+  .ui-motion:active {
+    transition-duration: 0.01ms !important;
+  }
+  .ui-motion:active {
+    transform: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .ui-motion.ui-lift:hover:not(:active),
+    .ui-motion.ui-lift-sm:hover:not(:active) {
+      transform: none;
+    }
+    .premium-card:hover {
+      transform: none !important;
+    }
   }
 }

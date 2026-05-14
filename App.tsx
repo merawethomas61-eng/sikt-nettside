@@ -274,11 +274,11 @@ const GoogleCTA = () => (
   <div className="flex justify-center mt-8 sm:mt-12 relative z-30">
     <button
       onClick={handleLogin}
-      className="group relative inline-flex items-center gap-3 px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-lg shadow-xl hover:bg-violet-600 hover:shadow-2xl hover:shadow-violet-500/20 transition-all duration-300 transform hover:-translate-y-1"
+      className="group relative ui-motion ui-lift inline-flex items-center gap-3 px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-lg shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20"
     >
       <span>Ta meg til toppen av Google</span>
       {/* Vi bruker ikonet du allerede har importert */}
-      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+      <ArrowRight className="w-5 h-5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
 
       {/* En liten 'glow' effekt for å gjøre den uimotståelig */}
       <div className="absolute inset-0 rounded-full ring-2 ring-white/10 group-hover:ring-white/30"></div>
@@ -363,7 +363,7 @@ const FeatureMatrix = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-12">
         <RevealOnScroll direction="left">
           <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <Wrench size={24} />
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Vi passer på siden din</h3>
@@ -379,7 +379,7 @@ const FeatureMatrix = () => (
 
         <RevealOnScroll direction="right">
           <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <Globe2 size={24} />
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Ekte tall rett fra Google</h3>
@@ -499,7 +499,7 @@ const DashboardSection = () => (
               }
             ].map((item, i) => (
               <div key={i} className="flex gap-4 sm:gap-6 group">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-slate-100 group-hover:scale-110 transition-transform duration-500">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-slate-100 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105">
                   {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
                 </div>
                 <div>
@@ -750,7 +750,7 @@ const ComparisonTable = () => {
                             <td className="py-4 sm:py-5 text-center">
                               <Cell value={f.standard} />
                             </td>
-                            <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 group-hover:bg-violet-50/60 transition-all">
+                            <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-50/60 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                               <Cell value={f.premium} isPremiumCol />
                             </td>
                           </tr>
@@ -790,9 +790,9 @@ const ComparisonTable = () => {
             <p className="text-xs sm:text-sm text-slate-500 font-medium mb-4">
               Usikker på hvilken pakke som passer? Start med Basic — du kan oppgradere når som helst.
             </p>
-            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-violet-600 hover:text-violet-700 transition-colors">
+            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-violet-600 transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700 group">
               Se pakkene og kom i gang
-              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight size={16} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
             </a>
           </div>
         </RevealOnScroll>
@@ -836,8 +836,8 @@ const Hero = () => {
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-600 hover:scale-105 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-500 flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-slate-200">
-              Ta meg til toppen av Google <ArrowRight size={22} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/30">
+              Ta meg til toppen av Google <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </a>
           </div>
         </RevealOnScroll>
@@ -1167,7 +1167,7 @@ const AiProcessDeepDive = () => (
           <div className="space-y-6 sm:space-y-8">
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Cpu size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Autonome Analyser</h3>
@@ -1176,7 +1176,7 @@ const AiProcessDeepDive = () => (
             </div>
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Zap size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Lynrask Implementering</h3>
@@ -1317,7 +1317,7 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
         <button
           onClick={onConfirm}
           disabled={!canProceed}
-          className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+          className={`w-full py-3 px-4 rounded-lg font-semibold transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] disabled:active:scale-100 ${
             canProceed
               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -1331,7 +1331,7 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 
         <button
           onClick={onCancel}
-          className="w-full py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          className="w-full py-2 text-sm text-slate-600 transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900 active:scale-[0.98]"
         >
           Hopp over for nå — jeg gjør dette senere
         </button>
@@ -1696,7 +1696,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg hover:bg-violet-700 transition-all shadow-xl disabled:opacity-50"
+            className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl disabled:opacity-50 enabled:hover:bg-violet-700 active:enabled:scale-[0.98]"
           >
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
           </button>
@@ -1817,8 +1817,8 @@ const IndustriesSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           {industries.map((industry, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 50}>
-              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-2xl sm:rounded-3xl hover:border-violet-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 h-full">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
+              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-2xl sm:rounded-3xl ui-motion ui-lift-sm h-full [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-200 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   {industry.icon}
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-slate-900 mb-1">{industry.name}</h3>
@@ -1978,10 +1978,10 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
 
             <button
               onClick={() => onSelectPlan('PREMIUM')}
-              className="group inline-flex items-center gap-3 px-10 py-5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-base sm:text-lg font-black tracking-tight transition-all duration-300 shadow-xl shadow-violet-900/50 hover:shadow-violet-500/50 hover:scale-105 active:scale-95"
+              className="group ui-motion ui-lift inline-flex items-center gap-3 px-10 py-5 bg-violet-600 text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl shadow-violet-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-500 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/50"
             >
               Inkludert i Premium
-              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+              <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </button>
 
             <p className="text-xs text-slate-500 mt-5 uppercase tracking-widest font-bold">
@@ -2070,7 +2070,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-start">
           {plans.map((plan, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 100}>
-              <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-transform duration-300 hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 md:scale-105 z-10' : 'border-slate-100'}`}>
+              <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 md:scale-105 z-10' : 'border-slate-100'}`}>
 
                 <div className="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 bg-violet-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 sm:px-3 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12 whitespace-nowrap">
                   70% RABATT 1. MND
@@ -2126,9 +2126,9 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                 {/* HER ER RETTELSEN: Vi sender 'plan.title' opp til Appen */}
                 <button
                   onClick={() => onSelectPlan(plan.title)}
-                  className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base transition-all ${plan.highlighted
-                    ? 'bg-slate-950 text-white hover:bg-violet-600 shadow-lg hover:shadow-violet-200'
-                    : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
+                  className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base ui-motion transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${plan.highlighted
+                    ? 'bg-slate-950 text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200'
+                    : 'bg-slate-100 text-slate-950 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-200'
                     }`}
                 >
                   Velg {plan.title}
@@ -2168,13 +2168,13 @@ const GeoFaq = () => {
         </RevealOnScroll>
         <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="border border-slate-100 rounded-[24px] sm:rounded-[32px] overflow-hidden group hover:border-violet-100 transition-all">
+            <div key={i} className="border border-slate-100 rounded-[24px] sm:rounded-[32px] overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100 transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full p-6 sm:p-8 flex items-center justify-between text-left group-hover:bg-slate-50/50 transition-colors"
+                className="w-full p-6 sm:p-8 flex items-center justify-between text-left [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-slate-50/50 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
               >
                 <span className="text-base sm:text-xl font-bold text-slate-950 pr-6 sm:pr-8 leading-snug">{faq.q}</span>
-                <ChevronDown className={`shrink-0 transition-transform duration-500 size-5 ${open === i ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`shrink-0 transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] size-5 ${open === i ? 'rotate-180' : ''}`} />
               </button>
               {open === i && (
                 <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-sm sm:text-lg text-slate-500 leading-relaxed font-medium animate-fade-in">
@@ -2245,12 +2245,12 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-500">
+      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-300">
 
         {/* Toppstripe — fylles opp i takt med hovedprogressjonen */}
         <div className="h-1.5 bg-slate-100 relative overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-emerald-500 transition-all duration-150 ease-out"
+            className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-emerald-500 transition-[width] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]"
             style={{ width: `${overallProgress}%` }}
           />
         </div>
@@ -2294,7 +2294,7 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
           {/* Stor progress-bar */}
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-10 relative">
             <div
-              className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500 rounded-full transition-all duration-150 ease-out bg-[length:200%_100%]"
+              className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500 rounded-full transition-[width,background-position] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[length:200%_100%]"
               style={{ width: `${overallProgress}%`, backgroundPosition: `${overallProgress * 2}% 0` }}
             />
           </div>
@@ -2314,7 +2314,7 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
                 return (
                   <div key={i} className="flex gap-4 items-center relative z-10">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-slate-50 shrink-0 transition-all
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-slate-50 shrink-0 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]
                       ${isDone ? 'bg-emerald-500' : isActive ? 'bg-white border-2 border-violet-600' : 'bg-slate-200 border-2 border-white'}
                     `}>
                       {isDone ? (
@@ -2426,9 +2426,9 @@ const PainPointsSection = () => (
           { text: "Tapte muligheter for vekst og salg.", icon: <TrendingDown size={18} />, subIcon: <BarChart3 className="text-rose-200/40 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> }
         ].map((point, i) => (
           <RevealOnScroll key={i} direction={i % 2 === 0 ? 'left' : 'right'} delay={i * 50}>
-            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden">
+            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md">
               {point.subIcon}
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-500 transition-colors shrink-0 relative z-10">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-rose-50 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 relative z-10">
                 {React.cloneElement(point.icon as React.ReactElement<any>, { size: 24 })}
               </div>
               <p className="text-slate-700 font-bold text-sm sm:text-lg leading-snug relative z-10">{point.text}</p>
@@ -2497,26 +2497,26 @@ const FAQSection = () => {
               {faqs.map((faq, i) => (
                 <RevealOnScroll key={i} direction="up" delay={i * 50}>
                   <div
-                    className={`group transition-all duration-500 ease-in-out border rounded-[20px] sm:rounded-[24px] overflow-hidden ${openIndex === i
+                    className={`group transition-[border-color,background-color,box-shadow] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] border rounded-[20px] sm:rounded-[24px] overflow-hidden ${openIndex === i
                       ? 'bg-white border-violet-200 shadow-xl shadow-violet-500/5'
-                      : 'bg-white/60 backdrop-blur-sm border-slate-100 hover:border-violet-100 hover:bg-white'
+                      : 'bg-white/60 backdrop-blur-sm border-slate-100 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white'
                       }`}
                   >
                     <button
                       onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-colors duration-500 ${openIndex === i ? 'bg-violet-50/50' : ''}`}
+                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${openIndex === i ? 'bg-violet-50/50' : ''}`}
                     >
-                      <span className={`text-sm sm:text-lg font-bold transition-colors duration-300 pr-2 sm:pr-4 ${openIndex === i ? 'text-violet-600' : 'text-slate-800'}`}>
+                      <span className={`text-sm sm:text-lg font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] pr-2 sm:pr-4 ${openIndex === i ? 'text-violet-600' : 'text-slate-800'}`}>
                         {faq.question}
                       </span>
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-all duration-500 ${openIndex === i
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-[background-color,border-color,color,transform] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i
                         ? 'bg-violet-600 border-violet-600 text-white shadow-lg'
                         : 'bg-slate-50 border-slate-100 text-slate-400'
                         }`}>
-                        <ChevronDown size={16} className={`transition-transform duration-500 ${openIndex === i ? 'rotate-180' : 'rotate-0'}`} />
+                        <ChevronDown size={16} className={`transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i ? 'rotate-180' : 'rotate-0'}`} />
                       </div>
                     </button>
-                    <div className={`transition-all duration-500 ease-in-out overflow-hidden ${openIndex === i ? 'max-h-[500px] opacity-100 pb-6 sm:pb-8' : 'max-h-0 opacity-0'}`}>
+                    <div className={`transition-[max-height,opacity,padding-bottom] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] overflow-hidden ${openIndex === i ? 'max-h-[500px] opacity-100 pb-6 sm:pb-8' : 'max-h-0 opacity-0'}`}>
                       <div className="px-6 sm:px-8 text-xs sm:text-base text-slate-500 font-medium leading-relaxed pt-4 sm:pt-6 border-t border-slate-50/50 mx-2">
                         {faq.answer}
                       </div>
@@ -2572,10 +2572,10 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={scrollToPricing}
-              className="group w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 shadow-2xl"
+              className="group ui-motion ui-lift w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight flex items-center justify-center gap-3 shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50"
             >
               Se pakkene
-              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+              <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </button>
           </div>
 
@@ -2685,7 +2685,7 @@ const ValuePropositionSection = () => {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 text-left">
             {benefits.map((benefit, i) => (
               <RevealOnScroll key={i} direction="right" delay={i * 100}>
-                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-slate-100 group hover:shadow-xl hover:border-violet-100 transition-all duration-500 h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden">
+                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-slate-100 ui-motion ui-lift-sm h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100">
                   {benefit.illu}
                   <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 relative z-10">
                     {React.cloneElement(benefit.icon as React.ReactElement<any>, { size: 28 })}
@@ -2706,9 +2706,9 @@ const ValuePropositionSection = () => {
 
 const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => {
   const steps = [
-    { number: "1", title: "Velg plan", desc: "Kom i gang på sekunder.", icon: <MousePointer2 />, illu: <Layers className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
-    { number: "2", title: "Legg til URL", desc: "Vi analyserer umiddelbart.", icon: <Globe />, illu: <Globe className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> },
-    { number: "3", title: "Se veksten", desc: "Sikt optimaliserer alt.", icon: <Activity />, illu: <TrendingUp className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-500" /> }
+    { number: "1", title: "Velg plan", desc: "Kom i gang på sekunder.", icon: <MousePointer2 />, illu: <Layers className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:rotate-12 transition-[opacity,transform] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]" /> },
+    { number: "2", title: "Legg til URL", desc: "Vi analyserer umiddelbart.", icon: <Globe />, illu: <Globe className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:rotate-12 transition-[opacity,transform] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]" /> },
+    { number: "3", title: "Se veksten", desc: "Sikt optimaliserer alt.", icon: <Activity />, illu: <TrendingUp className="w-16 h-16 absolute -bottom-4 -left-4 text-violet-50 opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:rotate-12 transition-[opacity,transform] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]" /> }
   ];
 
   return (
@@ -2733,7 +2733,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
             <RevealOnScroll key={i} direction="up" delay={i * 150}>
               <div className="relative z-10 flex flex-col items-center group cursor-default">
 
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-8 relative group-hover:-translate-y-2 transition-transform duration-500 overflow-visible">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-8 relative [@media(hover:hover)_and_(pointer:fine)]:group-hover:-translate-y-2 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-visible">
 
                   {/* --- HER ER RABATT-BADGEN --- */}
                   {step.number === "1" && (
@@ -2753,7 +2753,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
 
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-3 group-hover:text-violet-600 transition-colors">{step.title}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-3 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-600 transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">{step.title}</h3>
                 <p className="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
               </div>
             </RevealOnScroll>
@@ -2767,9 +2767,9 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
               // Dette fungerer som en heis direkte ned til pris-seksjonen
               document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
-            className="group w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-950 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg hover:bg-violet-600 transition-all shadow-xl shadow-slate-200 hover:shadow-violet-200 active:scale-95"
+            className="group ui-motion w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-950 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200"
           >
-            Ta meg til toppen av Google <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform shrink-0" />
+            Ta meg til toppen av Google <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1 shrink-0" />
           </button>
         </div>
 
@@ -2811,8 +2811,8 @@ const InsightSection = () => {
 
             {/* Kort 1: Frustrasjon (Stor) */}
             <RevealOnScroll direction="up" className="md:col-span-2">
-              <div className="p-6 sm:p-8 md:p-10 bg-white border border-slate-100 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden">
-                <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 group-hover:scale-110 transition-all duration-700">
+              <div className="p-6 sm:p-8 md:p-10 bg-white border border-slate-100 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+                <div className="absolute -right-6 -bottom-6 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-10 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-110 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <HeartHandshake size={180} />
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -2829,8 +2829,8 @@ const InsightSection = () => {
 
             {/* Kort 2: AI (Liten) */}
             <RevealOnScroll direction="up" delay={100}>
-              <div className="p-6 sm:p-8 bg-indigo-50/30 border border-indigo-100/50 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
-                <div className="absolute -right-4 -top-4 opacity-5 group-hover:rotate-12 transition-transform duration-500">
+              <div className="group p-6 sm:p-8 bg-indigo-50/30 border border-indigo-100/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+                <div className="absolute -right-4 -top-4 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:rotate-12 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <BrainCircuit size={100} />
                 </div>
                 <div className="w-11 h-11 sm:w-12 sm:h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-indigo-100">
@@ -2847,8 +2847,8 @@ const InsightSection = () => {
 
             {/* Kort 3: Vekst (Liten) */}
             <RevealOnScroll direction="up" delay={200}>
-              <div className="p-6 sm:p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-3xl sm:rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 group relative h-full flex flex-col justify-between overflow-hidden">
-                <div className="absolute -right-4 -top-4 opacity-5 group-hover:-rotate-12 transition-transform duration-500">
+              <div className="group p-6 sm:p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+                <div className="absolute -right-4 -top-4 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:-rotate-12 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <BarChart4 size={100} />
                 </div>
                 <div className="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-emerald-100">
@@ -2977,7 +2977,7 @@ const TrustSection = () => {
         <div className="mt-10 sm:mt-16">
           <button
             onClick={handleLogin}
-            className="w-full sm:w-auto bg-white text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-violet-200 transition-colors shadow-lg shadow-white/10"
+            className="w-full sm:w-auto bg-white text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg ui-motion shadow-lg shadow-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-200"
           >
             Start risikofritt i dag <ArrowRight className="inline ml-2" size={20} />
           </button>
@@ -3004,7 +3004,7 @@ const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
         <button
           // 2. Legg til onClick her:
           onClick={() => onNavigate('login')}
-          className="px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight hover:bg-violet-600 hover:scale-105 transition-all shadow-xl"
+          className="ui-motion ui-lift px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600"
         >
           Ta meg til toppen av Google
         </button>
@@ -3027,7 +3027,7 @@ const LegalPage = ({ title, lastUpdated, onBack, children }: {
     <div className="max-w-3xl mx-auto px-5 sm:px-6">
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-violet-600 transition-colors mb-10"
+        className="ui-motion inline-flex items-center gap-2 text-sm font-bold text-slate-500 mb-10 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600"
       >
         <ArrowLeft size={16} />
         Tilbake til forsiden
@@ -3242,7 +3242,7 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
           <p className="text-slate-400 font-medium max-w-sm leading-relaxed mb-8 mx-auto md:mx-0 text-sm">
             Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
           </p>
-          <div className="flex items-center justify-center md:justify-start gap-3 text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <div className="flex items-center justify-center md:justify-start gap-3 text-slate-400 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">
             <Mail size={16} className="text-violet-500" />
             <span className="font-bold text-xs">siktseo@gmail.com</span>
           </div>
@@ -3250,15 +3250,15 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
         <div className="text-center md:text-left">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6 sm:mb-8">Selskap</h4>
           <ul className="space-y-3 sm:space-y-4 text-slate-400 font-bold text-sm">
-            <li><a href="#" className="hover:text-violet-400 transition-colors">Om Sikt</a></li>
-            <li><a href="#" className="hover:text-violet-400 transition-colors">Tjenester</a></li>
+            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400">Om Sikt</a></li>
+            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400">Tjenester</a></li>
           </ul>
         </div>
         <div className="text-center md:text-left">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6 sm:mb-8">Kontakt</h4>
           <div className="flex justify-center md:justify-start gap-4 text-slate-400">
-            <Linkedin size={20} className="hover:text-violet-400 cursor-pointer" />
-            <Twitter size={20} className="hover:text-violet-400 cursor-pointer" />
+            <Linkedin size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400" />
+            <Twitter size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400" />
           </div>
         </div>
       </div>
@@ -3271,7 +3271,7 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
               onNavigate?.('privacy');
               window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
             }}
-            className="hover:text-white transition-colors uppercase tracking-widest"
+            className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] uppercase tracking-widest [@media(hover:hover)_and_(pointer:fine)]:hover:text-white active:text-white/90"
           >
             Personvern
           </button>
@@ -3281,7 +3281,7 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
               onNavigate?.('terms');
               window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
             }}
-            className="hover:text-white transition-colors uppercase tracking-widest"
+            className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] uppercase tracking-widest [@media(hover:hover)_and_(pointer:fine)]:hover:text-white active:text-white/90"
           >
             Vilkår
           </button>
@@ -3306,13 +3306,13 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const getAvatarUrl = (u: any) => u?.user_metadata?.avatar_url || u?.user_metadata?.picture;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 navbar-shell-t ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
 
         {/* LOGO */}
         <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold group-hover:bg-violet-600 transition-colors">S</div>
-          <span className="text-lg sm:text-xl font-black text-slate-900 group-hover:text-violet-600 transition-colors">Sikt</span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">S</div>
+          <span className="text-lg sm:text-xl font-black text-slate-900 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-600 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">Sikt</span>
         </div>
 
         {/* DESKTOP MENY */}
@@ -3322,22 +3322,22 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
           {user && hasAccess && (
             <button
               onClick={() => onNavigate('dashboard')}
-              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-all ${currentView === 'dashboard' ? 'bg-violet-100 text-violet-700' : 'text-slate-600 hover:text-violet-600 hover:bg-slate-50'}`}
+              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'dashboard' ? 'bg-violet-100 text-violet-700' : 'text-slate-600 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}
             >
               <BarChart3 size={18} />
               Dashboard
             </button>
           )}
 
-          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold ${currentView === 'deepdive' ? 'text-violet-600' : 'text-slate-500 hover:text-slate-900'}`}>Bli synlig på google</button>
-          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold ${currentView === 'technology' ? 'text-violet-600' : 'text-slate-500 hover:text-slate-900'}`}>Teknologien</button>
+          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'deepdive' ? 'text-violet-600' : 'text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900'}`}>Bli synlig på google</button>
+          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'technology' ? 'text-violet-600' : 'text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900'}`}>Teknologien</button>
 
           {user ? (
             <div className="relative">
               {/* Profilbilde-knapp */}
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 focus:outline-none">
                 <img src={getAvatarUrl(user)} className="w-9 h-9 rounded-full border-2 border-white shadow-sm" alt="" />
-                <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* DROPDOWN MENYEN */}
@@ -3352,22 +3352,22 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
 
                     {/* Dashboard også i dropdown for enkel tilgang */}
                     {hasAccess && (
-                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-violet-50 hover:text-violet-600 transition-colors text-left">
+                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-violet-50/80">
                         <BarChart3 size={16} /> Gå til Dashboard
                       </button>
                     )}
 
-                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-colors text-left">
+                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-slate-50/80">
                       <Settings size={16} /> Innstillinger
                     </button>
 
-                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-violet-600 transition-colors text-left">
+                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-slate-50/80">
                       <CreditCard size={16} /> Abonnement
                     </button>
 
                     <div className="my-1 border-b border-slate-50"></div>
 
-                    <button onClick={() => { onLogout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left">
+                    <button onClick={() => { onLogout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-rose-50 active:bg-rose-50/80">
                       <LogOut size={16} /> Logg ut
                     </button>
                   </div>
@@ -3375,7 +3375,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               )}
             </div>
           ) : (
-            <button onClick={onLoginTrigger} className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-violet-600 transition-all shadow-lg shadow-slate-200">Kom i gang</button>
+            <button onClick={onLoginTrigger} className="ui-motion bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600">Kom i gang</button>
           )}
         </div>
 
@@ -3385,19 +3385,19 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
 
       {/* MOBIL MENY (Expandable) */}
       {isMobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5">
+        <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5 duration-200">
           {user && hasAccess && (
             <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-violet-700 bg-violet-50 p-3 rounded-xl">
               <BarChart3 size={20} /> Dashboard
             </button>
           )}
-          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2">Bli synlig på google</button>
-          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2">Teknologien</button>
+          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">Bli synlig på google</button>
+          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">Teknologien</button>
           {user && (
             <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-left font-bold text-rose-500 p-2 flex items-center gap-2"><LogOut size={16} /> Logg ut</button>
           )}
           {!user && (
-            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-slate-900 text-white py-3 rounded-xl font-bold">Kom i gang</button>
+            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-slate-900 text-white py-3 rounded-xl font-bold ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600">Kom i gang</button>
           )}
         </div>
       )}
@@ -3431,8 +3431,8 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
   };
 
   return (
-    <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <button onClick={onBack} className="mb-8 text-sm font-bold text-slate-400 hover:text-slate-900 flex items-center gap-2">
+    <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-[280ms]">
+      <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-slate-400 flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">
         <ArrowRight className="rotate-180" size={16} /> Tilbake
       </button>
 
@@ -3441,10 +3441,10 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* MENY SIDEBAR */}
         <div className="w-full md:w-64 flex flex-col gap-2">
-          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'general' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}>
             <User size={18} /> Profil & Bedrift
           </button>
-          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'billing' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'billing' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}>
             <CreditCard size={18} /> Abonnement
           </button>
         </div>
@@ -3513,7 +3513,7 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
               {/* Slett Konto */}
               <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100">
                 <h3 className="text-rose-900 font-bold mb-2">Farlig område</h3>
-                <button onClick={() => toastInfo("Funksjonalitet for sletting kommer.")} className="flex items-center gap-2 text-rose-600 font-bold bg-white px-4 py-2 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors">
+                <button onClick={() => toastInfo("Funksjonalitet for sletting kommer.")} className="flex items-center gap-2 text-rose-600 font-bold bg-white px-4 py-2 rounded-lg border border-rose-200 ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-rose-100">
                   <Trash2 size={16} /> Slett min konto
                 </button>
               </div>
@@ -3527,7 +3527,7 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
                 <div className="relative z-10">
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
                   <h3 className="text-3xl font-black mb-2">Gratis</h3>
-                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-violet-50 transition-colors mt-4">Endre plan</button>
+                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50">Endre plan</button>
                 </div>
                 <div className="absolute top-0 right-0 p-32 bg-violet-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
               </div>
@@ -3606,9 +3606,9 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
       <div className="absolute inset-0 grid-pattern opacity-[0.04] pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-100/40 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
 
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-500">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-[280ms]">
 
-        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200 rotate-3 hover:rotate-6 transition-transform">
+        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200 rotate-3 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:rotate-6">
           <Sparkles className="text-white w-8 h-8" />
         </div>
 
@@ -3619,7 +3619,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-violet-200 hover:bg-violet-50 text-slate-700 font-bold py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md group transform active:scale-95"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-bold py-4 px-6 rounded-xl ui-motion transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm group [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -3679,7 +3679,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
             <button
               type="submit"
               disabled={magicLinkLoading || !email.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md transform active:scale-95"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl ui-motion transition-[background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm enabled:hover:bg-slate-800 enabled:hover:shadow-md"
             >
               {magicLinkLoading ? (
                 <>
@@ -5194,6 +5194,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [gscLoading, setGscLoading] = useState(false);
   const [gscKeywords, setGscKeywords] = useState<any[]>([]);
   const [showGscPreCheck, setShowGscPreCheck] = useState(false);
+  const [selectedKwId, setSelectedKwId] = useState<string | null>(null);
+  const [kwFilter, setKwFilter] = useState<'all' | 'mine' | 'gsc'>('all');
+  const [kwSearch, setKwSearch] = useState('');
+  const [kwChartRange, setKwChartRange] = useState<'28d' | '90d' | '12mnd'>('28d');
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [scores, setScores] = useState<{ technical: number | null; visibility: number | null }>({
     technical: null,
@@ -7432,562 +7436,882 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {/* SYNLIGHET — sub-faner: PageSpeed, Innhold, Lenker.              */}
         {/* =============================================================== */}
-        {activeTab === 'visibility' && (
-          <div className="space-y-6">
-            <header>
-              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Synlighet</h1>
-              <p className={`text-base mt-3 ${textDim}`}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
-            </header>
+        {activeTab === 'visibility' && (() => {
+          const palette = {
+            bg: '#F5F5F0',
+            card: '#FFFFFF',
+            ink: '#1A1A1A',
+            muted: '#808080',
+            border: '#EBEBE6',
+            success: '#52A447',
+            successBg: '#EAF4E8',
+            warn: '#B57A1A',
+            warnBg: '#F8F0DE',
+            danger: '#C75353',
+            dangerBg: '#FBECEC',
+          };
+          const tabItems = [
+            { id: 'pagespeed', label: 'PageSpeed' },
+            { id: 'content', label: 'Innhold' },
+            { id: 'links', label: 'Lenker' },
+          ] as const;
+          const latestRun = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1] : null;
+          const latestLabel = latestRun
+            ? new Date(latestRun.at).toLocaleString('nb-NO', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+            : 'Ingen analyse ennå';
+          const totalTone = totalScore == null ? 'n/a' : totalScore >= 80 ? 'God' : totalScore >= 60 ? 'Advarsel' : 'Svak';
+          const contentCriticalCount = contentPages.filter((p: any) => p?.status === 'Kritisk').length;
+          const linksIsolatedCount = linkPages.filter((p: any) => p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated).length;
 
-            {/* Sub-fane-pills */}
-            <div className={`inline-flex rounded-lg border ${divider} p-1`}>
-              {([
-                { id: 'pagespeed', label: 'PageSpeed' },
-                { id: 'content', label: 'Innhold' },
-                { id: 'links', label: 'Lenker' },
-              ] as const).map((sub) => (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setVisibilitySubTab(sub.id)}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    visibilitySubTab === sub.id
-                      ? isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
-                      : `${textDim} hover:${textMain}`
-                  }`}
-                >
-                  {sub.label}
-                </button>
-              ))}
-            </div>
+          const metricTone = (score: number): 'good' | 'warn' | 'bad' => (score >= 0.9 ? 'good' : score >= 0.5 ? 'warn' : 'bad');
+          const scoreTone = (value: number): 'good' | 'warn' | 'bad' => (value >= 80 ? 'good' : value >= 60 ? 'warn' : 'bad');
+          const tonePill = (tone: 'good' | 'warn' | 'bad') => {
+            if (tone === 'good') return { bg: palette.successBg, fg: palette.success, label: 'God' };
+            if (tone === 'warn') return { bg: palette.warnBg, fg: palette.warn, label: 'Advarsel' };
+            return { bg: palette.dangerBg, fg: palette.danger, label: 'Dårlig' };
+          };
 
-            {/* SUB: PAGESPEED */}
-            {visibilitySubTab === 'pagespeed' && (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader
-                  theme={themed}
-                  icon={<Zap size={16} />}
-                  accent={totalScore == null ? 'slate' : totalScore >= 80 ? 'emerald' : totalScore >= 60 ? 'amber' : 'rose'}
-                  title="PageSpeed (Lighthouse)"
-                  subtitle={analysisResults ? 'Mobil-resultat fra siste sjekk.' : 'Ingen sjekk kjørt enda.'}
-                  action={
-                    <SecondaryButton theme={themed} onClick={runRealAnalysis} disabled={isAnalyzing}>
-                      <RefreshCw size={14} /> {isAnalyzing ? 'Kjører…' : analysisResults ? 'Kjør ny test' : 'Kjør første test'}
-                    </SecondaryButton>
-                  }
-                />
+          return (
+            <div className="space-y-5 px-2 sm:px-3 py-1" style={{ background: palette.bg, color: palette.ink }}>
+              <header className="space-y-2">
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
+                <p className="text-base" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
+              </header>
 
-                {!analysisResults ? (
-                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-                    <p className={`text-sm ${textDim}`}>
-                      Trykk «Kjør første test» — Sikt henter Lighthouse-resultatet på 30 sekunder.
-                    </p>
+              <div className="border-b pb-3 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: palette.border }}>
+                <div className="inline-flex items-center gap-2">
+                  {tabItems.map((sub) => {
+                    const active = visibilitySubTab === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => setVisibilitySubTab(sub.id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                        style={{
+                          border: active ? `2px solid ${palette.ink}` : '2px solid transparent',
+                          background: active ? palette.card : 'transparent',
+                          color: active ? palette.ink : palette.muted,
+                        }}
+                      >
+                        {sub.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {visibilitySubTab === 'pagespeed' && (
+                  <button
+                    type="button"
+                    onClick={runRealAnalysis}
+                    disabled={isAnalyzing}
+                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                    style={{ background: palette.ink, color: '#fff' }}
+                  >
+                    <RefreshCw size={14} className={isAnalyzing ? 'animate-spin' : ''} />
+                    {isAnalyzing ? 'Kjører test…' : analysisResults ? 'Kjør ny test' : 'Kjør første test'}
+                  </button>
+                )}
+
+                {visibilitySubTab === 'content' && (
+                  <button
+                    type="button"
+                    onClick={() => runContentScan(contentPages.length > 0)}
+                    disabled={isScanning}
+                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                    style={{ background: palette.ink, color: '#fff' }}
+                  >
+                    <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
+                    {isScanning ? 'Skanner…' : contentPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
+                  </button>
+                )}
+
+                {visibilitySubTab === 'links' && (
+                  <button
+                    type="button"
+                    onClick={runLinkScan}
+                    disabled={isScanningLinks}
+                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                    style={{ background: palette.ink, color: '#fff' }}
+                  >
+                    <RefreshCw size={14} className={isScanningLinks ? 'animate-spin' : ''} />
+                    {isScanningLinks ? 'Skanner…' : linkPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
+                  </button>
+                )}
+              </div>
+
+              {visibilitySubTab === 'pagespeed' && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-4 text-sm flex-wrap" style={{ color: palette.muted }}>
+                    <span>Siste analyse: <strong style={{ color: palette.ink }}>{latestLabel}</strong></span>
+                    <span>Mobil Lighthouse</span>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Total-score radial + Core Web Vitals */}
-                    <div className="grid grid-cols-1 sm:grid-cols-[auto,1fr] gap-6 sm:gap-8 items-center">
-                      <div className="flex items-center gap-4">
-                        <RadialScore value={totalScore ?? 0} theme={themed} size={120} />
-                        <div>
-                          <p className={`text-xs ${textLabel}`}>Snitt</p>
-                          <p className={`text-sm font-medium ${textMain}`}>
-                            {totalScore == null ? '—' : totalScore >= 80 ? 'Sterk' : totalScore >= 60 ? 'God' : 'Svak'}
-                          </p>
-                          <p className={`text-xs ${textDim} mt-1`}>av 4 Lighthouse-kategorier</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
+
+                  {!analysisResults ? (
+                    <div className="rounded-xl p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                      Trykk «Kjør første test», så henter vi resultatene på ca. 30 sekunder.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <article className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: palette.muted }}>Total score</p>
+                          <p className="text-5xl font-semibold mt-2 leading-none" style={{ color: palette.ink }}>{totalScore ?? '—'}</p>
+                          <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold" style={{ background: totalScore != null && totalScore >= 60 ? palette.successBg : palette.warnBg, color: totalScore != null && totalScore >= 60 ? palette.success : palette.warn }}>
+                            {totalTone}
+                          </div>
+                          <p className="text-xs mt-2" style={{ color: palette.muted }}>av 4 Lighthouse-kategorier</p>
+                        </article>
+
                         {[
-                          { label: 'Fart (LCP)', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
-                          { label: 'Respons (TBT)', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
-                          { label: 'Stabilitet (CLS)', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
+                          { label: 'Fart', metric: 'LCP', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
+                          { label: 'Respons', metric: 'TBT', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
+                          { label: 'Stabilitet', metric: 'CLS', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
                         ].map((m, i) => {
-                          const tone: 'good' | 'warn' | 'bad' = m.score >= 0.9 ? 'good' : m.score >= 0.5 ? 'warn' : 'bad';
-                          const tonePill = tone === 'good'
-                            ? (isLight ? 'bg-emerald-50 border-emerald-100' : 'bg-emerald-500/10 border-emerald-500/20')
-                            : tone === 'warn'
-                              ? (isLight ? 'bg-amber-50 border-amber-100' : 'bg-amber-500/10 border-amber-500/20')
-                              : (isLight ? 'bg-rose-50 border-rose-100' : 'bg-rose-500/10 border-rose-500/20');
+                          const tone = tonePill(metricTone(m.score));
                           return (
-                            <div key={i} className={`rounded-lg border ${tonePill} p-3`}>
-                              <p className={`text-xs ${textLabel}`}>{m.label}</p>
-                              <BigNumber theme={themed} value={m.value} tone={tone} />
+                            <article key={i} className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <p className="text-sm font-semibold" style={{ color: palette.ink }}>{m.label}</p>
+                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
+                                  {tone.label}
+                                </span>
+                              </div>
+                              <p className="text-xs mb-2" style={{ color: palette.muted }}>{m.metric}</p>
+                              <p className="text-4xl font-semibold leading-none" style={{ color: palette.ink }}>{m.value}</p>
+                            </article>
+                          );
+                        })}
+                      </div>
+
+                      <div className="rounded-xl p-4 space-y-3" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold" style={{ color: palette.ink }}>Lighthouse-kategorier</p>
+                          <span className="text-xs" style={{ color: palette.muted }}>Mobilversjon /100</span>
+                        </div>
+                        {[
+                          { label: 'Ytelse', value: Math.round(perfMobile ?? 0) },
+                          { label: 'SEO', value: Math.round(seoMobile ?? 0) },
+                          { label: 'Beste praksis', value: Math.round(bpMobile ?? 0) },
+                          { label: 'Tilgjengelighet', value: Math.round(a11yMobile ?? 0) },
+                        ].map((row, i) => {
+                          const tone = tonePill(scoreTone(row.value));
+                          return (
+                            <div key={i} className="space-y-1">
+                              <div className="flex items-center justify-between gap-2 text-sm">
+                                <span style={{ color: palette.ink }}>{row.label}</span>
+                                <div className="inline-flex items-center gap-2">
+                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
+                                    {tone.label}
+                                  </span>
+                                  <span className="font-semibold" style={{ color: palette.ink }}>{row.value}</span>
+                                </div>
+                              </div>
+                              <div className="h-2 rounded-full overflow-hidden" style={{ background: palette.border }}>
+                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${row.value}%`, background: scoreTone(row.value) === 'good' ? palette.success : scoreTone(row.value) === 'warn' ? palette.warn : palette.danger }} />
+                              </div>
                             </div>
                           );
                         })}
                       </div>
-                    </div>
 
-                    {/* Lighthouse score-kategorier som horisontale bars */}
-                    <div className={`pt-6 border-t ${divider} space-y-3`}>
-                      {[
-                        { label: 'Ytelse', value: perfMobile, color: '#7c3aed' },
-                        { label: 'SEO', value: seoMobile, color: '#10b981' },
-                        { label: 'Beste praksis', value: bpMobile, color: '#f59e0b' },
-                        { label: 'Tilgjengelighet', value: a11yMobile, color: '#0ea5e9' },
-                      ].map((row, i) => {
-                        const v = Math.round(row.value ?? 0);
-                        const t: 'good' | 'warn' | 'bad' = v >= 80 ? 'good' : v >= 60 ? 'warn' : 'bad';
-                        const valueColor = t === 'good' ? 'text-emerald-600' : t === 'warn' ? 'text-amber-600' : 'text-rose-600';
-                        return (
-                          <div key={i}>
-                            <div className="flex items-baseline justify-between gap-2 mb-1">
-                              <span className={`text-sm ${textMain}`}>{row.label}</span>
-                              <span className={`text-sm font-semibold ${valueColor}`}>{v}<span className={`text-xs font-normal ${textDim}`}> / 100</span></span>
-                            </div>
-                            <div className={`h-2 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-                              <div
-                                className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${v}%`, backgroundColor: row.color }}
-                              />
-                            </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Forbedringsmuligheter</p>
+                            <span className="text-xs" style={{ color: palette.muted }}>Klikk for å åpne Verksted</span>
                           </div>
-                        );
-                      })}
-                    </div>
 
-                    {/* Forbedringsmuligheter -> Verksted */}
-                    {analysisResults.mobile.opportunities && analysisResults.mobile.opportunities.length > 0 && (
-                      <div className={`pt-6 border-t ${divider} space-y-2`}>
-                        <p className={`text-sm font-medium ${textMain}`}>Forbedringsmuligheter</p>
-                        {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => {
-                              setActiveSolveProblem({ raw: o, title: o.title });
-                              setActiveTab('workshop');
-                              setExpandedWorkshopProblem(`ps-${o.title}`);
-                            }}
-                            className={`w-full text-left rounded-xl px-4 py-3 border ${divider} hover:border-violet-300 hover:bg-violet-50/30 transition-colors flex items-start justify-between gap-3`}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-medium ${textMain}`}>{o.title}</p>
-                              {o.savings && <p className={`text-xs mt-0.5 ${textDim}`}>Spar {o.savings}</p>}
+                          {(analysisResults.mobile.opportunities || []).length === 0 ? (
+                            <p className="text-sm" style={{ color: palette.muted }}>Ingen konkrete forslag funnet i siste kjøring.</p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveSolveProblem({ raw: o, title: o.title });
+                                    setActiveTab('workshop');
+                                    setExpandedWorkshopProblem(`ps-${o.title}`);
+                                  }}
+                                  className="w-full rounded-lg px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
+                                  style={{ border: `1px solid ${palette.border}` }}
+                                >
+                                  <span className="inline-flex items-start gap-2 min-w-0">
+                                    <AlertTriangle size={13} style={{ color: palette.warn }} className="shrink-0 mt-0.5" />
+                                    <span className="min-w-0">
+                                      <span className="block text-sm font-medium truncate" style={{ color: palette.ink }}>{o.title}</span>
+                                      {o.savings ? <span className="block text-xs" style={{ color: palette.muted }}>{o.savings}</span> : null}
+                                    </span>
+                                  </span>
+                                  <ArrowRight size={14} style={{ color: palette.muted }} className="shrink-0" />
+                                </button>
+                              ))}
                             </div>
-                            <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium text-violet-600`}>
-                              Åpne i Verksted <ArrowRight size={12} />
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Utvikling */}
-                    {scoreHistory.length >= 2 && (
-                      <div className={`pt-6 border-t ${divider}`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <p className={`text-sm font-medium ${textMain}`}>Utvikling over tid</p>
-                          <div className="flex items-center gap-3 text-xs">
-                            <span className="inline-flex items-center gap-1.5 text-violet-700">
-                              <span className="w-2 h-2 rounded-full bg-violet-600" /> Ytelse
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 text-emerald-700">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500" /> SEO
-                            </span>
-                          </div>
+                          )}
                         </div>
-                        <div className="h-40">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-                              <defs>
-                                <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.3} />
-                                  <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="seoGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
-                                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#e2e8f0' : '#1e293b'} />
-                              <XAxis dataKey="idx" tick={false} axisLine={false} />
-                              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: isLight ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
-                              <RechartsTooltip
-                                contentStyle={{ backgroundColor: isLight ? '#fff' : '#0f172a', border: `1px solid ${isLight ? '#e2e8f0' : '#1e293b'}`, borderRadius: 12, fontSize: 12 }}
-                                labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
-                              />
-                              <Area type="monotone" dataKey="perf" name="Ytelse" stroke="#7c3aed" strokeWidth={2} fill="url(#perfGrad)" isAnimationActive={false} />
-                              <Area type="monotone" dataKey="seo" name="SEO" stroke="#10b981" strokeWidth={2} fill="url(#seoGrad)" isAnimationActive={false} />
-                            </AreaChart>
-                          </ResponsiveContainer>
+
+                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Utvikling over tid</p>
+                            <div className="text-xs flex items-center gap-3" style={{ color: palette.muted }}>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full" style={{ background: palette.success }} />
+                                Ytelse
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full" style={{ background: palette.ink }} />
+                                SEO
+                              </span>
+                            </div>
+                          </div>
+
+                          {scoreHistory.length < 2 ? (
+                            <p className="text-sm" style={{ color: palette.muted }}>Grafen vises når du har minst to målepunkter.</p>
+                          ) : (
+                            <div className="h-52">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart
+                                  data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))}
+                                  margin={{ top: 6, right: 6, bottom: 0, left: -20 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={palette.border} />
+                                  <XAxis dataKey="idx" tick={false} axisLine={false} tickLine={false} />
+                                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} />
+                                  <RechartsTooltip
+                                    contentStyle={{ background: '#fff', border: `1px solid ${palette.border}`, borderRadius: 10, fontSize: 12 }}
+                                    labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
+                                  />
+                                  <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} />
+                                  <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {visibilitySubTab === 'content' && (
+                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span style={{ color: palette.ink }}><strong>{contentPages.length}</strong> sider skannet</span>
+                      <span style={{ color: contentCriticalCount > 0 ? palette.danger : palette.muted }}>
+                        {contentCriticalCount} kritiske
+                      </span>
+                    </div>
                   </div>
-                )}
-              </PortalCard>
-            )}
 
-            {/* SUB: INNHOLD */}
-            {visibilitySubTab === 'content' && (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader
-                  theme={themed}
-                  icon={<FileText size={16} />}
-                  accent="violet"
-                  title="Innholds-skann"
-                  subtitle={contentPages.length > 0 ? `${contentPages.length} sider sjekket — meta, headings, alt-tekster.` : 'Ikke kjørt enda. Sikt går gjennom hver side og finner mangler.'}
-                  action={
-                    <SecondaryButton theme={themed} onClick={() => runContentScan(true)}>
-                      <RefreshCw size={14} /> {contentPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                    </SecondaryButton>
-                  }
-                />
+                  {contentPages.length === 0 ? (
+                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
+                      Trykk «Start skann», så går vi gjennom sider for meta, overskrifter og alt-tekster.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[760px]">
+                        <thead>
+                          <tr style={{ background: palette.bg, color: palette.muted }}>
+                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
+                            <th className="text-left text-xs font-semibold px-4 py-2.5">URL</th>
+                            <th className="text-right text-xs font-semibold px-4 py-2.5">FUNN</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contentPages.slice(0, 30).map((p: any, i: number) => {
+                            const issues = (p.issues || []).length;
+                            const critical = p?.status === 'Kritisk' || issues >= 3;
+                            const warn = issues > 0 && !critical;
+                            return (
+                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
+                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                <td className="px-4 py-3 text-sm font-mono" style={{ color: palette.muted }}>{p.url}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <span
+                                    className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
+                                    style={{
+                                      background: issues === 0 ? palette.successBg : critical ? palette.dangerBg : palette.warnBg,
+                                      color: issues === 0 ? palette.success : critical ? palette.danger : palette.warn,
+                                    }}
+                                  >
+                                    {issues === 0 ? 'OK' : warn ? `${issues} funn` : `${issues} funn`}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
+              )}
 
-                {contentPages.length === 0 ? (
-                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-                    <p className={`text-sm ${textDim}`}>
-                      Trykk «Start skann» — Sikt henter alle sider og rapporterer hva som mangler.
-                    </p>
+              {visibilitySubTab === 'links' && (
+                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span style={{ color: palette.ink }}><strong>{linkPages.length}</strong> sider</span>
+                      <span style={{ color: linksIsolatedCount > 0 ? palette.warn : palette.muted }}>
+                        {linksIsolatedCount} isolert
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <ul className={`divide-y ${divider}`}>
-                    {contentPages.slice(0, 30).map((p: any, i: number) => {
-                      const issues = (p.issues || []).length;
-                      return (
-                        <li key={i} className="flex items-start justify-between py-3 gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-sm font-medium ${textMain} truncate`}>{p.title || p.url}</p>
-                            <p className={`text-xs mt-0.5 ${textDim} truncate font-mono`}>{p.url}</p>
-                          </div>
-                          <span className={`shrink-0 text-xs font-medium ${issues === 0 ? 'text-emerald-600' : issues < 3 ? 'text-amber-600' : 'text-rose-600'}`}>
-                            {issues === 0 ? 'OK' : `${issues} ${issues === 1 ? 'funn' : 'funn'}`}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </PortalCard>
-            )}
 
-            {/* SUB: LENKER */}
-            {visibilitySubTab === 'links' && (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader
-                  theme={themed}
-                  icon={<Link2 size={16} />}
-                  accent="sky"
-                  title="Lenke-skann"
-                  subtitle={linkPages.length > 0 ? `${linkPages.length} sider sjekket — interne, eksterne og brutte lenker.` : 'Ikke kjørt enda. Sikt finner brutte og isolerte sider.'}
-                  action={
-                    <SecondaryButton theme={themed} onClick={runLinkScan}>
-                      <RefreshCw size={14} /> {linkPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                    </SecondaryButton>
-                  }
-                />
-
-                {linkPages.length === 0 ? (
-                  <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-                    <p className={`text-sm ${textDim}`}>
-                      Trykk «Start skann» — Sikt går gjennom alle lenker og rapporterer brudd.
-                    </p>
-                  </div>
-                ) : (
-                  <ul className={`divide-y ${divider}`}>
-                    {linkPages.slice(0, 30).map((p: any, i: number) => {
-                      const broken = (p.brokenLinks || []).length;
-                      const isolated = !!p.isolated;
-                      return (
-                        <li key={i} className="flex items-start justify-between py-3 gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-sm font-medium ${textMain} truncate`}>{p.title || p.url}</p>
-                            <p className={`text-xs mt-0.5 ${textDim} truncate font-mono`}>{p.url}</p>
-                          </div>
-                          <span className={`shrink-0 text-xs font-medium ${broken === 0 && !isolated ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {isolated ? 'Isolert' : broken > 0 ? `${broken} brutte` : 'OK'}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </PortalCard>
-            )}
-          </div>
-        )}
+                  {linkPages.length === 0 ? (
+                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
+                      Trykk «Start skann», så kartlegger vi interne/eksterne lenker per side.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[760px]">
+                        <thead>
+                          <tr style={{ background: palette.bg, color: palette.muted }}>
+                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
+                            <th className="text-right text-xs font-semibold px-4 py-2.5">INN</th>
+                            <th className="text-right text-xs font-semibold px-4 py-2.5">UT</th>
+                            <th className="text-right text-xs font-semibold px-4 py-2.5">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {linkPages.slice(0, 30).map((p: any, i: number) => {
+                            const brokenCount = Array.isArray(p.brokenLinks) ? p.brokenLinks.length : Number(p.brokenLinks || 0);
+                            const isolated = p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated;
+                            const statusText = isolated ? 'Isolert' : brokenCount > 0 ? `${brokenCount} brutte` : 'Bra';
+                            const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
+                            const tone = tonePill(statusTone);
+                            return (
+                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
+                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
+                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
+                                    {statusText}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          );
+        })()}
 
         {/* =============================================================== */}
         {/* SOKEORD — egen fane.                                            */}
         {/* =============================================================== */}
         {activeTab === 'keywords' && (
-          <div className="space-y-6">
-            <header className="flex items-end justify-between flex-wrap gap-3">
+          <div className="space-y-4">
+            <header className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Søkeord</h1>
-                <p className={`text-base mt-3 ${textDim}`}>
-                  Du sporer <span className={`font-semibold ${textMain}`}>{keywordsToTrack.length}</span> av {keywordLimit === Infinity ? 'ubegrenset' : keywordLimit} søkeord.
+                <h1 className="text-3xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Søkeord</h1>
+                <p className="text-sm mt-1" style={{ color: '#808080' }}>
+                  Velg et søkeord til venstre for å se detaljer
                 </p>
               </div>
               {keywordsToTrack.length > 0 && (
-                <PrimaryButton onClick={handleCheckRankings} disabled={rankingLoading}>
-                  <Search size={14} /> {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
-                </PrimaryButton>
+                <button
+                  onClick={handleCheckRankings}
+                  disabled={rankingLoading}
+                  className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                  style={{ background: '#1A1A1A', color: '#fff' }}
+                >
+                  <Search size={14} />
+                  {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
+                </button>
               )}
             </header>
 
-            {/* GOOGLE SEARCH CONSOLE */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              {!gscConnected ? (
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isLight ? 'bg-emerald-50' : 'bg-emerald-500/10'}`}>
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                      </svg>
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${textMain}`}>Koble til Google Search Console</p>
-                      <p className={`text-xs mt-0.5 ${textDim}`}>Hent dine faktiske søkeord, posisjoner, klikk og visninger direkte fra Google.</p>
-                    </div>
+            {/* GSC connection banner */}
+            {!gscConnected && (
+              <div className="rounded-xl p-4 flex items-center gap-4 justify-between flex-wrap" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#EBEBE6' }}>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
                   </div>
-                  {!showGscPreCheck ? (
-                    <button
-                      onClick={() => setShowGscPreCheck(true)}
-                      className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white" opacity="0.9" />
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.9" />
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="white" opacity="0.9" />
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white" opacity="0.9" />
-                      </svg>
-                      Koble til Google
-                    </button>
-                  ) : (
-                    <GscPreCheck
-                      onConfirm={handleConnectGsc}
-                      onCancel={() => setShowGscPreCheck(false)}
-                      theme={themed}
-                    />
-                  )}
-                </div>
-              ) : gscKeywords.length > 0 ? (
-                <>
-                  <CardHeader
-                    theme={themed}
-                    icon={<CheckCircle size={16} className="text-emerald-500" />}
-                    accent="violet"
-                    title="Google Search Console"
-                    subtitle={`${gscKeywords.length} søkeord hentet fra Google`}
-                  />
-                  <div className={`rounded-xl overflow-hidden border ${divider}`}>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className={`${subtleBg} border-b ${divider}`}>
-                          <th className={`text-left px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
-                            <span className="inline-flex items-center gap-1">Søkeord <HoverTooltip text="Søkeord hentet fra Google Search Console." /></span>
-                          </th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
-                            <span className="inline-flex items-center gap-1">Pos. <HoverTooltip text="Gjennomsnittlig plassering i Google." /></span>
-                          </th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel}`}>
-                            <span className="inline-flex items-center gap-1">Klikk <HoverTooltip text="Antall klikk fra organisk søk." /></span>
-                          </th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>
-                            <span className="inline-flex items-center gap-1">Visninger <HoverTooltip text="Hvor mange ganger siden er vist i søkeresultater." /></span>
-                          </th>
-                          <th className={`text-right px-4 py-2.5 text-xs font-semibold ${textLabel} hidden sm:table-cell`}>
-                            <span className="inline-flex items-center gap-1">CTR <HoverTooltip text="Klikkrate: klikk delt på visninger." /></span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${divider}`}>
-                        {gscKeywords.slice(0, 10).map((kw: any, i: number) => (
-                          <tr key={i} className={`${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'} transition-colors`}>
-                            <td className={`px-4 py-2.5 ${textMain} truncate max-w-[200px]`}>{kw.keyword}</td>
-                            <td className={`px-4 py-2.5 text-right font-semibold tabular-nums ${kw.position <= 3 ? 'text-emerald-600' : kw.position <= 10 ? 'text-violet-600' : textDim}`}>
-                              {kw.position ? `#${Math.round(kw.position)}` : '—'}
-                            </td>
-                            <td className={`px-4 py-2.5 text-right tabular-nums ${textMain}`}>{(kw.clicks ?? 0).toLocaleString('no-NO')}</td>
-                            <td className={`px-4 py-2.5 text-right tabular-nums ${textDim} hidden sm:table-cell`}>{(kw.impressions ?? 0).toLocaleString('no-NO')}</td>
-                            <td className={`px-4 py-2.5 text-right tabular-nums ${textDim} hidden sm:table-cell`}>
-                              {kw.ctr != null ? `${(kw.ctr * 100).toFixed(1)}%` : '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Koble til Google Search Console</p>
+                    <p className="text-xs" style={{ color: '#808080' }}>Hent dine faktiske søkeord, posisjoner, klikk og visninger direkte fra Google.</p>
                   </div>
-                  {gscKeywords.length > 10 && (
-                    <p className={`mt-3 text-xs ${textDim}`}>
-                      Viser 10 av {gscKeywords.length} søkeord — de resterende er tilgjengelig i søkeordlisten nedenfor.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  {gscLoading ? (
-                    <div className="flex items-center justify-center p-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <Search className="w-16 h-16 text-gray-400 mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                        Ingen søkeord ennå
-                      </h3>
-                      <p className="text-gray-600 text-center max-w-md mb-4">
-                        Google Search Console trenger 7-14 dager med data før vi kan vise søkeord.
-                      </p>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span>Sjekk at Google har indeksert siden din</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span>Send inn sitemap.xml</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span>Publiser nytt innhold</span>
-                        </div>
-                      </div>
-                      <a
-                        href="https://support.google.com/webmasters/answer/9008080"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-4 text-blue-600 hover:underline flex items-center gap-1"
-                      >
-                        Se guide: Kom i gang med GSC
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </>
-                  )}
                 </div>
-              )}
-            </PortalCard>
+                {!showGscPreCheck ? (
+                  <button
+                    onClick={() => setShowGscPreCheck(true)}
+                    className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97]"
+                    style={{ background: '#1A1A1A', color: '#fff' }}
+                  >
+                    Koble til Google
+                  </button>
+                ) : (
+                  <GscPreCheck onConfirm={handleConnectGsc} onCancel={() => setShowGscPreCheck(false)} theme={themed} />
+                )}
+              </div>
+            )}
 
-            {/* POSISJON-FORDELING — oversiktsbar med fargekodede grupper. */}
-            {realRankings.length > 0 && (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader theme={themed} icon={<BarChart3 size={16} />} accent="violet" title="Hvor du står" subtitle="Søkeord gruppert etter Google-posisjon." />
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                  {positionBuckets.map((b) => (
-                    <div key={b.name} className={`rounded-lg p-3 ${isLight ? 'bg-slate-50' : 'bg-slate-900/40'} border ${divider}`}>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: b.fill }} />
-                        <p className={`text-xs ${textLabel}`}>{b.name}</p>
+            {/* Two-panel keyword layout */}
+            {(() => {
+              const combinedList: Array<{
+                id: string; keyword: string; source: 'gsc' | 'tracked';
+                location?: string; position: number | null; change: number | null;
+                clicks?: number; impressions?: number; ctr?: number;
+                history: any[]; url?: string | null; competitors?: any[];
+              }> = [
+                ...gscKeywords.map((kw: any) => ({
+                  id: `gsc-${kw.keyword}`,
+                  keyword: kw.keyword,
+                  source: 'gsc' as const,
+                  position: kw.position != null ? parseFloat(kw.position.toFixed(1)) : null,
+                  change: null,
+                  clicks: kw.clicks,
+                  impressions: kw.impressions,
+                  ctr: kw.ctr,
+                  history: [],
+                })),
+                ...keywordsToTrack.map((k: any) => {
+                  const r = realRankings.find((r: any) => r.keyword === k.keyword && r.location === k.location);
+                  return {
+                    id: `tracked-${k.keyword}-${k.location}`,
+                    keyword: k.keyword,
+                    location: k.location,
+                    source: 'tracked' as const,
+                    position: r?.position ?? null,
+                    change: r?.change ?? null,
+                    history: r?.history ?? [],
+                    url: r?.url ?? null,
+                    competitors: r?.competitors ?? [],
+                  };
+                }),
+              ];
+
+              const filtered = combinedList.filter(kw => {
+                if (kwFilter === 'mine' && kw.source !== 'tracked') return false;
+                if (kwFilter === 'gsc' && kw.source !== 'gsc') return false;
+                if (kwSearch && !kw.keyword.toLowerCase().includes(kwSearch.toLowerCase())) return false;
+                return true;
+              });
+
+              const selected = selectedKwId ? combinedList.find(k => k.id === selectedKwId) ?? null : null;
+
+              const chartData = (() => {
+                if (!selected?.history?.length) return [];
+                const days = kwChartRange === '28d' ? 28 : kwChartRange === '90d' ? 90 : 365;
+                return selected.history.slice(-Math.min(days, selected.history.length));
+              })();
+
+              return (
+                <div className="flex gap-4" style={{ minHeight: 600 }}>
+                  {/* LEFT: keyword list */}
+                  <div className="flex flex-col gap-3 shrink-0" style={{ width: 260 }}>
+                    {/* Search */}
+                    <div className="relative">
+                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#808080' }} />
+                      <input
+                        type="text"
+                        value={kwSearch}
+                        onChange={e => setKwSearch(e.target.value)}
+                        placeholder={`Søk i ${combinedList.length} søkeord…`}
+                        className="w-full rounded-lg pl-8 pr-3 py-2 text-sm outline-none"
+                        style={{ background: '#FFFFFF', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                      />
+                    </div>
+
+                    {/* Filter tabs */}
+                    <div className="flex gap-1.5">
+                      {(['all', 'mine', 'gsc'] as const).map(f => (
+                        <button
+                          key={f}
+                          onClick={() => setKwFilter(f)}
+                          className="flex-1 py-1 rounded-full text-xs font-semibold transition-colors"
+                          style={{
+                            background: kwFilter === f ? '#1A1A1A' : '#EBEBE6',
+                            color: kwFilter === f ? '#fff' : '#808080',
+                          }}
+                        >
+                          {f === 'all' ? 'Alle' : f === 'mine' ? 'Mine' : 'GSC'}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Keyword list */}
+                    <div className="flex-1 overflow-y-auto rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6', maxHeight: 420 }}>
+                      {filtered.length === 0 ? (
+                        <div className="p-6 text-center text-sm" style={{ color: '#808080' }}>
+                          {kwSearch ? 'Ingen treff' : 'Ingen søkeord ennå'}
+                        </div>
+                      ) : (
+                        <ul>
+                          {filtered.map((kw, i) => {
+                            const isSelected = selectedKwId === kw.id;
+                            const posUp = kw.change !== null && kw.change > 0;
+                            const posDown = kw.change !== null && kw.change < 0;
+                            return (
+                              <li
+                                key={kw.id}
+                                onClick={() => setSelectedKwId(isSelected ? null : kw.id)}
+                                className="px-3 py-2.5 cursor-pointer"
+                                style={{
+                                  background: isSelected ? '#F5F5F0' : 'transparent',
+                                  borderBottom: i < filtered.length - 1 ? '1px solid #EBEBE6' : 'none',
+                                  borderLeft: isSelected ? '3px solid #1A1A1A' : '3px solid transparent',
+                                  transition: 'background 150ms ease-out',
+                                }}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-medium truncate" style={{ color: '#1A1A1A' }}>{kw.keyword}</p>
+                                  <div className="flex items-center gap-0.5 shrink-0 tabular-nums">
+                                    {kw.position !== null && (
+                                      <span className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>
+                                        {typeof kw.position === 'number' ? kw.position.toFixed(1) : kw.position}
+                                      </span>
+                                    )}
+                                    {posUp && <span className="text-[11px] font-semibold ml-1" style={{ color: '#52A447' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {posDown && <span className="text-[11px] font-semibold ml-1" style={{ color: '#ef4444' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#808080' }}>—0,0</span>}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span
+                                    className="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide"
+                                    style={{ background: '#EBEBE6', color: '#808080' }}
+                                  >
+                                    {kw.source === 'gsc' ? 'GSC' : 'EGEN'}
+                                  </span>
+                                  {kw.location && (
+                                    <span className="text-[10px] truncate" style={{ color: '#808080' }}>{kw.location}</span>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Add keyword */}
+                    <div className="rounded-xl p-3" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: '#1A1A1A' }}>Legg til søkeord</p>
+                      {canAddMoreKeywords ? (
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="text"
+                            value={newKeywordInput}
+                            onChange={e => setNewKeywordInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddKeyword()}
+                            placeholder="f.eks. rørlegger oslo"
+                            className="w-full rounded-lg px-3 py-2 text-xs outline-none"
+                            style={{ background: '#F5F5F0', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={locationInput}
+                              onChange={e => setLocationInput(e.target.value)}
+                              placeholder="Sted"
+                              className="flex-1 rounded-lg px-3 py-2 text-xs outline-none min-w-0"
+                              style={{ background: '#F5F5F0', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                            />
+                            <button
+                              onClick={handleAddKeyword}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold transition-transform active:scale-[0.97] shrink-0 flex items-center justify-center"
+                              style={{ background: '#1A1A1A', color: '#fff' }}
+                            >
+                              <Plus size={13} />
+                            </button>
+                          </div>
+                          <p className="text-[10px]" style={{ color: '#808080' }}>
+                            {keywordsToTrack.length}/{keywordLimit} søkeord brukt
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs" style={{ color: '#808080' }}>
+                          Grensen på {keywordLimit} søkeord er nådd.{' '}
+                          <button onClick={() => handleUpgrade()} className="underline font-medium" style={{ color: '#1A1A1A' }}>
+                            Oppgrader
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* RIGHT: detail panel */}
+                  <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                    {!selected ? (
+                      <div className="h-full flex flex-col items-center justify-center p-12 text-center" style={{ minHeight: 400 }}>
+                        <BarChart3 size={36} style={{ color: '#EBEBE6', marginBottom: 12 }} />
+                        <p className="text-sm font-semibold mb-1" style={{ color: '#1A1A1A' }}>Velg et søkeord</p>
+                        <p className="text-xs max-w-xs" style={{ color: '#808080' }}>
+                          Klikk på et søkeord til venstre for å se graf, landingssider og historikk på samme skjerm
+                        </p>
                       </div>
-                      <p className={`text-2xl font-semibold mt-1 ${textMain}`}>{b.value}</p>
+                    ) : (
+                      <div className="p-5 flex flex-col gap-5">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h2 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>{selected.keyword}</h2>
+                            <p className="text-xs mt-0.5" style={{ color: '#808080' }}>
+                              {selected.source === 'gsc'
+                                ? `Google Search Console · ${gscKeywords.length} søkeord hentet`
+                                : `${selected.location} · Manuelt sporet${selected.history.length > 0 ? ` · ${selected.history.length} målinger` : ''}`}
+                            </p>
+                          </div>
+                          {selected.source === 'tracked' && (
+                            <button
+                              onClick={() => { handleRemoveKeyword(selected.keyword, selected.location!); setSelectedKwId(null); }}
+                              className="text-xs transition-colors shrink-0"
+                              style={{ color: '#808080' }}
+                            >
+                              Fjern
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Stat cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {[
+                            {
+                              label: 'Posisjon',
+                              value: selected.position != null
+                                ? (selected.source === 'gsc' ? (selected.position as number).toFixed(1) : `#${selected.position}`)
+                                : '—',
+                              delta: selected.change,
+                              positive: (selected.change ?? 0) > 0,
+                            },
+                            {
+                              label: 'Klikk',
+                              value: selected.clicks != null ? (selected.clicks as number).toLocaleString('no-NO') : '—',
+                              delta: null,
+                              positive: false,
+                            },
+                            {
+                              label: 'Visninger',
+                              value: selected.impressions != null ? (selected.impressions as number).toLocaleString('no-NO') : '—',
+                              delta: null,
+                              positive: false,
+                            },
+                            {
+                              label: 'CTR',
+                              value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—',
+                              delta: null,
+                              positive: false,
+                            },
+                          ].map(stat => (
+                            <div key={stat.label} className="rounded-lg p-3" style={{ background: '#F5F5F0' }}>
+                              <p className="text-[11px] font-medium mb-1.5" style={{ color: '#808080' }}>{stat.label}</p>
+                              <p className="text-2xl font-semibold leading-none" style={{ color: '#1A1A1A' }}>{stat.value}</p>
+                              {stat.delta !== null && (
+                                <p className="text-xs font-semibold mt-1" style={{ color: stat.positive ? '#52A447' : '#ef4444' }}>
+                                  {stat.positive ? '▲' : stat.delta === 0 ? '' : '▼'}
+                                  {stat.delta !== 0 ? `${Math.abs(stat.delta as number).toFixed(1)}` : '—0,0'}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Position chart */}
+                        {chartData.length > 0 ? (
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Posisjon over tid</p>
+                              <div className="flex gap-1">
+                                {(['28d', '90d', '12mnd'] as const).map(r => (
+                                  <button
+                                    key={r}
+                                    onClick={() => setKwChartRange(r)}
+                                    className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+                                    style={{
+                                      background: kwChartRange === r ? '#1A1A1A' : '#EBEBE6',
+                                      color: kwChartRange === r ? '#fff' : '#808080',
+                                    }}
+                                  >
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div style={{ height: 176 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
+                                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
+                                  <YAxis
+                                    reversed
+                                    allowDecimals={false}
+                                    tick={{ fontSize: 10, fill: '#808080' }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    domain={['dataMin - 1', 'dataMax + 1']}
+                                  />
+                                  <RechartsTooltip
+                                    contentStyle={{ background: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
+                                    formatter={(val: any) => [`#${val}`, 'Posisjon']}
+                                  />
+                                  <Line
+                                    type="monotone"
+                                    dataKey="rank"
+                                    stroke="#1A1A1A"
+                                    strokeWidth={2}
+                                    dot={{ fill: '#52A447', r: 3, strokeWidth: 0 }}
+                                    activeDot={{ fill: '#52A447', r: 5, strokeWidth: 0 }}
+                                    isAnimationActive={false}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        ) : selected.source === 'tracked' ? (
+                          <div className="rounded-lg p-5 text-center" style={{ background: '#F5F5F0' }}>
+                            <p className="text-xs" style={{ color: '#808080' }}>Kjør «Sjekk rangering nå» for å se historikk her</p>
+                          </div>
+                        ) : null}
+
+                        {/* Bottom: landing pages + event log */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Landing pages */}
+                          <div className="rounded-lg p-4" style={{ border: '1px solid #EBEBE6' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Landingssider for dette ordet</p>
+                            {selected.source === 'tracked' && selected.url ? (
+                              <div>
+                                <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 pb-1.5 mb-1.5" style={{ borderBottom: '1px solid #EBEBE6' }}>
+                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>URL</p>
+                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>KLIKK</p>
+                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>POS</p>
+                                </div>
+                                <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center py-1.5">
+                                  <a
+                                    href={selected.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs truncate hover:underline"
+                                    style={{ color: '#52A447' }}
+                                  >
+                                    {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
+                                  </a>
+                                  <span className="text-xs tabular-nums text-right" style={{ color: '#1A1A1A' }}>—</span>
+                                  <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
+                                    {selected.position ?? '—'}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs" style={{ color: '#808080' }}>
+                                {selected.source === 'gsc'
+                                  ? 'Landingssidedata er ikke tilgjengelig via GSC-integrasjonen.'
+                                  : 'Kjør rangering for å finne landingssider.'}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Event log */}
+                          <div className="rounded-lg p-4" style={{ border: '1px solid #EBEBE6' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hendelseslogg</p>
+                            {(() => {
+                              const events: Array<{ text: string; sub?: string }> = [];
+                              if (selected.source === 'tracked') {
+                                if (selected.history.length >= 2) {
+                                  const first = selected.history[0];
+                                  const last = selected.history[selected.history.length - 1];
+                                  if (first.rank !== last.rank) {
+                                    events.push({
+                                      text: `Posisjon ${first.rank > last.rank ? 'forbedret' : 'svekket'} fra ${first.rank} → ${last.rank}`,
+                                      sub: last.date,
+                                    });
+                                  }
+                                }
+                                if (selected.history.length > 0) {
+                                  events.push({ text: 'Første rangering sjekket', sub: selected.history[0].date });
+                                }
+                                events.push({ text: 'Ord lagt til manuelt', sub: selected.location });
+                              } else {
+                                if (selected.position != null) {
+                                  events.push({ text: `Gjennomsnittlig posisjon ${(selected.position as number).toFixed(1)}`, sub: 'Siste 28 dager' });
+                                }
+                                if (selected.clicks) {
+                                  events.push({ text: `${(selected.clicks as number).toLocaleString('no-NO')} klikk fra organisk søk`, sub: 'Siste 28 dager' });
+                                }
+                                events.push({ text: 'Koblet via Google Search Console', sub: '' });
+                              }
+                              if (!events.length) {
+                                return <p className="text-xs" style={{ color: '#808080' }}>Ingen hendelser ennå.</p>;
+                              }
+                              return (
+                                <ul className="space-y-2.5">
+                                  {events.map((ev, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#52A447' }} />
+                                      <div>
+                                        <p className="text-xs" style={{ color: '#1A1A1A' }}>{ev.text}</p>
+                                        {ev.sub && <p className="text-[10px] mt-0.5" style={{ color: '#808080' }}>{ev.sub}</p>}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Position distribution */}
+            {realRankings.length > 0 && (
+              <div className="rounded-xl p-5" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                <p className="text-sm font-semibold mb-4" style={{ color: '#1A1A1A' }}>Posisjonsfordeling</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                  {positionBuckets.map((b) => (
+                    <div key={b.name} className="rounded-lg p-3" style={{ background: '#F5F5F0' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: b.fill }} />
+                        <p className="text-xs" style={{ color: '#808080' }}>{b.name}</p>
+                      </div>
+                      <p className="text-2xl font-semibold" style={{ color: '#1A1A1A' }}>{b.value}</p>
                     </div>
                   ))}
                 </div>
-                <div className="h-32">
+                <div style={{ height: 112 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={positionBuckets} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isLight ? '#e2e8f0' : '#1e293b'} />
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: isLight ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#808080' }} axisLine={false} tickLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
                       <RechartsTooltip
-                        contentStyle={{ backgroundColor: isLight ? '#fff' : '#0f172a', border: `1px solid ${isLight ? '#e2e8f0' : '#1e293b'}`, borderRadius: 12, fontSize: 12 }}
-                        cursor={{ fill: isLight ? '#f8fafc' : '#1e293b40' }}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
+                        cursor={{ fill: '#F5F5F0' }}
                       />
                       <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
-                        {positionBuckets.map((b, i) => (
-                          <Cell key={i} fill={b.fill} />
-                        ))}
+                        {positionBuckets.map((b, i) => <Cell key={i} fill={b.fill} />)}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </PortalCard>
+              </div>
             )}
-
-            {/* LEGG TIL */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader theme={themed} title="Legg til søkeord" subtitle="Skriv inn et ord du vil rangere på, og hvilket sted det gjelder." />
-              {canAddMoreKeywords ? (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    value={newKeywordInput}
-                    onChange={(e) => setNewKeywordInput(e.target.value)}
-                    placeholder="F.eks. «rørlegger oslo»"
-                    className={`flex-1 rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
-                  />
-                  <input
-                    type="text"
-                    value={locationInput}
-                    onChange={(e) => setLocationInput(e.target.value)}
-                    placeholder="Sted"
-                    className={`sm:w-32 rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
-                  />
-                  <PrimaryButton onClick={handleAddKeyword}>
-                    <Plus size={14} /> Legg til
-                  </PrimaryButton>
-                </div>
-              ) : (
-                <TierTeaser
-                  theme={themed}
-                  tier={currentLevel === 1 ? 'Standard' : 'Premium'}
-                  price={currentLevel === 1 ? '1 499 kr' : '4 999 kr'}
-                  message={`Du har nådd grensen på ${keywordLimit} søkeord`}
-                  onUpgrade={handleUpgrade}
-                />
-              )}
-            </PortalCard>
-
-            {/* SOKEORD-LISTE */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader theme={themed} title="Sporede søkeord" subtitle={realRankings.length > 0 ? 'Posisjon på Google fra siste sjekk.' : 'Sjekk rangering for å se hvor du står.'} />
-
-              {keywordsToTrack.length === 0 ? (
-                <div className={`rounded-xl px-5 py-8 text-center ${subtleBg}`}>
-                  <p className={`text-sm ${textDim}`}>Ingen søkeord lagt til enda — bruk skjemaet over.</p>
-                </div>
-              ) : (
-                <ul className={`divide-y ${divider}`}>
-                  {keywordsToTrack.map((k: any, i: number) => {
-                    const ranking = realRankings.find((r: any) => r.keyword === k.keyword && r.location === k.location);
-                    const pos = ranking?.position;
-                    const pillStyle = pos == null
-                      ? { bg: isLight ? 'bg-slate-100' : 'bg-slate-800', fg: textDim }
-                      : pos <= 3
-                        ? { bg: isLight ? 'bg-emerald-100' : 'bg-emerald-500/15', fg: 'text-emerald-700' }
-                        : pos <= 10
-                          ? { bg: isLight ? 'bg-violet-100' : 'bg-violet-500/15', fg: 'text-violet-700' }
-                          : pos <= 50
-                            ? { bg: isLight ? 'bg-amber-100' : 'bg-amber-500/15', fg: 'text-amber-700' }
-                            : { bg: isLight ? 'bg-rose-100' : 'bg-rose-500/15', fg: 'text-rose-700' };
-                    return (
-                      <li key={i} className="flex items-center justify-between py-3 gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-sm font-medium ${textMain}`}>{k.keyword}</p>
-                          <p className={`text-xs mt-0.5 ${textDim}`}>{k.location}</p>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold ${pillStyle.bg} ${pillStyle.fg}`}>
-                            {pos == null ? '—' : pos > 100 ? '100+' : `#${pos}`}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveKeyword(k.keyword, k.location)}
-                            className={`text-sm ${textDim} hover:text-rose-600`}
-                          >
-                            Fjern
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-
-              <p className={`mt-5 pt-5 border-t ${divider} text-xs ${textLabel}`}>
-                {currentLevel === 1
-                  ? `Basic: ${keywordLimit} søkeord. Standard sporer 15. Premium ubegrenset.`
-                  : currentLevel === 2
-                    ? `Standard: opptil ${keywordLimit} søkeord. Premium ubegrenset.`
-                    : 'Premium: ubegrenset søkeord.'}
-              </p>
-            </PortalCard>
           </div>
         )}
 
