@@ -4120,7 +4120,7 @@ const categoryMeta = (
 
 interface Competitor {
   id: string;
-  site_id: string;
+  user_id: string;
   domain: string;
   avg_position: number | null;
   keyword_count: number;
@@ -4132,7 +4132,7 @@ interface Competitor {
 
 interface KeywordOpportunity {
   id: string;
-  site_id: string;
+  user_id: string;
   keyword: string;
   search_volume: number;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -4166,53 +4166,73 @@ function formatVolume(n: number): string {
   return String(n);
 }
 
+/** Dekoder Supabase JWT (kun for sub / bruker-id — ikke validering). */
+function getUserIdFromAccessToken(accessToken: string | null | undefined): string | null {
+  if (!accessToken || typeof accessToken !== 'string') return null;
+  try {
+    const part = accessToken.split('.')[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4 ? '='.repeat(4 - (b64.length % 4)) : '';
+    const payload = JSON.parse(atob(b64 + pad));
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Samme bruker-id som JWT / scan-API: session → getUser → JWT i localStorage → ev. fallback fra props. */
+async function getCompetitorScopeUserId(fallback: string | null): Promise<string | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) return session.user.id;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) return user.id;
+  } catch {
+    /* ignore */
+  }
+  const fromJwt = getUserIdFromAccessToken(getStoredAccessToken());
+  if (fromJwt) return fromJwt;
+  return fallback ?? null;
+}
+
 // Custom hook — henter konkurrenter + muligheter fra Supabase med real-time
 function useCompetitorData(userId: string | null) {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [opportunities, setOpportunities] = useState<KeywordOpportunity[]>([]);
-  const [siteId, setSiteId] = useState<string | null>(null);
   const [hasSite, setHasSite] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!userId) {
+    const uid = await getCompetitorScopeUserId(userId);
+    if (!uid) {
       setCompetitors([]);
       setOpportunities([]);
-      setSiteId(null);
+      setHasSite(false);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const { data: site, error: siteError } = await supabase
-        .from('sites')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (siteError) throw siteError;
-      const resolvedSiteId = site?.id ?? null;
-      setSiteId(resolvedSiteId);
-      setHasSite(!!resolvedSiteId);
-
-      if (!resolvedSiteId) {
-        setCompetitors([]);
-        setOpportunities([]);
-        return;
-      }
+      // Tabellene er knyttet til bruker via user_id (samme som scan-competitor API).
+      setHasSite(true);
 
       const [{ data: compRows, error: compError }, { data: oppRows, error: oppError }] = await Promise.all([
         supabase
           .from('competitors')
           .select('*')
-          .eq('site_id', resolvedSiteId)
+          .eq('user_id', uid)
           .order('created_at', { ascending: true }),
         supabase
           .from('keyword_opportunities')
           .select('*')
-          .eq('site_id', resolvedSiteId)
+          .eq('user_id', uid)
           .order('estimated_traffic', { ascending: false }),
       ]);
 
@@ -4229,18 +4249,27 @@ function useCompetitorData(userId: string | null) {
   }, [userId]);
 
   useEffect(() => {
-    fetchData();
-    if (!userId || !siteId) return;
-    // Real-time oppdateringer
-    const channel = supabase
-      .channel(`competitors-rt-${siteId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `site_id=eq.${siteId}` }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `site_id=eq.${siteId}` }, fetchData)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [userId, siteId, fetchData]);
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-  return { competitors, opportunities, siteId, hasSite, loading, error, refetch: fetchData };
+    (async () => {
+      await fetchData();
+      const uid = await getCompetitorScopeUserId(userId);
+      if (cancelled || !uid) return;
+      channel = supabase
+        .channel(`competitors-rt-${uid}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'competitors', filter: `user_id=eq.${uid}` }, fetchData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'keyword_opportunities', filter: `user_id=eq.${uid}` }, fetchData)
+        .subscribe();
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [userId, fetchData]);
+
+  return { competitors, opportunities, hasSite, loading, error, refetch: fetchData };
 }
 
 // ============================================================
@@ -4260,7 +4289,7 @@ const KonkurrenterPage: React.FC<{
   const divider = portalDividerClass(theme);
   const subtleBg = portalSubtleBgClass(theme);
 
-  const { competitors, opportunities, siteId, hasSite, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+  const { competitors, opportunities, hasSite, loading, error, refetch } = useCompetitorData(user?.id ?? null);
 
   // --- Modal-tilstander ---
   const [showAddModal, setShowAddModal] = useState(false);
@@ -4293,6 +4322,11 @@ const KonkurrenterPage: React.FC<{
     return true;
   });
 
+  const getAccessTokenForApi = async (): Promise<string | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? getStoredAccessToken();
+  };
+
   // --- Legg til konkurrent ---
   const handleAddCompetitor = async () => {
     const raw = addDomain.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0];
@@ -4307,12 +4341,15 @@ const KonkurrenterPage: React.FC<{
     setAddLoading(true);
     setAddError(null);
     try {
-      // 1. Lag raden i Supabase
+      // 1. Lag raden i Supabase — user_id må være auth.users.id (samme som JWT). Ikke bruk bare getUser(); session/JWT er mer pålitelig i nettleseren.
       const color = getAvatarColor(raw);
-      if (!siteId) throw new Error('Fant ingen site for brukeren. Kjør analyse først.');
+      const uid = await getCompetitorScopeUserId(user?.id ?? null);
+      if (!uid) {
+        throw new Error('Kunne ikke hente bruker-ID. Oppdater siden og logg inn på nytt, og prøv igjen.');
+      }
       const { data: newComp, error: insertError } = await supabase
         .from('competitors')
-        .insert({ site_id: siteId, domain: raw, avatar_color: color, competitor_type: 'main' })
+        .insert({ user_id: uid, domain: raw, avatar_color: color, competitor_type: 'main' })
         .select('*')
         .single();
       if (insertError || !newComp) throw insertError || new Error('Klarte ikke å opprette konkurrent');
@@ -4321,15 +4358,22 @@ const KonkurrenterPage: React.FC<{
       toastInfo(`Analyserer ${raw}… Dette tar 1–2 minutter.`);
       // 2. Kjør scan umiddelbart i bakgrunnen
       setScanningId(newComp.id);
-      const token = getStoredAccessToken();
+      const token = await getAccessTokenForApi();
+      if (!token) {
+        toastError('Sesjon utløpt — logg inn på nytt for å skanne.');
+        await refetch();
+        return;
+      }
       const scanRes = await fetch('/api/scan-competitor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ competitor_id: newComp.id }),
       });
       const scanData = await scanRes.json().catch(() => ({}));
-      if (!scanRes.ok) toastError(scanData?.error || 'Scanning feilet — prøv igjen om litt.');
-      else toastSuccess(scanData?.message || `${raw} er lagt til og skannet.`);
+      if (!scanRes.ok) {
+        const msg = [scanData?.error, scanData?.hint].filter(Boolean).join(' — ');
+        toastError(msg || 'Scanning feilet — prøv igjen om litt.');
+      } else toastSuccess(scanData?.message || `${raw} er lagt til og skannet.`);
       await refetch();
     } catch (e: any) {
       setAddError(e?.message || 'Kunne ikke legge til konkurrenten.');
@@ -4343,15 +4387,21 @@ const KonkurrenterPage: React.FC<{
   const handleRescan = async (comp: Competitor) => {
     setScanningId(comp.id);
     try {
-      const token = getStoredAccessToken();
+      const token = await getAccessTokenForApi();
+      if (!token) {
+        toastError('Sesjon utløpt — logg inn på nytt for å skanne.');
+        return;
+      }
       const res = await fetch('/api/scan-competitor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ competitor_id: comp.id }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) toastError(data?.error || 'Scanning feilet.');
-      else toastSuccess(data?.message || 'Scanning fullført.');
+      if (!res.ok) {
+        const msg = [data?.error, data?.hint].filter(Boolean).join(' — ');
+        toastError(msg || 'Scanning feilet.');
+      } else toastSuccess(data?.message || 'Scanning fullført.');
       await refetch();
     } catch (e: any) {
       toastError(e?.message || 'Kunne ikke skanne konkurrenten akkurat nå.');
@@ -4511,10 +4561,8 @@ const KonkurrenterPage: React.FC<{
           <EmptyState
             theme={theme}
             icon={<Users className="w-12 h-12" />}
-            title={hasSite ? 'Ingen konkurrenter lagt til' : 'Ingen nettside funnet enda'}
-            description={hasSite
-              ? 'Legg til konkurrenter for å sammenligne prestasjonen din og finne gap du kan utnytte.'
-              : 'Kjør en første analyse slik at Sikt oppretter site før konkurrenter knyttes til den.'}
+            title="Ingen konkurrenter lagt til"
+            description="Legg til konkurrenter for å sammenligne prestasjonen din og finne søkeord du kan vinne."
             action={
               <PrimaryButton onClick={() => setShowAddModal(true)} disabled={!hasSite}>
                 Legg til din første konkurrent

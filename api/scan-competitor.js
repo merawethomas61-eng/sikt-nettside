@@ -45,6 +45,28 @@ function guessRecommendationType(keyword) {
     return 'expand_existing';
 }
 
+/** Vercel / Node kan gi req.body som objekt, streng eller tom — normaliser til objekt. */
+function parseJsonBody(req) {
+    const raw = req.body;
+    if (raw == null) return {};
+    if (typeof raw === 'object' && !Buffer.isBuffer(raw)) return raw;
+    if (typeof raw === 'string') {
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    }
+    if (Buffer.isBuffer(raw)) {
+        try {
+            return JSON.parse(raw.toString('utf8'));
+        } catch {
+            return {};
+        }
+    }
+    return {};
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Kun POST er tillatt' });
@@ -62,7 +84,8 @@ export default async function handler(req, res) {
     if (!SERP_API_KEY) return res.status(500).json({ error: 'SERP_API_KEY mangler på serveren' });
     if (!SUPABASE_SERVICE_KEY) return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
 
-    const { competitor_id } = req.body || {};
+    const body = parseJsonBody(req);
+    const { competitor_id } = body;
     if (!competitor_id) return res.status(400).json({ error: 'Mangler competitor_id' });
 
     // Service-role klient for å skrive til competitor_keyword_rankings
@@ -74,10 +97,20 @@ export default async function handler(req, res) {
         .select('id, domain, user_id')
         .eq('id', competitor_id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
     if (compErr || !competitor) {
-        return res.status(404).json({ error: 'Konkurrent ikke funnet' });
+        console.error('[scan-competitor] Konkurrent-lookup feilet', {
+            competitor_id,
+            authUserId: user.id,
+            supabaseMsg: compErr?.message,
+            supabaseCode: compErr?.code,
+        });
+        return res.status(404).json({
+            error: 'Konkurrent ikke funnet',
+            hint:
+                'Raden finnes ikke i Supabase for denne brukeren. Vanligste årsak: Vercel bruker et annet Supabase-prosjekt enn nettsiden (sjekk at VITE_SUPABASE_URL og nøkler i Vercel matcher bygget). Ellers: sjekk at competitors-tabellen har user_id og at innsettingen lyktes.',
+        });
     }
 
     // --- 2. Hent brukerens søkeord ---
