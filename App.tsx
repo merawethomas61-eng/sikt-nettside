@@ -17,6 +17,14 @@ import {
   ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info
 } from 'lucide-react';
 
+import {
+  DashboardCompetitorWidget,
+  CompetitorChangeFeed,
+  CompetitorCardEnhanced,
+  useCompetitorChanges,
+  useCompetitorPages,
+} from './CompetitorMonitor';
+
 
 // --- GLOBALE KONSTANTER ---
 // Hvor lenge "Control Center"-loading-skjermen vises før vi slipper
@@ -4894,6 +4902,12 @@ const KonkurrenterPage: React.FC<{
           </div>
         </div>
       )}
+
+      {/* Endringer / Varsler */}
+      <CompetitorChangeFeed
+        userId={user.id}
+        theme={theme}
+      />
     </div>
   );
 };
@@ -7024,20 +7038,29 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
         {/* =============================================================== */}
         {activeTab === 'home' && (
-          <DashboardHome
-            user={user}
-            clientData={clientData}
-            formData={formData}
-            analysisResults={analysisResults}
-            scoreHistory={scoreHistory}
-            siktActions={siktActions}
-            realRankings={realRankings}
-            gscConnected={gscConnected}
-            gscKeywords={gscKeywords}
-            isAnalyzing={isAnalyzing}
-            onRunAnalysis={runRealAnalysis}
-            onNavigate={setActiveTab}
-          />
+          <>
+            <DashboardHome
+              user={user}
+              clientData={clientData}
+              formData={formData}
+              analysisResults={analysisResults}
+              scoreHistory={scoreHistory}
+              siktActions={siktActions}
+              realRankings={realRankings}
+              gscConnected={gscConnected}
+              gscKeywords={gscKeywords}
+              isAnalyzing={isAnalyzing}
+              onRunAnalysis={runRealAnalysis}
+              onNavigate={setActiveTab}
+            />
+            <div className="max-w-5xl mx-auto px-4 mt-12 pb-20">
+              <DashboardCompetitorWidget
+                userId={user.id}
+                theme={themed}
+                onNavigate={() => setActiveTab('competitors')}
+              />
+            </div>
+          </>
         )}
         {false && activeTab === 'home' && (
           <div className="space-y-6">
