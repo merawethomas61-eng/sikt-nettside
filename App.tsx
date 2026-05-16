@@ -4283,6 +4283,271 @@ function useCompetitorData(userId: string | null) {
 // ============================================================
 // KonkurrenterPage
 // ============================================================
+
+// Relative-time helper (Norwegian) — used only inside KonkurrenterPage
+function kpTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Nå';
+  if (m < 60) return `${m} min siden`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}t siden`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'I går';
+  if (d < 7) return `${d} dager siden`;
+  return new Date(dateStr).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+}
+
+// ─── GEO / AI-SYNLIGHET PAGE ────────────────────────────────────────────────
+const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
+  const G = {
+    bg:     '#F5F5F0',
+    card:   '#FFFFFF',
+    ink:    '#1A1A1A',
+    green:  '#52A447',
+    muted:  '#808080',
+    border: '#EBEBE6',
+  } as const;
+  const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
+  const pressU = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
+
+  const [geoPrompt, setGeoPrompt] = useState('');
+  const suggestions = [
+    'Hvilken regnskapsfører bør jeg bruke i Bergen?',
+    'Beste elektriker i Oslo for varmepumpe',
+    'Anbefal en rørlegger i Trondheim sentrum',
+  ];
+  const openAI = (url: string) => {
+    const q = geoPrompt.trim();
+    window.open(q ? `${url}?q=${encodeURIComponent(q)}` : url, '_blank');
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* ── HERO: split ───────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+        {/* Left: editorial text */}
+        <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
+              GEO · Generative Engine Optimization
+            </p>
+            <span style={{ fontSize: 10, fontWeight: 700, background: G.green, color: '#fff', borderRadius: 100, padding: '2px 8px', letterSpacing: '0.06em' }}>
+              Beta
+            </span>
+          </div>
+          <h1 style={{ fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 900, lineHeight: 1.08, color: G.ink, margin: '0 0 20px', letterSpacing: '-0.02em' }}>
+            Når kundene spør AI-en,{' '}
+            <em style={{ fontStyle: 'italic', color: G.muted, fontWeight: 800 }}>blir du nevnt?</em>
+          </h1>
+          <p style={{ fontSize: 15, color: G.muted, lineHeight: 1.65, margin: '0 0 28px', maxWidth: 420 }}>
+            Småbedrifter sjekker fortsatt hvordan de rangerer på Google. Men nordmenn
+            flytter spørsmålene sine til ChatGPT, Perplexity og Gemini. Sikt hjelper deg
+            med å se hvordan bedriften din omtales i svarene.
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { document.getElementById('geo-tester')?.scrollIntoView({ behavior: 'smooth' }); }}
+              style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+              onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+            >
+              Start en test <ChevronRight size={15} />
+            </button>
+            <button
+              onClick={() => { document.getElementById('geo-veikartet')?.scrollIntoView({ behavior: 'smooth' }); }}
+              style={{ background: 'none', color: G.muted, border: `1px solid ${G.border}`, borderRadius: 11, padding: '11px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: `all 160ms ${EASE}` }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = G.ink; e.currentTarget.style.color = G.ink; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.muted; }}
+            >
+              Slik fungerer GEO
+            </button>
+          </div>
+        </div>
+
+        {/* Right: stat cards 2×2 */}
+        <div style={{ flex: '0 0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: 'min(360px, 100%)' }}>
+          {/* Card 1 – dark */}
+          <div style={{ background: G.ink, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Av nordmenn</p>
+            <p style={{ fontSize: 42, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>95%</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.45 }}>bruker ChatGPT til å finne lokale bedrifter</p>
+          </div>
+          {/* Card 2 – white */}
+          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Brukere</p>
+            <p style={{ fontSize: 42, fontWeight: 900, color: G.ink, margin: 0, lineHeight: 1 }}>200M</p>
+            <p style={{ fontSize: 11, color: G.muted, margin: 0, lineHeight: 1.45 }}>bruker ChatGPT månedlig — og spør om alt</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 18, marginTop: 4 }}>
+              {[40, 55, 45, 65, 58, 72, 80, 88, 95].map((h, i) => (
+                <div key={i} style={{ flex: 1, background: G.green, borderRadius: 2, height: `${h}%`, opacity: 0.7 + i * 0.033 }} />
+              ))}
+            </div>
+          </div>
+          {/* Card 3 – white */}
+          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Perplexity</p>
+              <TrendingUp size={13} style={{ color: G.green }} />
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: G.ink, margin: 0, lineHeight: 1.4 }}>erstatter Google-søket for mange profesjonelle</p>
+            <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 14, marginTop: 4 }}>
+              {[30, 50, 42, 60, 55, 68, 75].map((h, i) => (
+                <div key={i} style={{ flex: 1, background: G.border, borderRadius: 2, height: `${h}%` }} />
+              ))}
+            </div>
+          </div>
+          {/* Card 4 – white */}
+          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Gemini</p>
+              <ExternalLink size={12} style={{ color: G.border }} />
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: G.ink, margin: 0, lineHeight: 1.4 }}>er integrert direkte i Chrome — alle norske brukere</p>
+            <p style={{ fontSize: 10, color: G.muted, margin: '4px 0 0' }}>Brukes automatisk ved søk</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── PROMPT TESTER ──────────────────────────────────────────── */}
+      <div id="geo-tester" style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 16, padding: '24px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Test en prompt</p>
+          <span style={{ fontSize: 10, fontWeight: 600, background: G.bg, border: `1px solid ${G.border}`, borderRadius: 100, padding: '2px 10px', color: G.muted }}>
+            Manuell — ingen automatikk ennå
+          </span>
+        </div>
+
+        {/* Input row */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
+          <div
+            style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 10, background: G.bg, border: `1px solid ${G.border}`, borderRadius: 12, padding: '12px 16px', transition: `border-color 150ms ${EASE}` }}
+            onFocusCapture={e => (e.currentTarget.style.borderColor = G.ink)}
+            onBlurCapture={e => (e.currentTarget.style.borderColor = G.border)}
+          >
+            <Search size={15} style={{ color: G.muted, flexShrink: 0 }} />
+            <input
+              type="text"
+              value={geoPrompt}
+              onChange={e => setGeoPrompt(e.target.value)}
+              placeholder="Hvilken regnskapsfører bør jeg bruke i Bergen?"
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: G.ink, caretColor: G.ink }}
+            />
+          </div>
+          <button
+            onClick={() => openAI('https://chatgpt.com')}
+            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '12px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
+            onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+          >
+            <ExternalLink size={13} /> Åpne i ChatGPT
+          </button>
+        </div>
+
+        {/* Secondary: Perplexity */}
+        <div style={{ marginBottom: 20 }}>
+          <button
+            onClick={() => openAI('https://www.perplexity.ai/search')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 0', transition: `color 150ms ${EASE}` }}
+            onMouseEnter={e => (e.currentTarget.style.color = G.ink)}
+            onMouseLeave={e => (e.currentTarget.style.color = G.muted)}
+          >
+            <ExternalLink size={12} /> Åpne i Perplexity
+          </button>
+        </div>
+
+        {/* Suggestion chips */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => setGeoPrompt(s)}
+              style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 100, padding: '6px 14px', fontSize: 12, color: G.muted, cursor: 'pointer', transition: `all 150ms ${EASE}` }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = G.ink; e.currentTarget.style.color = G.ink; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.muted; }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── WARNING BANNER ─────────────────────────────────────────── */}
+      <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <AlertTriangle size={16} style={{ color: '#C07B00', flexShrink: 0, marginTop: 1 }} />
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#C07B00', margin: '0 0 2px' }}>
+            Du må sjekke manuelt om bedriften din nevnes
+          </p>
+          <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>
+            Automatisk sporing kommer snart. Test promptene under for hånd inntil videre.
+          </p>
+        </div>
+      </div>
+
+      {/* ── VEIKARTET / ROADMAP ────────────────────────────────────── */}
+      <div id="geo-veikartet">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
+            På veikartet
+          </p>
+          <span style={{ fontSize: 11, fontWeight: 600, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Lock size={11} /> Kommer Q3 2026
+          </span>
+        </div>
+        <h2 style={{ fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 900, color: G.ink, margin: '0 0 20px', letterSpacing: '-0.01em' }}>
+          Det vi snart automatiserer for deg.
+        </h2>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+          {([
+            {
+              num: '01',
+              title: 'Daglig sporing av 50+ relevante prompts',
+              badge: 'Under utvikling',
+              green: true,
+              desc: 'Vi spør ChatGPT, Perplexity og Gemini hver natt om de samme spørsmålene en kunde ville stilt. Du får varsel hvis du dukker opp — eller blir borte.',
+            },
+            {
+              num: '02',
+              title: 'Automatisk GEO-sporing',
+              badge: 'Lansering Q3 2026',
+              green: false,
+              desc: 'Posisjon, sitater og kontekst — på samme måte som Google Search Console, bare for AI-svar.',
+            },
+          ] as const).map(item => (
+            <div key={item.num} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 16, padding: '22px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+                <span style={{ fontSize: 28, fontWeight: 900, color: G.border, letterSpacing: '-0.03em', lineHeight: 1 }}>{item.num}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, background: item.green ? 'rgba(82,164,71,0.1)' : G.bg, color: item.green ? G.green : G.muted, border: `1px solid ${item.green ? 'rgba(82,164,71,0.2)' : G.border}`, borderRadius: 100, padding: '3px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  {!item.green && <Lock size={9} />}{item.badge}
+                </span>
+              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: G.ink, margin: '0 0 10px', lineHeight: 1.35 }}>{item.title}</h3>
+              <p style={{ fontSize: 13, color: G.muted, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 16 }}>
+          <button
+            type="button"
+            onClick={onNotify}
+            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+          >
+            Bli varslet når det lanseres <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const KonkurrenterPage: React.FC<{
   user: any;
   theme: PortalTheme;
@@ -4290,35 +4555,41 @@ const KonkurrenterPage: React.FC<{
   hasPremium: boolean;
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
-  const isLight = theme === 'light';
-  const textMain = portalTextMainClass(theme);
-  const textDim = portalTextDimClass(theme);
-  const textLabel = portalTextLabelClass(theme);
-  const divider = portalDividerClass(theme);
-  const subtleBg = portalSubtleBgClass(theme);
+  // Colour tokens — always this palette regardless of theme
+  const C = {
+    bg:     '#F5F5F0',
+    card:   '#FFFFFF',
+    ink:    '#1A1A1A',
+    green:  '#52A447',
+    muted:  '#808080',
+    border: '#EBEBE6',
+  } as const;
 
-  const { competitors, opportunities, hasSite, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+  // Custom easing (Emil: never use default CSS easings)
+  const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
-  // --- Modal-tilstander ---
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addDomain, setAddDomain] = useState('');
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
+  // Shared button press helpers
+  const pressDown  = (e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; };
+  const pressReset = (e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; };
 
-  const [scanningId, setScanningId] = useState<string | null>(null);
+  void theme; // palette is always hardcoded — theme prop kept for API compatibility
 
-  const [selectedComp, setSelectedComp] = useState<Competitor | null>(null);
-  const [compRankings, setCompRankings] = useState<CompetitorKeywordRanking[]>([]);
-  const [rankingsLoading, setRankingsLoading] = useState(false);
+  const { competitors, opportunities, loading, error, refetch } = useCompetitorData(user?.id ?? null);
+  const { changes, unreadCount, markAllRead }                    = useCompetitorChanges(user?.id, 20);
 
-  const [oppFilter, setOppFilter] = useState<'all' | 'easy' | 'high_value'>('all');
-
-  const [generateTarget, setGenerateTarget] = useState<KeywordOpportunity | null>(null);
-  const [generateLoading, setGenerateLoading] = useState(false);
-
+  const [showAddModal,      setShowAddModal]      = useState(false);
+  const [addDomain,         setAddDomain]         = useState('');
+  const [addLoading,        setAddLoading]        = useState(false);
+  const [addError,          setAddError]          = useState<string | null>(null);
+  const [scanningId,        setScanningId]        = useState<string | null>(null);
+  const [selectedComp,      setSelectedComp]      = useState<Competitor | null>(null);
+  const [compRankings,      setCompRankings]      = useState<CompetitorKeywordRanking[]>([]);
+  const [rankingsLoading,   setRankingsLoading]   = useState(false);
+  const [oppFilter,         setOppFilter]         = useState<'all' | 'easy' | 'high_value'>('all');
+  const [generateTarget,    setGenerateTarget]    = useState<KeywordOpportunity | null>(null);
+  const [generateLoading,   setGenerateLoading]   = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
-  // --- Avledede tall ---
   const maxCompetitors = hasPremium ? 99 : 3;
   const totalTraffic = opportunities.reduce((s, o) => s + (o.estimated_traffic || 0), 0);
   const easyCount = opportunities.filter((o) => o.difficulty === 'easy').length;
@@ -4419,7 +4690,7 @@ const KonkurrenterPage: React.FC<{
   };
 
   // --- Last detaljer for valgt konkurrent ---
-  const handleSelectCompetitor = async (comp: Competitor) => {
+  const handleSelectCompetitor = useCallback(async (comp: Competitor) => {
     setSelectedComp(comp);
     setRankingsLoading(true);
     try {
@@ -4428,7 +4699,14 @@ const KonkurrenterPage: React.FC<{
       );
       setCompRankings(Array.isArray(rows) ? rows : []);
     } catch { setCompRankings([]); } finally { setRankingsLoading(false); }
-  };
+  }, []);
+
+  // Auto-select first competitor once data loads
+  useEffect(() => {
+    if (!loading && competitors.length > 0 && !selectedComp) {
+      handleSelectCompetitor(competitors[0]);
+    }
+  }, [loading, competitors, selectedComp, handleSelectCompetitor]);
 
   // --- Generer side ---
   const handleGeneratePage = async () => {
@@ -4457,457 +4735,573 @@ const KonkurrenterPage: React.FC<{
     }
   };
 
-  // === BASIC — Låst tilstand ===
+  // CSV export for selected competitor rankings
+  const exportCSV = () => {
+    if (!compRankings.length || !selectedComp) return;
+    const rows = [
+      ['Søkeord', 'Posisjon', 'URL'],
+      ...compRankings.map(r => [r.keyword, String(r.position), r.url || '']),
+    ];
+    const csv = rows.map(r => r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${selectedComp.domain}-rangeringer.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Derived values
+  const competitorMap: Record<string, string> = {};
+  competitors.forEach(c => { competitorMap[c.id] = c.domain; });
+
+  const lastScannedGlobal = competitors
+    .filter(c => c.last_scanned_at)
+    .sort((a, b) => new Date(b.last_scanned_at!).getTime() - new Date(a.last_scanned_at!).getTime())[0]
+    ?.last_scanned_at;
+
+  const formatScanDate = (d: string | null | undefined) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return dt.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })
+      + ' · '
+      + dt.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // ISO week number
+  const weekNumber = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    const ys = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil((((d.getTime() - ys.getTime()) / 86400000) + 1) / 7);
+  })();
+
+  const changeConfig: Record<string, { symbol: string; positive: boolean }> = {
+    new_page:      { symbol: '↑', positive: true  },
+    removed_page:  { symbol: '↓', positive: false },
+    new_keyword:   { symbol: '✦', positive: true  },
+    rank_improved: { symbol: '↑', positive: true  },
+    rank_dropped:  { symbol: '↓', positive: false },
+  };
+
+  // === BASIC — Locked state ===
   if (!hasStandardOrHigher) {
     return (
-      <div className="space-y-6">
-        <header>
-          <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
-        </header>
-        <PortalCard theme={theme} className="p-8 sm:p-12 flex flex-col items-center text-center gap-4">
-          <span className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
-            <Lock size={24} className={textLabel} />
-          </span>
-          <div>
-            <h2 className={`text-lg font-semibold ${textMain}`}>Konkurrent-analyse er låst</h2>
-            <p className={`text-sm mt-2 max-w-sm ${textDim}`}>
-              Se hvilke søkeord konkurrentene rangerer på som du mangler. Tilgjengelig i Standard og oppover.
-            </p>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 48, textAlign: 'center', maxWidth: 440 }}>
+          <Lock size={28} style={{ color: C.muted, margin: '0 auto 16px', display: 'block' }} />
+          <h2 style={{ color: C.ink, fontWeight: 800, fontSize: 20, margin: '0 0 8px' }}>Konkurrent-analyse er låst</h2>
+          <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 24px' }}>
+            Se hvilke søkeord konkurrentene rangerer på som du mangler. Tilgjengelig i Standard og oppover.
+          </p>
           <button
-            type="button"
             onClick={() => onUpgrade('Standard')}
-            className="mt-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+            style={{ background: C.ink, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
           >
             <Sparkles size={14} /> Oppgrader til Standard
           </button>
-        </PortalCard>
+        </div>
       </div>
     );
   }
 
-  // === STANDARD / PREMIUM — Fullversjon ===
+  // === STANDARD / PREMIUM ===
   return (
-    <div className="space-y-6">
-      {/* ---- HEADER ---- */}
-      <header>
-        <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
-        <p className={`text-base mt-2 ${textDim}`}>
-          {loading ? 'Laster…'
-            : `${competitors.length} konkurrenter overvåkes · ${opportunities.length} søkeord-gap funnet`}
-        </p>
-      </header>
-
-      {error && (
-        <div className={`rounded-xl px-4 py-3 text-sm border flex items-center justify-between gap-3 ${isLight ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'}`}>
-          <span>{error}</span>
-          <button type="button" onClick={refetch} className="font-medium underline underline-offset-2">
-            Prøv igjen
-          </button>
-        </div>
-      )}
-
-      {/* ---- STATS-RAD ---- */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
-          {
-            label: 'Konkurrenter overvåket',
-            value: competitors.length,
-            icon: <Radar size={15} />,
-            accent: isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400',
-            valColor: textMain,
-          },
-          {
-            label: 'Søkeord-gap funnet',
-            value: opportunities.length,
-            icon: <Search size={15} />,
-            accent: isLight ? 'bg-violet-50 text-violet-600' : 'bg-violet-500/10 text-violet-400',
-            valColor: isLight ? 'text-violet-700' : 'text-violet-300',
-          },
-          {
-            label: 'Estimert trafikk-potensial',
-            value: totalTraffic > 0 ? `+${formatVolume(totalTraffic)} besøk/mnd` : '—',
-            icon: <TrendingUp size={15} />,
-            accent: isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400',
-            valColor: isLight ? 'text-emerald-700' : 'text-emerald-400',
-          },
-        ].map((s, i) => (
-          <div key={i} className={`rounded-xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/40'} p-4 flex items-start gap-3`}>
-            <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${s.accent}`}>{s.icon}</span>
-            <div className="min-w-0">
-              <p className={`text-xs ${textLabel} truncate`}>{s.label}</p>
-              <p className={`text-xl font-semibold mt-0.5 ${s.valColor}`}>{s.value}</p>
-            </div>
-          </div>
-        ))}
+    <div>
+      {/* ── ACTION BAR ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, paddingBottom: 20 }}>
+        {scanningId && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.green }}>
+            <span style={{ width: 7, height: 7, background: C.green, borderRadius: '50%', display: 'inline-block' }} />
+            Skanner aktiv
+          </span>
+        )}
+        <button
+          onClick={() => { if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; } setShowAddModal(true); }}
+          style={{ background: C.ink, color: '#fff', padding: '9px 18px', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 6, transition: `transform 160ms ${EASE}` }}
+          onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
+        >
+          <Plus size={14} /> Legg til konkurrent
+        </button>
       </div>
 
-      {/* ---- KONKURRENT-LISTE ---- */}
-      <PortalCard theme={theme} className="p-6 sm:p-8">
-        <CardHeader
-          theme={theme}
-          icon={<Radar size={16} />}
-          accent="rose"
-          title="Aktive konkurrenter"
-          subtitle="Klikk for detaljert analyse"
-          action={
-            <SecondaryButton
-              theme={theme}
-              onClick={() => {
-                if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; }
-                setShowAddModal(true);
-              }}
-            >
-              <Plus size={14} /> Legg til konkurrent
-            </SecondaryButton>
-          }
-        />
+      {/* ── 2-COLUMN LAYOUT ── */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
-        {loading ? (
-          <InlineLoading theme={theme} text="Laster konkurrenter…" />
-        ) : competitors.length === 0 ? (
-          <EmptyState
-            theme={theme}
-            icon={<Users className="w-12 h-12" />}
-            title="Ingen konkurrenter lagt til"
-            description="Legg til konkurrenter for å sammenligne prestasjonen din og finne søkeord du kan vinne."
-            action={
-              <PrimaryButton onClick={() => setShowAddModal(true)} disabled={!hasSite}>
-                Legg til din første konkurrent
-              </PrimaryButton>
-            }
-          />
-        ) : (
-          <ul className={`divide-y ${divider}`}>
-            {competitors.map((c) => {
-              const color = c.avatar_color || getAvatarColor(c.domain);
-              const initials = c.domain.replace(/^www\./i, '').slice(0, 2).toUpperCase();
-              const isScanning = scanningId === c.id;
-              return (
-                <li key={c.id} className="flex items-center gap-3 py-3">
-                  {/* Avatar */}
-                  <span
-                    className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: color }}
-                  >
-                    {initials}
-                  </span>
+        {/* ── LEFT: MAIN ── */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-                  {/* Info */}
+          {/* HERO */}
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 14px' }}>
+              Konkurrenter · Uke {weekNumber}
+            </p>
+            {loading ? (
+              <div style={{ height: 88, display: 'flex', alignItems: 'center' }}>
+                <Loader2 size={20} className="animate-spin" style={{ color: C.muted }} />
+              </div>
+            ) : (
+              <>
+                <h1 style={{ fontSize: 'clamp(24px, 3.2vw, 42px)', fontWeight: 900, lineHeight: 1.1, color: C.ink, margin: 0 }}>
+                  {competitors.length} konkurrenter overvåkes.{' '}
+                  <span style={{ color: C.muted }}>{opportunities.length} åpne muligheter</span>{' '}
+                  ligger på bordet,
+                </h1>
+                <p style={{ fontSize: 'clamp(24px, 3.2vw, 42px)', fontWeight: 900, lineHeight: 1.2, color: C.green, margin: '4px 0 0' }}>
+                  verdt +{formatVolume(totalTraffic)} besøk/mnd.
+                </p>
+              </>
+            )}
+          </div>
+
+          {error && (
+            <div style={{ background: '#fff0f0', border: '1px solid #ffd0d0', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#c0392b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <span>{error}</span>
+              <button onClick={refetch} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
+            </div>
+          )}
+
+          {/* COMPETITOR TABS */}
+          {!loading && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {competitors.map(c => {
+                const isActive  = selectedComp?.id === c.id;
+                const isScanning = scanningId === c.id;
+                return (
                   <button
-                    type="button"
+                    key={c.id}
                     onClick={() => handleSelectCompetitor(c)}
-                    className="min-w-0 flex-1 text-left"
+                    style={{
+                      background: isActive ? C.ink : C.card,
+                      border:     `1px solid ${isActive ? C.ink : C.border}`,
+                      borderRadius: 12,
+                      padding: '12px 18px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: `all 180ms ${EASE}`,
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.borderColor = C.ink; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.borderColor = C.border; }}
                   >
-                    <p className={`text-sm font-medium ${textMain} truncate`} style={{ maxWidth: '16rem' }}>{c.domain}</p>
-                    <p className={`text-[11px] ${textLabel} truncate`}>
-                      {c.keyword_count > 0
-                        ? `${c.keyword_count} søkeord · snitt pos. ${c.avg_position ?? '?'}`
-                        : isScanning ? 'Analyserer…' : 'Ikke skannet ennå'}
+                    <p style={{ fontSize: 13, fontWeight: 700, color: isActive ? '#fff' : C.ink, margin: 0 }}>{c.domain}</p>
+                    <p style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.55)' : C.muted, margin: '4px 0 0' }}>
+                      {isScanning ? 'Analyserer…' : c.keyword_count > 0
+                        ? `${c.keyword_count} søkeord · snitt #${c.avg_position ?? '?'}`
+                        : 'Ikke skannet ennå'}
                     </p>
                   </button>
-
-                  {/* Handlinger */}
-                  <div className="shrink-0 flex items-center gap-2">
-                    {isScanning ? (
-                      <Loader2 size={14} className="text-violet-600 animate-spin" />
-                    ) : (
-                      <button
-                        type="button"
-                        title="Skann på nytt"
-                        onClick={() => handleRescan(c)}
-                        className={`p-1.5 rounded-md ${textLabel} hover:${textMain} transition-colors`}
-                      >
-                        <RefreshCw size={13} />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleSelectCompetitor(c)}
-                      className={`text-xs font-medium border rounded-lg px-3 py-1 transition-colors ${
-                        isLight
-                          ? 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                          : 'border-white/10 text-slate-300 hover:bg-slate-800'
-                      }`}
-                    >
-                      Detaljer ↗
-                    </button>
-                    <button
-                      type="button"
-                      title="Fjern"
-                      onClick={async () => {
-                        try {
-                          const { error: deleteError } = await supabase
-                            .from('competitors')
-                            .delete()
-                            .eq('id', c.id);
-                          if (deleteError) throw deleteError;
-                          await refetch();
-                          toastSuccess('Konkurrent fjernet.');
-                        } catch (e: any) {
-                          toastError(e?.message || 'Kunne ikke fjerne konkurrenten.');
-                        }
-                      }}
-                      className={`p-1.5 rounded-md ${textLabel} hover:text-rose-600 transition-colors`}
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {/* Standard-grense hint */}
-        {!hasPremium && competitors.length >= 3 && (
-          <div className={`mt-4 pt-4 border-t ${divider}`}>
-            <TierTeaser
-              theme={theme}
-              tier="Premium"
-              price="4 999 kr"
-              message="Overvåk ubegrenset antall konkurrenter"
-              onUpgrade={onUpgrade}
-            />
-          </div>
-        )}
-      </PortalCard>
-
-      {/* ---- SØKEORD-MULIGHETER ---- */}
-      <PortalCard theme={theme} className="p-6 sm:p-8">
-        <CardHeader
-          theme={theme}
-          icon={<TrendingUp size={16} />}
-          accent="violet"
-          title="Topp søkeord-muligheter"
-          subtitle="Konkurrenter rangerer på disse — du mangler dem"
-        />
-
-        {/* Filter-knapper */}
-        <div className="flex flex-wrap gap-2 mb-5">
-          {([
-            { key: 'all' as const, label: `Alle ${opportunities.length}` },
-            { key: 'easy' as const, label: `Lave-hengende ${easyCount}` },
-            { key: 'high_value' as const, label: `Høy verdi ${highValueCount}` },
-          ]).map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setOppFilter(f.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                oppFilter === f.key
-                  ? 'bg-violet-600 text-white'
-                  : isLight
-                    ? 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                    : 'bg-slate-900 border border-white/10 text-slate-400 hover:border-white/20'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <InlineLoading theme={theme} text="Analyserer søkeord-gap…" />
-        ) : filteredOpps.length === 0 ? (
-          <EmptyState
-            theme={theme}
-            icon={<Search className="w-10 h-10" />}
-            title={opportunities.length === 0 ? 'Ingen søkeord-gap funnet' : 'Ingen treff i dette filteret'}
-            description={opportunities.length === 0
-              ? 'Legg til eller skann konkurrenter. Når Sikt finner søkeord de rangerer på og du mangler, vises de her.'
-              : 'Bytt filter for å se andre muligheter.'}
-          />
-        ) : (
-          <div className="overflow-x-auto -mx-6 sm:-mx-8">
-            <ul className={`min-w-[480px] divide-y ${divider} mx-6 sm:mx-8`}>
-              {filteredOpps.map((opp) => {
-                const diffLabel = opp.difficulty === 'easy' ? 'Lett' : opp.difficulty === 'medium' ? 'Middels' : 'Vanskelig';
-                const diffColor = opp.difficulty === 'easy'
-                  ? (isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/10 text-emerald-300')
-                  : opp.difficulty === 'medium'
-                    ? (isLight ? 'bg-amber-50 text-amber-700' : 'bg-amber-500/10 text-amber-300')
-                    : (isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-300');
-                return (
-                  <li key={opp.id} className="py-3 flex items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`text-sm font-medium ${textMain}`}>{opp.keyword}</span>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${diffColor}`}>{diffLabel}</span>
-                      </div>
-                      <p className={`text-xs ${textLabel}`}>{formatVolume(opp.search_volume)} søk/mnd · +{opp.estimated_traffic} est. besøk</p>
-                      <p className={`text-xs mt-0.5 ${textDim}`}>{opp.recommendation_text}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setGenerateTarget(opp)}
-                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors"
-                    >
-                      <Sparkles size={11} /> Generer side
-                    </button>
-                  </li>
                 );
               })}
-            </ul>
-          </div>
-        )}
-      </PortalCard>
-
-      {/* ========================= MODALER ========================= */}
-
-      {/* LEGG TIL KONKURRENT */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }} />
-          <div className={`relative w-full max-w-md rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl`}>
-            <h3 className={`text-base font-semibold ${textMain} mb-1`}>Legg til konkurrent</h3>
-            <p className={`text-sm ${textDim} mb-4`}>Skriv inn domenenavnet uten «https://» eller «www.»</p>
-            <input
-              type="text"
-              value={addDomain}
-              onChange={(e) => setAddDomain(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCompetitor()}
-              placeholder="konkurrent.no"
-              className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 mb-2`}
-              autoFocus
-            />
-            {addError && <p className="text-xs text-rose-600 mb-3">{addError}</p>}
-            <div className="flex gap-2 mt-4">
-              <PrimaryButton onClick={handleAddCompetitor} disabled={addLoading || !addDomain.trim()} className="flex-1">
-                {addLoading ? <><Loader2 size={13} className="animate-spin" /> Analyserer…</> : 'Legg til og skann'}
-              </PrimaryButton>
-              <SecondaryButton theme={theme} onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }}>
-                Avbryt
-              </SecondaryButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* KONKURRENT-DETALJER */}
-      {selectedComp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedComp(null)} />
-          <div className={`relative w-full max-w-lg rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl max-h-[80vh] overflow-y-auto`}>
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3">
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
-                  style={{ backgroundColor: selectedComp.avatar_color || getAvatarColor(selectedComp.domain) }}
+              {competitors.length === 0 && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  style={{ background: C.card, border: `1px dashed ${C.border}`, borderRadius: 12, padding: '12px 18px', cursor: 'pointer', fontSize: 13, color: C.muted, fontWeight: 600 }}
                 >
-                  {selectedComp.domain.slice(0, 2).toUpperCase()}
-                </span>
-                <div>
-                  <h3 className={`text-base font-semibold ${textMain}`}>{selectedComp.domain}</h3>
-                  <p className={`text-xs ${textLabel}`}>
+                  + Legg til din første konkurrent
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* SELECTED COMPETITOR DETAIL (inline) */}
+          {selectedComp && (
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '24px 28px' }}>
+              {/* Top row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Domene</p>
+                  <h2 style={{ fontSize: 'clamp(20px, 2.2vw, 32px)', fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1.1 }}>{selectedComp.domain}</h2>
+                  <p style={{ fontSize: 11, color: C.muted, margin: '6px 0 0' }}>
                     {selectedComp.last_scanned_at
-                      ? `Sist skannet ${new Date(selectedComp.last_scanned_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`
+                      ? `Sist skannet ${new Date(selectedComp.last_scanned_at).toLocaleString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                       : 'Aldri skannet'}
                   </p>
                 </div>
+                <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexShrink: 0 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkeord</p>
+                    <p style={{ fontSize: 38, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>{selectedComp.keyword_count || '—'}</p>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Snitt pos.</p>
+                    <p style={{ fontSize: 38, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>
+                      {selectedComp.avg_position ? `#${selectedComp.avg_position}` : '—'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2 }}>
+                    <button
+                      onClick={() => handleRescan(selectedComp)}
+                      disabled={scanningId === selectedComp.id}
+                      style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 12px', cursor: scanningId === selectedComp.id ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.ink, opacity: scanningId === selectedComp.id ? 0.5 : 1, transition: `transform 160ms ${EASE}` }}
+                      onMouseDown={e => { if (!scanningId) pressDown(e); }}
+                      onMouseUp={pressReset} onMouseLeave={pressReset}
+                    >
+                      {scanningId === selectedComp.id ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                      Skann
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Fjern ${selectedComp.domain}?`)) return;
+                        try {
+                          await supabase.from('competitors').delete().eq('id', selectedComp.id);
+                          setSelectedComp(null); setCompRankings([]);
+                          await refetch(); toastSuccess('Konkurrent fjernet.');
+                        } catch (e: any) { toastError(e?.message || 'Kunne ikke fjerne.'); }
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.muted, padding: '7px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, transition: `color 150ms ${EASE}` }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#c0392b')}
+                      onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+                    >
+                      <Trash2 size={13} /> Fjern
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button type="button" onClick={() => setSelectedComp(null)} className={`p-1.5 rounded-md ${textLabel} hover:${textMain}`}>
-                <X size={16} />
-              </button>
-            </div>
 
-            <div className="flex gap-2 mb-4">
-              <SecondaryButton
-                theme={theme}
-                onClick={() => { handleRescan(selectedComp); setSelectedComp(null); }}
-                disabled={scanningId === selectedComp.id}
-              >
-                {scanningId === selectedComp.id
-                  ? <><Loader2 size={13} className="animate-spin" /> Skanner…</>
-                  : <><RefreshCw size={13} /> Skann på nytt</>}
-              </SecondaryButton>
-            </div>
-
-            {rankingsLoading ? (
-              <div className="py-6 flex items-center justify-center gap-2">
-                <Loader2 size={14} className="text-violet-600 animate-spin" />
-                <span className={`text-sm ${textDim}`}>Laster rangeringer…</span>
+              {/* Rankings */}
+              <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 20, paddingTop: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: C.ink, margin: 0 }}>Rangeringer · Topp 20</p>
+                  <button
+                    onClick={exportCSV}
+                    disabled={!compRankings.length}
+                    style={{ fontSize: 11, fontWeight: 600, color: C.muted, background: 'none', border: 'none', cursor: compRankings.length ? 'pointer' : 'not-allowed', padding: '4px 8px', borderRadius: 6, transition: `color 150ms ${EASE}` }}
+                    onMouseEnter={e => { if (compRankings.length) e.currentTarget.style.color = C.ink; }}
+                    onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+                  >
+                    Eksporter CSV
+                  </button>
+                </div>
+                {rankingsLoading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '24px 0', justifyContent: 'center' }}>
+                    <Loader2 size={16} className="animate-spin" style={{ color: C.muted }} />
+                    <span style={{ fontSize: 13, color: C.muted }}>Laster rangeringer…</span>
+                  </div>
+                ) : compRankings.length === 0 ? (
+                  <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '24px 0', margin: 0 }}>
+                    Ingen rangeringer ennå — trykk «Skann» for å hente data.
+                  </p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
+                    {compRankings.slice(0, 20).map(r => (
+                      <div key={r.id} style={{ background: C.card, padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 900, minWidth: 32, flexShrink: 0, color: r.position <= 3 ? C.green : r.position <= 10 ? C.ink : C.muted }}>
+                          #{r.position}
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.keyword}</p>
+                          {r.url && (
+                            <a href={r.url} target="_blank" rel="noreferrer"
+                              style={{ fontSize: 10, color: C.muted, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: `color 120ms ${EASE}` }}
+                              onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
+                              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+                            >
+                              {r.url.replace(/^https?:\/\/[^/]+/, '') || '/'}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : compRankings.length === 0 ? (
-              <p className={`text-sm ${textDim} py-4 text-center`}>Ingen rangeringer ennå — trykk «Skann på nytt».</p>
-            ) : (
-              <ul className={`divide-y ${divider}`}>
-                {compRankings.slice(0, 20).map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <p className={`text-sm ${textMain} truncate flex-1`}>{r.keyword}</p>
-                    <span className={`text-xs font-semibold tabular-nums ${r.position <= 3 ? 'text-emerald-600' : r.position <= 10 ? 'text-amber-600' : textLabel}`}>
-                      #{r.position}
-                    </span>
-                    {r.url && (
-                      <a href={r.url} target="_blank" rel="noreferrer" className={`p-1 ${textLabel} hover:${textMain}`}>
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
-                  </li>
+            </div>
+          )}
+
+          {/* OPPORTUNITIES */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 800, color: C.ink, margin: 0 }}>Topp søkeord-muligheter</h2>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: C.muted }}>
+                  {opportunities.length} totalt · {easyCount} lette · {highValueCount} høy verdi
+                </span>
+                {(['all', 'easy', 'high_value'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setOppFilter(f)}
+                    style={{
+                      padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      background: oppFilter === f ? C.ink : C.card,
+                      color:      oppFilter === f ? '#fff' : C.muted,
+                      border: `1px solid ${oppFilter === f ? C.ink : C.border}`,
+                      transition: `all 150ms ${EASE}`,
+                    }}
+                  >
+                    {f === 'all' ? 'Alle' : f === 'easy' ? 'Lette' : 'Høy verdi'}
+                  </button>
                 ))}
-              </ul>
+              </div>
+            </div>
+
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 }}>
+                <Loader2 size={16} className="animate-spin" style={{ color: C.muted }} />
+                <span style={{ fontSize: 13, color: C.muted }}>Analyserer søkeord-gap…</span>
+              </div>
+            ) : filteredOpps.length === 0 ? (
+              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 48, textAlign: 'center' }}>
+                <Search size={32} style={{ color: C.border, margin: '0 auto 12px', display: 'block' }} />
+                <p style={{ fontSize: 14, color: C.muted, margin: 0 }}>
+                  {opportunities.length === 0
+                    ? 'Legg til eller skann konkurrenter. Søkeord-gap vises her etter neste skann.'
+                    : 'Ingen treff i dette filteret.'}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                {filteredOpps.map((opp, i) => {
+                  const diffLabel = opp.difficulty === 'easy' ? 'Lett' : opp.difficulty === 'medium' ? 'Middels' : 'Vanskelig';
+                  const diffDots  = opp.difficulty === 'easy' ? '●' : opp.difficulty === 'medium' ? '●●' : '●●●';
+                  const diffColor = opp.difficulty === 'easy' ? C.green : opp.difficulty === 'medium' ? C.muted : C.ink;
+                  const rankedBy  = (opp.competitor_ids || []).slice(0, 3).map((id: string) => competitorMap[id]).filter(Boolean);
+                  return (
+                    <div
+                      key={opp.id}
+                      style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 10, animationDelay: `${i * 45}ms` }}
+                      className="sikt-stagger-item"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 800, color: C.ink, margin: 0, lineHeight: 1.3, flex: 1 }}>{opp.keyword}</h3>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: diffColor, flexShrink: 0, whiteSpace: 'nowrap' }}>{diffDots} {diffLabel}</span>
+                      </div>
+                      {opp.recommendation_text && (
+                        <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>{opp.recommendation_text}</p>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkevolum</p>
+                          <p style={{ fontSize: 22, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>
+                            {formatVolume(opp.search_volume)}<span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>/mnd</span>
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Potensial</p>
+                          <p style={{ fontSize: 22, fontWeight: 900, color: C.green, margin: 0, lineHeight: 1 }}>
+                            +{opp.estimated_traffic}<span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}> besøk</span>
+                          </p>
+                        </div>
+                      </div>
+                      {rankedBy.length > 0 && (
+                        <div>
+                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 6px' }}>Rangeres av</p>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {rankedBy.map((domain: string) => (
+                              <span key={domain} style={{ fontSize: 10, fontWeight: 700, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 5, padding: '2px 8px', color: C.ink }}>
+                                {domain}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setGenerateTarget(opp)}
+                        style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', transition: `transform 160ms ${EASE}` }}
+                        onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
+                      >
+                        <Sparkles size={11} /> Generer side
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
+
+            {!hasPremium && competitors.length >= 3 && (
+              <div style={{ marginTop: 12, padding: '14px 18px', background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Overvåk ubegrenset antall konkurrenter</p>
+                <button
+                  onClick={() => onUpgrade('Premium')}
+                  style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}` }}
+                  onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
+                >
+                  Premium → 4 999 kr
+                </button>
+              </div>
+            )}
+          </div>
+        </div>{/* end LEFT */}
+
+        {/* ── RIGHT: SIDEBAR ── */}
+        <div style={{ width: 232, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          {/* Info card */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Plan</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0 }}>
+                  {hasPremium ? 'Premium' : 'Standard'} · {competitors.length} av {maxCompetitors}
+                </p>
+              </div>
+              {lastScannedGlobal && (
+                <div>
+                  <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Sist skannet</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0 }}>{formatScanDate(lastScannedGlobal)}</p>
+                </div>
+              )}
+              <div>
+                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Nye varsler</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: unreadCount > 0 ? C.green : C.muted, margin: 0 }}>
+                    {unreadCount > 0 ? `${unreadCount} uleste` : 'Ingen uleste'}
+                  </p>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} style={{ fontSize: 10, fontWeight: 600, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: `color 120ms ${EASE}` }}
+                      onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
+                      onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+                    >
+                      Merk lest
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Changes feed */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 800, color: C.ink, margin: 0 }}>Endringer</h3>
+              {unreadCount > 0 && (
+                <span style={{ background: C.ink, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px' }}>
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            {changes.length === 0 ? (
+              <p style={{ fontSize: 12, color: C.muted, textAlign: 'center', padding: '16px 0', margin: 0 }}>Ingen endringer enda</p>
+            ) : (
+              <div>
+                {changes.slice(0, 8).map((change, i) => {
+                  const cfg = changeConfig[change.change_type] || { symbol: '●', positive: true };
+                  return (
+                    <div
+                      key={change.id}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: i < Math.min(changes.length - 1, 7) ? `1px solid ${C.border}` : 'none', opacity: change.is_read ? 0.45 : 1, transition: `opacity 150ms ${EASE}` }}
+                    >
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: cfg.positive ? 'rgba(82,164,71,0.1)' : 'rgba(26,26,26,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: cfg.positive ? C.green : C.muted }}>{cfg.symbol}</span>
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.4 }}>{change.title}</p>
+                        {change.detail && (
+                          <p style={{ fontSize: 10, color: C.muted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{change.detail}</p>
+                        )}
+                        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.05em', color: C.muted, margin: '4px 0 0' }}>{kpTimeAgo(change.created_at)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {changes.length > 8 && (
+              <button
+                style={{ width: '100%', marginTop: 10, padding: '8px 0', fontSize: 11, fontWeight: 600, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', transition: `color 150ms ${EASE}` }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+              >
+                Vis hele historikken →
+              </button>
+            )}
+          </div>
+        </div>{/* end RIGHT */}
+
+      </div>{/* end 2-col */}
+
+      {/* ── MODALS ── */}
+
+      {/* ADD COMPETITOR */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.45)', backdropFilter: 'blur(6px)' }} onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }} />
+          <div style={{ position: 'relative', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }} className="sikt-stagger-item">
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 6px' }}>Legg til konkurrent</h3>
+            <p style={{ fontSize: 13, color: C.muted, margin: '0 0 18px', lineHeight: 1.5 }}>Skriv inn domenenavnet uten «https://» eller «www.»</p>
+            <input
+              type="text" value={addDomain} onChange={e => setAddDomain(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddCompetitor()}
+              placeholder="konkurrent.no" autoFocus
+              style={{ width: '100%', borderRadius: 10, padding: '11px 14px', fontSize: 14, border: `1px solid ${C.border}`, color: C.ink, background: C.bg, outline: 'none', boxSizing: 'border-box', marginBottom: 8, transition: `border-color 150ms ${EASE}` }}
+              onFocus={e => (e.currentTarget.style.borderColor = C.ink)}
+              onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
+            />
+            {addError && <p style={{ fontSize: 12, color: '#c0392b', margin: '0 0 12px' }}>{addError}</p>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button
+                onClick={handleAddCompetitor} disabled={addLoading || !addDomain.trim()}
+                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: addLoading || !addDomain.trim() ? 'not-allowed' : 'pointer', opacity: addLoading || !addDomain.trim() ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+                onMouseDown={e => { if (!addLoading && addDomain.trim()) pressDown(e); }}
+                onMouseUp={pressReset} onMouseLeave={pressReset}
+              >
+                {addLoading ? <><Loader2 size={13} className="animate-spin" /> Analyserer…</> : 'Legg til og skann'}
+              </button>
+              <button onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }}
+                style={{ background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >Avbryt</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* GENERER SIDE — bekreftelse */}
+      {/* GENERATE PAGE */}
       {generateTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => !generateLoading && setGenerateTarget(null)} />
-          <div className={`relative w-full max-w-md rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl`}>
-            <h3 className={`text-base font-semibold ${textMain} mb-2`}>
-              Vil du la AI generere en side for «{generateTarget.keyword}»?
-            </h3>
-            <div className={`rounded-xl px-4 py-3 ${subtleBg} mb-4`}>
-              <ul className={`text-xs ${textDim} space-y-1.5`}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.45)', backdropFilter: 'blur(6px)' }} onClick={() => { if (!generateLoading) setGenerateTarget(null); }} />
+          <div style={{ position: 'relative', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }} className="sikt-stagger-item">
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 8px' }}>Generer side for «{generateTarget.keyword}»?</h3>
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+              <ul style={{ fontSize: 12, color: C.muted, margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <li>✦ AI skriver SEO-optimalisert innhold på 800–1200 ord</li>
                 <li>✦ Optimaliserer meta-tittel og meta-beskrivelse</li>
                 {generateTarget.recommendation_type === 'faq' && <li>✦ Strukturerer som FAQ med schema markup</li>}
                 <li>✦ Publiserer via din CMS-integrasjon (hvis tilkoblet)</li>
               </ul>
             </div>
-            <div className="flex gap-2">
-              <PrimaryButton onClick={handleGeneratePage} disabled={generateLoading} className="flex-1">
-                {generateLoading
-                  ? <><Loader2 size={13} className="animate-spin" /> AI skriver innholdet…</>
-                  : <><Sparkles size={13} /> Ja, generer</>}
-              </PrimaryButton>
-              <SecondaryButton theme={theme} onClick={() => setGenerateTarget(null)} disabled={generateLoading}>
-                Avbryt
-              </SecondaryButton>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleGeneratePage} disabled={generateLoading}
+                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: generateLoading ? 'not-allowed' : 'pointer', opacity: generateLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+                onMouseDown={e => { if (!generateLoading) pressDown(e); }}
+                onMouseUp={pressReset} onMouseLeave={pressReset}
+              >
+                {generateLoading ? <><Loader2 size={13} className="animate-spin" /> AI skriver…</> : <><Sparkles size={13} /> Ja, generer</>}
+              </button>
+              <button onClick={() => { if (!generateLoading) setGenerateTarget(null); }}
+                style={{ background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >Avbryt</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* OPPGRADER PROMPT (Standard → Premium) */}
+      {/* UPGRADE PROMPT */}
       {showUpgradePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowUpgradePrompt(false)} />
-          <div className={`relative w-full max-w-sm rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900'} p-6 shadow-xl text-center`}>
-            <span className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${isLight ? 'bg-violet-50' : 'bg-violet-500/10'}`}>
-              <Sparkles size={20} className="text-violet-600" />
-            </span>
-            <h3 className={`text-base font-semibold ${textMain} mb-2`}>Grense nådd</h3>
-            <p className={`text-sm ${textDim} mb-4`}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.45)', backdropFilter: 'blur(6px)' }} onClick={() => setShowUpgradePrompt(false)} />
+          <div style={{ position: 'relative', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 32, width: '100%', maxWidth: 360, boxShadow: '0 24px 64px rgba(0,0,0,0.12)', textAlign: 'center' }} className="sikt-stagger-item">
+            <div style={{ width: 48, height: 48, background: C.bg, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Sparkles size={20} style={{ color: C.ink }} />
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 8px' }}>Grense nådd</h3>
+            <p style={{ fontSize: 13, color: C.muted, margin: '0 0 22px', lineHeight: 1.6 }}>
               Du har nådd grensen på 3 konkurrenter med Standard. Oppgrader til Premium for ubegrenset overvåkning.
             </p>
-            <div className="flex gap-2">
-              <PrimaryButton onClick={() => { setShowUpgradePrompt(false); onUpgrade('Premium'); }} className="flex-1">
-                Oppgrader til Premium
-              </PrimaryButton>
-              <SecondaryButton theme={theme} onClick={() => setShowUpgradePrompt(false)}>Lukk</SecondaryButton>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { setShowUpgradePrompt(false); onUpgrade('Premium'); }}
+                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
+              >Oppgrader til Premium</button>
+              <button onClick={() => setShowUpgradePrompt(false)}
+                style={{ background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >Lukk</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Endringer / Varsler */}
-      <CompetitorChangeFeed
-        userId={user.id}
-        theme={theme}
-      />
     </div>
   );
 };
@@ -8501,116 +8895,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         )}
 
         {/* =============================================================== */}
-        {/* AI-SYNLIGHET (GEO) — alltid synlig, TierTeaser for Basic/Std.   */}
+        {/* AI-SYNLIGHET (GEO) — alltid synlig */}
         {/* =============================================================== */}
         {activeTab === 'geo' && (
-          <div className="space-y-6">
-            {/* Hero-seksjon */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-8 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-3 mb-4">
-                <Bot className="w-8 h-8 text-purple-600" />
-                <h2 className="text-2xl font-bold">GEO - Synlighet i AI-søk</h2>
-              </div>
-              <p className="text-lg text-gray-700">
-                95% av nordmenn bruker ChatGPT til å finne bedrifter. <strong>Er du synlig der?</strong>
-              </p>
-            </div>
-
-            {/* Hvorfor viktig */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="text-xl font-semibold mb-4">Hvorfor GEO er viktig</h3>
-              <div className="space-y-3 text-gray-700">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                  <span>ChatGPT har 200 millioner brukere</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                  <span>Perplexity erstatter Google for mange</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                  <span>Gemini er integrert i Chrome</span>
-                </div>
-              </div>
-              <p className="mt-4 text-gray-600 italic">
-                Hvis du ikke er der, går kunden til konkurrenten.
-              </p>
-            </div>
-
-            {/* Prompt-tester */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-2 mb-4">
-                <Microscope className="w-6 h-6 text-blue-600" />
-                <h3 className="text-xl font-semibold">Test din synlighet nå</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Skriv en prompt:</label>
-                  <input
-                    type="text"
-                    placeholder="Hvilken rørlegger i Oslo anbefaler du?"
-                    className="w-full p-3 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => window.open('https://chatgpt.com', '_blank')}
-                    className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium"
-                  >
-                    Test i ChatGPT
-                  </button>
-                  <button
-                    onClick={() => window.open('https://www.perplexity.ai', '_blank')}
-                    className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium"
-                  >
-                    Test i Perplexity
-                  </button>
-                </div>
-
-                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ Du må sjekke manuelt om bedriften din nevnes. Automatisk sporing kommer snart.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Roadmap */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-4">
-                <Rocket className="w-6 h-6 text-blue-600" />
-                <h3 className="text-xl font-semibold">Automatisk GEO-sporing (Kommer Q3 2026)</h3>
-              </div>
-
-              <p className="text-gray-700 mb-4">Når dette aktiveres får du:</p>
-
-              <div className="space-y-2 text-gray-700 mb-4">
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-600">•</span>
-                  <span>Daglig sporing av 50+ relevante prompts</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-600">•</span>
-                  <span>Konkurrent-sammenligning</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-600">•</span>
-                  <span>Varsler når du faller ut av AI-svar</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')}
-                className="bg-white border border-blue-300 text-blue-700 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium"
-              >
-                Bli varslet når det lanseres →
-              </button>
-            </div>
-          </div>
+          <GeoPage onNotify={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')} />
         )}
 
         {/* =============================================================== */}
