@@ -5378,6 +5378,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [expandedWorkshopProblem, setExpandedWorkshopProblem] = useState<string | null>(null);
   // Verksted-filter: alle / aapne / loste
   const [workshopFilter, setWorkshopFilter] = useState<'all' | 'open' | 'done'>('all');
+  const [workshopQuery, setWorkshopQuery] = useState('');
   // Hjem: vis alle todos, ikke bare topp 3
   const [showAllTodos, setShowAllTodos] = useState(false);
 
@@ -7426,7 +7427,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div className="w-8" />
           </header>
 
-          <main className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <main className={`w-full flex-1 min-h-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
 
         {/* =============================================================== */}
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
@@ -8044,7 +8045,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
 
           return (
-            <div className="space-y-5 px-2 sm:px-3 py-1" style={{ background: palette.bg, color: palette.ink }}>
+            <div className="space-y-5 px-2 sm:px-3 py-1" style={{ color: palette.ink }}>
               <header className="space-y-2">
                 <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
                 <p className="text-base" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
@@ -8925,9 +8926,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const pressDown = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
           const pressReset = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
           const filteredProblems =
-            workshopFilter === 'all' ? problems :
-            workshopFilter === 'open' ? problems.filter((p) => p.status === 'open') :
-            problems.filter((p) => p.status !== 'open');
+            (workshopFilter === 'all' ? problems :
+              workshopFilter === 'open' ? problems.filter((p) => p.status === 'open') :
+              problems.filter((p) => p.status !== 'open'))
+              .filter((p) => {
+                const q = workshopQuery.trim().toLowerCase();
+                if (!q) return true;
+                return `${p.title} ${p.desc} ${p.raw?.description || ''}`.toLowerCase().includes(q);
+              });
           const selectedProblem =
             problems.find((p) => p.id === expandedWorkshopProblem) ||
             filteredProblems[0] ||
@@ -8966,320 +8972,648 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
 
           return (
-            <div style={{ background: W.bg, border: `1px solid ${W.border}`, borderRadius: 20, overflow: 'hidden', minHeight: 'min(820px, calc(100dvh - 180px))' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '280px minmax(360px, 1fr) 320px', minHeight: 'inherit' }}>
-                {/* LEFT: real Lighthouse findings */}
-                <aside style={{ background: W.card, borderRight: `1px solid ${W.border}`, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                  <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${W.border}` }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-                      <div>
-                        <p style={{ margin: 0, color: W.ink, fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em' }}>Funn</p>
-                        <p style={{ margin: '4px 0 0', color: W.muted, fontSize: 12 }}>{siteLabel}</p>
-                      </div>
-                      <span style={{ color: W.muted, fontSize: 12, fontWeight: 700 }}>{problems.length} totalt</span>
-                    </div>
+            <>
+              <style>{`
+                @keyframes ws-fade-up {
+                  from { opacity: 0; transform: translateY(6px); }
+                  to   { opacity: 1; transform: translateY(0);   }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  @keyframes ws-fade-up {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                  }
+                }
+              `}</style>
+              <div style={{ background: 'transparent', border: `1px solid ${W.border}`, borderRadius: 22, overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', boxShadow: '0 24px 70px rgba(26,26,26,0.05)', display: 'flex', flexDirection: 'column' }}>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                      {([
-                        { key: 'all' as const, label: 'Alle', count: problems.length },
-                        { key: 'open' as const, label: 'Åpne', count: openCount },
-                        { key: 'done' as const, label: 'Løste', count: doneCount },
-                      ]).map((p) => {
-                        const active = workshopFilter === p.key;
-                        return (
-                          <button
-                            key={p.key}
-                            type="button"
-                            onClick={() => setWorkshopFilter(p.key)}
-                            onMouseDown={pressDown}
-                            onMouseUp={pressReset}
-                            onMouseLeave={pressReset}
-                            style={{
-                              border: `1px solid ${active ? W.ink : W.border}`,
-                              background: active ? W.ink : W.bg,
-                              color: active ? '#fff' : W.muted,
-                              borderRadius: 9,
-                              padding: '8px 6px',
-                              fontSize: 12,
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              transition: `transform 160ms ${EASE}, border-color 160ms ${EASE}, background 160ms ${EASE}`,
-                            }}
-                          >
-                            {p.label} {p.count}
-                          </button>
-                        );
-                      })}
+                {/* ── TOP BAR ── */}
+                <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: `1px solid ${W.border}`, background: isLight ? 'rgba(248,250,252,0.92)' : 'rgba(15,23,42,0.92)', flexShrink: 0, gap: 16 }}>
+                  {/* Left */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 0 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: 7, background: W.ink, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>S</span>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, color: W.ink, fontSize: 13, fontWeight: 700 }}>Verksted</p>
+                      <p style={{ margin: '1px 0 0', color: W.muted, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{siteLabel}</p>
                     </div>
                   </div>
 
-                  <div style={{ overflowY: 'auto', minHeight: 0 }}>
-                    {filteredProblems.length === 0 ? (
-                      <div style={{ padding: 24 }}>
-                        <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 14, fontWeight: 800 }}>
-                          {problems.length === 0 ? 'Ingen aktive problemer' : 'Ingen problemer i dette filteret'}
-                        </p>
-                        <p style={{ margin: 0, color: W.muted, fontSize: 13, lineHeight: 1.55 }}>
-                          {problems.length === 0
-                            ? 'Kjør en analyse under Synlighet → PageSpeed for å finne ting å fikse.'
-                            : 'Bytt filter for å se andre problemer.'}
-                        </p>
-                      </div>
-                    ) : (
-                      filteredProblems.map((p) => {
-                        const active = selectedProblem?.id === p.id;
-                        const idx = problems.findIndex((x) => x.id === p.id) + 1;
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => selectProblem(p)}
-                            style={{
-                              width: '100%',
-                              border: 'none',
-                              borderBottom: `1px solid ${W.border}`,
-                              background: active ? W.bg : W.card,
-                              color: W.ink,
-                              textAlign: 'left',
-                              padding: '16px 18px',
-                              cursor: 'pointer',
-                              transition: `background 160ms ${EASE}`,
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                              <span style={{ color: W.muted, fontSize: 10, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                                Funn {String(idx).padStart(2, '0')}
-                              </span>
-                              <span style={{ color: W.muted, fontSize: 10, fontWeight: 700 }}>Åpen</span>
-                            </div>
-                            <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 800, lineHeight: 1.35, color: W.ink }}>
-                              {p.title}
-                            </p>
-                            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: p.raw?.savings ? W.green : W.muted }}>
-                              {p.desc}
-                            </p>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </aside>
-
-                {/* CENTER: selected finding detail */}
-                <main style={{ padding: '28px 34px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ width: 9, height: 9, borderRadius: 99, background: analysisResults ? W.green : W.border }} />
-                      <span style={{ color: W.muted, fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                        {analysisResults ? `Analysert ${analyzedLabel}` : 'Ingen PageSpeed-analyse'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {/* Center: search (overview) OR nav arrows (detail) */}
+                  {expandedWorkshopProblem === null ? (
+                    <label style={{ height: 34, maxWidth: 360, width: '100%', background: W.card, border: `1px solid ${W.border}`, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '0 12px', transition: `border-color 160ms ${EASE}`, cursor: 'text' }}
+                      onFocusCapture={e => (e.currentTarget.style.borderColor = W.ink)}
+                      onBlurCapture={e => (e.currentTarget.style.borderColor = W.border)}
+                    >
+                      <Search size={14} style={{ color: W.muted, flexShrink: 0 }} />
+                      <input
+                        value={workshopQuery}
+                        onChange={e => setWorkshopQuery(e.target.value)}
+                        placeholder="Søk i funn"
+                        style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', color: W.ink, fontSize: 12 }}
+                      />
+                      <span style={{ color: W.muted, border: `1px solid ${W.border}`, borderRadius: 6, padding: '1px 5px', fontSize: 10, fontWeight: 700, flexShrink: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>⌘K</span>
+                    </label>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         type="button"
                         disabled={selectedIndex <= 0}
                         onClick={() => goRelative(-1)}
-                        style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${W.border}`, background: W.card, color: selectedIndex <= 0 ? W.border : W.ink, cursor: selectedIndex <= 0 ? 'not-allowed' : 'pointer', transition: `transform 160ms ${EASE}` }}
                         onMouseDown={pressDown}
                         onMouseUp={pressReset}
                         onMouseLeave={pressReset}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: selectedIndex <= 0 ? 'not-allowed' : 'pointer', opacity: selectedIndex <= 0 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
                       >
-                        <ChevronLeft size={15} />
+                        <ChevronLeft size={14} /> Forrige funn
                       </button>
                       <button
                         type="button"
-                        disabled={selectedIndex < 0 || selectedIndex >= problems.length - 1}
+                        disabled={selectedIndex >= problems.length - 1}
                         onClick={() => goRelative(1)}
-                        style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${W.border}`, background: W.card, color: selectedIndex < 0 || selectedIndex >= problems.length - 1 ? W.border : W.ink, cursor: selectedIndex < 0 || selectedIndex >= problems.length - 1 ? 'not-allowed' : 'pointer', transition: `transform 160ms ${EASE}` }}
                         onMouseDown={pressDown}
                         onMouseUp={pressReset}
                         onMouseLeave={pressReset}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: selectedIndex >= problems.length - 1 ? 'not-allowed' : 'pointer', opacity: selectedIndex >= problems.length - 1 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
                       >
-                        <ChevronRight size={15} />
+                        Neste funn <ChevronRight size={14} />
                       </button>
                     </div>
+                  )}
+
+                  {/* Right: status */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: analysisResults ? W.green : W.border, flexShrink: 0 }} />
+                    <p style={{ margin: 0, color: W.muted, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{analysisResults ? `Analysert ${analyzedLabel}` : 'Ikke analysert'}</p>
                   </div>
+                </div>
 
-                  {selectedProblem ? (
-                    <>
-                      <p style={{ margin: '0 0 12px', color: W.muted, fontSize: 11, fontWeight: 900, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-                        Funn {String(selectedIndex + 1).padStart(2, '0')} av {String(problems.length).padStart(2, '0')}
-                      </p>
-                      <h1 style={{ margin: '0 0 14px', color: W.ink, fontSize: 'clamp(30px, 4vw, 46px)', lineHeight: 1.05, letterSpacing: '-0.045em', fontWeight: 900 }}>
-                        {selectedProblem.title}
-                      </h1>
-                      <p style={{ margin: '0 0 28px', color: W.muted, fontSize: 15, lineHeight: 1.65, maxWidth: 680 }}>
-                        {selectedProblem.raw?.description || 'Lighthouse foreslår en forbedring for mobilversjonen av nettsiden.'}
-                        {selectedProblem.raw?.savings ? <><span style={{ color: W.green, fontWeight: 800 }}> {selectedProblem.desc}.</span></> : null}
-                      </p>
+                {/* ── SCROLLABLE BODY ── */}
+                <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 28 }}>
-                        <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                          <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 10, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kategori</p>
-                          <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 800 }}>PageSpeed</p>
+                  {expandedWorkshopProblem === null ? (
+                    /* ═══════════════════════════════════
+                       SCREEN A — OVERSIKT
+                       ═══════════════════════════════════ */
+                    <div style={{ padding: '40px 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+                      {/* Headline */}
+                      <div>
+                        <h1 style={{ margin: '0 0 8px', color: W.ink, fontSize: 34, fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1 }}>verksted</h1>
+                        <p style={{ margin: 0, color: W.muted, fontSize: 14 }}>
+                          {problems.length} funn fra Lighthouse mobile. Sortert etter potensiell besparelse.
+                        </p>
+                      </div>
+
+                      {/* Bento grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)', gap: 16 }}>
+
+                        {/* LEFT — Hovedfunn */}
+                        <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '28px 28px 24px', display: 'flex', flexDirection: 'column', minHeight: 220 }}>
+                          {problems.length > 0 ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.green, flexShrink: 0 }} />
+                                <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Hovedfunn · Høyest gevinst</span>
+                              </div>
+                              <h2 style={{ margin: '0 0 12px', color: W.ink, fontSize: 'clamp(26px,3.2vw,40px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1.1, flex: 1 }}>
+                                {problems[0].title}
+                              </h2>
+                              {problems[0].raw?.description && (
+                                <p style={{ margin: '0 0 20px', color: W.muted, fontSize: 14, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                  {problems[0].raw.description}
+                                </p>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                                <span style={{ color: problems[0].raw?.savings ? W.green : W.muted, fontSize: 26, fontWeight: 600, fontFamily: problems[0].raw?.savings ? "ui-monospace,'SF Mono',Menlo,monospace" : 'inherit', fontVariantNumeric: 'tabular-nums' }}>
+                                  {problems[0].raw?.savings ? `Sparer ${problems[0].raw.savings}` : 'Forbedring foreslått av Lighthouse'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => selectProblem(problems[0])}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={pressReset}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
+                                >
+                                  <Sparkles size={14} /> Be AI om løsning
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <div style={{ margin: 'auto', textAlign: 'center' }}>
+                              <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Ingen funn enda</p>
+                              <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.6 }}>Kjør en PageSpeed-analyse under Synlighet for å fylle Verkstedet med ekte Lighthouse-funn.</p>
+                            </div>
+                          )}
                         </div>
-                        <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                          <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 10, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Status</p>
-                          <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 800 }}>Åpen</p>
-                        </div>
-                        <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                          <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 10, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Besparelse</p>
-                          <p style={{ margin: 0, color: selectedProblem.raw?.savings ? W.green : W.muted, fontSize: 14, fontWeight: 900 }}>
-                            {selectedProblem.raw?.savings || 'Ikke oppgitt'}
-                          </p>
+
+                        {/* RIGHT — nested stats */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {/* 3 stat cards */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                            {[
+                              { label: 'FUNN TOTALT', value: String(problems.length).padStart(2, '0'), foot: 'mobile · siste kjøring', dim: false },
+                              { label: 'ÅPNE',        value: String(openCount).padStart(2, '0'),       foot: 'ikke markert løst',    dim: false },
+                              { label: 'LØSTE',       value: String(doneCount).padStart(2, '0'),       foot: 'bekreftet i ny analyse', dim: doneCount === 0 },
+                            ].map((s) => (
+                              <div key={s.label} style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 18, padding: '18px 16px' }}>
+                                <p style={{ margin: '0 0 6px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{s.label}</p>
+                                <p style={{ margin: '0 0 8px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 44, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1, color: s.dim ? W.muted : W.ink, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
+                                <p style={{ margin: 0, color: W.muted, fontSize: 11 }}>{s.foot}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Sparkline + Kilde */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            {/* Sparkline */}
+                            {(() => {
+                              const sparkRaw: number[] = scoreHistory
+                                .map((s: any) => s.score ?? s.performance ?? null)
+                                .filter((v: any): v is number => typeof v === 'number' && v >= 0);
+                              const hasEnough = sparkRaw.length >= 2;
+                              const svgW = 160, svgH = 48;
+                              let linePath = '', areaPath = '', sparkDelta: number | null = null;
+                              if (hasEnough) {
+                                const mn = Math.min(...sparkRaw), mx = Math.max(...sparkRaw);
+                                const rng = mx - mn || 1;
+                                const pts = sparkRaw.map((v, i) => ({
+                                  x: (i / (sparkRaw.length - 1)) * svgW,
+                                  y: svgH - ((v - mn) / rng) * (svgH - 8) - 4,
+                                }));
+                                linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                                areaPath = `${linePath} L${svgW},${svgH} L0,${svgH} Z`;
+                                sparkDelta = Math.round(sparkRaw[sparkRaw.length - 1] - sparkRaw[0]);
+                              }
+                              const dateLabel = (idx: number) => {
+                                const entry = scoreHistory[idx];
+                                if (!entry?.at) return '';
+                                return new Date(entry.at).toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit' }).replace(/\//g, '.');
+                              };
+                              return (
+                                <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '18px 16px', display: 'flex', flexDirection: 'column' }}>
+                                  <p style={{ margin: '0 0 12px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ytelse · Siste analyser</p>
+                                  {hasEnough ? (
+                                    <>
+                                      <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: 'visible', width: '100%', height: svgH }}>
+                                        <defs>
+                                          <linearGradient id="ws-spark-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%"   stopColor={W.green} stopOpacity="0.18" />
+                                            <stop offset="100%" stopColor={W.green} stopOpacity="0" />
+                                          </linearGradient>
+                                        </defs>
+                                        <path d={areaPath} fill="url(#ws-spark-grad)" />
+                                        <path d={linePath} fill="none" stroke={W.green} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                                      </svg>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{dateLabel(0)}</span>
+                                        {sparkDelta !== null && (
+                                          <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: sparkDelta >= 0 ? W.green : '#C0392B', fontWeight: 700 }}>
+                                            {sparkDelta >= 0 ? '+' : ''}{sparkDelta}
+                                          </span>
+                                        )}
+                                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{dateLabel(scoreHistory.length - 1)}</span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <p style={{ margin: 'auto 0', color: W.muted, fontSize: 12, lineHeight: 1.5 }}>Ikke nok historikk enda</p>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
+                            {/* Kilde */}
+                            <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '18px 16px' }}>
+                              <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kilde</p>
+                              <p style={{ margin: '0 0 4px', color: W.ink, fontSize: 14, fontWeight: 700 }}>Google Lighthouse</p>
+                              <p style={{ margin: '0 0 12px', color: W.muted, fontSize: 12, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>mobil · {analyzedLabel}</p>
+                              {(analysisResults?.mobile?.lcp?.value || analysisResults?.mobile?.tbt?.value) && (
+                                <div style={{ display: 'flex', gap: 16 }}>
+                                  {analysisResults?.mobile?.lcp?.value && (
+                                    <div>
+                                      <p style={{ margin: '0 0 2px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>LCP</p>
+                                      <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 14, fontWeight: 600, color: W.ink }}>{analysisResults.mobile.lcp.value}</p>
+                                    </div>
+                                  )}
+                                  {analysisResults?.mobile?.tbt?.value && (
+                                    <div>
+                                      <p style={{ margin: '0 0 2px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>TBT</p>
+                                      <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 14, fontWeight: 600, color: W.ink }}>{analysisResults.mobile.tbt.value}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <section style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, overflow: 'hidden', marginBottom: 'auto' }}>
-                        <div style={{ padding: '14px 18px', borderBottom: `1px solid ${W.border}` }}>
-                          <p style={{ margin: 0, color: W.muted, fontSize: 11, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Lighthouse-data</p>
+                      {/* Filter tabs + list */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex' }}>
+                            {([
+                              { key: 'all'  as const, label: `Alle ${problems.length}` },
+                              { key: 'open' as const, label: `Åpne ${openCount}` },
+                              { key: 'done' as const, label: `Løste ${doneCount}` },
+                            ]).map((tab) => {
+                              const active = workshopFilter === tab.key;
+                              return (
+                                <button
+                                  key={tab.key}
+                                  type="button"
+                                  onClick={() => setWorkshopFilter(tab.key)}
+                                  style={{ background: 'none', border: 'none', padding: '10px 16px', fontSize: 14, fontWeight: active ? 600 : 400, color: active ? W.ink : W.muted, cursor: 'pointer', position: 'relative', transition: `color 160ms ${EASE}` }}
+                                >
+                                  {tab.label}
+                                  {active && <span style={{ position: 'absolute', bottom: 0, left: 16, right: 16, height: 2, background: W.ink, borderRadius: 2 }} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p style={{ margin: 0, color: W.muted, fontSize: 12 }}>Sortert etter besparelse</p>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 0 }}>
-                          <div style={{ padding: '16px 18px', borderBottom: `1px solid ${W.border}`, color: W.ink, fontSize: 13, fontWeight: 700 }}>Tittel</div>
-                          <div style={{ padding: '16px 18px', borderBottom: `1px solid ${W.border}`, color: W.muted, fontSize: 13, textAlign: 'right' }}>{selectedProblem.title}</div>
-                          <div style={{ padding: '16px 18px', borderBottom: `1px solid ${W.border}`, color: W.ink, fontSize: 13, fontWeight: 700 }}>Forventet gevinst</div>
-                          <div style={{ padding: '16px 18px', borderBottom: `1px solid ${W.border}`, color: selectedProblem.raw?.savings ? W.green : W.muted, fontSize: 13, fontWeight: 800, textAlign: 'right' }}>{selectedProblem.raw?.savings || 'Ikke oppgitt'}</div>
-                          <div style={{ padding: '16px 18px', color: W.ink, fontSize: 13, fontWeight: 700 }}>Kilde</div>
-                          <div style={{ padding: '16px 18px', color: W.muted, fontSize: 13, textAlign: 'right' }}>Google Lighthouse mobil</div>
-                        </div>
-                      </section>
+                        <div style={{ height: 1, background: W.border }} />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 28, flexWrap: 'wrap' }}>
+                        {filteredProblems.length === 0 ? (
+                          <div style={{ padding: '32px 0' }}>
+                            <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 16, fontWeight: 700 }}>
+                              {problems.length === 0 ? 'Ingen aktive problemer' : 'Ingen problemer i dette filteret'}
+                            </p>
+                            <p style={{ margin: '0 0 16px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                              {problems.length === 0
+                                ? 'Kjør en analyse under Synlighet → PageSpeed for å finne ting å fikse.'
+                                : workshopQuery.trim()
+                                  ? 'Ingen funn matcher søket. Tøm søket eller bytt filter.'
+                                  : 'Bytt filter for å se andre problemer.'}
+                            </p>
+                            {workshopQuery.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => setWorkshopQuery('')}
+                                onMouseDown={pressDown}
+                                onMouseUp={pressReset}
+                                onMouseLeave={pressReset}
+                                style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              >
+                                Tøm søk
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          filteredProblems.map((p, listIdx) => {
+                            const num = String(problems.findIndex(x => x.id === p.id) + 1).padStart(2, '0');
+                            return (
+                              <div
+                                key={p.id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => selectProblem(p)}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProblem(p); } }}
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '36px 1fr auto auto',
+                                  alignItems: 'center',
+                                  gap: 16,
+                                  padding: '18px 4px',
+                                  borderBottom: `1px solid ${W.border}`,
+                                  cursor: 'pointer',
+                                  background: 'transparent',
+                                  transition: `background 120ms ${EASE}`,
+                                  animation: `ws-fade-up 220ms ${EASE} both`,
+                                  animationDelay: `${listIdx * 40}ms`,
+                                }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(26,26,26,0.03)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                              >
+                                <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: W.muted, fontWeight: 600 }}>{num}</span>
+                                <div style={{ minWidth: 0 }}>
+                                  <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: W.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</p>
+                                  <p style={{ margin: 0, fontSize: 12, color: p.raw?.savings ? W.green : W.muted }}>{p.desc}</p>
+                                </div>
+                                <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 13, fontWeight: 600, color: p.raw?.savings ? W.green : 'transparent', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{p.raw?.savings || '\u00a0'}</p>
+                                <button
+                                  type="button"
+                                  onClick={e => { e.stopPropagation(); selectProblem(p); }}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor = W.border; e.currentTarget.style.transform = 'scale(1)'; }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor = W.ink; }}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 9, padding: '7px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}, border-color 160ms ${EASE}` }}
+                                >
+                                  <Sparkles size={12} /> AI-løsning
+                                </button>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Tier teaser */}
+                      {!hasStandardOrHigher && (
+                        <div style={{ background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(82,164,71,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Sparkles size={16} style={{ color: W.green }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>Lås opp AI-løsninger for alle funnene</p>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Inkluderer automatisk re-analyse hver natt, søkeordsposisjon og konkurrent-sporing.</p>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 499 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
+                            <button
+                              type="button"
+                              onClick={() => handleUpgrade('Standard')}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ background: '#fff', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                  ) : selectedProblem ? (
+                    /* ═══════════════════════════════════
+                       SCREEN B — DETALJ
+                       ═══════════════════════════════════ */
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+
+                      {/* Breadcrumb */}
+                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
                         <button
                           type="button"
-                          onClick={copyTicket}
-                          style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '12px 18px', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+                          onClick={() => setExpandedWorkshopProblem(null)}
                           onMouseDown={pressDown}
                           onMouseUp={pressReset}
                           onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                         >
-                          <Copy size={14} /> Kopier som ticket
+                          <ChevronLeft size={12} /> Verksted
+                        </button>
+                        <span style={{ color: W.border, fontSize: 14 }}>/</span>
+                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: W.muted }}>
+                          Funn {String(selectedIndex + 1).padStart(2, '0')} av {String(problems.length).padStart(2, '0')}
+                          {selectedProblem.raw?.id ? ` · ${selectedProblem.raw.id}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Two-column main */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,0.7fr)', gap: 32, padding: '32px 48px', alignItems: 'start' }}>
+
+                        {/* Left: title + meta */}
+                        <div>
+                          {/* Tag pills */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+                            <span style={{ background: W.ink, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>PageSpeed</span>
+                            <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.ink, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: W.green, flexShrink: 0 }} /> Åpen
+                            </span>
+                            <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 500, color: W.muted, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Google Lighthouse · mobil</span>
+                          </div>
+
+                          {/* Title */}
+                          <h2 style={{ margin: '0 0 16px', color: W.ink, fontSize: 'clamp(30px,4vw,50px)', fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.05 }}>
+                            {selectedProblem.title}
+                          </h2>
+
+                          {/* Description */}
+                          <p style={{ margin: '0 0 28px', color: W.muted, fontSize: 16, lineHeight: 1.65, maxWidth: '52ch' }}>
+                            {selectedProblem.raw?.description || 'Lighthouse foreslår en forbedring for mobilversjonen av nettsiden.'}
+                          </p>
+
+                          {/* Savings */}
+                          <div>
+                            <p style={{ margin: '0 0 4px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Lighthouse anslår</p>
+                            <p style={{ margin: 0, fontSize: 36, fontWeight: 600, color: selectedProblem.raw?.savings ? W.green : W.muted, fontFamily: selectedProblem.raw?.savings ? "ui-monospace,'SF Mono',Menlo,monospace" : 'inherit', fontVariantNumeric: 'tabular-nums' }}>
+                              {selectedProblem.raw?.savings ? `Sparer ${selectedProblem.raw.savings}` : 'Forbedring foreslått'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right: 2×2 meta cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          {[
+                            { label: 'KATEGORI',   value: 'Performance',                                                                  color: W.ink,                                                dot: false, mono: false },
+                            { label: 'STATUS',     value: 'Åpen',                                                                         color: W.green,                                              dot: true,  mono: false },
+                            { label: 'KILDE',      value: 'Lighthouse · mobil',                                                           color: W.ink,                                                dot: false, mono: true  },
+                            { label: 'BESPARELSE', value: selectedProblem.raw?.savings || 'Ikke oppgitt', color: selectedProblem.raw?.savings ? W.green : W.muted, dot: false, mono: !!selectedProblem.raw?.savings },
+                          ].map((card) => (
+                            <div key={card.label} style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '18px 16px' }}>
+                              <p style={{ margin: '0 0 8px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{card.label}</p>
+                              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: card.color as string, fontFamily: card.mono ? "ui-monospace,'SF Mono',Menlo,monospace" : 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                {card.dot && <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.green, flexShrink: 0 }} />}
+                                {card.value}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div style={{ height: 1, background: W.border, margin: '0 48px' }} />
+
+                      {/* AI solution section */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 32, padding: '32px 48px', alignItems: 'start' }}>
+
+                        {/* Left: explanation + steps */}
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: W.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Sparkles size={13} style={{ color: W.green }} />
+                              </div>
+                              <div>
+                                <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, fontWeight: 700, color: W.ink, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Sikt-AI · Løsning</p>
+                                <p style={{ margin: '2px 0 0', color: W.muted, fontSize: 11 }}>Forklaring og nummererte steg</p>
+                              </div>
+                            </div>
+                            <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, background: W.bg, border: `1px solid ${W.border}`, borderRadius: 6, padding: '3px 7px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                              {aiIsThinking ? 'Jobber' : aiSolution ? 'Svar' : 'Klar'}
+                            </span>
+                          </div>
+
+                          {aiIsThinking ? (
+                            <div style={{ padding: '32px 0', textAlign: 'center' }}>
+                              <Loader2 size={22} style={{ color: W.green, margin: '0 auto 12px', animation: 'spin 1s linear infinite', display: 'block' }} />
+                              <p style={{ margin: '0 0 4px', color: W.ink, fontSize: 14, fontWeight: 700 }}>Sikt-AI jobber</p>
+                              <p style={{ margin: 0, color: W.muted, fontSize: 12 }}>Normalt tar AI-svar 5–15 sekunder.</p>
+                            </div>
+                          ) : aiSolution ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                              {aiSolution.replacementExplanation && (
+                                <div>
+                                  <p style={{ margin: '0 0 6px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Forklaring</p>
+                                  <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.6 }}>{aiSolution.replacementExplanation}</p>
+                                </div>
+                              )}
+                              {aiSolution.fileHint && (
+                                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.muted, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
+                                  HVOR {aiSolution.fileHint}
+                                </span>
+                              )}
+                              {Array.isArray(aiSolution.steps) && aiSolution.steps.length > 0 && (
+                                <div>
+                                  <p style={{ margin: '0 0 12px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Steg</p>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {aiSolution.steps.map((step: any, i: number) => (
+                                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '14px 0', borderTop: `1px solid ${W.border}` }}>
+                                        <span style={{ width: 24, height: 24, borderRadius: 7, background: W.bg, border: `1px solid ${W.border}`, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, fontWeight: 700, color: W.muted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                          {String(i + 1).padStart(2, '0')}
+                                        </span>
+                                        <div>
+                                          <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 600, color: W.ink }}>{step.title || `Steg ${i + 1}`}</p>
+                                          {step.description && <p style={{ margin: 0, fontSize: 12, color: W.muted, lineHeight: 1.55 }}>{step.description}</p>}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{ border: `1.5px dashed ${W.border}`, borderRadius: 14, padding: '24px 20px', textAlign: 'center' }}>
+                              <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 14, fontWeight: 700 }}>Ingen løsning generert enda</p>
+                              <p style={{ margin: '0 0 16px', color: W.muted, fontSize: 13, lineHeight: 1.6 }}>Be AI om en forklaring og nummererte steg for dette funnet.</p>
+                              <button
+                                type="button"
+                                onClick={() => selectProblem(selectedProblem)}
+                                onMouseDown={pressDown}
+                                onMouseUp={pressReset}
+                                onMouseLeave={pressReset}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              >
+                                <Sparkles size={13} /> Be AI om løsning
+                              </button>
+                              <p style={{ margin: '12px 0 0', color: W.muted, fontSize: 11 }}>Normalt tar AI-svar 5–15 sekunder.</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right: code panels */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          {aiSolution?.originalCode && (
+                            <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
+                              <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.muted }} />
+                                  <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Gammel kode</span>
+                                </div>
+                                {aiSolution.fileHint && <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{aiSolution.fileHint}</span>}
+                              </div>
+                              <div style={{ background: W.ink, padding: '14px 16px', overflowX: 'auto' }}>
+                                <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.65)', whiteSpace: 'pre-wrap' }}><code>{String(aiSolution.originalCode)}</code></pre>
+                              </div>
+                              <div style={{ padding: '8px 14px' }}>
+                                <button type="button" onClick={() => { navigator.clipboard?.writeText(String(aiSolution.originalCode)); toastSuccess('Kopiert.'); }} style={{ background: 'none', border: 'none', color: W.green, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <Copy size={12} /> Kopier
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {aiSolution?.codePatch && (
+                            <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
+                              <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.green }} />
+                                <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Foreslått patch</span>
+                              </div>
+                              <div style={{ background: 'rgba(82,164,71,0.06)', padding: '14px 16px', overflowX: 'auto' }}>
+                                <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: W.green, whiteSpace: 'pre-wrap' }}><code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code></pre>
+                              </div>
+                              <div style={{ padding: '8px 14px' }}>
+                                <button type="button" onClick={() => { navigator.clipboard?.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch)); toastSuccess('Kopiert.'); }} style={{ background: 'none', border: 'none', color: W.green, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <Copy size={12} /> Kopier
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {!aiSolution && !aiIsThinking && (
+                            <div style={{ background: W.bg, border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 16px', textAlign: 'center' }}>
+                              <p style={{ margin: 0, color: W.muted, fontSize: 13, lineHeight: 1.5 }}>Kodepaneler vises her etter at AI har svart.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div style={{ height: 1, background: W.border, margin: '0 48px' }} />
+
+                      {/* Action row */}
+                      <div style={{ padding: '22px 48px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => toastSuccess('Markert som løst (lagres ikke i denne versjonen).')}
+                          onMouseDown={pressDown}
+                          onMouseUp={pressReset}
+                          onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          Marker som løst
                         </button>
                         <button
                           type="button"
-                          disabled
-                          style={{ background: W.card, color: W.muted, border: `1px solid ${W.border}`, borderRadius: 11, padding: '12px 18px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed' }}
+                          onClick={copyTicket}
+                          onMouseDown={pressDown}
+                          onMouseUp={pressReset}
+                          onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                         >
-                          Marker som løst krever lagring
+                          <Copy size={13} /> Kopier som ticket
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => selectProblem(selectedProblem)}
+                          onMouseDown={pressDown}
+                          onMouseUp={pressReset}
+                          onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: 'none', background: 'transparent', color: W.muted, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        >
+                          Be om annen vinkling
+                        </button>
+                        <p style={{ margin: '0 0 0 auto', color: W.muted, fontSize: 12 }}>Normalt tar AI-svar 5–15 sekunder</p>
                       </div>
-                    </>
+
+                      {/* Tier teaser */}
+                      {!hasStandardOrHigher && (
+                        <div style={{ margin: '0 48px 32px', background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(82,164,71,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Sparkles size={16} style={{ color: W.green }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>Få AI-løsninger for alle funnene</p>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Inkluderer automatisk re-analyse hver natt, søkeordsposisjon og konkurrent-sporing.</p>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 499 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
+                            <button
+                              type="button"
+                              onClick={() => handleUpgrade('Standard')}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ background: '#fff', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                   ) : (
-                    <div style={{ margin: 'auto', maxWidth: 420, textAlign: 'center' }}>
-                      <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 18, fontWeight: 900 }}>Ingen funn enda</p>
-                      <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.6 }}>Kjør en PageSpeed-analyse under Synlighet for å fylle Verkstedet med ekte Lighthouse-funn.</p>
+                    <div style={{ padding: '64px 48px', textAlign: 'center' }}>
+                      <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 18, fontWeight: 700 }}>Funn ikke funnet</p>
+                      <button type="button" onClick={() => setExpandedWorkshopProblem(null)} style={{ marginTop: 12, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>← Tilbake</button>
                     </div>
                   )}
-                </main>
 
-                {/* RIGHT: AI co-pilot / plan state */}
-                <aside style={{ background: W.card, borderLeft: `1px solid ${W.border}`, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                  <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 99, background: W.ink, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Sparkles size={14} />
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 900 }}>Sikt-AI</p>
-                        <p style={{ margin: '2px 0 0', color: W.muted, fontSize: 11 }}>Løsningsforslag</p>
-                      </div>
-                    </div>
-                    <span style={{ background: W.bg, color: W.muted, border: `1px solid ${W.border}`, borderRadius: 6, padding: '4px 7px', fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      {aiSolution ? 'Svar' : 'Klar'}
-                    </span>
-                  </div>
-
-                  <div style={{ padding: 20, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-                    {!selectedProblem ? (
-                      <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.6 }}>Velg et Lighthouse-funn for å se AI-løsningen.</p>
-                    ) : aiIsThinking ? (
-                      <div style={{ padding: '34px 0', textAlign: 'center' }}>
-                        <Loader2 size={24} style={{ color: W.green, margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
-                        <p style={{ margin: '0 0 4px', color: W.ink, fontSize: 14, fontWeight: 900 }}>AI analyserer kildekoden</p>
-                        <p style={{ margin: 0, color: W.muted, fontSize: 12 }}>Dette tar normalt 5–15 sekunder.</p>
-                      </div>
-                    ) : aiSolution ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-                        {aiSolution.originalCode && (
-                          <section>
-                            <p style={{ margin: '0 0 10px', color: W.ink, fontSize: 13, fontWeight: 900 }}>Fjern denne koden</p>
-                            <div style={{ background: W.ink, color: '#F5F5F0', borderRadius: 12, padding: 14, overflowX: 'auto', fontSize: 11, lineHeight: 1.6, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}><code>{String(aiSolution.originalCode)}</code></pre>
-                            </div>
-                            <button type="button" onClick={() => { navigator.clipboard?.writeText(String(aiSolution.originalCode)); toastSuccess('Kopiert.'); }} style={{ marginTop: 8, background: 'none', border: 'none', color: W.green, fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                              <Copy size={12} /> Kopier
-                            </button>
-                            {aiSolution.fileHint && <p style={{ margin: '8px 0 0', color: W.muted, fontSize: 12 }}>Hvor: {aiSolution.fileHint}</p>}
-                          </section>
-                        )}
-
-                        {aiSolution.codePatch && (
-                          <section>
-                            <p style={{ margin: '0 0 10px', color: W.ink, fontSize: 13, fontWeight: 900 }}>
-                              {aiSolution.originalCode ? 'Bytt ut med' : 'Foreslått kode'}
-                            </p>
-                            <div style={{ background: W.ink, color: '#DDF3D8', borderRadius: 12, padding: 14, overflowX: 'auto', fontSize: 11, lineHeight: 1.6, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}><code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code></pre>
-                            </div>
-                            <button type="button" onClick={() => { navigator.clipboard?.writeText(typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch)); toastSuccess('Kopiert.'); }} style={{ marginTop: 8, background: 'none', border: 'none', color: W.green, fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                              <Copy size={12} /> Kopier
-                            </button>
-                            {aiSolution.replacementExplanation && <p style={{ margin: '8px 0 0', color: W.muted, fontSize: 12, lineHeight: 1.6 }}>Hvorfor: {aiSolution.replacementExplanation}</p>}
-                          </section>
-                        )}
-
-                        {Array.isArray(aiSolution.steps) && aiSolution.steps.length > 0 && (
-                          <section>
-                            <p style={{ margin: '0 0 14px', color: W.ink, fontSize: 13, fontWeight: 900 }}>Slik fikser du det</p>
-                            <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 13 }}>
-                              {aiSolution.steps.map((step: any, i: number) => (
-                                <li key={i} style={{ display: 'grid', gridTemplateColumns: '26px 1fr', gap: 10 }}>
-                                  <span style={{ width: 24, height: 24, borderRadius: 7, background: W.bg, color: W.muted, border: `1px solid ${W.border}`, fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {String(i + 1).padStart(2, '0')}
-                                  </span>
-                                  <div>
-                                    <p style={{ margin: '0 0 3px', color: W.ink, fontSize: 13, fontWeight: 900 }}>{step.title || `Steg ${i + 1}`}</p>
-                                    {step.description && <p style={{ margin: 0, color: W.muted, fontSize: 12, lineHeight: 1.55 }}>{step.description}</p>}
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
-                          </section>
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{ background: W.bg, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                        <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 14, fontWeight: 900 }}>Ingen løsning generert enda</p>
-                        <p style={{ margin: 0, color: W.muted, fontSize: 12, lineHeight: 1.6 }}>Klikk på et funn i listen for å be Sikt-AI lage forslag basert på det ekte Lighthouse-funnet.</p>
-                      </div>
-                    )}
-
-                    {!hasStandardOrHigher && (
-                      <div style={{ marginTop: 22, background: W.bg, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                        <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>På Standard</p>
-                        <p style={{ margin: '0 0 12px', color: W.muted, fontSize: 13, lineHeight: 1.55 }}>Sikt kan kjøre rettingen automatisk og bekrefte effekten i en ny analyse.</p>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <p style={{ margin: 0, color: W.ink, fontSize: 13, fontWeight: 900 }}>1 499 kr / mnd</p>
-                          <button type="button" onClick={() => handleUpgrade('Standard')} style={{ background: 'none', border: 'none', color: W.ink, fontSize: 12, fontWeight: 900, cursor: 'pointer', padding: 0 }}>
-                            Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {hasStandardOrHigher && !hostIsConnected && (
-                      <div style={{ marginTop: 22, background: W.bg, border: `1px solid ${W.border}`, borderRadius: 14, padding: 16 }}>
-                        <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 14, fontWeight: 900 }}>CMS ikke koblet til</p>
-                        <p style={{ margin: '0 0 12px', color: W.muted, fontSize: 12, lineHeight: 1.6 }}>Koble til der nettsiden din ligger, så finner Sikt eksakt kode-linje.</p>
-                        <button type="button" onClick={() => { setActiveTab('settings'); setShowHostModal(true); }} style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 13px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, transition: `transform 160ms ${EASE}` }} onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}>
-                          <Server size={13} /> Koble til CMS
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </aside>
+                </div>
               </div>
-            </div>
+            </>
           );
         })()}
 
@@ -9326,159 +9660,256 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             { key: 'alert', label: `Varsler ${counts.alert}` },
           ];
 
-          return (
-            <div className="space-y-6">
-              <header>
-                <p className={`text-sm ${textDim}`}>
-                  Uke {getWeekNumber(viewedStart)} · {viewedStart.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}
-                  {weekOffset === 0 ? ' (denne uken)' : ''}
-                </p>
-                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight mt-2 ${textMain}`}>
-                  {hasStandardOrHigher ? 'Dette har Sikt fikset for deg' : 'Dette har Sikt funnet for deg'}
-                </h1>
-                <p className={`text-base mt-3 ${textDim}`}>
-                  {hasStandardOrHigher
-                    ? 'Konkret arbeid Sikt har utført på siden din. Hver linje er en endring du kan se og angre.'
-                    : 'Funn og AI-forslag du kan kopiere inn i CMS-en din selv. Oppgrader for å la Sikt pushe automatisk.'}
-                </p>
-              </header>
+          const L = {
+            bg:     '#F5F5F0',
+            card:   '#FFFFFF',
+            ink:    '#1A1A1A',
+            green:  '#52A447',
+            muted:  '#808080',
+            border: '#EBEBE6',
+          } as const;
+          const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+          const catColor = (c: string) =>
+            c === 'fix' ? L.green
+            : c === 'alert' ? L.muted
+            : L.ink;
+          const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
+          const pressU = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
 
-              {/* Uke-navigator */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((o) => o - 1)}
-                  className={`px-3 py-2 rounded-lg text-sm border ${divider} ${textDim} hover:${textMain}`}
-                >
-                  <ChevronLeft size={14} className="inline" /> Forrige uke
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
-                  disabled={weekOffset >= 0}
-                  className={`px-3 py-2 rounded-lg text-sm border ${divider} ${textDim} hover:${textMain} disabled:opacity-40 disabled:cursor-not-allowed`}
-                >
-                  Neste uke <ChevronRight size={14} className="inline" />
-                </button>
-                {weekOffset !== 0 && (
+          return (
+            <>
+              <style>{`
+                @keyframes log-fade-up {
+                  from { opacity: 0; transform: translateY(5px); }
+                  to   { opacity: 1; transform: translateY(0); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  @keyframes log-fade-up {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                  }
+                }
+              `}</style>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 28, color: L.ink }}>
+
+                {/* ── HEADER ── */}
+                <header style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, fontWeight: 600, color: L.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    Uke {getWeekNumber(viewedStart)} · {viewedStart.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}
+                    {weekOffset === 0 ? ' (denne uken)' : ''}
+                  </p>
+                  <h1 style={{ margin: 0, fontSize: 'clamp(28px,3.5vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, color: L.ink }}>
+                    {hasStandardOrHigher ? 'Dette har Sikt fikset for deg' : 'Dette har Sikt funnet for deg'}
+                  </h1>
+                  <p style={{ margin: 0, fontSize: 15, color: L.muted, lineHeight: 1.65, maxWidth: '56ch' }}>
+                    {hasStandardOrHigher
+                      ? 'Konkret arbeid Sikt har utført på siden din. Hver linje er en endring du kan se og angre.'
+                      : 'Funn og AI-forslag du kan kopiere inn i CMS-en din selv. Oppgrader for å la Sikt pushe automatisk.'}
+                  </p>
+                </header>
+
+                {/* ── UKE-NAVIGATOR ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={() => setWeekOffset(0)}
-                    className="ml-2 text-sm font-medium text-violet-600 hover:text-violet-500"
+                    onClick={() => setWeekOffset((o) => o - 1)}
+                    onMouseDown={pressD}
+                    onMouseUp={pressU}
+                    onMouseLeave={pressU}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: L.card, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: L.ink, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                   >
-                    Tilbake til denne uken
+                    <ChevronLeft size={14} /> Forrige uke
                   </button>
-                )}
-              </div>
-
-              {/* Filter-pills med fargekoding pr kategori */}
-              <div className="flex flex-wrap gap-2">
-                {filterPills.map((p) => {
-                  const dotColor: Record<string, string> = {
-                    all: 'bg-slate-400',
-                    fix: 'bg-emerald-500',
-                    suggestion: 'bg-sky-500',
-                    finding: 'bg-violet-500',
-                    alert: 'bg-amber-500',
-                  };
-                  const active = receiptCategoryFilter === p.key;
-                  return (
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
+                    disabled={weekOffset >= 0}
+                    onMouseDown={pressD}
+                    onMouseUp={pressU}
+                    onMouseLeave={pressU}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: L.card, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: weekOffset >= 0 ? L.muted : L.ink, cursor: weekOffset >= 0 ? 'not-allowed' : 'pointer', opacity: weekOffset >= 0 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                  >
+                    Neste uke <ChevronRight size={14} />
+                  </button>
+                  {weekOffset !== 0 && (
                     <button
-                      key={p.key}
                       type="button"
-                      onClick={() => setReceiptCategoryFilter(p.key)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        active
-                          ? isLight
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-white text-slate-900'
-                          : isLight
-                            ? 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                            : 'bg-slate-900 border border-white/10 text-slate-400 hover:border-white/20'
-                      }`}
+                      onClick={() => setWeekOffset(0)}
+                      onMouseDown={pressD}
+                      onMouseUp={pressU}
+                      onMouseLeave={pressU}
+                      style={{ background: 'none', border: 'none', color: L.ink, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '8px 4px', textDecoration: 'underline', textDecorationColor: L.border, transition: `transform 160ms ${EASE}` }}
                     >
-                      <span className={`w-2 h-2 rounded-full ${dotColor[p.key] || 'bg-slate-400'}`} />
-                      {p.label}
+                      Tilbake til denne uken
                     </button>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
 
-              {/* Logg-feed */}
-              <PortalCard theme={themed}>
+                {/* ── FILTER-PILLS ── */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {filterPills.map((p) => {
+                    const active = receiptCategoryFilter === p.key;
+                    const dot = p.key === 'all' ? L.muted : catColor(p.key);
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => setReceiptCategoryFilter(p.key)}
+                        onMouseDown={pressD}
+                        onMouseUp={pressU}
+                        onMouseLeave={(e) => { pressU(e); if (!active) e.currentTarget.style.borderColor = L.border; }}
+                        onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = '#d9d9d2'; }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 7,
+                          background: active ? L.ink : L.card,
+                          border: `1px solid ${active ? L.ink : L.border}`,
+                          borderRadius: 999,
+                          padding: '6px 14px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: active ? '#fff' : L.muted,
+                          cursor: 'pointer',
+                          transition: `transform 160ms ${EASE}, background 160ms ${EASE}, border-color 160ms ${EASE}, color 160ms ${EASE}`,
+                          fontFamily: "ui-monospace,'SF Mono',Menlo,monospace",
+                        }}
+                      >
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: active ? '#fff' : dot, flexShrink: 0, transition: `background 160ms ${EASE}` }} />
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* ── FEED ── */}
                 {loadingReceipt ? (
-                  <InlineLoading theme={themed} text="Laster aktivitetsloggen…" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '24px 0', color: L.muted, fontSize: 14 }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+                      <circle cx="8" cy="8" r="6" fill="none" stroke={L.border} strokeWidth="2" />
+                      <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={L.ink} strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    Laster aktivitetsloggen…
+                  </div>
                 ) : filtered.length === 0 ? (
-                  <EmptyState
-                    theme={themed}
-                    icon={<ClipboardCheck className="w-10 h-10" />}
-                    title={`Ingen handlinger ${weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}`}
-                    description={weekOffset === 0 ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.' : 'Sikt logget ingenting i denne perioden.'}
-                    action={weekOffset === 0 ? (
-                      <SecondaryButton theme={themed} onClick={() => setActiveTab('home')}>
+                  <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 18, padding: '40px 32px', textAlign: 'center' }}>
+                    <ClipboardCheck size={28} style={{ color: L.muted, margin: '0 auto 14px', display: 'block' }} />
+                    <p style={{ margin: '0 0 8px', color: L.ink, fontSize: 16, fontWeight: 600 }}>
+                      {`Ingen handlinger ${weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}`}
+                    </p>
+                    <p style={{ margin: '0 0 20px', color: L.muted, fontSize: 14, lineHeight: 1.6, maxWidth: '38ch', marginLeft: 'auto', marginRight: 'auto' }}>
+                      {weekOffset === 0
+                        ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.'
+                        : 'Sikt logget ingenting i denne perioden.'}
+                    </p>
+                    {weekOffset === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('home')}
+                        onMouseDown={pressD}
+                        onMouseUp={pressU}
+                        onMouseLeave={pressU}
+                        style={{ background: L.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                      >
                         Gå til Hjem
-                      </SecondaryButton>
-                    ) : undefined}
-                  />
+                      </button>
+                    )}
+                  </div>
                 ) : (
-                  <ul className={`divide-y ${divider}`}>
-                    {filtered.map((a) => {
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {filtered.map((a, idx) => {
                       const meta = categoryMeta(a.category);
                       return (
-                        <li key={a.id} className="px-6 py-5">
-                          <div className="flex items-start gap-4">
-                            <span className={`mt-2 w-2 h-2 rounded-full ${meta.dot} shrink-0`} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-3 flex-wrap">
-                                <p className={`text-sm font-medium ${textMain}`}>{a.title}</p>
-                                <span className={`text-xs ${textLabel}`}>{meta.label}</span>
-                              </div>
-                              {a.page_url && (
-                                <p className={`text-xs mt-1 ${textDim} truncate font-mono`}>
-                                  {(() => {
-                                    try {
-                                      const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
-                                      return u.hostname + u.pathname;
-                                    } catch { return a.page_url; }
-                                  })()}
-                                </p>
-                              )}
-                              {(a.before_value || a.after_value) && (
-                                <div className="grid sm:grid-cols-2 gap-2 mt-3">
-                                  {a.before_value && (
-                                    <div className={`rounded-lg px-3 py-2 text-xs ${isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/10 text-rose-300'} line-through opacity-80`}>
-                                      {a.before_value}
-                                    </div>
-                                  )}
-                                  {a.after_value && (
-                                    <div className={`rounded-lg px-3 py-2 text-xs ${isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/10 text-emerald-300'} font-medium`}>
-                                      {a.after_value}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              {a.category === 'suggestion' && a.after_value && (
-                                <button
-                                  type="button"
-                                  onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
-                                  className="mt-3 text-sm font-medium text-violet-600 hover:text-violet-500 inline-flex items-center gap-1"
-                                >
-                                  <Copy size={12} /> Kopier til utklipp
-                                </button>
-                              )}
+                        <div
+                          key={a.id}
+                          style={{
+                            background: L.card,
+                            border: `1px solid ${L.border}`,
+                            borderRadius: 16,
+                            padding: '20px 22px',
+                            boxShadow: '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)',
+                            transition: `transform 160ms ${EASE}, box-shadow 160ms ${EASE}`,
+                            animation: `log-fade-up 220ms ${EASE} both`,
+                            animationDelay: `${idx * 40}ms`,
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.03), 0 18px 40px -20px rgba(26,26,26,0.13)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)'; }}
+                        >
+                          {/* Top row */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: a.page_url || a.before_value || a.after_value ? 10 : 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: catColor(a.category), flexShrink: 0, marginTop: 2 }} />
+                              <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: L.ink, lineHeight: 1.3 }}>{a.title}</p>
+                              <span style={{
+                                flexShrink: 0,
+                                fontFamily: "ui-monospace,'SF Mono',Menlo,monospace",
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: L.muted,
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase' as const,
+                                background: L.bg,
+                                border: `1px solid ${L.border}`,
+                                borderRadius: 6,
+                                padding: '2px 7px',
+                              }}>
+                                {meta.label}
+                              </span>
                             </div>
-                            <span className={`text-xs ${textLabel} shrink-0 font-mono`}>
+                            <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, color: L.muted, flexShrink: 0, marginTop: 2 }}>
                               {new Date(a.created_at).toLocaleDateString('nb-NO', { weekday: 'short' }).replace('.', '')}
                             </span>
                           </div>
-                        </li>
+
+                          {/* URL */}
+                          {a.page_url && (
+                            <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: L.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 18 }}>
+                              {(() => {
+                                try {
+                                  const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
+                                  return u.hostname + u.pathname;
+                                } catch { return a.page_url; }
+                              })()}
+                            </p>
+                          )}
+
+                          {/* Before / After */}
+                          {(a.before_value || a.after_value) && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginTop: 12, paddingLeft: 18 }}>
+                              {a.before_value && (
+                                <div style={{ background: L.bg, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 12px', fontSize: 12, color: L.muted, textDecoration: 'line-through', opacity: 0.85 }}>
+                                  {a.before_value}
+                                </div>
+                              )}
+                              {a.after_value && (
+                                <div style={{ background: 'rgba(82,164,71,0.10)', border: '1px solid rgba(82,164,71,0.20)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: L.green, fontWeight: 600 }}>
+                                  {a.after_value}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Copy button */}
+                          {a.category === 'suggestion' && a.after_value && (
+                            <button
+                              type="button"
+                              onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
+                              onMouseDown={pressD}
+                              onMouseUp={pressU}
+                              onMouseLeave={pressU}
+                              style={{ marginTop: 12, marginLeft: 18, background: 'none', border: 'none', color: L.ink, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
+                            >
+                              <Copy size={12} /> Kopier til utklipp
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
-                  </ul>
+                  </div>
                 )}
-              </PortalCard>
 
-            </div>
+              </div>
+            </>
           );
         })()}
 
