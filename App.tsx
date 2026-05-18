@@ -7190,6 +7190,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const footerPlanLabel = `${planNames[activePlanKey]} plan`;
   const domainLabel = websiteUrl
     .replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
+  const tabFadeInClass = 'animate-in fade-in slide-in-from-bottom-2 duration-150 ease-out motion-reduce:slide-in-from-bottom-0';
 
   return (
     <div className={`min-h-screen ${rootBg} antialiased`}>
@@ -7370,69 +7371,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%' }}
           className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-      {/* Fast toppseksjon */}
-      <div style={{ marginBottom: 24 }}>
-        {activeTab === 'settings' && (
-          <p style={{ fontSize: 13, color: '#808080', margin: 0 }}>
-            {navItems.find(n => n.id === activeTab)?.label
-              || (activeTab === 'settings' ? 'Innstillinger' : 'Dashboard')}
-            {domainLabel ? <> · <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>{domainLabel}</span></> : null}
-          </p>
-        )}
-        {activeTab !== 'settings' && (
-          <header className="flex items-center justify-between flex-wrap gap-3" style={{ minHeight: 56, marginTop: ['home', 'competitors', 'workshop'].includes(activeTab) ? 0 : 12 }}>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>
-                {activeTab === 'home' ? 'Dashboard' : (navItems.find(n => n.id === activeTab)?.label || 'Dashboard')}
-              </h1>
-              {activeTab === 'keywords' && (
-                <p className="text-sm mt-1" style={{ color: '#808080' }}>
-                  Velg et søkeord til venstre for å se detaljer
-                </p>
-              )}
-            </div>
-            {activeTab === 'keywords' && keywordsToTrack.length > 0 && (
-              <button
-                onClick={handleCheckRankings}
-                disabled={rankingLoading}
-                className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                style={{ background: '#1A1A1A', color: '#fff' }}
-              >
-                <Search size={14} />
-                {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
-              </button>
-            )}
-          </header>
-        )}
-      </div>
 
         {/* =============================================================== */}
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
         {/* =============================================================== */}
         {activeTab === 'home' && (
-          <>
-            <DashboardHome
-              user={user}
-              clientData={clientData}
-              formData={formData}
-              analysisResults={analysisResults}
-              scoreHistory={scoreHistory}
-              siktActions={siktActions}
-              realRankings={realRankings}
-              gscConnected={gscConnected}
-              gscKeywords={gscKeywords}
-              isAnalyzing={isAnalyzing}
-              onRunAnalysis={runRealAnalysis}
-              onNavigate={setActiveTab}
-            />
-            <div className="max-w-5xl mx-auto px-4 mt-12 pb-20">
-              <DashboardCompetitorWidget
-                userId={user.id}
-                theme={themed}
-                onNavigate={() => setActiveTab('competitors')}
+          <div key={activeTab} className="space-y-6">
+            <header className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Dashboard</h1>
+                <p className={`text-base mt-3 ${textDim}`}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+              </div>
+            </header>
+            <div className={`${tabFadeInClass} space-y-6`}>
+              <DashboardHome
+                user={user}
+                clientData={clientData}
+                formData={formData}
+                analysisResults={analysisResults}
+                scoreHistory={scoreHistory}
+                siktActions={siktActions}
+                realRankings={realRankings}
+                gscConnected={gscConnected}
+                gscKeywords={gscKeywords}
+                isAnalyzing={isAnalyzing}
+                onRunAnalysis={runRealAnalysis}
+                onNavigate={setActiveTab}
               />
+              <div className="mt-12 pb-20">
+                <DashboardCompetitorWidget
+                  userId={user.id}
+                  theme={themed}
+                  onNavigate={() => setActiveTab('competitors')}
+                />
+              </div>
             </div>
-          </>
+          </div>
         )}
         {false && activeTab === 'home' && (
           <div className="space-y-6">
@@ -8022,8 +7996,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
 
           return (
-            <div className="space-y-5 px-2 sm:px-3 py-1" style={{ color: palette.ink }}>
-
+            <div key={activeTab} className="space-y-6" style={{ color: palette.ink }}>
+              <header className="flex items-end justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
+                  <p className="text-base mt-3" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
+                </div>
+              </header>
+              <div className={`${tabFadeInClass} space-y-6`}>
               <div className="border-b pb-3 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: palette.border }}>
                 <div className="inline-flex items-center gap-2">
                   {tabItems.map((sub) => {
@@ -8349,6 +8329,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   )}
                 </section>
               )}
+              </div>
             </div>
           );
         })()}
@@ -8357,7 +8338,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* SOKEORD — egen fane.                                            */}
         {/* =============================================================== */}
         {activeTab === 'keywords' && (
-          <div className="space-y-4">
+          <div key={activeTab} className="space-y-6">
+            <header className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Søkeord</h1>
+                <p className="text-base mt-3" style={{ color: '#808080' }}>
+                  Velg et søkeord til venstre for å se detaljer
+                </p>
+              </div>
+              {keywordsToTrack.length > 0 && (
+                <button
+                  onClick={handleCheckRankings}
+                  disabled={rankingLoading}
+                  className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                  style={{ background: '#1A1A1A', color: '#fff' }}
+                >
+                  <Search size={14} />
+                  {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
+                </button>
+              )}
+            </header>
+            <div className={`${tabFadeInClass} space-y-6`}>
 
             {/* GSC connection banner */}
             {!gscConnected && (
@@ -8833,6 +8834,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </div>
             )}
+            </div>
           </div>
         )}
 
@@ -8840,20 +8842,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* KONKURRENTER — KonkurrenterPage (egen komponent)              */}
         {/* =============================================================== */}
         {activeTab === 'competitors' && (
-          <KonkurrenterPage
-            user={user}
-            theme={themed}
-            hasStandardOrHigher={hasStandardOrHigher}
-            hasPremium={hasPremium}
-            onUpgrade={handleUpgrade}
-          />
+          <div key={activeTab} className="space-y-6">
+            <header className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
+                <p className={`text-base mt-3 ${textDim}`}>Følg konkurrentene dine og oppdag åpne muligheter.</p>
+              </div>
+            </header>
+            <div className={tabFadeInClass}>
+              <KonkurrenterPage
+                user={user}
+                theme={themed}
+                hasStandardOrHigher={hasStandardOrHigher}
+                hasPremium={hasPremium}
+                onUpgrade={handleUpgrade}
+              />
+            </div>
+          </div>
         )}
 
         {/* =============================================================== */}
         {/* AI-SYNLIGHET (GEO) — alltid synlig */}
         {/* =============================================================== */}
         {activeTab === 'geo' && (
-          <GeoPage onNotify={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')} />
+          <div key={activeTab} className="space-y-6">
+            <header className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>AI-synlighet</h1>
+                <p className={`text-base mt-3 ${textDim}`}>Hvordan nettsiden din omtales i AI-søk.</p>
+              </div>
+            </header>
+            <div className={tabFadeInClass}>
+              <GeoPage onNotify={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')} />
+            </div>
+          </div>
         )}
 
         {/* =============================================================== */}
@@ -8926,7 +8948,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
 
           return (
-            <>
+            <div key={activeTab} className="space-y-6">
+              <header className="flex items-end justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Verksted</h1>
+                  <p className={`text-base mt-3 ${textDim}`}>Prioriterte Lighthouse-funn med AI-forslag.</p>
+                </div>
+              </header>
+              <div className={`${tabFadeInClass} space-y-6`}>
               <style>{`
                 @keyframes ws-fade-up {
                   from { opacity: 0; transform: translateY(6px); }
@@ -9562,7 +9591,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                 </div>
               </div>
-            </>
+              </div>
+            </div>
           );
         })()}
 
@@ -9679,7 +9709,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           }).replace('.', '') + ' · ' + periodEndDate.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
 
           return (
-            <>
+            <div key={activeTab} className="space-y-6">
+              <header className="flex items-end justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Sikt-loggen</h1>
+                  <p className={`text-base mt-3 ${textDim}`}>Historikk over funn, forslag, fikser og varsler.</p>
+                </div>
+              </header>
+              <div className={`${tabFadeInClass} space-y-6`}>
               <style>{`
                 @keyframes log-card-in {
                   from { opacity: 0; transform: translateY(6px); }
@@ -10098,7 +10135,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   )}
                 </main>
               </div>
-            </>
+              </div>
+            </div>
           );
         })()}
 
@@ -10149,19 +10187,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const rowShell = "flex items-start justify-between gap-4 py-3 border-t border-[#EBEBE6]";
 
           return (
-            <div className="space-y-6 sm:space-y-8">
-              <header className="space-y-4">
-                <p className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>
-                  sikt / {settingsDomain} / settings
-                </p>
+            <div key={activeTab} className="space-y-6">
+              <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <p className="text-xs tracking-[0.14em] uppercase mb-2" style={{ color: '#808080', fontFamily: settingsMono }}>
-                    /settings — innstillinger
-                  </p>
-                  <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Konfigurasjon</h1>
+                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konfigurasjon</h1>
+                  <p className={`text-base mt-3 ${textDim}`}>innstillinger</p>
                 </div>
               </header>
-
+              <div className={`${tabFadeInClass} space-y-6`}>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
                   <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>Plan</p>
@@ -10464,6 +10497,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <p className="text-sm" style={{ color: '#808080' }}>
                   Felles svar om analyseintervall, GSC-forsinkelse, GEO-status og Technical Score.
                 </p>
+              </div>
               </div>
             </div>
           );
