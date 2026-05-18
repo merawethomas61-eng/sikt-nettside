@@ -607,28 +607,6 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         }
         .gsc-btn:active { transform: scale(0.97); }
       `}} />
-      {/* ── Navbar ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pb-3">
-        <div className="flex items-baseline gap-2.5">
-          <span className="text-sm font-semibold text-slate-900">
-            Dashboard
-          </span>
-          <span className="text-xs font-medium text-slate-400">
-            {domain}
-          </span>
-        </div>
-        <div className="hidden items-center gap-2 sm:flex">
-          <button
-            type="button"
-            onClick={onRunAnalysis}
-            className="nav-btn grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-400"
-            aria-label="Kjør ny analyse"
-          >
-            <RefreshCw size={13} />
-          </button>
-        </div>
-      </div>
-
       {/* ── Heading ─────────────────────────────────────────────────── */}
       <div className="dash-stagger dash-stagger-1 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>

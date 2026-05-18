@@ -4835,10 +4835,7 @@ const KonkurrenterPage: React.FC<{
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           {/* HERO */}
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 14px' }}>
-              Konkurrenter · Uke {weekNumber}
-            </p>
+          <div style={{ marginTop: -16 }}>
             {loading ? (
               <div style={{ height: 88, display: 'flex', alignItems: 'center' }}>
                 <Loader2 size={20} className="animate-spin" style={{ color: C.muted }} />
@@ -7373,13 +7370,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%' }}
           className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-      {/* Brødsmule */}
+      {/* Fast toppseksjon */}
       <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 13, color: '#808080', margin: 0 }}>
-          {navItems.find(n => n.id === activeTab)?.label
-            || (activeTab === 'settings' ? 'Innstillinger' : 'Dashboard')}
-          {domainLabel ? <> · <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>{domainLabel}</span></> : null}
-        </p>
+        {activeTab === 'settings' && (
+          <p style={{ fontSize: 13, color: '#808080', margin: 0 }}>
+            {navItems.find(n => n.id === activeTab)?.label
+              || (activeTab === 'settings' ? 'Innstillinger' : 'Dashboard')}
+            {domainLabel ? <> · <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>{domainLabel}</span></> : null}
+          </p>
+        )}
+        {activeTab !== 'settings' && (
+          <header className="flex items-center justify-between flex-wrap gap-3" style={{ minHeight: 56, marginTop: ['home', 'competitors', 'workshop'].includes(activeTab) ? 0 : 12 }}>
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>
+                {activeTab === 'home' ? 'Dashboard' : (navItems.find(n => n.id === activeTab)?.label || 'Dashboard')}
+              </h1>
+              {activeTab === 'keywords' && (
+                <p className="text-sm mt-1" style={{ color: '#808080' }}>
+                  Velg et søkeord til venstre for å se detaljer
+                </p>
+              )}
+            </div>
+            {activeTab === 'keywords' && keywordsToTrack.length > 0 && (
+              <button
+                onClick={handleCheckRankings}
+                disabled={rankingLoading}
+                className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                style={{ background: '#1A1A1A', color: '#fff' }}
+              >
+                <Search size={14} />
+                {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
+              </button>
+            )}
+          </header>
+        )}
       </div>
 
         {/* =============================================================== */}
@@ -7999,10 +8023,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
           return (
             <div className="space-y-5 px-2 sm:px-3 py-1" style={{ color: palette.ink }}>
-              <header className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
-                <p className="text-base" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
-              </header>
 
               <div className="border-b pb-3 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: palette.border }}>
                 <div className="inline-flex items-center gap-2">
@@ -8338,25 +8358,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'keywords' && (
           <div className="space-y-4">
-            <header className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Søkeord</h1>
-                <p className="text-sm mt-1" style={{ color: '#808080' }}>
-                  Velg et søkeord til venstre for å se detaljer
-                </p>
-              </div>
-              {keywordsToTrack.length > 0 && (
-                <button
-                  onClick={handleCheckRankings}
-                  disabled={rankingLoading}
-                  className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                  style={{ background: '#1A1A1A', color: '#fff' }}
-                >
-                  <Search size={14} />
-                  {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
-                </button>
-              )}
-            </header>
 
             {/* GSC connection banner */}
             {!gscConnected && (
@@ -8941,7 +8942,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <div style={{ background: 'transparent', overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', display: 'flex', flexDirection: 'column' }}>
 
                 {/* ── TOP BAR ── */}
-                <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: `1px solid ${W.border}`, background: isLight ? 'rgba(248,250,252,0.92)' : 'rgba(15,23,42,0.92)', flexShrink: 0, gap: 16 }}>
+                <div style={{ height: 56, display: expandedWorkshopProblem === null ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: `1px solid ${W.border}`, background: isLight ? 'rgba(248,250,252,0.92)' : 'rgba(15,23,42,0.92)', flexShrink: 0, gap: 16 }}>
                   {/* Left */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 0 }}>
                     <span style={{ width: 24, height: 24, borderRadius: 7, background: W.ink, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>S</span>
@@ -9007,15 +9008,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     /* ═══════════════════════════════════
                        SCREEN A — OVERSIKT
                        ═══════════════════════════════════ */
-                    <div style={{ padding: '40px 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+                    <div style={{ padding: '20px 48px 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
 
                       {/* Headline */}
-                      <div>
-                        <h1 style={{ margin: '0 0 8px', color: W.ink, fontSize: 34, fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1 }}>verksted</h1>
-                        <p style={{ margin: 0, color: W.muted, fontSize: 14 }}>
-                          {problems.length} funn fra Lighthouse mobile. Sortert etter potensiell besparelse.
-                        </p>
-                      </div>
+                      <div />
 
                       {/* Bento grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)', gap: 16 }}>
@@ -9720,17 +9716,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   alignSelf: 'start',
                 }}>
 
-                  {/* Logo-rad */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
-                      <circle cx="10" cy="10" r="9" fill="none" stroke={L.ink} strokeWidth="1.5" />
-                      <circle cx="10" cy="10" r="3" fill={L.ink} />
-                    </svg>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: L.ink }}>
-                      Sikt<span style={{ color: L.muted, fontWeight: 400 }}>-loggen</span>
-                    </span>
-                  </div>
-
                   {/* Firmakort */}
                   <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 16, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: L.ink, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
@@ -9902,10 +9887,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <main style={{ padding: '28px 40px', minWidth: 0 }}>
 
                   {/* Feed header */}
-                  <div style={{ marginBottom: 24 }}>
-                    <p style={{ margin: '0 0 8px', fontFamily: MONO, fontSize: 11, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                      Aktivitet · Uke {getWeekNumber(viewedStart)}
-                    </p>
+                  <div style={{ marginBottom: 16 }}>
                     <h1 style={{ margin: 0, fontSize: 'clamp(28px,3.5vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, color: L.ink }}>
                       {counts.all} hendelser{' '}
                       <span style={{ color: L.muted, fontWeight: 400 }}>
@@ -9913,7 +9895,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </span>
                     </h1>
                   </div>
-                  <div style={{ height: 1, background: L.border, marginBottom: 32 }} />
+                  <div style={{ height: 1, background: L.border, marginBottom: 24 }} />
 
                   {/* States */}
                   {loadingReceipt ? (
@@ -10121,324 +10103,431 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         })()}
 
         {/* =============================================================== */}
-        {/* INNSTILLINGER — vertikal liste av seksjoner.                    */}
+        {/* INNSTILLINGER — KONFIGURASJON                                  */}
         {/* =============================================================== */}
-        {activeTab === 'settings' && (
-          <div className="space-y-6">
-            <header>
-              <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Innstillinger</h1>
-              <p className={`text-base mt-3 ${textDim}`}>Ett sted for alt — bedrift, CMS, abonnement og varsler.</p>
-            </header>
+        {activeTab === 'settings' && (() => {
+          const settingsMono = "ui-monospace,'SF Mono',Menlo,monospace";
+          const settingsDomain = domainLabel || 'ingen-nettside';
+          const profileDisplayFields = [
+            { label: 'Bedrift', value: clientData?.companyName || '—' },
+            { label: 'Kontaktperson', value: clientData?.contactPerson || '—' },
+            { label: 'E-post', value: clientData?.email || user?.email || '—' },
+            { label: 'Telefon', value: clientData?.phone || '—' },
+            { label: 'Nettside', value: websiteUrl || '—' },
+            { label: 'Bransje', value: clientData?.industry || '—' },
+            { label: 'Målgruppe', value: clientData?.targetAudience || '—' },
+          ];
+          const profileEditFields = [
+            { key: 'companyName', label: 'Bedrift', placeholder: 'Min Bedrift AS' },
+            { key: 'contactPerson', label: 'Kontaktperson', placeholder: 'Ola Nordmann' },
+            { key: 'email', label: 'E-post', placeholder: 'ola@bedrift.no' },
+            { key: 'phone', label: 'Telefon', placeholder: '+47 ...' },
+            { key: 'industry', label: 'Bransje', placeholder: 'F.eks. rørlegger' },
+          ] as const;
+          const notifRows = [
+            { id: 'weeklyReport' as const, label: hasStandardOrHigher ? 'Ukentlig rapport' : 'Månedlig rapport', desc: 'Sammendrag av fikser, funn og rangeringer.' },
+            { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
+            { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
+          ];
+          const cmsRows = hostIsConnected
+            ? [
+                { label: 'Plattform', value: hostConnection?.platform || '—' },
+                { label: 'URL', value: hostConnection?.repoUrl || hostConnection?.adminUrl || '—' },
+                { label: 'Status', value: 'synced' },
+              ]
+            : [
+                { label: 'Status', value: 'ikke koblet' },
+              ];
+          const sectionCountProfile = editingSection === 'profile' ? profileEditFields.length + 2 : profileDisplayFields.length;
+          const sectionCountCms = (/basic/i.test(planBundle) && !hasStandardOrHigher) ? 0 : cmsRows.length;
+          const sectionCountNotif = notifRows.length;
+          const sectionCountTheme = 2;
+          const planCost = planPrices[activePlanKey];
 
-            {/* SEKSJON: Bedrift & nettside */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader
-                theme={themed}
-                icon={<Briefcase size={16} />}
-                accent="violet"
-                title="Bedrift og nettside"
-                subtitle="Hvem du er og hvor nettsiden din ligger."
-                action={
-                  <button
-                    type="button"
-                    onClick={() => setEditingSection(editingSection === 'profile' ? null : 'profile')}
-                    className={`text-sm font-medium ${editingSection === 'profile' ? 'text-rose-600' : 'text-violet-600'} hover:opacity-80`}
-                  >
-                    {editingSection === 'profile' ? 'Avbryt' : 'Rediger'}
-                  </button>
-                }
-              />
+          const sectionShell = "rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] overflow-hidden";
+          const sectionSummary = "list-none px-4 sm:px-6 py-4 cursor-pointer";
+          const rowShell = "flex items-start justify-between gap-4 py-3 border-t border-[#EBEBE6]";
 
-              {editingSection !== 'profile' ? (
-                <dl className={`divide-y ${divider}`}>
-                  {[
-                    { label: 'Bedrift', value: clientData?.companyName || '—' },
-                    { label: 'Kontaktperson', value: clientData?.contactPerson || '—' },
-                    { label: 'E-post', value: clientData?.email || user?.email || '—' },
-                    { label: 'Telefon', value: clientData?.phone || '—' },
-                    { label: 'Nettside', value: websiteUrl || '—' },
-                    { label: 'Bransje', value: clientData?.industry || '—' },
-                    { label: 'Målgruppe', value: clientData?.targetAudience || '—' },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-baseline justify-between py-3 gap-4">
-                      <dt className={`text-sm ${textDim}`}>{row.label}</dt>
-                      <dd className={`text-sm font-medium ${textMain} text-right truncate max-w-xs`}>{row.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : (
-                <div className="space-y-4">
-                  {[
-                    { key: 'companyName', label: 'Bedrift', placeholder: 'Min Bedrift AS' },
-                    { key: 'contactPerson', label: 'Kontaktperson', placeholder: 'Ola Nordmann' },
-                    { key: 'email', label: 'E-post', placeholder: 'ola@bedrift.no' },
-                    { key: 'phone', label: 'Telefon', placeholder: '+47 ...' },
-                    { key: 'industry', label: 'Bransje', placeholder: 'F.eks. rørlegger' },
-                  ].map((f) => (
-                    <div key={f.key}>
-                      <label className={`block text-sm ${textDim} mb-1`}>{f.label}</label>
-                      <input
-                        type="text"
-                        value={formData[f.key] ?? ''}
-                        onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
-                        placeholder={f.placeholder}
-                        className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
-                      />
-                    </div>
-                  ))}
-
-                  <div>
-                    <label className={`block text-sm ${textDim} mb-1`}>
-                      Nettside {urlLocked && <span className={textLabel}>(låst i {urlDaysLeft} dag{urlDaysLeft === 1 ? '' : 'er'})</span>}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.websiteUrl ?? ''}
-                      onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                      placeholder="https://minbedrift.no"
-                      disabled={urlLocked}
-                      className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 disabled:opacity-60 disabled:cursor-not-allowed`}
-                    />
-                    <p className={`text-xs mt-1.5 ${textLabel}`}>
-                      Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm ${textDim} mb-1`}>Målgruppe</label>
-                    <textarea
-                      value={formData.targetAudience ?? ''}
-                      onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                      placeholder="Hvem vil du nå?"
-                      rows={3}
-                      className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500 resize-none`}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <SecondaryButton theme={themed} onClick={() => setEditingSection(null)}>Avbryt</SecondaryButton>
-                    <PrimaryButton onClick={async () => { await handleSaveSettings(formData); setEditingSection(null); }} disabled={saving}>
-                      {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                      Lagre
-                    </PrimaryButton>
-                  </div>
-                </div>
-              )}
-            </PortalCard>
-
-            {/* SEKSJON: CMS-tilkobling */}
-            {!(/basic/i.test(planBundle) && !hasStandardOrHigher) && (
-              <PortalCard theme={themed} className="p-6 sm:p-8">
-                <CardHeader
-                  theme={themed}
-                  icon={<Server size={16} />}
-                  accent={hostIsConnected ? 'emerald' : 'amber'}
-                  title="CMS-tilkobling"
-                  subtitle="Koble til der nettsiden din ligger, så pusher Sikt fikser automatisk."
-                  action={
-                    <SecondaryButton
-                      theme={themed}
-                      onClick={() => {
-                        setHostPlatform(hostConnection?.platform || '');
-                        setHostInputValue(hostConnection?.repoUrl || hostConnection?.adminUrl || hostConnection?.notes || '');
-                        setShowHostModal(true);
-                      }}
-                    >
-                      <Server size={14} /> {hostIsConnected ? 'Endre' : 'Koble til'}
-                    </SecondaryButton>
-                  }
-                />
-                {hostIsConnected ? (
-                  <div className="space-y-2">
-                    <p className={`text-sm ${textMain}`}>
-                      <span className="font-medium">{hostConnection?.platform}</span>
-                      {hostConnection?.repoUrl && <span className={textDim}> · {hostConnection.repoUrl}</span>}
-                      {hostConnection?.adminUrl && !hostConnection?.repoUrl && <span className={textDim}> · {hostConnection.adminUrl}</span>}
-                    </p>
-                    <p className={`text-sm ${textDim}`}>
-                      <CheckCircle2 size={14} className="inline text-emerald-600 mr-1" />
-                      Sikt har lese-tilgang. Auto-fiks aktivt.
-                    </p>
-                  </div>
-                ) : (
-                  <p className={`text-sm ${textDim}`}>
-                    Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
+          return (
+            <div className="space-y-6 sm:space-y-8">
+              <header className="space-y-4">
+                <p className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>
+                  sikt / {settingsDomain} / settings
+                </p>
+                <div>
+                  <p className="text-xs tracking-[0.14em] uppercase mb-2" style={{ color: '#808080', fontFamily: settingsMono }}>
+                    /settings — innstillinger
                   </p>
-                )}
-              </PortalCard>
-            )}
+                  <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Konfigurasjon</h1>
+                </div>
+              </header>
 
-            {/* SEKSJON: Abonnement */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader
-                theme={themed}
-                icon={<CreditCard size={16} />}
-                accent="violet"
-                title="Abonnement"
-                subtitle={`${planNames[activePlanKey]} · ${planPrices[activePlanKey]}/mnd`}
-              />
-
-              <div className="grid sm:grid-cols-3 gap-3">
-                {(['BASIC', 'STANDARD', 'PREMIUM'] as const).map((key) => {
-                  const isCurrent = activePlanKey === key;
-                  const order: Record<string, number> = { BASIC: 1, STANDARD: 2, PREMIUM: 3 };
-                  const type: 'upgrade' | 'downgrade' = order[key] > order[activePlanKey] ? 'upgrade' : 'downgrade';
-                  return (
-                    <div
-                      key={key}
-                      className={`rounded-xl p-5 border ${
-                        isCurrent
-                          ? isLight ? 'border-violet-300 bg-violet-50/50' : 'border-violet-500/40 bg-violet-500/10'
-                          : divider
-                      }`}
-                    >
-                      <p className={`text-sm font-semibold ${textMain}`}>{planNames[key]}</p>
-                      <p className={`text-2xl font-semibold mt-2 ${textMain}`}>
-                        {planPrices[key]}<span className={`text-xs font-normal ${textDim}`}>/mnd</span>
-                      </p>
-                      {isCurrent ? (
-                        <p className={`mt-4 text-xs font-medium text-violet-600`}>Aktiv plan</p>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setPlanChangeTarget({ key, name: planNames[key], price: planPrices[key], type })}
-                          className={`mt-4 text-sm font-medium ${type === 'upgrade' ? 'text-violet-600 hover:text-violet-500' : `${textDim} hover:${textMain}`}`}
-                        >
-                          {type === 'upgrade' ? 'Oppgrader →' : 'Nedgrader'}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>Plan</p>
+                  <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planNames[activePlanKey]}</p>
+                </div>
+                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>Mnd. kostnad</p>
+                  <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planCost}</p>
+                </div>
+                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>CMS</p>
+                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsConnected ? '#52A447' : '#1A1A1A' }}>
+                    {hostIsConnected ? 'Synced' : 'Ikke koblet'}
+                  </p>
+                </div>
               </div>
-            </PortalCard>
 
-            {/* SEKSJON: Varsler */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader theme={themed} icon={<Bell size={16} />} accent="amber" title="Varsler" subtitle="Hva Sikt skal sende deg på e-post." />
-              <ul className={`divide-y ${divider}`}>
-                {[
-                  { id: 'weeklyReport' as const, label: hasStandardOrHigher ? 'Ukentlig rapport' : 'Månedlig rapport', desc: 'Sammendrag av fikser, funn og rangeringer.' },
-                  { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
-                  { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
-                ].map((item) => (
-                  <li key={item.id} className="flex items-start justify-between py-4 gap-4">
-                    <div className="min-w-0">
-                      <p className={`text-sm font-medium ${textMain}`}>{item.label}</p>
-                      <p className={`text-xs mt-0.5 ${textDim}`}>{item.desc}</p>
+              <details className={sectionShell} open>
+                <summary className={sectionSummary}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>01</span>
+                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Bedrift og nettside · {sectionCountProfile} felt</p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => toggleNotif(item.id)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                        notifPrefs[item.id] ? 'bg-violet-600' : isLight ? 'bg-slate-200' : 'bg-slate-700'
-                      }`}
+                      onClick={(e) => { e.preventDefault(); setEditingSection(editingSection === 'profile' ? null : 'profile'); }}
+                      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
+                      style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${notifPrefs[item.id] ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </PortalCard>
-
-            {/* SEKSJON: Utseende */}
-            <PortalCard theme={themed} className="p-6 sm:p-8">
-              <CardHeader theme={themed} icon={<Sparkle size={16} />} accent="sky" title="Utseende" subtitle="Velg hvordan portalen skal se ut." />
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'light' as const, label: 'Lys' },
-                  { id: 'dark' as const, label: 'Mørk' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setTheme(opt.id)}
-                    className={`px-5 py-4 rounded-xl border text-sm font-medium transition-colors ${
-                      theme === opt.id
-                        ? isLight ? 'border-violet-300 bg-violet-50 text-slate-900' : 'border-violet-500/40 bg-violet-500/10 text-white'
-                        : `${divider} ${textDim} hover:${textMain}`
-                    }`}
-                  >
-                    {opt.id === 'light' ? <Sun size={16} className="inline mr-2" /> : <Moon size={16} className="inline mr-2" />}
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </PortalCard>
-          </div>
-        )}
-
-            <footer className={`mt-12 pt-6 border-t ${divider} text-center text-sm ${textDim}`}>
-              <p className="inline-flex items-center justify-center gap-2 flex-wrap">
-                <LifeBuoy size={14} className="text-violet-600" />
-                <span>Support-kanal:</span>
-                <a href="mailto:support@siktseo.com?subject=Support%20fra%20Sikt-portalen" className="text-violet-600 hover:text-violet-500 font-medium underline underline-offset-2">
-                  support@siktseo.com
-                </a>
-                <span className={textLabel}>Svar normalt innen én arbeidsdag.</span>
-              </p>
-              <p className="mt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFaqModal(true)}
-                  className="text-violet-600 hover:text-violet-500 underline underline-offset-2"
-                >
-                  Se vanlige spørsmål
-                </button>
-              </p>
-            </footer>
-
-            {showFaqModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <button
-                  type="button"
-                  aria-label="Lukk FAQ"
-                  onClick={() => setShowFaqModal(false)}
-                  className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-                />
-                <div className={`relative w-full max-w-2xl rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6 max-h-[80vh] overflow-y-auto`}>
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className={`text-lg font-semibold ${textMain}`}>Vanlige spørsmål</h3>
-                    <button type="button" onClick={() => setShowFaqModal(false)} className={`p-1.5 rounded-md ${textDim} hover:${textMain}`}>
-                      <X size={16} />
+                      {editingSection === 'profile' ? 'edit off' : 'edit'}
                     </button>
                   </div>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        q: 'Hvor raskt ser jeg resultater i Sikt?',
-                        a: 'Teknisk analyse vises vanligvis innen 30-60 sekunder, mens søkeordsdata fra GSC kan ta 7-14 dager.',
-                      },
-                      {
-                        q: 'Hvorfor vises ingen søkeord ennå?',
-                        a: 'Google Search Console trenger historikk før data vises. Sørg for at siden er verifisert og indeksert.',
-                      },
-                      {
-                        q: 'Hvordan oppgraderer jeg abonnementet?',
-                        a: 'Trykk på «Oppgrader» i portalen. Du sendes direkte til Stripe checkout for valgt plan.',
-                      },
-                      {
-                        q: 'Kan jeg koble flere nettsider?',
-                        a: 'Per nå støtter portalen én hovedside per bruker. Kontakt support for fler-domene oppsett.',
-                      },
-                      {
-                        q: 'Hva betyr Technical Score?',
-                        a: 'Scoren vurderer lastetid, mobilvennlighet, sikkerhet og SEO-tekniske signaler på en skala fra 0 til 100.',
-                      },
-                      {
-                        q: 'Hvordan fungerer GEO-fanen?',
-                        a: 'Du kan teste synlighet manuelt i AI-søk nå. Automatisk GEO-sporing lanseres i Q3 2026.',
-                      },
-                    ].map((item, idx) => (
-                      <div key={idx} className={`rounded-lg border ${divider} p-4`}>
-                        <p className={`text-sm font-semibold ${textMain}`}>{item.q}</p>
-                        <p className={`text-sm mt-1 ${textDim}`}>{item.a}</p>
+                </summary>
+                <div className="px-4 sm:px-6 pb-5">
+                  {editingSection !== 'profile' ? (
+                    <dl>
+                      {profileDisplayFields.map((row) => (
+                        <div key={row.label} className={rowShell}>
+                          <dt className="text-sm" style={{ color: '#808080' }}>{row.label}</dt>
+                          <dd className="text-sm text-right max-w-[70%] break-words" style={{ color: '#1A1A1A', fontFamily: settingsMono }}>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <div className="space-y-4 pt-1">
+                      {profileEditFields.map((f) => (
+                        <div key={f.key}>
+                          <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>{f.label}</label>
+                          <input
+                            type="text"
+                            value={formData[f.key] ?? ''}
+                            onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                            placeholder={f.placeholder}
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                            style={{ color: '#1A1A1A' }}
+                          />
+                        </div>
+                      ))}
+                      <div>
+                        <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>
+                          Nettside
+                          {urlLocked && (
+                            <span className="ml-2 text-[11px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full border border-[#EBEBE6]" style={{ color: '#808080', fontFamily: settingsMono }}>
+                              locked · {urlDaysLeft}d
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.websiteUrl ?? ''}
+                          onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                          placeholder="https://minbedrift.no"
+                          disabled={urlLocked}
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                          style={{ color: '#1A1A1A' }}
+                        />
+                        <p className="text-xs mt-1.5" style={{ color: '#808080' }}>
+                          Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
+                        </p>
                       </div>
+                      <div>
+                        <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Målgruppe</label>
+                        <textarea
+                          value={formData.targetAudience ?? ''}
+                          onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                          placeholder="Hvem vil du nå?"
+                          rows={3}
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none resize-none"
+                          style={{ color: '#1A1A1A' }}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingSection(null)}
+                          onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                          onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
+                          style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                        >
+                          Avbryt
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => { await handleSaveSettings(formData); setEditingSection(null); }}
+                          disabled={saving}
+                          onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                          onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white inline-flex items-center gap-2 disabled:opacity-70"
+                          style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                        >
+                          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                          Lagre
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </details>
+
+              {!(/basic/i.test(planBundle) && !hasStandardOrHigher) && (
+                <details className={sectionShell} open>
+                  <summary className={sectionSummary}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>02</span>
+                        <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>CMS-tilkobling · {sectionCountCms} felt</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setHostPlatform(hostConnection?.platform || '');
+                          setHostInputValue(hostConnection?.repoUrl || hostConnection?.adminUrl || hostConnection?.notes || '');
+                          setShowHostModal(true);
+                        }}
+                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
+                        style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      >
+                        sync
+                      </button>
+                    </div>
+                  </summary>
+                  <div className="px-4 sm:px-6 pb-5">
+                    <dl>
+                      {cmsRows.map((row) => (
+                        <div key={row.label} className={rowShell}>
+                          <dt className="text-sm" style={{ color: '#808080' }}>{row.label}</dt>
+                          <dd className="text-sm text-right max-w-[70%] break-words" style={{ color: row.value === 'synced' ? '#52A447' : '#1A1A1A', fontFamily: settingsMono }}>
+                            {row.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {!hostIsConnected && (
+                      <p className="text-sm mt-3" style={{ color: '#808080' }}>
+                        Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
+                      </p>
+                    )}
+                  </div>
+                </details>
+              )}
+
+              <details className={sectionShell} open>
+                <summary className={sectionSummary}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>03</span>
+                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Abonnement</p>
+                  </div>
+                </summary>
+                <div className="px-4 sm:px-6 pb-5">
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {(['BASIC', 'STANDARD', 'PREMIUM'] as const).map((key) => {
+                      const isCurrent = activePlanKey === key;
+                      const order: Record<string, number> = { BASIC: 1, STANDARD: 2, PREMIUM: 3 };
+                      const type: 'upgrade' | 'downgrade' = order[key] > order[activePlanKey] ? 'upgrade' : 'downgrade';
+                      return (
+                        <div key={key} className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
+                          <p className="text-xs uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>{planNames[key]}</p>
+                          <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planPrices[key]}<span className="text-xs font-normal ml-1" style={{ color: '#808080' }}>/mnd</span></p>
+                          {isCurrent ? (
+                            <p className="mt-3 text-xs uppercase tracking-[0.12em]" style={{ color: '#52A447', fontFamily: settingsMono }}>aktiv</p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setPlanChangeTarget({ key, name: planNames[key], price: planPrices[key], type })}
+                              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              className="mt-3 text-sm"
+                              style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            >
+                              {type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </details>
+
+              <details className={sectionShell} open>
+                <summary className={sectionSummary}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>04</span>
+                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Varsler · {sectionCountNotif} felt</p>
+                  </div>
+                </summary>
+                <div className="px-4 sm:px-6 pb-5">
+                  <ul>
+                    {notifRows.map((item) => (
+                      <li key={item.id} className={rowShell}>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{item.label}</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#808080' }}>{item.desc}</p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: settingsMono }}>
+                            {notifPrefs[item.id] ? 'true' : 'false'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleNotif(item.id)}
+                            className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
+                            style={{ background: notifPrefs[item.id] ? '#52A447' : '#EBEBE6', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                          >
+                            <span
+                              className="inline-block h-4 w-4 rounded-full bg-white"
+                              style={{ transform: notifPrefs[item.id] ? 'translateX(24px)' : 'translateX(4px)', transition: 'transform 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </details>
+
+              <details className={sectionShell} open>
+                <summary className={sectionSummary}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>05</span>
+                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Utseende · {sectionCountTheme} felt</p>
+                  </div>
+                </summary>
+                <div className="px-4 sm:px-6 pb-5">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'light' as const, label: 'Lys' },
+                      { id: 'dark' as const, label: 'Mørk' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setTheme(opt.id)}
+                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        className="px-5 py-4 rounded-xl border text-sm font-medium"
+                        style={{
+                          borderColor: '#EBEBE6',
+                          background: theme === opt.id ? '#1A1A1A' : '#FFFFFF',
+                          color: theme === opt.id ? '#FFFFFF' : '#1A1A1A',
+                          transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1)',
+                        }}
+                      >
+                        {opt.id === 'light' ? <Sun size={16} className="inline mr-2" /> : <Moon size={16} className="inline mr-2" />}
+                        {opt.label}
+                      </button>
                     ))}
                   </div>
                 </div>
+              </details>
+
+              <div className="rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Vanlige spørsmål</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowFaqModal(true)}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
+                    style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    åpne
+                  </button>
+                </div>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  Felles svar om analyseintervall, GSC-forsinkelse, GEO-status og Technical Score.
+                </p>
               </div>
-            )}
+            </div>
+          );
+        })()}
+
+        <footer className="mt-12 pt-6 border-t border-[#EBEBE6] text-center text-sm" style={{ color: '#808080' }}>
+          <p className="inline-flex items-center justify-center gap-2 flex-wrap" style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
+            <span>support@siktseo.com</span>
+            <span>·</span>
+            <span>sla 1 working day</span>
+          </p>
+        </footer>
+
+        {showFaqModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+              type="button"
+              aria-label="Lukk FAQ"
+              onClick={() => setShowFaqModal(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            <div className="relative w-full max-w-2xl rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] p-6 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Vanlige spørsmål</h3>
+                <button type="button" onClick={() => setShowFaqModal(false)} className="p-1.5 rounded-md" style={{ color: '#808080' }}>
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                {[
+                  {
+                    q: 'Hvor raskt ser jeg resultater i Sikt?',
+                    a: 'Teknisk analyse vises vanligvis innen 30-60 sekunder, mens søkeordsdata fra GSC kan ta 7-14 dager.',
+                  },
+                  {
+                    q: 'Hvorfor vises ingen søkeord ennå?',
+                    a: 'Google Search Console trenger historikk før data vises. Sørg for at siden er verifisert og indeksert.',
+                  },
+                  {
+                    q: 'Hvordan oppgraderer jeg abonnementet?',
+                    a: 'Trykk på «Oppgrader» i portalen. Du sendes direkte til Stripe checkout for valgt plan.',
+                  },
+                  {
+                    q: 'Kan jeg koble flere nettsider?',
+                    a: 'Per nå støtter portalen én hovedside per bruker. Kontakt support for fler-domene oppsett.',
+                  },
+                  {
+                    q: 'Hva betyr Technical Score?',
+                    a: 'Scoren vurderer lastetid, mobilvennlighet, sikkerhet og SEO-tekniske signaler på en skala fra 0 til 100.',
+                  },
+                  {
+                    q: 'Hvordan fungerer GEO-fanen?',
+                    a: 'Du kan teste synlighet manuelt i AI-søk nå. Automatisk GEO-sporing lanseres i Q3 2026.',
+                  },
+                ].map((item, idx) => (
+                  <div key={idx} className="rounded-lg border border-[#EBEBE6] p-4">
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{item.q}</p>
+                    <p className="text-sm mt-1" style={{ color: '#808080' }}>{item.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
     </main>
 
       {/* =============================================================== */}
