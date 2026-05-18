@@ -7191,243 +7191,196 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     return n.slice(0, 2).toUpperCase() || '?';
   })();
   const footerPlanLabel = `${planNames[activePlanKey]} plan`;
+  const domainLabel = websiteUrl
+    .replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
 
   return (
     <div className={`min-h-screen ${rootBg} antialiased`}>
 
-      {/* =============================================================== */}
-      {/* SIDEBAR-NAVIGASJON — vertikal liste, 7 faner + innstillinger i bunntekst */}
-      {/* Kollapsbar (kun-ikoner) via knapp i topp. Persistert i localStorage.*/}
-      {/* =============================================================== */}
-      <div className="flex min-h-screen">
-        {/* Sidebar (md+): alltid synlig. Mobil: drawer styrt av mobileNavOpen. */}
-        <aside
-          className={`fixed md:sticky top-0 left-0 z-40 h-screen ${sidebarCollapsed ? 'w-16' : 'w-64'} shrink-0 border-r ${navBorder} ${navBg} backdrop-blur flex flex-col transition-[width,transform] duration-200 ${
-            mobileNavOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-          }`}
-        >
-          {/* Logo + collapse-knapp */}
-          <div className={`h-16 ${sidebarCollapsed ? 'px-3 justify-center' : 'px-5 justify-between'} flex items-center border-b ${navBorder}`}>
-            {!sidebarCollapsed ? (
-              <>
-                <button onClick={() => { setActiveTab('home'); setMobileNavOpen(false); }} className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-violet-500/30 shrink-0">S</div>
-                  <span className={`font-semibold text-base ${textMain} truncate`}>Sikt</span>
-                </button>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setSidebarCollapsed(true)}
-                    className={`hidden md:inline-flex p-1.5 rounded-md ${textDim} hover:${textMain} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'} transition-colors`}
-                    aria-label="Skjul meny"
-                    title="Skjul meny"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileNavOpen(false)}
-                    className={`md:hidden p-1.5 rounded-md ${textDim} hover:${textMain}`}
-                    aria-label="Lukk meny"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(false)}
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-violet-500/30 hover:scale-105 transition-transform"
-                aria-label="Vis meny"
-                title="Vis meny"
-              >
-                S
-              </button>
-            )}
+      {/* ===== NY: STICKY HORISONTAL TOPP-NAV ===== */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: '#F5F5F0', borderBottom: '1px solid #EBEBE6' }}>
+        {/* Desktop nav */}
+        <div style={{ maxWidth: 1320, margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 24 }}
+             className="hidden sm:flex">
+
+          {/* VENSTRE: logo + nettside-velger */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+            <button
+              onClick={() => setActiveTab('home')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              <span style={{ width: 30, height: 30, borderRadius: 9, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>S</span>
+              <span style={{ fontWeight: 600, fontSize: 17, color: '#1A1A1A', letterSpacing: '-0.01em' }}>Sikt</span>
+            </button>
           </div>
 
-          {/* Nav-liste */}
-          <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${sidebarCollapsed ? 'px-2' : 'px-3'} space-y-0.5`}>
-            {navItems.map((item) => {
+          {/* MIDT: sentrert pill-meny */}
+          <nav style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: 5 }}>
+              {navItems.map(item => {
+                const Icon = item.icon;
+                const active = activeTab === item.id;
+                let badge: number | null = null;
+                if (item.id === 'workshop' || item.id === 'home') {
+                  const c = todos.length;
+                  if (c > 0) badge = c;
+                }
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 16px', borderRadius: 999, fontSize: 14,
+                      fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
+                      border: 'none',
+                      background: active ? '#1A1A1A' : 'transparent',
+                      color: active ? '#FFFFFF' : '#808080',
+                      transition: 'background 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1), transform 140ms cubic-bezier(0.23,1,0.32,1)',
+                    }}
+                  >
+                    <Icon size={15} />
+                    <span>{item.label}</span>
+                    {badge !== null && (
+                      <span style={{
+                        minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999,
+                        fontSize: 11, fontWeight: 700, display: 'inline-flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        background: active ? 'rgba(255,255,255,0.18)' : '#EBEBE6',
+                        color: active ? '#FFFFFF' : '#1A1A1A',
+                      }}>{badge}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* HØYRE: konto + oppgrader */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {currentLevel < 3 && (
+              <button
+                onClick={() => handleUpgrade()}
+                style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: 8, transition: 'opacity 160ms' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.65'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+              >
+                Oppgrader
+              </button>
+            )}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setUserFooterMenuOpen(v => !v)}
+                aria-haspopup="menu"
+                aria-expanded={userFooterMenuOpen}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: '5px 10px 5px 5px', cursor: 'pointer', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF'; }}
+              >
+                <span style={{ width: 28, height: 28, borderRadius: 999, background: '#1A1A1A', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{footerInitials}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+                <ChevronsUpDown size={14} style={{ color: '#808080' }} />
+              </button>
+              {userFooterMenuOpen && (
+                <div
+                  role="menu"
+                  style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 180, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
+                >
+                  <button
+                    role="menuitem"
+                    onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  >
+                    <Settings size={15} /> Innstillinger
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff0f0'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  >
+                    <LogOut size={15} /> Logg ut
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* MOBIL (< sm): kompakt rad + scrollbart fane-bånd */}
+        <div className="sm:hidden">
+          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EBEBE6' }}>
+            <button
+              onClick={() => setActiveTab('home')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              <span style={{ width: 26, height: 26, borderRadius: 8, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>S</span>
+              <span style={{ fontWeight: 600, fontSize: 15, color: '#1A1A1A' }}>Sikt</span>
+            </button>
+            <button
+              onClick={() => setUserFooterMenuOpen(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: '4px 8px 4px 4px', cursor: 'pointer' }}
+            >
+              <span style={{ width: 24, height: 24, borderRadius: 999, background: '#1A1A1A', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{footerInitials}</span>
+              <ChevronsUpDown size={12} style={{ color: '#808080' }} />
+            </button>
+            {userFooterMenuOpen && (
+              <div
+                role="menu"
+                style={{ position: 'absolute', right: 16, top: 'calc(100% - 4px)', minWidth: 160, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
+              >
+                <button role="menuitem" onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  <Settings size={15} /> Innstillinger
+                </button>
+                <button role="menuitem" onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  <LogOut size={15} /> Logg ut
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Horisontalt scrollbart fane-bånd */}
+          <div style={{ overflowX: 'auto', display: 'flex', gap: 4, padding: '8px 12px', scrollbarWidth: 'none' }}>
+            {navItems.map(item => {
               const Icon = item.icon;
               const active = activeTab === item.id;
-              // Liten badge: antall todos paa Verksted/Hjem
               let badge: number | null = null;
-              if (item.id === 'workshop' || item.id === 'home') {
-                const c = todos.length;
-                if (c > 0) badge = c;
-              }
+              if (item.id === 'workshop' || item.id === 'home') { const c = todos.length; if (c > 0) badge = c; }
               return (
                 <button
                   key={item.id}
-                  onClick={() => { setActiveTab(item.id); setMobileNavOpen(false); }}
-                  title={sidebarCollapsed ? item.label : undefined}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2'} rounded-lg text-sm font-medium transition-colors relative ${
-                    active
-                      ? isLight ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'
-                      : `${textDim} hover:${textMain} ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`
-                  }`}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer', border: 'none', flexShrink: 0, background: active ? '#1A1A1A' : '#F5F5F0', color: active ? '#FFFFFF' : '#808080', transition: 'background 160ms, color 160ms' }}
                 >
-                  {active && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-violet-600" aria-hidden />
-                  )}
-                  <Icon size={16} className={active ? 'text-violet-600' : ''} />
-                  {!sidebarCollapsed && <span className="truncate flex-1 text-left">{item.label}</span>}
-                  {!sidebarCollapsed && badge !== null && (
-                    <span className={`ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full ${active ? 'bg-violet-600 text-white' : isLight ? 'bg-slate-200 text-slate-700' : 'bg-white/15 text-white'}`}>{badge}</span>
-                  )}
-                  {sidebarCollapsed && badge !== null && (
-                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-violet-500 ring-2 ring-white dark:ring-slate-900" aria-hidden />
+                  <Icon size={14} />
+                  <span>{item.label}</span>
+                  {badge !== null && (
+                    <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,0.18)' : '#EBEBE6', color: active ? '#FFFFFF' : '#1A1A1A' }}>{badge}</span>
                   )}
                 </button>
               );
             })}
-          </nav>
-
-          {/* Bruker-rad + snarveier (innstillinger ligger her — ikke i nav-listen). */}
-          <div className={`border-t ${navBorder} ${sidebarCollapsed ? 'px-1.5' : 'px-3'} py-3 relative`}>
-            {!sidebarCollapsed ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0 select-none"
-                    style={{ background: '#1A1A1A' }}
-                    aria-hidden
-                  >
-                    {footerInitials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#1A1A1A' }}>{displayName}</p>
-                    <p className="text-xs truncate mt-0.5" style={{ color: '#808080' }}>{footerPlanLabel}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveTab('settings'); setMobileNavOpen(false); setUserFooterMenuOpen(false); }}
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0 transition-transform active:scale-[0.97]"
-                    style={{ border: '1px solid #EBEBE6', color: '#1A1A1A', background: isLight ? '#fff' : 'rgba(255,255,255,0.06)' }}
-                    aria-label="Innstillinger"
-                    title="Innstillinger"
-                  >
-                    <Settings size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUserFooterMenuOpen((v) => !v)}
-                    className={`inline-flex items-center justify-center w-8 h-9 rounded-lg shrink-0 transition-transform active:scale-[0.97] ${isLight ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/10'}`}
-                    aria-expanded={userFooterMenuOpen}
-                    aria-haspopup="menu"
-                    aria-label="Konto-meny"
-                  >
-                    <ChevronsUpDown size={16} />
-                  </button>
-                </div>
-                {userFooterMenuOpen && (
-                  <div
-                    className="absolute bottom-full left-2 right-2 mb-2 rounded-xl py-1 z-50 shadow-lg"
-                    style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}
-                    role="menu"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => { onLogout(); setUserFooterMenuOpen(false); setMobileNavOpen(false); }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
-                    >
-                      <LogOut size={16} /> Logg ut
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shrink-0 select-none"
-                  style={{ background: '#1A1A1A' }}
-                  title={displayName}
-                >
-                  {footerInitials}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('settings'); setMobileNavOpen(false); setUserFooterMenuOpen(false); }}
-                  className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-transform active:scale-[0.97] ${isLight ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-200 hover:bg-white/10'}`}
-                  aria-label="Innstillinger"
-                  title="Innstillinger"
-                >
-                  <Settings size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserFooterMenuOpen((v) => !v)}
-                  className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-transform active:scale-[0.97] ${isLight ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/10'}`}
-                  aria-expanded={userFooterMenuOpen}
-                  aria-label="Konto-meny"
-                  title="Mer"
-                >
-                  <ChevronsUpDown size={16} />
-                </button>
-                {userFooterMenuOpen && (
-                  <div
-                    className="absolute bottom-full left-0 right-0 mb-1 mx-1 rounded-xl py-1 z-50 shadow-lg"
-                    style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}
-                    role="menu"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => { onLogout(); setUserFooterMenuOpen(false); setMobileNavOpen(false); }}
-                      className="w-full flex items-center justify-center gap-1 px-2 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
-                    >
-                      <LogOut size={14} /> Logg ut
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {currentLevel < 3 && (
-              <button
-                onClick={handleUpgrade}
-                title={sidebarCollapsed ? 'Oppgrader' : undefined}
-                className={`mt-2 w-full flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-lg text-sm font-medium text-violet-600 hover:text-violet-500 ${isLight ? 'hover:bg-violet-50' : 'hover:bg-violet-500/10'} transition-colors`}
-              >
-                <ArrowUpCircle size={16} />
-                {!sidebarCollapsed && <span>Oppgrader</span>}
-              </button>
-            )}
           </div>
-        </aside>
+        </div>
+      </header>
 
-        {/* Mobil-overlay bak sidebar */}
-        {mobileNavOpen && (
-          <button
-            type="button"
-            aria-label="Lukk meny"
-            onClick={() => { setMobileNavOpen(false); setUserFooterMenuOpen(false); }}
-            className="md:hidden fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-sm"
-          />
-        )}
-
-        {/* Hovedinnhold-kolonne */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          {/* Mobil-toppbar med hamburger */}
-          <header className={`md:hidden sticky top-0 z-20 h-14 px-4 flex items-center justify-between border-b ${navBorder} ${navBg} backdrop-blur`}>
-            <button
-              type="button"
-              onClick={() => setMobileNavOpen(true)}
-              className={`p-2 -ml-2 rounded-md ${textDim} hover:${textMain}`}
-              aria-label="Åpne meny"
-            >
-              <Menu size={20} />
-            </button>
-            <span className={`text-sm font-semibold ${textMain}`}>
-              {activeTab === 'settings' ? 'Innstillinger' : (navItems.find((n) => n.id === activeTab)?.label || 'Sikt')}
-            </span>
-            <div className="w-8" />
-          </header>
-
-          <main className={`w-full flex-1 min-h-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
+    <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%' }}
+          className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      {/* Brødsmule */}
+      <div style={{ marginBottom: 24 }}>
+        <p style={{ fontSize: 13, color: '#808080', margin: 0 }}>
+          {navItems.find(n => n.id === activeTab)?.label
+            || (activeTab === 'settings' ? 'Innstillinger' : 'Dashboard')}
+          {domainLabel ? <> · <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>{domainLabel}</span></> : null}
+        </p>
+      </div>
 
         {/* =============================================================== */}
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
@@ -8985,7 +8938,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   }
                 }
               `}</style>
-              <div style={{ background: 'transparent', border: `1px solid ${W.border}`, borderRadius: 22, overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', boxShadow: '0 24px 70px rgba(26,26,26,0.05)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: 'transparent', overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', display: 'flex', flexDirection: 'column' }}>
 
                 {/* ── TOP BAR ── */}
                 <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: `1px solid ${W.border}`, background: isLight ? 'rgba(248,250,252,0.92)' : 'rgba(15,23,42,0.92)', flexShrink: 0, gap: 16 }}>
@@ -9670,244 +9623,498 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const catColor = (c: string) =>
-            c === 'fix' ? L.green
-            : c === 'alert' ? L.muted
-            : L.ink;
+            c === 'fix' ? L.green : c === 'alert' ? L.muted : L.ink;
           const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
           const pressU = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
+          const MONO = "ui-monospace,'SF Mono',Menlo,monospace";
+
+          // ── AVLEDNINGER ──────────────────────────────────────────────────
+          const siteLabel = websiteUrl
+            ? websiteUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '')
+            : '';
+          const companyLabel = (clientData as any)?.companyName || siteLabel || 'Din bedrift';
+          const initials = (() => {
+            const parts = companyLabel.trim().split(/\s+/).filter(Boolean);
+            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            return companyLabel.slice(0, 2).toUpperCase() || '??';
+          })();
+          const currentPkgName = (clientData as any)?.package_name || 'Basic';
+
+          // perDay: group filtered by calendar day, sorted ascending
+          const perDay: { dateKey: string; label: string; weekdayLong: string; actions: typeof filtered }[] = [];
+          filtered.forEach((a) => {
+            const d = new Date(a.created_at);
+            const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            let group = perDay.find(g => g.dateKey === key);
+            if (!group) {
+              group = {
+                dateKey: key,
+                label: d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }),
+                weekdayLong: d.toLocaleDateString('nb-NO', { weekday: 'long' }),
+                actions: [],
+              };
+              perDay.push(group);
+            }
+            group.actions.push(a);
+          });
+          perDay.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+          perDay.forEach(g => g.actions.sort((a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          ));
+
+          // weekdayCounts: mon(0)…sun(6) counts from inWeek
+          const weekdayCounts: number[] = Array(7).fill(0);
+          inWeek.forEach((a) => {
+            const d = new Date(a.created_at).getDay(); // 0=sun
+            const idx = d === 0 ? 6 : d - 1; // mon=0…sun=6
+            weekdayCounts[idx]++;
+          });
+          const maxWDCount = Math.max(...weekdayCounts, 1);
+          const todayWDIdx = (() => {
+            if (weekOffset !== 0) return -1;
+            const d = new Date().getDay();
+            return d === 0 ? 6 : d - 1;
+          })();
+
+          // periodEndLabel: viewedEnd minus 1 min
+          const periodEndDate = new Date(viewedEnd.getTime() - 60000);
+          const periodEndLabel = periodEndDate.toLocaleDateString('nb-NO', {
+            weekday: 'short', day: 'numeric', month: 'short',
+          }).replace('.', '') + ' · ' + periodEndDate.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
 
           return (
             <>
               <style>{`
-                @keyframes log-fade-up {
-                  from { opacity: 0; transform: translateY(5px); }
+                @keyframes log-card-in {
+                  from { opacity: 0; transform: translateY(6px); }
                   to   { opacity: 1; transform: translateY(0); }
                 }
                 @media (prefers-reduced-motion: reduce) {
-                  @keyframes log-fade-up {
+                  @keyframes log-card-in {
                     from { opacity: 0; }
                     to   { opacity: 1; }
                   }
                 }
               `}</style>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 28, color: L.ink }}>
 
-                {/* ── HEADER ── */}
-                <header style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, fontWeight: 600, color: L.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    Uke {getWeekNumber(viewedStart)} · {viewedStart.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}
-                    {weekOffset === 0 ? ' (denne uken)' : ''}
-                  </p>
-                  <h1 style={{ margin: 0, fontSize: 'clamp(28px,3.5vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, color: L.ink }}>
-                    {hasStandardOrHigher ? 'Dette har Sikt fikset for deg' : 'Dette har Sikt funnet for deg'}
-                  </h1>
-                  <p style={{ margin: 0, fontSize: 15, color: L.muted, lineHeight: 1.65, maxWidth: '56ch' }}>
-                    {hasStandardOrHigher
-                      ? 'Konkret arbeid Sikt har utført på siden din. Hver linje er en endring du kan se og angre.'
-                      : 'Funn og AI-forslag du kan kopiere inn i CMS-en din selv. Oppgrader for å la Sikt pushe automatisk.'}
-                  </p>
-                </header>
+              {/* ── TWO-COLUMN WRAPPER ── */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0,300px) 1fr',
+                gap: 0,
+                alignItems: 'start',
+                background: 'transparent',
+              }}>
 
-                {/* ── UKE-NAVIGATOR ── */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((o) => o - 1)}
-                    onMouseDown={pressD}
-                    onMouseUp={pressU}
-                    onMouseLeave={pressU}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: L.card, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: L.ink, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
-                  >
-                    <ChevronLeft size={14} /> Forrige uke
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
-                    disabled={weekOffset >= 0}
-                    onMouseDown={pressD}
-                    onMouseUp={pressU}
-                    onMouseLeave={pressU}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: L.card, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: weekOffset >= 0 ? L.muted : L.ink, cursor: weekOffset >= 0 ? 'not-allowed' : 'pointer', opacity: weekOffset >= 0 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
-                  >
-                    Neste uke <ChevronRight size={14} />
-                  </button>
-                  {weekOffset !== 0 && (
+                {/* ══════════════════════════════════
+                    LEFT SIDEBAR
+                    ══════════════════════════════════ */}
+                <aside style={{
+                  borderRight: `1px solid ${L.border}`,
+                  padding: '28px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                  position: 'sticky',
+                  top: 24,
+                  alignSelf: 'start',
+                }}>
+
+                  {/* Logo-rad */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="10" cy="10" r="9" fill="none" stroke={L.ink} strokeWidth="1.5" />
+                      <circle cx="10" cy="10" r="3" fill={L.ink} />
+                    </svg>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: L.ink }}>
+                      Sikt<span style={{ color: L.muted, fontWeight: 400 }}>-loggen</span>
+                    </span>
+                  </div>
+
+                  {/* Firmakort */}
+                  <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 16, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: L.ink, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                      {initials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: L.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{companyLabel}</p>
+                      {siteLabel && (
+                        <p style={{ margin: '2px 0 0', fontFamily: MONO, fontSize: 11, color: L.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{siteLabel}</p>
+                      )}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setWeekOffset(0)}
+                      onClick={() => setActiveTab('settings')}
                       onMouseDown={pressD}
                       onMouseUp={pressU}
                       onMouseLeave={pressU}
-                      style={{ background: 'none', border: 'none', color: L.ink, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '8px 4px', textDecoration: 'underline', textDecorationColor: L.border, transition: `transform 160ms ${EASE}` }}
+                      style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: L.muted, display: 'flex', alignItems: 'center', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
+                      aria-label="Innstillinger"
                     >
-                      Tilbake til denne uken
+                      <Settings size={14} />
                     </button>
-                  )}
-                </div>
-
-                {/* ── FILTER-PILLS ── */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {filterPills.map((p) => {
-                    const active = receiptCategoryFilter === p.key;
-                    const dot = p.key === 'all' ? L.muted : catColor(p.key);
-                    return (
-                      <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => setReceiptCategoryFilter(p.key)}
-                        onMouseDown={pressD}
-                        onMouseUp={pressU}
-                        onMouseLeave={(e) => { pressU(e); if (!active) e.currentTarget.style.borderColor = L.border; }}
-                        onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = '#d9d9d2'; }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 7,
-                          background: active ? L.ink : L.card,
-                          border: `1px solid ${active ? L.ink : L.border}`,
-                          borderRadius: 999,
-                          padding: '6px 14px',
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: active ? '#fff' : L.muted,
-                          cursor: 'pointer',
-                          transition: `transform 160ms ${EASE}, background 160ms ${EASE}, border-color 160ms ${EASE}, color 160ms ${EASE}`,
-                          fontFamily: "ui-monospace,'SF Mono',Menlo,monospace",
-                        }}
-                      >
-                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: active ? '#fff' : dot, flexShrink: 0, transition: `background 160ms ${EASE}` }} />
-                        {p.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* ── FEED ── */}
-                {loadingReceipt ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '24px 0', color: L.muted, fontSize: 14 }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
-                      <circle cx="8" cy="8" r="6" fill="none" stroke={L.border} strokeWidth="2" />
-                      <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={L.ink} strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                    Laster aktivitetsloggen…
                   </div>
-                ) : filtered.length === 0 ? (
-                  <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 18, padding: '40px 32px', textAlign: 'center' }}>
-                    <ClipboardCheck size={28} style={{ color: L.muted, margin: '0 auto 14px', display: 'block' }} />
-                    <p style={{ margin: '0 0 8px', color: L.ink, fontSize: 16, fontWeight: 600 }}>
-                      {`Ingen handlinger ${weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}`}
-                    </p>
-                    <p style={{ margin: '0 0 20px', color: L.muted, fontSize: 14, lineHeight: 1.6, maxWidth: '38ch', marginLeft: 'auto', marginRight: 'auto' }}>
-                      {weekOffset === 0
-                        ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.'
-                        : 'Sikt logget ingenting i denne perioden.'}
-                    </p>
-                    {weekOffset === 0 && (
+
+                  {/* Ukekalender-kort */}
+                  <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 16, padding: '14px 14px 12px' }}>
+                    {/* Nav row */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                       <button
                         type="button"
-                        onClick={() => setActiveTab('home')}
+                        onClick={() => setWeekOffset((o) => o - 1)}
                         onMouseDown={pressD}
                         onMouseUp={pressU}
                         onMouseLeave={pressU}
-                        style={{ background: L.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: L.ink, display: 'flex', alignItems: 'center', transition: `transform 160ms ${EASE}` }}
+                        aria-label="Forrige uke"
                       >
-                        Gå til Hjem
+                        <ChevronLeft size={15} />
                       </button>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {filtered.map((a, idx) => {
-                      const meta = categoryMeta(a.category);
-                      return (
-                        <div
-                          key={a.id}
-                          style={{
-                            background: L.card,
-                            border: `1px solid ${L.border}`,
-                            borderRadius: 16,
-                            padding: '20px 22px',
-                            boxShadow: '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)',
-                            transition: `transform 160ms ${EASE}, box-shadow 160ms ${EASE}`,
-                            animation: `log-fade-up 220ms ${EASE} both`,
-                            animationDelay: `${idx * 40}ms`,
-                          }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.03), 0 18px 40px -20px rgba(26,26,26,0.13)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)'; }}
-                        >
-                          {/* Top row */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: a.page_url || a.before_value || a.after_value ? 10 : 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: catColor(a.category), flexShrink: 0, marginTop: 2 }} />
-                              <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: L.ink, lineHeight: 1.3 }}>{a.title}</p>
-                              <span style={{
-                                flexShrink: 0,
-                                fontFamily: "ui-monospace,'SF Mono',Menlo,monospace",
-                                fontSize: 10,
-                                fontWeight: 700,
-                                color: L.muted,
-                                letterSpacing: '0.08em',
-                                textTransform: 'uppercase' as const,
-                                background: L.bg,
-                                border: `1px solid ${L.border}`,
-                                borderRadius: 6,
-                                padding: '2px 7px',
-                              }}>
-                                {meta.label}
-                              </span>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: L.ink }}>Uke {getWeekNumber(viewedStart)}</p>
+                        <p style={{ margin: '1px 0 0', fontFamily: MONO, fontSize: 10, color: L.muted }}>
+                          {viewedStart.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}–{new Date(viewedEnd.getTime() - 86400000).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })} · {viewedStart.getFullYear()}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
+                        disabled={weekOffset >= 0}
+                        onMouseDown={pressD}
+                        onMouseUp={pressU}
+                        onMouseLeave={pressU}
+                        style={{ background: 'none', border: 'none', padding: 4, cursor: weekOffset >= 0 ? 'not-allowed' : 'pointer', color: weekOffset >= 0 ? L.border : L.ink, opacity: weekOffset >= 0 ? 0.35 : 1, display: 'flex', alignItems: 'center', transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                        aria-label="Neste uke"
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
+
+                    {/* Mini søylerad: M T O T F L S */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+                      {(['M','T','O','T','F','L','S'] as const).map((letter, i) => {
+                        const count = weekdayCounts[i];
+                        const isToday = i === todayWDIdx;
+                        const barPct = count > 0 ? Math.max(0.15, count / maxWDCount) : 0;
+                        return (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                            <div style={{ width: '100%', height: 36, borderRadius: 5, background: isToday ? L.ink : L.bg, position: 'relative', overflow: 'hidden' }}>
+                              {count > 0 && (
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  height: `${barPct * 100}%`,
+                                  background: isToday ? 'rgba(255,255,255,0.55)' : L.green,
+                                  borderRadius: 4,
+                                }} />
+                              )}
                             </div>
-                            <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 11, color: L.muted, flexShrink: 0, marginTop: 2 }}>
-                              {new Date(a.created_at).toLocaleDateString('nb-NO', { weekday: 'short' }).replace('.', '')}
+                            <span style={{ fontFamily: MONO, fontSize: 9, color: L.muted, letterSpacing: '0.04em' }}>{letter}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: count === 0 ? L.muted : L.ink }}>{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Bunnlinje */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                      {weekOffset === 0 ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(82,164,71,0.10)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, color: L.green }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: L.green }} />
+                          denne uken
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setWeekOffset(0)}
+                          onMouseDown={pressD}
+                          onMouseUp={pressU}
+                          onMouseLeave={pressU}
+                          style={{ background: 'none', border: 'none', fontFamily: MONO, fontSize: 10, color: L.muted, cursor: 'pointer', padding: 0, textDecoration: 'underline', textDecorationColor: L.border, transition: `transform 160ms ${EASE}` }}
+                        >
+                          → denne uken
+                        </button>
+                      )}
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: L.muted }}>{periodEndLabel}</span>
+                    </div>
+                  </div>
+
+                  {/* Filter-kort */}
+                  <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 16, padding: '14px 14px 10px' }}>
+                    <p style={{ margin: '0 0 10px', fontFamily: MONO, fontSize: 10, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Filtre</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {filterPills.map((p) => {
+                        const active = receiptCategoryFilter === p.key;
+                        const dot = p.key === 'all' ? L.muted : catColor(p.key);
+                        // split label into text + count for alignment
+                        const labelMatch = p.label.match(/^(.*?)(\d+)$/);
+                        const labelText = labelMatch ? labelMatch[1].trim() : p.label;
+                        const labelNum  = labelMatch ? labelMatch[2] : '';
+                        return (
+                          <button
+                            key={p.key}
+                            type="button"
+                            onClick={() => setReceiptCategoryFilter(p.key)}
+                            onMouseDown={pressD}
+                            onMouseUp={pressU}
+                            onMouseLeave={(e) => { pressU(e); (e.currentTarget as HTMLButtonElement).style.background = active ? L.ink : 'transparent'; }}
+                            onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(26,26,26,0.04)'; }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              width: '100%',
+                              background: active ? L.ink : 'transparent',
+                              border: 'none',
+                              borderRadius: 10,
+                              padding: '8px 10px',
+                              cursor: 'pointer',
+                              transition: `transform 160ms ${EASE}, background 160ms ${EASE}`,
+                              textAlign: 'left',
+                            }}
+                          >
+                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: active ? '#fff' : dot, flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: active ? '#fff' : L.ink }}>{labelText}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: active ? 'rgba(255,255,255,0.6)' : L.muted }}>{labelNum}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Abonnementskort */}
+                  <div style={{ background: L.bg, border: `1px solid ${L.border}`, borderRadius: 14, padding: 14 }}>
+                    <p style={{ margin: '0 0 4px', fontFamily: MONO, fontSize: 10, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Abonnement</p>
+                    <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, color: L.ink }}>{currentPkgName}</p>
+                    <p style={{ margin: 0, fontSize: 12, color: L.muted, lineHeight: 1.5 }}>
+                      {hasStandardOrHigher
+                        ? 'Du ser før/etter-verdier og full historikk.'
+                        : 'Oppgrader for å se før/etter-verdier og full historikk.'}
+                    </p>
+                  </div>
+                </aside>
+
+                {/* ══════════════════════════════════
+                    RIGHT FEED
+                    ══════════════════════════════════ */}
+                <main style={{ padding: '28px 40px', minWidth: 0 }}>
+
+                  {/* Feed header */}
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ margin: '0 0 8px', fontFamily: MONO, fontSize: 11, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                      Aktivitet · Uke {getWeekNumber(viewedStart)}
+                    </p>
+                    <h1 style={{ margin: 0, fontSize: 'clamp(28px,3.5vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, color: L.ink }}>
+                      {counts.all} hendelser{' '}
+                      <span style={{ color: L.muted, fontWeight: 400 }}>
+                        {weekOffset === 0 ? 'denne uken' : 'denne perioden'}
+                      </span>
+                    </h1>
+                  </div>
+                  <div style={{ height: 1, background: L.border, marginBottom: 32 }} />
+
+                  {/* States */}
+                  {loadingReceipt ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: L.muted, fontSize: 14 }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+                        <circle cx="8" cy="8" r="6" fill="none" stroke={L.border} strokeWidth="2" />
+                        <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={L.ink} strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                      Laster aktivitetsloggen…
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 18, padding: '48px 32px', textAlign: 'center', maxWidth: 420 }}>
+                      <ClipboardCheck size={28} style={{ color: L.muted, margin: '0 auto 14px', display: 'block' }} />
+                      <p style={{ margin: '0 0 8px', color: L.ink, fontSize: 16, fontWeight: 600 }}>
+                        {`Ingen handlinger ${weekOffset === 0 ? 'denne uken enda' : 'i denne uken'}`}
+                      </p>
+                      <p style={{ margin: '0 0 20px', color: L.muted, fontSize: 14, lineHeight: 1.6 }}>
+                        {weekOffset === 0
+                          ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.'
+                          : 'Sikt logget ingenting i denne perioden.'}
+                      </p>
+                      {weekOffset === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('home')}
+                          onMouseDown={pressD}
+                          onMouseUp={pressU}
+                          onMouseLeave={pressU}
+                          style={{ background: L.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        >
+                          Gå til Hjem
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    /* Day groups */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+                      {perDay.map((group) => (
+                        <div key={group.dateKey}>
+                          {/* Day header */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: L.ink, textTransform: 'capitalize', flexShrink: 0 }}>
+                              {group.weekdayLong.charAt(0).toUpperCase() + group.weekdayLong.slice(1)}
+                            </h2>
+                            <span style={{ fontFamily: MONO, fontSize: 12, color: L.muted, flexShrink: 0 }}>{group.label}</span>
+                            <div style={{ flex: 1, height: 1, background: L.border }} />
+                            <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: L.muted, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+                              {group.actions.length} hendelse{group.actions.length !== 1 ? 'r' : ''}
                             </span>
                           </div>
 
-                          {/* URL */}
-                          {a.page_url && (
-                            <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: L.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 18 }}>
-                              {(() => {
-                                try {
-                                  const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
-                                  return u.hostname + u.pathname;
-                                } catch { return a.page_url; }
-                              })()}
-                            </p>
-                          )}
+                          {/* Timeline */}
+                          <div style={{ position: 'relative', paddingLeft: 48 }}>
+                            {/* Vertical line */}
+                            <div style={{ position: 'absolute', left: 14, top: 15, bottom: 15, width: 1, background: L.border }} />
 
-                          {/* Before / After */}
-                          {(a.before_value || a.after_value) && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginTop: 12, paddingLeft: 18 }}>
-                              {a.before_value && (
-                                <div style={{ background: L.bg, border: `1px solid ${L.border}`, borderRadius: 10, padding: '8px 12px', fontSize: 12, color: L.muted, textDecoration: 'line-through', opacity: 0.85 }}>
-                                  {a.before_value}
-                                </div>
-                              )}
-                              {a.after_value && (
-                                <div style={{ background: 'rgba(82,164,71,0.10)', border: '1px solid rgba(82,164,71,0.20)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: L.green, fontWeight: 600 }}>
-                                  {a.after_value}
-                                </div>
-                              )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                              {group.actions.map((a, idx) => {
+                                const meta = categoryMeta(a.category);
+                                const nodeColor = catColor(a.category);
+                                const catBg = a.category === 'fix'
+                                  ? 'rgba(82,164,71,0.12)'
+                                  : a.category === 'alert'
+                                  ? 'rgba(128,128,128,0.14)'
+                                  : 'rgba(26,26,26,0.07)';
+                                const globalIdx = filtered.indexOf(a);
+                                return (
+                                  <div
+                                    key={a.id}
+                                    style={{
+                                      position: 'relative',
+                                      animation: `log-card-in 220ms ${EASE} both`,
+                                      animationDelay: `${globalIdx * 35}ms`,
+                                    }}
+                                  >
+                                    {/* Node */}
+                                    <div style={{
+                                      position: 'absolute',
+                                      left: -48,
+                                      top: 14,
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: '50%',
+                                      background: nodeColor,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      boxShadow: `0 0 0 3px ${L.bg}`,
+                                    }}>
+                                      {a.category === 'fix' ? (
+                                        <CheckCircle2 size={13} style={{ color: '#fff' }} />
+                                      ) : a.category === 'alert' ? (
+                                        <Bell size={12} style={{ color: '#fff' }} />
+                                      ) : a.category === 'suggestion' ? (
+                                        <ArrowRight size={12} style={{ color: '#fff', transform: 'rotate(-45deg)' }} />
+                                      ) : (
+                                        <Search size={12} style={{ color: '#fff' }} />
+                                      )}
+                                    </div>
+
+                                    {/* Card */}
+                                    <div
+                                      style={{
+                                        background: L.card,
+                                        border: `1px solid ${L.border}`,
+                                        borderRadius: 14,
+                                        padding: '16px 18px',
+                                        boxShadow: '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)',
+                                        transition: `transform 160ms ${EASE}, box-shadow 160ms ${EASE}`,
+                                      }}
+                                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.03), 0 18px 40px -20px rgba(26,26,26,0.13)'; }}
+                                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)'; }}
+                                    >
+                                      {/* Card top row: category pill + URL + time */}
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                                        <span style={{
+                                          background: catBg,
+                                          color: nodeColor,
+                                          borderRadius: 6,
+                                          padding: '3px 8px',
+                                          fontSize: 11,
+                                          fontWeight: 700,
+                                          letterSpacing: '0.04em',
+                                          fontFamily: MONO,
+                                        }}>
+                                          {meta.label}
+                                        </span>
+                                        {a.page_url && (
+                                          <span style={{ fontFamily: MONO, fontSize: 11, color: L.muted, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {(() => {
+                                              try {
+                                                const u = new URL(a.page_url.startsWith('http') ? a.page_url : `https://${a.page_url}`);
+                                                return u.hostname + u.pathname;
+                                              } catch { return a.page_url; }
+                                            })()}
+                                          </span>
+                                        )}
+                                        <span style={{ fontFamily: MONO, fontSize: 11, color: L.muted, marginLeft: 'auto', flexShrink: 0 }}>
+                                          {new Date(a.created_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+
+                                      {/* Title */}
+                                      <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: L.ink, lineHeight: 1.35 }}>{a.title}</p>
+
+                                      {/* Before / After */}
+                                      {(a.before_value || a.after_value) && (
+                                        <div style={{
+                                          background: L.bg,
+                                          border: `1px solid ${L.border}`,
+                                          borderRadius: 12,
+                                          marginTop: 14,
+                                          display: 'grid',
+                                          gridTemplateColumns: a.before_value && a.after_value ? '1fr 28px 1fr' : '1fr',
+                                          alignItems: 'start',
+                                          overflow: 'hidden',
+                                        }}>
+                                          {a.before_value && (
+                                            <div style={{ padding: '10px 12px' }}>
+                                              <p style={{ margin: '0 0 4px', fontFamily: MONO, fontSize: 9, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Før</p>
+                                              <p style={{ margin: 0, fontFamily: MONO, fontSize: 12, color: L.muted, textDecoration: 'line-through', lineHeight: 1.45 }}>{a.before_value}</p>
+                                            </div>
+                                          )}
+                                          {a.before_value && a.after_value && (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 22 }}>
+                                              <ArrowRight size={12} style={{ color: L.green }} />
+                                            </div>
+                                          )}
+                                          {a.after_value && (
+                                            <div style={{ padding: '10px 12px' }}>
+                                              <p style={{ margin: '0 0 4px', fontFamily: MONO, fontSize: 9, fontWeight: 700, color: L.green, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Etter</p>
+                                              <p style={{ margin: 0, fontFamily: MONO, fontSize: 12, color: L.green, fontWeight: 600, lineHeight: 1.45 }}>{a.after_value}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Copy button */}
+                                      {a.category === 'suggestion' && a.after_value && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
+                                          onMouseDown={pressD}
+                                          onMouseUp={pressU}
+                                          onMouseLeave={pressU}
+                                          style={{ marginTop: 12, background: 'none', border: 'none', color: L.ink, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
+                                        >
+                                          <Copy size={12} /> Kopier til utklipp
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          )}
-
-                          {/* Copy button */}
-                          {a.category === 'suggestion' && a.after_value && (
-                            <button
-                              type="button"
-                              onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
-                              onMouseDown={pressD}
-                              onMouseUp={pressU}
-                              onMouseLeave={pressU}
-                              style={{ marginTop: 12, marginLeft: 18, background: 'none', border: 'none', color: L.ink, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
-                            >
-                              <Copy size={12} /> Kopier til utklipp
-                            </button>
-                          )}
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-
+                      ))}
+                    </div>
+                  )}
+                </main>
               </div>
             </>
           );
@@ -10232,9 +10439,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </div>
             )}
-          </main>
-        </div>
-      </div>
+    </main>
 
       {/* =============================================================== */}
       {/* HOST CONNECT MODAL                                              */}
