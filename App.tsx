@@ -79,6 +79,7 @@ const getProblemDetails = (problemId: string, rawTitle: string) => {
 interface ContentPage {
   id: string;
   url: string;
+  fullUrl?: string;
   title: string;
   wordCount: number;
   status: 'Bra' | 'Advarsel' | 'Kritisk';
@@ -130,13 +131,13 @@ import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip 
 // --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
 const InfoHint = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-1.5 cursor-help">
-    <div className="text-slate-500 hover:text-white transition-colors opacity-50 hover:opacity-100">
+    <div className="text-[#808080] hover:text-white transition-colors opacity-50 hover:opacity-100">
       <HelpCircle size={12} />
     </div>
     {/* Tooltip boks */}
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-800 text-white text-[10px] leading-relaxed font-medium rounded-lg shadow-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-[#1A1A1A] text-white text-[10px] leading-relaxed font-medium rounded-lg shadow-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
       {text}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1A1A1A]"></div>
     </div>
   </div>
 );
@@ -267,7 +268,7 @@ export interface AnalysisResult {
 const GlobalDecorations = () => {
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-      <div className="absolute top-[2%] left-[10%] w-[40rem] h-[40rem] bg-violet-400/10 rounded-full blur-[160px] animate-mesh"></div>
+      <div className="absolute top-[2%] left-[10%] w-[40rem] h-[40rem] bg-[#F5F5F0] rounded-full blur-[160px] animate-mesh"></div>
       <div className="absolute bottom-[5%] right-[2%] w-[45rem] h-[45rem] bg-indigo-400/10 rounded-full blur-[180px] animate-mesh" style={{ animationDelay: '-12s' }}></div>
       <div className="absolute top-[40%] right-[15%] w-[35rem] h-[35rem] bg-fuchsia-400/5 rounded-full blur-[140px] animate-mesh" style={{ animationDelay: '-6s' }}></div>
       <div className="absolute bottom-[30%] left-[-10%] w-[30rem] h-[30rem] bg-blue-400/5 rounded-full blur-[120px] animate-mesh" style={{ animationDelay: '-18s' }}></div>
@@ -282,7 +283,7 @@ const GoogleCTA = () => (
   <div className="flex justify-center mt-8 sm:mt-12 relative z-30">
     <button
       onClick={handleLogin}
-      className="group relative ui-motion ui-lift inline-flex items-center gap-3 px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-lg shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20"
+      className="group relative ui-motion ui-lift inline-flex items-center gap-3 px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-bold text-lg shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20"
     >
       <span>Ta meg til toppen av Google</span>
       {/* Vi bruker ikonet du allerede har importert */}
@@ -300,40 +301,40 @@ const TechnologyHero = () => (
   <section className="relative pt-24 pb-16 md:pt-48 md:pb-32 overflow-hidden bg-white/40">
     <div className="max-w-5xl mx-auto px-5 text-center relative z-10">
       <RevealOnScroll direction="down">
-        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-slate-950 mb-6 md:mb-8 leading-[1.05] tracking-tight">
+        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-[#1A1A1A] mb-6 md:mb-8 leading-[1.05] tracking-tight">
           Under panseret: AI. <br className="hidden md:block" />
-          <span className="text-violet-600">For deg: plain norsk.</span>
+          <span className="text-[#1A1A1A]">For deg: plain norsk.</span>
         </h1>
-        <p className="text-base sm:text-lg md:text-2xl text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto mb-12 md:mb-16">
+        <p className="text-base sm:text-lg md:text-2xl text-[#808080] font-medium leading-relaxed max-w-3xl mx-auto mb-12 md:mb-16">
           Vi overvåker siden din døgnet rundt, leser Google-dataene dine, og bruker AI til å finne ting du burde gjøre. Du får én rapport i måneden som forteller deg hva som skjer — uten forkortelser eller engelske ord.
         </p>
       </RevealOnScroll>
 
       <RevealOnScroll direction="up" delay={200} className="max-w-4xl mx-auto">
-        <div className="relative p-1.5 sm:p-2 bg-slate-950 rounded-[28px] sm:rounded-[40px] shadow-2xl overflow-hidden">
+        <div className="relative p-1.5 sm:p-2 bg-[#1A1A1A] rounded-[28px] sm:rounded-[40px] shadow-2xl overflow-hidden">
           <div className="bg-white rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 md:p-10 border border-white/20 relative overflow-hidden h-[240px] sm:h-[350px] md:h-[450px]">
             <div className="flex justify-between items-center mb-6 sm:mb-8">
               <div className="flex gap-1.5 sm:gap-2">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-400"></div>
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400"></div>
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-400"></div>
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#1A1A1A]"></div>
               </div>
-              <div className="h-4 sm:h-6 w-20 sm:w-32 bg-slate-100 rounded-full"></div>
+              <div className="h-4 sm:h-6 w-20 sm:w-32 bg-[#F5F5F0] rounded-full"></div>
             </div>
             <div className="grid grid-cols-12 gap-2 sm:gap-4">
-              <div className="col-span-4 h-24 sm:h-32 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 p-2 sm:p-4">
-                <div className="h-1.5 sm:h-2 w-8 sm:w-12 bg-slate-200 rounded mb-1.5 sm:mb-2"></div>
+              <div className="col-span-4 h-24 sm:h-32 bg-[#F5F5F0] rounded-xl sm:rounded-2xl border border-[#EBEBE6] p-2 sm:p-4">
+                <div className="h-1.5 sm:h-2 w-8 sm:w-12 bg-[#EBEBE6] rounded mb-1.5 sm:mb-2"></div>
                 <div className="h-3 sm:h-4 w-12 sm:w-20 bg-violet-200 rounded"></div>
               </div>
-              <div className="col-span-8 h-24 sm:h-32 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 flex items-end p-2 sm:p-4 gap-1 sm:gap-2">
+              <div className="col-span-8 h-24 sm:h-32 bg-[#F5F5F0] rounded-xl sm:rounded-2xl border border-[#EBEBE6] flex items-end p-2 sm:p-4 gap-1 sm:gap-2">
                 {[40, 70, 45, 90, 65, 80, 50, 95].map((h, i) => (
-                  <div key={i} className="flex-1 bg-violet-100 rounded-t" style={{ height: `${h}%` }}></div>
+                  <div key={i} className="flex-1 bg-[#F5F5F0] rounded-t" style={{ height: `${h}%` }}></div>
                 ))}
               </div>
-              <div className="col-span-12 h-32 sm:h-48 bg-slate-50 rounded-[20px] sm:rounded-3xl border border-slate-100"></div>
+              <div className="col-span-12 h-32 sm:h-48 bg-[#F5F5F0] rounded-[20px] sm:rounded-3xl border border-[#EBEBE6]"></div>
             </div>
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20">
-              <div className="w-full h-1 bg-violet-500/40 shadow-[0_0_25px_4px_rgba(124,58,237,0.6)] animate-scan-tech"></div>
+              <div className="w-full h-1 bg-[#EBEBE6] shadow-[0_0_25px_4px_rgba(124,58,237,0.6)] animate-scan-tech"></div>
               <div className="w-full h-20 bg-gradient-to-b from-violet-500/5 to-transparent absolute top-0 animate-scan-area-tech"></div>
             </div>
           </div>
@@ -371,32 +372,32 @@ const FeatureMatrix = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-12">
         <RevealOnScroll direction="left">
           <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <Wrench size={24} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Vi passer på siden din</h3>
-            <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed mb-6">
+            <h3 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4">Vi passer på siden din</h3>
+            <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed mb-6">
               Hastighet, ødelagte lenker, feilmeldinger og brukeropplevelse — vi sjekker alt sammen hvert døgn. Hvis noe hindrer Google i å vise siden din, får vi beskjed med en gang og fikser det.
             </p>
             <div className="mt-auto flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Basic</span>
-              <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Standard</span>
+              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Basic</span>
+              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Standard</span>
             </div>
           </div>
         </RevealOnScroll>
 
         <RevealOnScroll direction="right">
           <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <Globe2 size={24} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-950 mb-4">Ekte tall rett fra Google</h3>
-            <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed mb-6">
+            <h3 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4">Ekte tall rett fra Google</h3>
+            <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed mb-6">
               Ingen gjetninger. Vi henter data direkte fra Google: hva folk faktisk søker etter før de finner deg, hvilke sider de klikker på, og hvor mange som går videre til kjøp.
             </p>
             <div className="mt-auto flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Basic</span>
-              <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-full text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Standard</span>
+              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Basic</span>
+              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Standard</span>
             </div>
           </div>
         </RevealOnScroll>
@@ -405,18 +406,18 @@ const FeatureMatrix = () => (
       <RevealOnScroll direction="up" className="mb-6 sm:mb-12">
         <div className="p-1 rounded-[36px] sm:rounded-[44px] bg-gradient-to-r from-violet-500 to-indigo-600 shadow-2xl shadow-violet-200/50">
           <div className="bg-white p-6 sm:p-12 md:p-16 rounded-[35px] sm:rounded-[43px] text-center relative overflow-hidden backdrop-blur-sm">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-violet-100/40 rounded-full blur-3xl"></div>
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#F5F5F0] rounded-full blur-3xl"></div>
             <div className="relative z-10 max-w-3xl mx-auto">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-violet-600 rounded-2xl sm:rounded-[28px] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-xl text-white">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#1A1A1A] rounded-2xl sm:rounded-[28px] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-xl text-white">
                 <Cpu size={32} />
               </div>
-              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tight">AI som skriver for deg</h3>
-              <p className="text-sm sm:text-lg md:text-xl text-slate-600 font-medium leading-relaxed mb-8 sm:mb-10">
+              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6 tracking-tight">AI som skriver for deg</h3>
+              <p className="text-sm sm:text-lg md:text-xl text-[#808080] font-medium leading-relaxed mb-8 sm:mb-10">
                 AI-en vår skriver overskriftene og tekstene som vises når folk finner deg på Google — skreddersydd slik at de får lyst til å klikke. Du slipper å bry deg. Det bare blir gjort.
               </p>
               <div className="flex justify-center gap-3 sm:gap-4">
-                <span className="px-3 sm:px-4 py-1.5 bg-violet-50 border border-violet-100 rounded-full text-[9px] sm:text-xs font-black text-violet-600 uppercase">Standard</span>
-                <span className="px-3 sm:px-4 py-1.5 bg-violet-50 border border-violet-100 rounded-full text-[9px] sm:text-xs font-black text-violet-600 uppercase">Premium</span>
+                <span className="px-3 sm:px-4 py-1.5 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase">Standard</span>
+                <span className="px-3 sm:px-4 py-1.5 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase">Premium</span>
               </div>
             </div>
           </div>
@@ -424,18 +425,18 @@ const FeatureMatrix = () => (
       </RevealOnScroll>
 
       <RevealOnScroll direction="up">
-        <div className="bg-slate-950 p-8 sm:p-16 rounded-[36px] sm:rounded-[48px] text-white relative overflow-hidden group">
+        <div className="bg-[#1A1A1A] p-8 sm:p-16 rounded-[36px] sm:rounded-[48px] text-white relative overflow-hidden group">
           <div className="absolute inset-0 grid-pattern opacity-10"></div>
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#F5F5F0] rounded-full blur-[120px] pointer-events-none"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center relative z-10 text-center lg:text-left">
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-violet-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 sm:mb-8 border border-white/10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 sm:mb-8 border border-white/10">
                 <Stars size={12} />
                 <span>Eksklusivt for Premium</span>
               </div>
               <h3 className="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">Vi dekoder <br className="hidden sm:block" /> konkurrentene dine</h3>
-              <p className="text-slate-400 text-sm sm:text-lg md:text-xl font-medium leading-relaxed mb-8">
+              <p className="text-[#808080] text-sm sm:text-lg md:text-xl font-medium leading-relaxed mb-8">
                 Hvorfor ligger de over deg på Google? Hva gjør de bedre? AI-en leser konkurrentene dine hver uke og forteller deg nøyaktig hva du må gjøre for å ta dem igjen.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
@@ -446,7 +447,7 @@ const FeatureMatrix = () => (
                   "Strategimøte hver måned"
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-bold">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#1A1A1A] flex items-center justify-center shrink-0">
                       <Check size={10} />
                     </div>
                     {item}
@@ -456,11 +457,11 @@ const FeatureMatrix = () => (
             </div>
             <div className="lg:col-span-5 flex justify-center mt-8 lg:mt-0">
               <div className="relative">
-                <div className="absolute inset-0 bg-violet-500/30 blur-[60px] sm:blur-[80px] rounded-full"></div>
+                <div className="absolute inset-0 bg-[#F5F5F0] blur-[60px] sm:blur-[80px] rounded-full"></div>
                 <div className="relative p-6 sm:p-8 bg-white/5 border border-white/10 rounded-[32px] sm:rounded-[40px] shadow-2xl backdrop-blur-md text-center">
-                  <Target size={48} className="text-violet-400 mx-auto mb-4 sm:mb-6" />
+                  <Target size={48} className="text-[#1A1A1A] mx-auto mb-4 sm:mb-6" />
                   <div className="text-xl sm:text-2xl font-black mb-2">Markedsdominans</div>
-                  <div className="text-slate-500 text-[10px] sm:text-sm font-bold uppercase tracking-widest">Aktiv overvåking</div>
+                  <div className="text-[#808080] text-[10px] sm:text-sm font-bold uppercase tracking-widest">Aktiv overvåking</div>
                 </div>
               </div>
             </div>
@@ -472,19 +473,19 @@ const FeatureMatrix = () => (
 );
 
 const DashboardSection = () => (
-  <section className="py-16 sm:py-32 bg-slate-50/50 border-y border-slate-100 relative overflow-hidden">
+  <section className="py-16 sm:py-32 bg-[#F5F5F0]/50 border-y border-[#EBEBE6] relative overflow-hidden">
     <div className="max-w-6xl mx-auto px-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <RevealOnScroll direction="left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-violet-100">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-[#EBEBE6]">
             <Sparkles size={11} />
             <span>Handling, ikke grafer</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-6 sm:mb-8 leading-[1.05] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-[#1A1A1A] mb-6 sm:mb-8 leading-[1.05] tracking-tight">
             Ikke tall og grafer. <br />
-            <span className="text-violet-600">Bare gjøremål.</span>
+            <span className="text-[#1A1A1A]">Bare gjøremål.</span>
           </h2>
-          <p className="text-base sm:text-lg md:text-xl text-slate-600 font-medium leading-relaxed mb-10 sm:mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-[#808080] font-medium leading-relaxed mb-10 sm:mb-12">
             Andre dashboards krever at du tolker tallene selv. Hos Sikt får du én klar beskjed: "Gjør dette nå." Ferdig.
           </p>
           <div className="space-y-6 sm:space-y-8">
@@ -492,29 +493,29 @@ const DashboardSection = () => (
               {
                 title: "AI som oversetter tallene",
                 desc: "I stedet for grafer får du en setning du skjønner.",
-                icon: <MessageCircle className="text-violet-600" />,
+                icon: <MessageCircle className="text-[#1A1A1A]" />,
                 example: "Eksempel: 'Siden om varmepumper får færre besøk. Skriv en seksjon om strømsparing.'"
               },
               {
                 title: "Bare det som gir kunder",
                 desc: "Vi kutter alt som ikke fører til flere kunder. Du jobber bare med det som betyr noe.",
-                icon: <TrendingUp className="text-violet-600" />
+                icon: <TrendingUp className="text-[#1A1A1A]" />
               },
               {
                 title: "Vi følger med på konkurrentene",
                 desc: "Får du beskjed når noen gjør noe nytt som kan treffe kundene dine. Da kan du svare.",
-                icon: <Activity className="text-violet-600" />
+                icon: <Activity className="text-[#1A1A1A]" />
               }
             ].map((item, i) => (
               <div key={i} className="flex gap-4 sm:gap-6 group">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-slate-100 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-[#EBEBE6] transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105">
                   {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
                 </div>
                 <div>
-                  <h4 className="text-lg sm:text-xl font-bold text-slate-950 mb-1.5 sm:mb-2">{item.title}</h4>
-                  <p className="text-xs sm:text-base text-slate-500 font-medium leading-relaxed mb-3">{item.desc}</p>
+                  <h4 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-1.5 sm:mb-2">{item.title}</h4>
+                  <p className="text-xs sm:text-base text-[#808080] font-medium leading-relaxed mb-3">{item.desc}</p>
                   {item.example && (
-                    <div className="inline-block p-3 sm:p-4 bg-violet-50 border-l-4 border-violet-500 rounded-r-xl italic text-[10px] sm:text-sm text-violet-700 font-bold">
+                    <div className="inline-block p-3 sm:p-4 bg-[#F5F5F0] border-l-4 border-[#1A1A1A] rounded-r-xl italic text-[10px] sm:text-sm text-[#1A1A1A] font-bold">
                       {item.example}
                     </div>
                   )}
@@ -528,58 +529,58 @@ const DashboardSection = () => (
           <div className="relative w-full max-w-sm sm:max-w-lg aspect-[4/5] bg-white/40 rounded-[36px] sm:rounded-[48px] border border-white/50 shadow-2xl backdrop-blur-md p-6 sm:p-8 overflow-hidden">
             <div className="flex items-center justify-between mb-8 sm:mb-10">
               <div className="flex items-center gap-2.5 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1A1A1A] rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
                 <div>
-                  <div className="text-[10px] sm:text-xs font-black text-slate-900 uppercase">Sikt AI — Gjøremål</div>
-                  <div className="text-[8px] sm:text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Jobber nå
+                  <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] uppercase">Sikt AI — Gjøremål</div>
+                  <div className="text-[8px] sm:text-[10px] text-[#1A1A1A] font-bold flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-[#808080] rounded-full animate-pulse"></div> Jobber nå
                   </div>
                 </div>
               </div>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100"><Search size={12} className="text-slate-400" /></div>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#F5F5F0] flex items-center justify-center border border-[#EBEBE6]"><Search size={12} className="text-[#808080]" /></div>
             </div>
 
             <div className="space-y-4 sm:space-y-6">
-              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex gap-3 sm:gap-4 mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shrink-0"><Zap size={16} /></div>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#1A1A1A] shrink-0"><Zap size={16} /></div>
                   <div>
-                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Fiks innholdet</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Høy prioritet · +15% kunder</div>
+                    <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] mb-1">Fiks innholdet</div>
+                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Høy prioritet · +15% kunder</div>
                   </div>
                 </div>
-                <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                  "Legg til <span className="text-violet-600 font-bold">SEO-byrå Oslo</span> på tjeneste-siden. Det er dette kundene dine søker på."
+                <p className="text-[10px] sm:text-xs text-[#808080] font-medium leading-relaxed">
+                  "Legg til <span className="text-[#1A1A1A] font-bold">SEO-byrå Oslo</span> på tjeneste-siden. Det er dette kundene dine søker på."
                 </p>
               </div>
 
-              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm animate-fade-in" style={{ animationDelay: '0.4s' }}>
                 <div className="flex gap-3 sm:gap-4 mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><Target size={16} /></div>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#1A1A1A] shrink-0"><Target size={16} /></div>
                   <div>
-                    <div className="text-[10px] sm:text-xs font-black text-slate-900 mb-1">Konkurrent-varsel</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Nettopp publisert</div>
+                    <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] mb-1">Konkurrent-varsel</div>
+                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Nettopp publisert</div>
                   </div>
                 </div>
-                <p className="text-[10px] sm:text-xs text-slate-600 font-medium leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-[#808080] font-medium leading-relaxed">
                   "Nærmeste konkurrent la ut 3 nye blogger. Her er 3 ideer du kan publisere for å svare."
                 </p>
               </div>
 
-              <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.6s' }}>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl"></div>
+              <div className="bg-[#1A1A1A] p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.6s' }}>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#EBEBE6] rounded-full blur-2xl"></div>
                 <div className="flex gap-3 sm:gap-4 mb-3 relative z-10">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-violet-400 shrink-0"><Sparkles size={16} /></div>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-[#1A1A1A] shrink-0"><Sparkles size={16} /></div>
                   <div>
                     <div className="text-[10px] sm:text-xs font-black text-white mb-1">Gjør dette nå</div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-400 font-medium uppercase tracking-wider">Anbefalt av Sikt AI</div>
+                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Anbefalt av Sikt AI</div>
                   </div>
                 </div>
                 <div className="text-[11px] sm:text-sm text-white font-bold leading-relaxed relative z-10">
                   "Oppdater produktsidene. 80% av kundene som besøker dem klikker seg ikke videre."
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-end relative z-10">
-                  <button className="text-[9px] sm:text-[10px] font-black text-violet-400 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
+                  <button className="text-[9px] sm:text-[10px] font-black text-[#1A1A1A] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
                     Start nå <ArrowRight size={10} />
                   </button>
                 </div>
@@ -666,14 +667,14 @@ const ComparisonTable = () => {
   const Cell = ({ value, isPremiumCol = false }: { value: CellValue, isPremiumCol?: boolean }) => {
     if (typeof value === 'string') {
       return (
-        <span className={`text-[11px] sm:text-xs font-black ${isPremiumCol ? 'text-violet-600' : 'text-slate-700'}`}>
+        <span className={`text-[11px] sm:text-xs font-black ${isPremiumCol ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>
           {value}
         </span>
       );
     }
     return value
-      ? <Check className={`mx-auto ${isPremiumCol ? 'text-violet-600' : 'text-emerald-500'}`} size={18} />
-      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-slate-200"></div>;
+      ? <Check className={`mx-auto ${isPremiumCol ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`} size={18} />
+      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-[#EBEBE6]"></div>;
   };
 
   return (
@@ -681,12 +682,12 @@ const ComparisonTable = () => {
       <div className="max-w-6xl mx-auto px-5">
         <RevealOnScroll direction="up">
           <div className="text-center mb-12 sm:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-5 border border-violet-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
               <Check size={11} />
               <span>Hva får du i hver pakke</span>
             </div>
-            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-slate-950 mb-4 sm:mb-6 tracking-tighter">Sammenlign pakkene.</h2>
-            <p className="text-sm sm:text-lg text-slate-500 font-medium max-w-xl mx-auto">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-[#1A1A1A] mb-4 sm:mb-6 tracking-tighter">Sammenlign pakkene.</h2>
+            <p className="text-sm sm:text-lg text-[#808080] font-medium max-w-xl mx-auto">
               Start med Basic, oppgrader når du er klar. Ingen bindingstid — du betaler måned for måned.
             </p>
           </div>
@@ -696,25 +697,25 @@ const ComparisonTable = () => {
           <div className="overflow-x-auto pb-4 scrollbar-hide">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
-                <tr className="border-b-2 border-slate-200">
-                  <th className="py-6 sm:py-8 text-base sm:text-xl font-black text-slate-950 w-2/5"></th>
-                  <th className="py-6 sm:py-8 text-center text-slate-950">
-                    <div className="text-[9px] sm:text-xs font-black text-slate-400 uppercase mb-1 sm:mb-2">Basic</div>
+                <tr className="border-b-2 border-[#EBEBE6]">
+                  <th className="py-6 sm:py-8 text-base sm:text-xl font-black text-[#1A1A1A] w-2/5"></th>
+                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A]">
+                    <div className="text-[9px] sm:text-xs font-black text-[#808080] uppercase mb-1 sm:mb-2">Basic</div>
                     <div className="text-lg sm:text-2xl font-black">499,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
                   </th>
-                  <th className="py-6 sm:py-8 text-center text-slate-950">
-                    <div className="text-[9px] sm:text-xs font-black text-slate-400 uppercase mb-1 sm:mb-2">Standard</div>
+                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A]">
+                    <div className="text-[9px] sm:text-xs font-black text-[#808080] uppercase mb-1 sm:mb-2">Standard</div>
                     <div className="text-lg sm:text-2xl font-black">1 499,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
                   </th>
-                  <th className="py-6 sm:py-8 text-center text-slate-950 bg-violet-50/40 border-x border-violet-100 rounded-t-2xl">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider mb-1.5">
+                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A] bg-[#F5F5F0] border-x border-[#EBEBE6] rounded-t-2xl">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1A1A1A] text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider mb-1.5">
                       <Sparkles size={9} /> Anbefalt
                     </div>
-                    <div className="text-[9px] sm:text-xs font-black text-violet-600 uppercase mb-1 sm:mb-2">Premium</div>
+                    <div className="text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase mb-1 sm:mb-2">Premium</div>
                     <div className="text-lg sm:text-2xl font-black">4 999,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-medium mt-1">pr mnd</div>
+                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
                   </th>
                 </tr>
               </thead>
@@ -724,7 +725,7 @@ const ComparisonTable = () => {
                     {/* Gruppe-overskrift */}
                     <tr>
                       <td colSpan={4} className="pt-8 sm:pt-10 pb-3">
-                        <div className="text-[10px] sm:text-xs font-black text-violet-600 uppercase tracking-widest">
+                        <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] uppercase tracking-widest">
                           {group.label}
                         </div>
                       </td>
@@ -734,10 +735,10 @@ const ComparisonTable = () => {
                       const isOpen = openDetail === detailKey;
                       return (
                         <React.Fragment key={detailKey}>
-                          <tr className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                            <td className="py-4 sm:py-5 font-bold text-slate-700 text-xs sm:text-base">
+                          <tr className="group border-b border-[#EBEBE6] hover:bg-[#F5F5F0]/50 transition-colors">
+                            <td className="py-4 sm:py-5 font-bold text-[#1A1A1A] text-xs sm:text-base">
                               <div className="flex items-center gap-2">
-                                {f.highlight && <Sparkles size={12} className="text-violet-500 shrink-0" />}
+                                {f.highlight && <Sparkles size={12} className="text-[#1A1A1A] shrink-0" />}
                                 <span className="flex-1">{f.name}</span>
                                 {f.detail && (
                                   <button
@@ -745,7 +746,7 @@ const ComparisonTable = () => {
                                     onClick={() => setOpenDetail(isOpen ? null : detailKey)}
                                     aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
                                     aria-expanded={isOpen}
-                                    className={`shrink-0 transition-colors ${isOpen ? 'text-violet-600' : 'text-slate-300 hover:text-violet-500'}`}
+                                    className={`shrink-0 transition-colors ${isOpen ? 'text-[#1A1A1A]' : 'text-[#808080] hover:text-[#1A1A1A]'}`}
                                   >
                                     <HelpCircle size={14} />
                                   </button>
@@ -758,18 +759,18 @@ const ComparisonTable = () => {
                             <td className="py-4 sm:py-5 text-center">
                               <Cell value={f.standard} />
                             </td>
-                            <td className="py-4 sm:py-5 text-center bg-violet-50/40 border-x border-violet-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-50/60 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+                            <td className="py-4 sm:py-5 text-center bg-[#F5F5F0] border-x border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-[#F5F5F0] transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                               <Cell value={f.premium} isPremiumCol />
                             </td>
                           </tr>
                           {isOpen && f.detail && (
-                            <tr className="border-b border-slate-50">
+                            <tr className="border-b border-[#EBEBE6]">
                               <td className="pb-4 sm:pb-5 pt-0" colSpan={3}>
-                                <div className="p-3 sm:p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                <div className="p-3 sm:p-4 bg-[#F5F5F0] border border-[#EBEBE6] rounded-xl text-xs sm:text-sm text-[#808080] leading-relaxed">
                                   {f.detail}
                                 </div>
                               </td>
-                              <td className="pb-4 sm:pb-5 pt-0 bg-violet-50/40 border-x border-violet-100"></td>
+                              <td className="pb-4 sm:pb-5 pt-0 bg-[#F5F5F0] border-x border-[#EBEBE6]"></td>
                             </tr>
                           )}
                         </React.Fragment>
@@ -780,12 +781,12 @@ const ComparisonTable = () => {
                 {/* Bunn av Premium-kolonnen (avrundet hjørne) */}
                 <tr>
                   <td colSpan={3}></td>
-                  <td className="bg-violet-50/40 border-x border-b border-violet-100 rounded-b-2xl h-4"></td>
+                  <td className="bg-[#F5F5F0] border-x border-b border-[#EBEBE6] rounded-b-2xl h-4"></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div className="md:hidden flex justify-center items-center gap-2 mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+          <div className="md:hidden flex justify-center items-center gap-2 mt-4 text-[10px] text-[#808080] font-bold uppercase tracking-widest animate-pulse">
             <ArrowRight size={10} className="rotate-0" />
             <span>Sveip for å se alle pakker</span>
             <ArrowRight size={10} className="rotate-180" />
@@ -795,10 +796,10 @@ const ComparisonTable = () => {
         {/* Myk CTA under tabellen — guider brukeren videre uten å tvinge */}
         <RevealOnScroll direction="up" delay={200}>
           <div className="mt-12 sm:mt-16 text-center">
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mb-4">
+            <p className="text-xs sm:text-sm text-[#808080] font-medium mb-4">
               Usikker på hvilken pakke som passer? Start med Basic — du kan oppgradere når som helst.
             </p>
-            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-violet-600 transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700 group">
+            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-[#1A1A1A] transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] group">
               Se pakkene og kom i gang
               <ArrowRight size={16} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
             </a>
@@ -815,26 +816,20 @@ const Hero = () => {
   return (
     <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-28 md:pt-44 md:pb-60 hero-gradient overflow-hidden">
       <div className="absolute top-1/4 -left-12 hidden xl:block animate-float-subtle opacity-20 pointer-events-none">
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-violet-100 rotate-12">
-          <SearchIcon size={48} className="text-violet-600" />
+        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#EBEBE6] rotate-12">
+          <SearchIcon size={48} className="text-[#3F8F38]" />
         </div>
       </div>
       <div className="absolute bottom-1/4 -right-16 hidden xl:block animate-float-subtle opacity-20 pointer-events-none" style={{ animationDelay: '2s' }}>
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-violet-100 -rotate-12">
-          <TrendingUp size={48} className="text-violet-600" />
+        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#EBEBE6] -rotate-12">
+          <TrendingUp size={48} className="text-[#3F8F38]" />
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-5 sm:px-6 text-center relative z-10">
-        <RevealOnScroll direction="down" delay={100}>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-md text-violet-600 text-[9px] sm:text-[10px] font-bold mb-6 sm:mb-10 border border-violet-100/50 uppercase tracking-widest shadow-sm">
-            <Sparkles size={11} className="fill-current" />
-            <span>AI-drevet SEO for vekst</span>
-          </div>
-        </RevealOnScroll>
         <RevealOnScroll direction="up" delay={200}>
-          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-slate-950 mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
-            Ranger høyere på Google <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-[#1A1A1A] mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
+            Ranger høyere på Google <span className="text-[#3F8F38] font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
           </h1>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={300}>
@@ -844,7 +839,7 @@ const Hero = () => {
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/30">
+            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
               Ta meg til toppen av Google <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </a>
           </div>
@@ -866,12 +861,12 @@ const DashboardPreview = () => (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent animate-scan-tech"></div>
             <div className="absolute top-[40%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent animate-scan-tech" style={{ animationDelay: '1.5s', animationDuration: '6s' }}></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-[600px] h-[600px] bg-violet-400/5 rounded-full blur-[120px] animate-pulse"></div>
+              <div className="w-[600px] h-[600px] bg-transparent rounded-full blur-[120px] animate-pulse"></div>
             </div>
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-1 h-1 bg-violet-400 rounded-full blur-sm animate-float-particle"
+                className="absolute w-1 h-1 bg-[#808080] rounded-full blur-sm animate-float-particle"
                 style={{
                   top: `${Math.random() * 100}%`,
                   left: `${Math.random() * 100}%`,
@@ -882,44 +877,44 @@ const DashboardPreview = () => (
             ))}
           </div>
 
-          <div className="bg-white rounded-[20px] sm:rounded-[28px] flex overflow-hidden h-[320px] sm:h-[500px] md:h-[650px] shadow-sm border border-slate-100/50 relative z-10">
+          <div className="bg-white rounded-[20px] sm:rounded-[28px] flex overflow-hidden h-[320px] sm:h-[500px] md:h-[650px] shadow-sm border border-[#EBEBE6]/50 relative z-10">
 
             {/* 1. New Sidebar for density */}
-            <div className="hidden sm:flex flex-col w-12 sm:w-16 border-r border-slate-100 bg-white pt-4 items-center gap-4 shrink-0">
-              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs mb-4">S</div>
+            <div className="hidden sm:flex flex-col w-12 sm:w-16 border-r border-[#EBEBE6] bg-white pt-4 items-center gap-4 shrink-0">
+              <div className="w-8 h-8 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-xs mb-4">S</div>
               {[Home, Activity, Layers, User, Wrench].map((Icon, i) => (
-                <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-violet-50 text-violet-600' : 'text-slate-300 hover:text-slate-600'}`}>
+                <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-[rgba(63,143,56,0.09)] text-[#3F8F38]' : 'text-[#808080] hover:text-[#808080]'}`}>
                   <Icon size={18} />
                 </div>
               ))}
             </div>
 
-            <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-[#F5F5F0]/30 overflow-hidden">
               {/* Header */}
-              <div className="h-12 md:h-16 border-b border-slate-100 bg-white flex items-center justify-between px-4 md:px-8 shrink-0">
+              <div className="h-12 md:h-16 border-b border-[#EBEBE6] bg-white flex items-center justify-between px-4 md:px-8 shrink-0">
                 <div className="flex items-center gap-2 sm:gap-4">
-                  <div className="sm:hidden w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-sm">S</div>
+                  <div className="sm:hidden w-8 h-8 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-sm">S</div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Din oversikt</h3>
-                    <p className="text-[10px] text-slate-400 font-medium hidden sm:block">Oppdatert akkurat nå</p>
+                    <h3 className="text-xs sm:text-sm font-bold text-[#1A1A1A] tracking-tight">Din oversikt</h3>
+                    <p className="text-[10px] text-[#808080] font-medium hidden sm:block">Oppdatert akkurat nå</p>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-[9px] font-bold text-emerald-600 uppercase">Alt OK</span>
+                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-[rgba(63,143,56,0.09)] rounded-full border border-[rgba(63,143,56,0.18)]">
+                    <div className="w-1.5 h-1.5 bg-[#808080] rounded-full animate-pulse"></div>
+                    <span className="text-[9px] font-bold text-[#1A1A1A] uppercase">Alt OK</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden md:flex gap-4 mr-4">
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">Siden din</span>
-                      <span className="text-xs font-black text-slate-900">98.5%</span>
+                      <span className="text-[9px] text-[#808080] font-bold uppercase">Siden din</span>
+                      <span className="text-xs font-black text-[#1A1A1A]">98.5%</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">Ord du ranker på</span>
-                      <span className="text-xs font-black text-slate-900">2,341</span>
+                      <span className="text-[9px] text-[#808080] font-bold uppercase">Ord du ranker på</span>
+                      <span className="text-xs font-black text-[#1A1A1A]">2,341</span>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-400 relative">
+                  <div className="w-8 h-8 rounded-full border border-[#EBEBE6] bg-white flex items-center justify-center text-[#808080] relative">
                     <div className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></div>
                     <MessageCircle size={14} />
                   </div>
@@ -932,18 +927,18 @@ const DashboardPreview = () => (
                 {/* Row 1: KPI Cards (Dense) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
-                    { l: "Besøkende", v: "124.5k", c: "text-violet-600", g: "+12%" },
-                    { l: "Synlighet", v: "89.2%", c: "text-emerald-600", g: "+4.1%" },
+                    { l: "Besøkende", v: "124.5k", c: "text-[#3F8F38]", g: "+12%" },
+                    { l: "Synlighet", v: "89.2%", c: "text-[#3F8F38]", g: "+4.1%" },
                     { l: "Troverdighet", v: "54", c: "text-amber-600", g: "+1" },
-                    { l: "Feil å fikse", v: "0", c: "text-slate-900", g: "-2" },
+                    { l: "Feil å fikse", v: "0", c: "text-[#1A1A1A]", g: "-2" },
                   ].map((kpi, i) => (
-                    <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-20 sm:h-24">
+                    <div key={i} className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm flex flex-col justify-between h-20 sm:h-24">
                       <div className="flex justify-between items-start">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{kpi.l}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'}`}>{kpi.g}</span>
+                        <span className="text-[10px] text-[#808080] font-bold uppercase tracking-wide">{kpi.l}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-[rgba(63,143,56,0.09)] text-[#3F8F38]' : 'bg-[#F5F5F0] text-[#808080]'}`}>{kpi.g}</span>
                       </div>
                       <span className={`text-lg sm:text-2xl font-black ${kpi.c}`}>{kpi.v}</span>
-                      <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                      <div className="h-1 w-full bg-[#F5F5F0] rounded-full overflow-hidden">
                         <div className="h-full bg-current opacity-20 w-2/3"></div>
                       </div>
                     </div>
@@ -954,61 +949,61 @@ const DashboardPreview = () => (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
                   {/* Score Card (Detailed) */}
-                  <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
+                  <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-[#EBEBE6] shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">Total score</h4>
-                      <Wrench size={14} className="text-slate-300" />
+                      <h4 className="font-bold text-[#1A1A1A] text-xs uppercase tracking-wide">Total score</h4>
+                      <Wrench size={14} className="text-[#808080]" />
                     </div>
                     <div className="flex items-center gap-6 mb-6">
                       <div className="relative">
                         <svg className="w-20 h-20 transform -rotate-90">
-                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-50" />
-                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-violet-500" strokeDasharray="200" strokeDashoffset="30" />
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#F5F5F0]" />
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#3F8F38]" strokeDasharray="200" strokeDashoffset="30" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-xl font-black text-slate-900">85</span>
+                          <span className="text-xl font-black text-[#1A1A1A]">85</span>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 flex-1">
                         {["Teknisk", "Innhold", "Lenker"].map((l, i) => (
                           <div key={i} className="flex flex-col gap-1">
-                            <div className="flex justify-between text-[9px] font-bold text-slate-500">
+                            <div className="flex justify-between text-[9px] font-bold text-[#808080]">
                               <span>{l}</span>
                               <span>{90 - i * 5}%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-                              <div className="h-full bg-slate-800 rounded-full" style={{ width: `${90 - i * 5}%` }}></div>
+                            <div className="h-1.5 w-full bg-[#F5F5F0] rounded-full overflow-hidden">
+                              <div className="h-full bg-[#3F8F38] rounded-full" style={{ width: `${90 - i * 5}%` }}></div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="mt-auto border-t border-slate-50 pt-3 flex justify-between items-center">
-                      <span className="text-[10px] text-slate-400 font-medium">Neste sjekk om 2t 14m</span>
-                      <button className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">Sjekk nå</button>
+                    <div className="mt-auto border-t border-[#EBEBE6] pt-3 flex justify-between items-center">
+                      <span className="text-[10px] text-[#808080] font-medium">Neste sjekk om 2t 14m</span>
+                      <button className="text-[10px] font-bold text-[#3F8F38] bg-[rgba(63,143,56,0.09)] px-2 py-1 rounded-md">Sjekk nå</button>
                     </div>
                   </div>
 
                   {/* Chart Card (Detailed) */}
-                  <div className="md:col-span-8 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col relative overflow-hidden">
+                  <div className="md:col-span-8 bg-white p-4 rounded-2xl border border-[#EBEBE6] shadow-sm flex flex-col relative overflow-hidden">
                     <div className="flex justify-between items-center mb-4 z-10">
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Besøkende på siden</h4>
-                        <div className="flex gap-2 text-[9px] text-slate-400 font-medium mt-0.5">
-                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div> Fra Google</span>
-                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> Direkte</span>
+                        <h4 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wide">Besøkende på siden</h4>
+                        <div className="flex gap-2 text-[9px] text-[#808080] font-medium mt-0.5">
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#3F8F38]"></div> Fra Google</span>
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#EBEBE6]"></div> Direkte</span>
                         </div>
                       </div>
-                      <div className="flex gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                      <div className="flex gap-1 bg-[#F5F5F0] p-1 rounded-lg border border-[#EBEBE6]">
                         {["1U", "1M", "3M", "1Å"].map((t, i) => (
-                          <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>{t}</button>
+                          <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-[#1A1A1A]' : 'text-[#808080]'}`}>{t}</button>
                         ))}
                       </div>
                     </div>
-                    <div className="flex-1 relative min-h-[140px] border-b border-l border-slate-50">
+                    <div className="flex-1 relative min-h-[140px] border-b border-l border-[#EBEBE6]">
                       {/* Grid lines */}
                       <div className="absolute inset-0 grid grid-rows-4 gap-0 pointer-events-none">
-                        {[...Array(4)].map((_, i) => <div key={i} className="border-t border-slate-50 w-full h-full"></div>)}
+                        {[...Array(4)].map((_, i) => <div key={i} className="border-t border-[#EBEBE6] w-full h-full"></div>)}
                       </div>
                       <svg className="absolute inset-0 w-full h-full overflow-visible z-10" viewBox="0 0 800 200" preserveAspectRatio="none">
                         <defs>
@@ -1024,47 +1019,47 @@ const DashboardPreview = () => (
                         <path d="M0 190 C 80 180, 160 170, 240 180 C 320 190, 400 160, 480 150 C 560 140, 640 130, 720 120 L 800 110" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" fill="none" />
                       </svg>
                       {/* Tooltip Simulation */}
-                      <div className="absolute top-[30%] left-[60%] bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl transform -translate-x-1/2 -translate-y-full z-20">
+                      <div className="absolute top-[30%] left-[60%] bg-[#1A1A1A] text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl transform -translate-x-1/2 -translate-y-full z-20">
                         2,451
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-[#1A1A1A] rotate-45"></div>
                       </div>
-                      <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-violet-600 border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
+                      <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-[#3F8F38] border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
                   </div>
                 </div>
 
                 {/* Row 3: Bottom Density (New) */}
                 <div className="grid grid-cols-3 gap-4 h-24 hidden sm:grid">
-                  <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Topp søk</h4>
+                  <div className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden relative">
+                    <h4 className="text-[9px] font-bold text-[#808080] uppercase mb-2">Topp søk</h4>
                     <div className="space-y-1.5">
                       {[{ w: "seo byrå", r: 1 }, { w: "digital markedsføring", r: 3 }].map((kw, i) => (
-                        <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-slate-50 pb-1">
-                          <span className="text-slate-700">{kw.w}</span>
-                          <span className="text-violet-600 font-bold">#{kw.r}</span>
+                        <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-[#EBEBE6] pb-1">
+                          <span className="text-[#1A1A1A]">{kw.w}</span>
+                          <span className="text-[#3F8F38] font-bold">#{kw.r}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase mb-2">Brukeropplevelse</h4>
+                  <div className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden">
+                    <h4 className="text-[9px] font-bold text-[#808080] uppercase mb-2">Brukeropplevelse</h4>
                     <div className="flex items-end gap-2 h-10 mt-2">
                       {[
-                        { l: "Fart", v: 80, c: "bg-emerald-400" },
-                        { l: "Respons", v: 95, c: "bg-emerald-400" },
+                        { l: "Fart", v: 80, c: "bg-[#3F8F38]" },
+                        { l: "Respons", v: 95, c: "bg-[#3F8F38]" },
                         { l: "Stabilitet", v: 60, c: "bg-amber-400" }
                       ].map((m, i) => (
                         <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1">
                           <div className={`w-full rounded-t-sm ${m.c}`} style={{ height: `${m.v}%` }}></div>
-                          <span className="text-[8px] font-bold text-slate-400">{m.l}</span>
+                          <span className="text-[8px] font-bold text-[#808080]">{m.l}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
-                    <div className="absolute inset-0 bg-violet-500/10 animate-pulse"></div>
-                    <Activity size={20} className="text-violet-400 mb-2 relative z-10" />
-                    <span className="text-[9px] font-bold text-slate-400 uppercase relative z-10">Sikt AI</span>
+                  <div className="bg-[#1A1A1A] p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
+                    <div className="absolute inset-0 bg-[#F5F5F0] animate-pulse"></div>
+                    <Activity size={20} className="text-[#1A1A1A] mb-2 relative z-10" />
+                    <span className="text-[9px] font-bold text-[#808080] uppercase relative z-10">Sikt AI</span>
                     <span className="text-[10px] font-black text-white relative z-10">Jobber...</span>
                   </div>
                 </div>
@@ -1092,16 +1087,16 @@ const DeepDiveHero = () => (
   <section className="relative pt-24 pb-12 md:pt-48 md:pb-32 overflow-hidden bg-white/40">
     <div className="max-w-4xl mx-auto px-5 text-center relative z-10">
       <RevealOnScroll direction="down">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-emerald-100">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-[#EBEBE6]">
           <Check size={11} />
           <span>Din vei til toppen</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-slate-950 mb-6 sm:mb-8 leading-[1.05] tracking-tight">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] mb-6 sm:mb-8 leading-[1.05] tracking-tight">
           Fra Usynlig til <br className="hidden sm:block" />
-          <span className="text-violet-600">Markedsledende.</span>
+          <span className="text-[#1A1A1A]">Markedsledende.</span>
         </h1>
-        <p className="text-base sm:text-lg md:text-2xl text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto mb-10">
-          Å se på prosessen ware er det første steget. <span className="text-slate-900 font-bold underline decoration-violet-300">Google-dominans</span> er matematikk og AI i samspill.
+        <p className="text-base sm:text-lg md:text-2xl text-[#808080] font-medium leading-relaxed max-w-2xl mx-auto mb-10">
+          Å se på prosessen ware er det første steget. <span className="text-[#1A1A1A] font-bold underline decoration-[#EBEBE6]">Google-dominans</span> er matematikk og AI i samspill.
         </p>
       </RevealOnScroll>
     </div>
@@ -1109,7 +1104,7 @@ const DeepDiveHero = () => (
 );
 
 const PainPointData = () => (
-  <section className="py-16 sm:py-24 bg-slate-950 text-white relative overflow-hidden">
+  <section className="py-16 sm:py-24 bg-[#1A1A1A] text-white relative overflow-hidden">
     <div className="absolute top-0 left-0 w-full h-full grid-pattern opacity-10 pointer-events-none"></div>
     <div className="max-w-6xl mx-auto px-5 relative z-10">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -1123,14 +1118,14 @@ const PainPointData = () => (
               <div className="text-4xl sm:text-5xl md:text-7xl font-black text-rose-500 shrink-0">90%</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">får 0 trafikk.</h4>
-                <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed">De fleste bedrifter kaster bort penger på en digital fasade ingen ser.</p>
+                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">De fleste bedrifter kaster bort penger på en digital fasade ingen ser.</p>
               </div>
             </div>
             <div className="flex gap-4 sm:gap-6 items-start">
-              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-violet-500 shrink-0">95%</div>
+              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] shrink-0">95%</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">går til toppen.</h4>
-                <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed">Usynlighet koster bedrifter tapt omsetning hver eneste dag.</p>
+                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">Usynlighet koster bedrifter tapt omsetning hver eneste dag.</p>
               </div>
             </div>
           </div>
@@ -1141,16 +1136,16 @@ const PainPointData = () => (
               <AlertTriangle size={24} className="text-white sm:w-8 sm:h-8" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Hvert minutt teller.</h3>
-            <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed mb-6 sm:mb-8 font-medium">
+            <p className="text-sm sm:text-base md:text-lg text-[#808080] leading-relaxed mb-6 sm:mb-8 font-medium">
               Mens du leser dette, søker potensielle kunder etter dine tjenester. De finner konkurrentene dine akkurat nå.
             </p>
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
-                <Check className="text-emerald-500 shrink-0" size={16} />
+                <Check className="text-[#1A1A1A] shrink-0" size={16} />
                 <span className="text-xs sm:text-sm font-semibold">Stopp blødningen av tapt omsetning</span>
               </div>
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
-                <Check className="text-emerald-500 shrink-0" size={16} />
+                <Check className="text-[#1A1A1A] shrink-0" size={16} />
                 <span className="text-xs sm:text-sm font-semibold">Begynn din klatring i dag</span>
               </div>
             </div>
@@ -1166,8 +1161,8 @@ const AiProcessDeepDive = () => (
     <div className="max-w-6xl mx-auto px-5">
       <div className="text-center mb-12 sm:mb-20">
         <RevealOnScroll direction="up">
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6 leading-tight">Fremtidens SEO (2026-Teknologi)</h2>
-          <p className="text-sm sm:text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">Vi bruker kraftige AI-modeller for å utkonkurrere markedet.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6 leading-tight">Fremtidens SEO (2026-Teknologi)</h2>
+          <p className="text-sm sm:text-lg text-[#808080] max-w-2xl mx-auto font-medium leading-relaxed">Vi bruker kraftige AI-modeller for å utkonkurrere markedet.</p>
         </RevealOnScroll>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center">
@@ -1175,30 +1170,30 @@ const AiProcessDeepDive = () => (
           <div className="space-y-6 sm:space-y-8">
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Cpu size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Autonome Analyser</h3>
               </div>
-              <p className="text-sm sm:text-base text-slate-500 pl-14 sm:pl-16 font-medium leading-relaxed">Våre modeller skanner algoritme-endringer i sanntid og utfører 1000x flere beregninger.</p>
+              <p className="text-sm sm:text-base text-[#808080] pl-14 sm:pl-16 font-medium leading-relaxed">Våre modeller skanner algoritme-endringer i sanntid og utfører 1000x flere beregninger.</p>
             </div>
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-violet-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Zap size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Lynrask Implementering</h3>
               </div>
-              <p className="text-sm sm:text-base text-slate-500 pl-14 sm:pl-16 font-medium leading-relaxed">Vi identifiserer tekniske hull på sekunder og genererer optimalisert innhold umiddelbart.</p>
+              <p className="text-sm sm:text-base text-[#808080] pl-14 sm:pl-16 font-medium leading-relaxed">Vi identifiserer tekniske hull på sekunder og genererer optimalisert innhold umiddelbart.</p>
             </div>
           </div>
         </RevealOnScroll>
         <RevealOnScroll direction="right">
-          <div className="p-1.5 sm:p-2 bg-slate-950 rounded-[28px] sm:rounded-[40px] shadow-2xl mt-8 md:mt-0">
-            <div className="bg-white rounded-[24px] sm:rounded-[34px] p-6 sm:p-8 border border-slate-100">
+          <div className="p-1.5 sm:p-2 bg-[#1A1A1A] rounded-[28px] sm:rounded-[40px] shadow-2xl mt-8 md:mt-0">
+            <div className="bg-white rounded-[24px] sm:rounded-[34px] p-6 sm:p-8 border border-[#EBEBE6]">
               <div className="flex justify-between items-center mb-6 sm:mb-8">
-                <div className="text-sm sm:text-base font-black text-slate-900 uppercase">AI Prosessering</div>
-                <div className="text-[8px] sm:text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-bold">Aktiv</div>
+                <div className="text-sm sm:text-base font-black text-[#1A1A1A] uppercase">AI Prosessering</div>
+                <div className="text-[8px] sm:text-xs bg-[#F5F5F0] text-[#1A1A1A] px-2 py-1 rounded-full font-bold">Aktiv</div>
               </div>
               <div className="space-y-4 sm:space-y-6">
                 {[
@@ -1207,9 +1202,9 @@ const AiProcessDeepDive = () => (
                   { label: "Innholds-skår", val: "9.2/10" }
                 ].map((stat, i) => (
                   <div key={i}>
-                    <div className="flex justify-between text-[9px] sm:text-xs font-bold text-slate-400 mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
-                    <div className="h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-violet-600 animate-draw-line" style={{ width: stat.val, animationDelay: `${i * 200}ms` }}></div>
+                    <div className="flex justify-between text-[9px] sm:text-xs font-bold text-[#808080] mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
+                    <div className="h-1.5 sm:h-2 bg-[#F5F5F0] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#1A1A1A] animate-draw-line" style={{ width: stat.val, animationDelay: `${i * 200}ms` }}></div>
                     </div>
                   </div>
                 ))}
@@ -1259,10 +1254,10 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 
   return (
     <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
-      <h2 className="text-2xl font-bold text-slate-900 mb-2">
+      <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2">
         Før du kobler til Google
       </h2>
-      <p className="text-slate-600 mb-6">
+      <p className="text-[#808080] mb-6">
         For at Sikt skal kunne hente søkeorddata for nettsiden din, må disse to tingene være på plass:
       </p>
 
@@ -1271,24 +1266,24 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
         {/* Punkt 1 */}
         <div
           onClick={() => setVerified(!verified)}
-          className="flex items-start gap-3 p-4 rounded-lg border-2 border-slate-200 hover:border-violet-300 cursor-pointer transition-colors"
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#EBEBE6] hover:border-[#808080] cursor-pointer transition-colors"
         >
           <div className="pt-0.5">
             {verified ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <CheckCircle2 className="w-5 h-5 text-[#1A1A1A]" />
             ) : (
-              <Circle className="w-5 h-5 text-slate-400" />
+              <Circle className="w-5 h-5 text-[#808080]" />
             )}
           </div>
           <div className="flex-1">
-            <p className="font-medium text-slate-900 mb-1">
+            <p className="font-medium text-[#1A1A1A] mb-1">
               Jeg har verifisert nettsiden min i Google Search Console
             </p>
             <a
               href="https://support.google.com/webmasters/answer/9008080"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1"
+              className="text-sm text-[#1A1A1A] hover:text-[#1A1A1A] inline-flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               Har du ikke gjort det ennå? Slik gjør du det
@@ -1300,20 +1295,20 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
         {/* Punkt 2 */}
         <div
           onClick={() => setSameAccount(!sameAccount)}
-          className="flex items-start gap-3 p-4 rounded-lg border-2 border-slate-200 hover:border-violet-300 cursor-pointer transition-colors"
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#EBEBE6] hover:border-[#808080] cursor-pointer transition-colors"
         >
           <div className="pt-0.5">
             {sameAccount ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <CheckCircle2 className="w-5 h-5 text-[#1A1A1A]" />
             ) : (
-              <Circle className="w-5 h-5 text-slate-400" />
+              <Circle className="w-5 h-5 text-[#808080]" />
             )}
           </div>
           <div className="flex-1">
-            <p className="font-medium text-slate-900 mb-1">
+            <p className="font-medium text-[#1A1A1A] mb-1">
               Jeg vil koble til med samme Google-konto som eier nettsiden
             </p>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[#808080]">
               Hvis nettsiden er verifisert med jobbkonto, logg inn med jobbkonto.
             </p>
           </div>
@@ -1327,8 +1322,8 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
           disabled={!canProceed}
           className={`w-full py-3 px-4 rounded-lg font-semibold transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] disabled:active:scale-100 ${
             canProceed
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              ? 'bg-[#52A447] hover:bg-violet-600 text-white'
+              : 'bg-[#EBEBE6] text-[#808080] cursor-not-allowed'
           }`}
         >
           {canProceed
@@ -1339,7 +1334,7 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 
         <button
           onClick={onCancel}
-          className="w-full py-2 text-sm text-slate-600 transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900 active:scale-[0.98]"
+          className="w-full py-2 text-sm text-[#808080] transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:scale-[0.98]"
         >
           Hopp over for nå — jeg gjør dette senere
         </button>
@@ -1613,7 +1608,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   if (showGscStep) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F5F5F0] to-[#F5F5F0] flex items-center justify-center p-4">
         <GscPreCheck
           onConfirm={handleConnectSearchConsole}
           onCancel={onComplete}
@@ -1623,10 +1618,10 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 py-20 px-5 flex items-center justify-center">
-      <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-slate-100">
-        <h1 className="text-3xl font-black text-slate-950 mb-2">Fortell oss om din <span className="text-violet-600">bedrift</span></h1>
-        <p className="text-sm text-slate-500 mb-8">
+    <section className="min-h-screen bg-[#F5F5F0] py-20 px-5 flex items-center justify-center">
+      <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-[#EBEBE6]">
+        <h1 className="text-3xl font-black text-[#1A1A1A] mb-2">Fortell oss om din <span className="text-[#1A1A1A]">bedrift</span></h1>
+        <p className="text-sm text-[#808080] mb-8">
           {prefillLoading
             ? 'Henter dine opplysninger…'
             : (formData.companyName || formData.websiteUrl)
@@ -1639,12 +1634,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur} placeholder="Bedriftsnavn" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
-            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} onBlur={handleBlur} placeholder="Kontaktperson" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur} placeholder="Bedriftsnavn" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
+            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} onBlur={handleBlur} placeholder="Kontaktperson" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
-            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+            <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
+            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
           </div>
           <div>
             <div className="relative">
@@ -1656,10 +1651,10 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
                 onChange={handleChange}
                 onBlur={handleWebsiteUrlBlur}
                 placeholder="Nettside URL (https://...)"
-                className={`w-full p-4 pr-11 bg-slate-50 rounded-xl border ${websiteUrlStatus === 'valid' ? 'border-emerald-300' : websiteUrlStatus === 'invalid' ? 'border-rose-300' : 'border-slate-200'} focus:ring-2 focus:ring-violet-600 outline-none`}
+                className={`w-full p-4 pr-11 bg-[#F5F5F0] rounded-xl border ${websiteUrlStatus === 'valid' ? 'border-[#808080]' : websiteUrlStatus === 'invalid' ? 'border-rose-300' : 'border-[#EBEBE6]'} focus:ring-2 focus:ring-[#808080]/25 outline-none`}
               />
               {websiteUrlStatus === 'valid' && (
-                <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+                <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1A1A1A]" />
               )}
               {websiteUrlStatus === 'invalid' && (
                 <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-600" />
@@ -1681,16 +1676,16 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
               placeholder="Bransje (Begynn å skrive...)"
-              className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none"
+              className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none"
             />
 
             {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
+              <ul className="absolute z-50 w-full bg-white border border-[#EBEBE6] rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={index}
                     onClick={() => handleSelectIndustry(suggestion)}
-                    className="p-3 hover:bg-violet-50 cursor-pointer text-slate-700 transition-colors"
+                    className="p-3 hover:bg-[#F5F5F0] cursor-pointer text-[#1A1A1A] transition-colors"
                   >
                     {suggestion}
                   </li>
@@ -1699,12 +1694,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             )}
           </div>
 
-          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-violet-600 outline-none" />
+          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-5 bg-violet-600 text-white rounded-xl font-bold text-lg transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl disabled:opacity-50 enabled:hover:bg-violet-700 active:enabled:scale-[0.98]"
+            className="w-full py-5 bg-violet-700 text-white rounded-xl font-bold text-lg transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl disabled:opacity-50 enabled:hover:bg-violet-600 active:enabled:scale-[0.98]"
           >
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
           </button>
@@ -1719,7 +1714,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 // --- STORYBRAND SEKSJON (Med Animasjon) ---
 const StoryBrandOneLiner = () => {
   return (
-    <section className="relative py-20 sm:py-32 md:py-48 overflow-hidden bg-[#fcfcfd]">
+    <section className="relative py-20 sm:py-32 md:py-48 overflow-hidden bg-[#F5F5F0]">
 
       {/* Bakgrunn: En rolig, pulserende glød */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[800px] h-[400px] sm:h-[500px] bg-gradient-to-tr from-violet-100/50 via-indigo-50/50 to-white rounded-[100%] blur-[80px] animate-[pulse_10s_ease-in-out_infinite] pointer-events-none"></div>
@@ -1730,12 +1725,12 @@ const StoryBrandOneLiner = () => {
           {/* DEL 1: PROBLEMET (Venstre side) */}
           <RevealOnScroll delay={0} className="self-start sm:ml-12 relative">
             {/* En liten bakgrunns-sirkel for dybde */}
-            <div className="absolute -left-4 -top-4 w-20 h-20 bg-slate-100 rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
+            <div className="absolute -left-4 -top-4 w-20 h-20 bg-[#F5F5F0] rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
 
-            <div className="backdrop-blur-md bg-white/80 border border-slate-200/60 shadow-sm px-5 py-4 sm:px-8 sm:py-5 rounded-2xl inline-flex items-center gap-3 sm:gap-4 max-w-lg relative z-10">
-              <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></div>
-              <p className="text-slate-600 font-medium text-sm sm:text-lg leading-snug">
-                Mange bedrifter gjetter på hvordan de oppnår <span className="text-slate-900 font-bold border-b-2 border-slate-200">høyere rangering</span> på Google.
+            <div className="backdrop-blur-md bg-white/80 border border-[#EBEBE6]/60 shadow-sm px-5 py-4 sm:px-8 sm:py-5 rounded-2xl inline-flex items-center gap-3 sm:gap-4 max-w-lg relative z-10">
+              <div className="w-2 h-2 rounded-full bg-[#808080] shrink-0"></div>
+              <p className="text-[#808080] font-medium text-sm sm:text-lg leading-snug">
+                Mange bedrifter gjetter på hvordan de oppnår <span className="text-[#1A1A1A] font-bold border-b-2 border-[#EBEBE6]">høyere rangering</span> på Google.
               </p>
             </div>
           </RevealOnScroll>
@@ -1754,13 +1749,13 @@ const StoryBrandOneLiner = () => {
 
                 {/* Graf-stolper */}
                 <div className="flex items-end gap-2 w-full h-32">
-                  <div className="w-1/4 bg-slate-200/50 rounded-t-lg h-[30%] animate-[loading_3s_ease-in-out_infinite_0.2s]"></div>
-                  <div className="w-1/4 bg-slate-300/50 rounded-t-lg h-[50%] animate-[loading_3s_ease-in-out_infinite_0.5s]"></div>
+                  <div className="w-1/4 bg-[#EBEBE6]/50 rounded-t-lg h-[30%] animate-[loading_3s_ease-in-out_infinite_0.2s]"></div>
+                  <div className="w-1/4 bg-[#EBEBE6]/50 rounded-t-lg h-[50%] animate-[loading_3s_ease-in-out_infinite_0.5s]"></div>
                   <div className="w-1/4 bg-violet-300/50 rounded-t-lg h-[70%] animate-[loading_3s_ease-in-out_infinite_0.8s]"></div>
                   {/* Vinner-stolpen */}
                   <div className="w-1/4 bg-gradient-to-t from-violet-500 to-indigo-500 rounded-t-lg h-[100%] relative shadow-lg animate-[loading_3s_ease-in-out_infinite_1.1s]">
                     <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full animate-ping opacity-75"></div>
-                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-violet-500 rounded-full"></div>
+                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-[#1A1A1A] rounded-full"></div>
                   </div>
                 </div>
 
@@ -1769,12 +1764,12 @@ const StoryBrandOneLiner = () => {
 
             {/* Teksten */}
             <div className="text-left sm:text-right">
-              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-[1.2] sm:leading-[1.15]">
-                Vi bruker <span className="text-violet-600">AI</span> til å gi deg en <br className="hidden sm:block" />
+              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] tracking-tight leading-[1.2] sm:leading-[1.15]">
+                Vi bruker <span className="text-[#1A1A1A]">AI</span> til å gi deg en <br className="hidden sm:block" />
                 konkret oppskrift på å <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">nå toppen.</span>
               </h2>
 
-              <p className="mt-4 sm:mt-8 text-base sm:text-xl md:text-2xl text-slate-600 font-normal leading-relaxed max-w-2xl sm:ml-auto">
+              <p className="mt-4 sm:mt-8 text-base sm:text-xl md:text-2xl text-[#808080] font-normal leading-relaxed max-w-2xl sm:ml-auto">
                 Slik at du får trafikken og veksten du fortjener – helt uten gjetting.
               </p>
             </div>
@@ -1809,14 +1804,14 @@ const IndustriesSection = () => {
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <RevealOnScroll direction="up">
           <div className="text-center mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[10px] font-bold uppercase tracking-widest mb-5 border border-violet-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
               <Users size={11} />
               <span>Er dette for meg</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-950 mb-4 tracking-tight leading-tight">
-              Sikt hjelper <span className="text-violet-600">bedrifter som dere.</span>
+            <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] mb-4 tracking-tight leading-tight">
+              Sikt hjelper <span className="text-[#1A1A1A]">bedrifter som dere.</span>
             </h2>
-            <p className="text-base sm:text-lg text-slate-500 font-medium max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#808080] font-medium max-w-2xl mx-auto">
               Hvis kundene dine søker etter deg på Google — så fungerer Sikt for deg. Her er noen eksempler.
             </p>
           </div>
@@ -1825,19 +1820,19 @@ const IndustriesSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           {industries.map((industry, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 50}>
-              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-2xl sm:rounded-3xl ui-motion ui-lift-sm h-full [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-200 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-[#EBEBE6] rounded-2xl sm:rounded-3xl ui-motion ui-lift-sm h-full [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#F5F5F0] text-[#1A1A1A] flex items-center justify-center mb-4 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   {industry.icon}
                 </div>
-                <h3 className="text-sm sm:text-base font-black text-slate-900 mb-1">{industry.name}</h3>
-                <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed">{industry.example}</p>
+                <h3 className="text-sm sm:text-base font-black text-[#1A1A1A] mb-1">{industry.name}</h3>
+                <p className="text-[11px] sm:text-xs text-[#808080] font-medium leading-relaxed">{industry.example}</p>
               </div>
             </RevealOnScroll>
           ))}
         </div>
 
         <RevealOnScroll direction="up" delay={300}>
-          <p className="text-center text-xs sm:text-sm text-slate-400 font-medium mt-8 italic">
+          <p className="text-center text-xs sm:text-sm text-[#808080] font-medium mt-8 italic">
             Driver du noe annet? Sikt fungerer for alle bransjer der Google er kilden til kunder.
           </p>
         </RevealOnScroll>
@@ -1870,17 +1865,17 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         {/* --- OVERSKRIFT --- */}
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-16 md:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-600/10 backdrop-blur-md border border-violet-400/30 text-violet-300 text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F5F5F0] backdrop-blur-md border border-[#EBEBE6] text-[#808080] text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
               <BrainCircuit size={13} />
               <span>Både Google og AI</span>
             </div>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 leading-[1.1] sm:leading-[1.05]">
-              Google er ikke <span className="text-violet-400">alene</span> lenger.
+              Google er ikke <span className="text-[#1A1A1A]">alene</span> lenger.
               <br className="hidden sm:block" />
               <span className="sm:hidden"> </span>Kundene spør også ChatGPT.
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium px-2">
+            <p className="text-base sm:text-lg md:text-xl text-[#808080] max-w-2xl mx-auto leading-relaxed font-medium px-2">
               For å vinne i dag må du være synlig begge steder. Sikt jobber for begge.
             </p>
           </div>
@@ -1894,47 +1889,47 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 h-full">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-700/70 flex items-center justify-center">
-                    <SearchIcon size={16} className="text-slate-300" />
+                  <div className="w-9 h-9 rounded-full bg-[#1A1A1A]/70 flex items-center justify-center">
+                    <SearchIcon size={16} className="text-[#808080]" />
                   </div>
-                  <span className="text-xs uppercase tracking-widest text-slate-300 font-bold">Google</span>
+                  <span className="text-xs uppercase tracking-widest text-[#808080] font-bold">Google</span>
                 </div>
-                <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-black bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-400/30">Fortsatt viktig</span>
+                <span className="text-[9px] uppercase tracking-wider text-[#1A1A1A] font-black bg-[#F5F5F0] px-2 py-0.5 rounded-full border border-[#EBEBE6]">Fortsatt viktig</span>
               </div>
 
               <div className="bg-white/10 rounded-xl p-4 mb-5 border border-white/5">
-                <p className="text-sm text-slate-200 italic">"Beste SEO-byrå Oslo"</p>
+                <p className="text-sm text-[#EBEBE6] italic">"Beste SEO-byrå Oslo"</p>
               </div>
 
               {/* Fake søkeresultater */}
               <div className="space-y-3">
                 <div className="flex items-start gap-2 opacity-70">
-                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-slate-600 rounded-full w-3/4"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-[#808080] rounded-full w-3/4"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-50">
-                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-slate-600 rounded-full w-2/3"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-[#808080] rounded-full w-2/3"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-30">
-                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-slate-600 rounded-full w-1/2"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-[#808080] rounded-full w-1/2"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-20">
-                  <div className="w-1 h-1 rounded-full bg-violet-400 mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-slate-600 rounded-full w-5/6"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-[#808080] rounded-full w-5/6"></div>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 mt-6 italic">Sikt løfter deg til topps her. Det er grunnmuren.</p>
+              <p className="text-xs text-[#808080] mt-6 italic">Sikt løfter deg til topps her. Det er grunnmuren.</p>
             </div>
           </RevealOnScroll>
 
           {/* AI — Det nye laget */}
           <RevealOnScroll direction="right" delay={200}>
-            <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-violet-400/30 rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
+            <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-[#EBEBE6] rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
               {/* "Nytt"-indikator */}
-              <div className="absolute -top-3 -right-3 bg-violet-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
+              <div className="absolute -top-3 -right-3 bg-[#1A1A1A] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
                 Nytt
               </div>
 
@@ -1945,24 +1940,24 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
                   </div>
                   <span className="text-xs uppercase tracking-widest text-violet-200 font-bold">ChatGPT</span>
                 </div>
-                <span className="text-[9px] uppercase tracking-wider text-violet-200 font-black bg-violet-500/20 px-2 py-0.5 rounded-full border border-violet-400/40">I tillegg</span>
+                <span className="text-[9px] uppercase tracking-wider text-violet-200 font-black bg-[#EBEBE6] px-2 py-0.5 rounded-full border border-[#EBEBE6]">I tillegg</span>
               </div>
 
-              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-violet-400/20">
-                <p className="text-sm text-slate-100 italic">"Hvilket SEO-byrå bør jeg velge?"</p>
+              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-[#EBEBE6]">
+                <p className="text-sm text-[#F5F5F0] italic">"Hvilket SEO-byrå bør jeg velge?"</p>
               </div>
 
               {/* AI-svar med én anbefaling */}
               <div className="space-y-3">
-                <div className="bg-white/10 rounded-xl p-4 border border-violet-400/20">
+                <div className="bg-white/10 rounded-xl p-4 border border-[#EBEBE6]">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400 flex items-center justify-center">
                       <Sparkles size={10} className="text-white" />
                     </div>
                     <span className="text-xs text-violet-200 font-bold">ChatGPT</span>
                   </div>
-                  <p className="text-sm text-slate-100 leading-relaxed">
-                    Jeg vil anbefale <span className="font-bold text-violet-300 bg-violet-500/20 px-1.5 rounded">din bedrift</span> — de er kjent for...
+                  <p className="text-sm text-[#F5F5F0] leading-relaxed">
+                    Jeg vil anbefale <span className="font-bold text-[#808080] bg-[#EBEBE6] px-1.5 rounded">din bedrift</span> — de er kjent for...
                   </p>
                 </div>
               </div>
@@ -1976,9 +1971,9 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         <RevealOnScroll direction="up" delay={300}>
           <div className="max-w-3xl mx-auto text-center">
             <h3 className="text-2xl sm:text-3xl font-black mb-4 leading-tight">
-              Sikt jobber for <span className="text-violet-400">begge deler.</span>
+              Sikt jobber for <span className="text-[#1A1A1A]">begge deler.</span>
             </h3>
-            <p className="text-slate-400 text-base sm:text-lg mb-10 leading-relaxed">
+            <p className="text-[#808080] text-base sm:text-lg mb-10 leading-relaxed">
               Vi løfter deg høyere på Google — og sørger samtidig for at ChatGPT, Gemini og Perplexity anbefaler deg.
               <br className="hidden sm:block" />
               Ingen andre byråer i Norge gjør begge deler — ennå.
@@ -1986,13 +1981,13 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
 
             <button
               onClick={() => onSelectPlan('PREMIUM')}
-              className="group ui-motion ui-lift inline-flex items-center gap-3 px-10 py-5 bg-violet-600 text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl shadow-violet-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-500 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/50"
+              className="group ui-motion ui-lift inline-flex items-center gap-3 px-10 py-5 bg-violet-700 text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl shadow-violet-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20"
             >
               Inkludert i Premium
               <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </button>
 
-            <p className="text-xs text-slate-500 mt-5 uppercase tracking-widest font-bold">
+            <p className="text-xs text-[#808080] mt-5 uppercase tracking-widest font-bold">
               Vær synlig der kundene leter — både på Google og i AI
             </p>
           </div>
@@ -2065,48 +2060,48 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   ];
 
   return (
-    <section id="priser" className="py-16 sm:py-24 md:py-32 bg-slate-50 relative overflow-hidden">
+    <section id="priser" className="py-16 sm:py-24 md:py-32 bg-[#F5F5F0] relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-5 relative z-10">
 
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-950 mb-4 sm:mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
-            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-slate-400 -mt-0.5" /> for å se detaljer.</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6">Velg din <span className="text-[#1A1A1A]">vekstplan</span></h2>
+            <p className="text-base sm:text-lg md:text-xl text-[#808080] max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-[#808080] -mt-0.5" /> for å se detaljer.</p>
           </div>
         </RevealOnScroll>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-start">
           {plans.map((plan, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 100}>
-              <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-500 shadow-violet-200/50 md:scale-105 z-10' : 'border-slate-100'}`}>
+              <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-400 shadow-violet-200/50 md:scale-105 z-10' : 'border-[#EBEBE6]'}`}>
 
-                <div className="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 bg-violet-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 sm:px-3 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12 whitespace-nowrap">
+                <div className="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 bg-[#1A1A1A] text-white text-[10px] sm:text-xs font-black px-2.5 py-1 sm:px-3 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12 whitespace-nowrap">
                   70% RABATT 1. MND
                 </div>
 
                 {plan.highlighted && (
-                  <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wide shadow-lg whitespace-nowrap">
+                  <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wide shadow-lg whitespace-nowrap">
                     Mest valgt
                   </div>
                 )}
 
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-2 mt-2 sm:mt-0">{plan.title}</h3>
-                <p className="text-violet-600 text-xs sm:text-sm font-bold mb-3 sm:mb-4 uppercase tracking-wider">{plan.tagline}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-[#1A1A1A] mb-2 mt-2 sm:mt-0">{plan.title}</h3>
+                <p className="text-[#1A1A1A] text-xs sm:text-sm font-bold mb-3 sm:mb-4 uppercase tracking-wider">{plan.tagline}</p>
 
                 <div className="flex items-baseline gap-1 mb-3 sm:mb-4">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-950">{plan.price},-</span>
-                  <span className="text-slate-500 font-medium text-sm sm:text-base">/mnd</span>
+                  <span className="text-3xl sm:text-4xl font-black text-[#1A1A1A]">{plan.price},-</span>
+                  <span className="text-[#808080] font-medium text-sm sm:text-base">/mnd</span>
                 </div>
-                <p className="text-sm sm:text-base text-slate-600 mb-6 sm:mb-8 leading-relaxed">{plan.desc}</p>
+                <p className="text-sm sm:text-base text-[#808080] mb-6 sm:mb-8 leading-relaxed">{plan.desc}</p>
 
                 <ul className="space-y-3 mb-6 sm:mb-8">
                   {plan.features.map((feat, j) => {
                     const detailKey = `${i}-${j}`;
                     const isOpen = openDetail === detailKey;
                     return (
-                      <li key={j} className="text-slate-700">
+                      <li key={j} className="text-[#1A1A1A]">
                         <div className="flex items-start gap-3">
-                          <div className="mt-1 w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+                          <div className="mt-1 w-5 h-5 rounded-full bg-[#F5F5F0] flex items-center justify-center text-[#1A1A1A] shrink-0">
                             <Check size={12} strokeWidth={3} />
                           </div>
                           <span className="text-sm font-medium flex-1">{feat.text}</span>
@@ -2115,14 +2110,14 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                               type="button"
                               onClick={() => setOpenDetail(isOpen ? null : detailKey)}
                               aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
-                              className={`mt-0.5 shrink-0 transition-colors ${isOpen ? 'text-violet-600' : 'text-slate-300 hover:text-violet-500'}`}
+                              className={`mt-0.5 shrink-0 transition-colors ${isOpen ? 'text-[#1A1A1A]' : 'text-[#808080] hover:text-[#1A1A1A]'}`}
                             >
                               <HelpCircle size={14} />
                             </button>
                           )}
                         </div>
                         {isOpen && feat.detail && (
-                          <div className="mt-2 ml-8 p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-600 leading-relaxed">
+                          <div className="mt-2 ml-8 p-3 bg-[#F5F5F0] border border-[#EBEBE6] rounded-lg text-xs text-[#808080] leading-relaxed">
                             {feat.detail}
                           </div>
                         )}
@@ -2135,8 +2130,8 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                 <button
                   onClick={() => onSelectPlan(plan.title)}
                   className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base ui-motion transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${plan.highlighted
-                    ? 'bg-slate-950 text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200'
-                    : 'bg-slate-100 text-slate-950 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-200'
+                    ? 'bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200'
+                    : 'bg-[#F5F5F0] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#EBEBE6]'
                     }`}
                 >
                   Velg {plan.title}
@@ -2176,16 +2171,16 @@ const GeoFaq = () => {
         </RevealOnScroll>
         <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="border border-slate-100 rounded-[24px] sm:rounded-[32px] overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100 transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            <div key={i} className="border border-[#EBEBE6] rounded-[24px] sm:rounded-[32px] overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full p-6 sm:p-8 flex items-center justify-between text-left [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-slate-50/50 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
+                className="w-full p-6 sm:p-8 flex items-center justify-between text-left [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-[#F5F5F0]/50 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
               >
-                <span className="text-base sm:text-xl font-bold text-slate-950 pr-6 sm:pr-8 leading-snug">{faq.q}</span>
+                <span className="text-base sm:text-xl font-bold text-[#1A1A1A] pr-6 sm:pr-8 leading-snug">{faq.q}</span>
                 <ChevronDown className={`shrink-0 transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] size-5 ${open === i ? 'rotate-180' : ''}`} />
               </button>
               {open === i && (
-                <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-sm sm:text-lg text-slate-500 leading-relaxed font-medium animate-fade-in">
+                <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-sm sm:text-lg text-[#808080] leading-relaxed font-medium animate-fade-in">
                   {faq.a}
                 </div>
               )}
@@ -2204,10 +2199,10 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
   // Hvert steg har egen varighet (summeres til TOTAL_DURATION_MS)
   const steps = [
-    { icon: Key,      label: 'Kobler til Google Search Console', detail: 'Henter 16 måneder med søkeord- og klikkdata',     duration: 12000 },
-    { icon: Activity, label: 'Kjører teknisk helsesjekk',         detail: 'Core Web Vitals, mobil, SSL, ødelagte lenker',  duration: 15000 },
-    { icon: Radar,    label: 'Scanner konkurrenter',              detail: 'Finner hvem som ranker i din nisje',             duration: 14000 },
-    { icon: Sparkles, label: 'Klargjør AI-innsikt & dashboard',   detail: 'Genererer første anbefalinger',                 duration: 14000 },
+    { icon: Key,      label: 'Kobler til Google Search Console', detail: 'Søkeord fra Google kommer vanligvis om 1–2 uker — vi varsler deg når data er inne', duration: 12000 },
+    { icon: Activity, label: 'Kjører teknisk helsesjekk',         detail: 'Ytelse, mobil, SSL og tekniske funn — klart på minutter', duration: 15000 },
+    { icon: Radar,    label: 'Scanner konkurrenter',              detail: 'Første oversikt over hvem som ranker i din nisje', duration: 14000 },
+    { icon: Sparkles, label: 'Klargjør AI-innsikt & dashboard',   detail: 'Teknisk analyse og anbefalinger er klare med én gang', duration: 14000 },
   ];
 
   const [overallProgress, setOverallProgress] = useState(0); // 0–100
@@ -2247,16 +2242,16 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
   const remainingSeconds = Math.max(0, Math.ceil((TOTAL_DURATION_MS - elapsedMs) / 1000));
 
   return (
-    <section className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <section className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Bakgrunnseffekter */}
       <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-transparent rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-transparent rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-300">
+      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-[#EBEBE6] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-300">
 
         {/* Toppstripe — fylles opp i takt med hovedprogressjonen */}
-        <div className="h-1.5 bg-slate-100 relative overflow-hidden">
+        <div className="h-1.5 bg-[#F5F5F0] relative overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-emerald-500 transition-[width] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]"
             style={{ width: `${overallProgress}%` }}
@@ -2266,23 +2261,23 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
         <div className="p-8 sm:p-12 text-center">
 
           {/* Pulserende ikon som skifter med aktivt steg */}
-          <div className="mx-auto w-24 h-24 bg-violet-50 rounded-full flex items-center justify-center mb-6 relative">
-            <div className="absolute inset-0 bg-violet-100 rounded-full animate-ping opacity-30"></div>
+          <div className="mx-auto w-24 h-24 bg-[#F5F5F0] rounded-full flex items-center justify-center mb-6 relative">
+            <div className="absolute inset-0 bg-[#F5F5F0] rounded-full animate-ping opacity-30"></div>
             <div className="absolute inset-2 bg-white rounded-full"></div>
             {currentStep < steps.length ? (
               (() => {
                 const StepIcon = steps[currentStep].icon;
-                return <StepIcon className="w-10 h-10 text-violet-600 relative z-10 animate-pulse" />;
+                return <StepIcon className="w-10 h-10 text-[#1A1A1A] relative z-10 animate-pulse" />;
               })()
             ) : (
-              <CheckCircle2 className="w-12 h-12 text-emerald-500 relative z-10" />
+              <CheckCircle2 className="w-12 h-12 text-[#1A1A1A] relative z-10" />
             )}
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3">
+          <h1 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-3">
             {currentStep < steps.length ? 'Setter opp Sikt for deg' : 'Alt er klart!'}
           </h1>
-          <p className="text-slate-500 text-base sm:text-lg mb-2 leading-relaxed">
+          <p className="text-[#808080] text-base sm:text-lg mb-2 leading-relaxed">
             {currentStep < steps.length
               ? steps[currentStep].detail
               : 'Åpner dashboardet ditt...'}
@@ -2290,17 +2285,17 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
           {/* Nedtelling + prosent */}
           <div className="flex items-center justify-center gap-4 mb-8 text-sm">
-            <span className="text-slate-400 font-mono">
+            <span className="text-[#808080] font-mono">
               {currentStep < steps.length
                 ? `~${remainingSeconds}s igjen`
                 : 'Ferdig'}
             </span>
-            <span className="w-1 h-1 bg-slate-300 rounded-full" />
-            <span className="text-violet-600 font-black">{Math.round(overallProgress)}%</span>
+            <span className="w-1 h-1 bg-[#EBEBE6] rounded-full" />
+            <span className="text-[#1A1A1A] font-black">{Math.round(overallProgress)}%</span>
           </div>
 
           {/* Stor progress-bar */}
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-10 relative">
+          <div className="h-2 bg-[#F5F5F0] rounded-full overflow-hidden mb-10 relative">
             <div
               className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500 rounded-full transition-[width,background-position] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[length:200%_100%]"
               style={{ width: `${overallProgress}%`, backgroundPosition: `${overallProgress * 2}% 0` }}
@@ -2308,11 +2303,11 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
           </div>
 
           {/* Steg-liste */}
-          <div className="bg-slate-50 rounded-2xl p-6 text-left border border-slate-100">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">Sikt jobber i bakgrunnen</h3>
+          <div className="bg-[#F5F5F0] rounded-2xl p-6 text-left border border-[#EBEBE6]">
+            <h3 className="text-xs font-bold text-[#808080] uppercase tracking-wider mb-5">Sikt jobber i bakgrunnen</h3>
 
             <div className="space-y-4 relative">
-              <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-200"></div>
+              <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-[#EBEBE6]"></div>
 
               {steps.map((step, i) => {
                 const StepIcon = step.icon;
@@ -2322,31 +2317,31 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
                 return (
                   <div key={i} className="flex gap-4 items-center relative z-10">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-slate-50 shrink-0 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]
-                      ${isDone ? 'bg-emerald-500' : isActive ? 'bg-white border-2 border-violet-600' : 'bg-slate-200 border-2 border-white'}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-[#F5F5F0] shrink-0 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]
+                      ${isDone ? 'bg-[#1A1A1A]' : isActive ? 'bg-white border-2 border-[#1A1A1A]' : 'bg-[#EBEBE6] border-2 border-white'}
                     `}>
                       {isDone ? (
                         <Check size={13} className="text-white" />
                       ) : isActive ? (
-                        <div className="w-2 h-2 bg-violet-600 rounded-full animate-pulse" />
+                        <div className="w-2 h-2 bg-[#808080] rounded-full animate-pulse" />
                       ) : (
-                        <StepIcon size={11} className="text-slate-400" />
+                        <StepIcon size={11} className="text-[#808080]" />
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className={`text-sm font-bold transition-colors
-                        ${isDone ? 'text-slate-400 line-through decoration-slate-300' : isActive ? 'text-slate-900' : 'text-slate-400'}
+                        ${isDone ? 'text-[#808080] line-through decoration-[#EBEBE6]' : isActive ? 'text-[#1A1A1A]' : 'text-[#808080]'}
                       `}>
                         {step.label}
                       </span>
                       {isActive && (
-                        <span className="text-xs text-violet-600 font-medium animate-pulse mt-0.5">Jobber nå...</span>
+                        <span className="text-xs text-[#1A1A1A] font-medium animate-pulse mt-0.5">Jobber nå...</span>
                       )}
                       {isPending && (
-                        <span className="text-xs text-slate-400 mt-0.5">Venter</span>
+                        <span className="text-xs text-[#808080] mt-0.5">Venter</span>
                       )}
                       {isDone && (
-                        <span className="text-xs text-emerald-600 font-medium mt-0.5">Ferdig</span>
+                        <span className="text-xs text-[#1A1A1A] font-medium mt-0.5">Ferdig</span>
                       )}
                     </div>
                   </div>
@@ -2355,8 +2350,11 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 mt-6">
-            Du blir automatisk sendt til dashboardet når alt er klart.
+          <p className="text-sm text-[#808080] mt-6 pt-5 border-t border-[#EBEBE6] leading-relaxed">
+            Teknisk analyse er klar med én gang. Søkeorddata fra Google kommer vanligvis om 1–2 uker etter tilkobling — det er normalt for en ny konto, og du får varsel når tallene er inne.
+          </p>
+          <p className="text-xs text-[#808080] mt-3">
+            Du blir automatisk sendt til dashboardet når oppsettet er ferdig.
           </p>
 
         </div>
@@ -2422,24 +2420,24 @@ const PainPointsSection = () => (
     <div className="max-w-6xl mx-auto px-5 sm:px-6">
       <RevealOnScroll direction="up">
         <div className="text-center mb-10 sm:mb-16 md:mb-20">
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-950 mb-3 sm:mb-6">Synlighet er nøkkelen</h2>
-          <p className="text-sm sm:text-lg md:text-xl text-violet-600 font-semibold opacity-90 px-4">Gir ikke markedsføringen din resultater?</p>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#1A1A1A] mb-3 sm:mb-6">Synlighet er nøkkelen</h2>
+          <p className="text-sm sm:text-lg md:text-xl text-[#1A1A1A] font-semibold opacity-90 px-4">Gir ikke markedsføringen din resultater?</p>
         </div>
       </RevealOnScroll>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 relative z-10 text-left">
         {[
           { text: "Lave Google-rangeringer hindrer din suksess.", icon: <TrendingDown size={18} />, subIcon: <Monitor className="text-rose-200/40 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
-          { text: "Bortkastet tid på strategier som ikke virker.", icon: <Clock size={18} />, subIcon: <Clock className="text-slate-100 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
-          { text: "Frustrasjon over manglende kunder.", icon: <Frown size={18} />, subIcon: <User className="text-slate-100 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
+          { text: "Bortkastet tid på strategier som ikke virker.", icon: <Clock size={18} />, subIcon: <Clock className="text-[#F5F5F0] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
+          { text: "Frustrasjon over manglende kunder.", icon: <Frown size={18} />, subIcon: <User className="text-[#F5F5F0] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
           { text: "Tapte muligheter for vekst og salg.", icon: <TrendingDown size={18} />, subIcon: <BarChart3 className="text-rose-200/40 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> }
         ].map((point, i) => (
           <RevealOnScroll key={i} direction={i % 2 === 0 ? 'left' : 'right'} delay={i * 50}>
-            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md">
+            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md">
               {point.subIcon}
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-rose-50 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 relative z-10">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-rose-50 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 relative z-10">
                 {React.cloneElement(point.icon as React.ReactElement<any>, { size: 24 })}
               </div>
-              <p className="text-slate-700 font-bold text-sm sm:text-lg leading-snug relative z-10">{point.text}</p>
+              <p className="text-[#1A1A1A] font-bold text-sm sm:text-lg leading-snug relative z-10">{point.text}</p>
             </div>
           </RevealOnScroll>
         ))}
@@ -2479,21 +2477,21 @@ const FAQSection = () => {
   ];
 
   return (
-    <section className="py-16 sm:py-32 bg-slate-50/30 relative overflow-hidden">
+    <section className="py-16 sm:py-32 bg-[#F5F5F0]/30 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-[0.05] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20">
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left">
             <RevealOnScroll direction="left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 border border-violet-100">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#EBEBE6]">
                 <HelpCircle size={11} />
                 <span>Det du lurer på</span>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-950 mb-6 leading-tight tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] mb-6 leading-tight tracking-tight">
                 Spørsmål vi <br className="hidden lg:block" /> faktisk får.
               </h2>
-              <p className="text-slate-500 font-medium text-sm sm:text-lg leading-relaxed mb-8 max-w-md">
+              <p className="text-[#808080] font-medium text-sm sm:text-lg leading-relaxed mb-8 max-w-md">
                 Ærlige svar på det folk lurer på før de prøver Sikt. Ingen salgssnakk.
               </p>
               <Lightbulb className="w-32 h-32 text-violet-100 hidden lg:block opacity-50 mt-10 -ml-4" />
@@ -2506,26 +2504,26 @@ const FAQSection = () => {
                 <RevealOnScroll key={i} direction="up" delay={i * 50}>
                   <div
                     className={`group transition-[border-color,background-color,box-shadow] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] border rounded-[20px] sm:rounded-[24px] overflow-hidden ${openIndex === i
-                      ? 'bg-white border-violet-200 shadow-xl shadow-violet-500/5'
-                      : 'bg-white/60 backdrop-blur-sm border-slate-100 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white'
+                      ? 'bg-white border-[#EBEBE6] shadow-xl shadow-violet-500/5'
+                      : 'bg-white/60 backdrop-blur-sm border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white'
                       }`}
                   >
                     <button
                       onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${openIndex === i ? 'bg-violet-50/50' : ''}`}
+                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${openIndex === i ? 'bg-[#F5F5F0]/50' : ''}`}
                     >
-                      <span className={`text-sm sm:text-lg font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] pr-2 sm:pr-4 ${openIndex === i ? 'text-violet-600' : 'text-slate-800'}`}>
+                      <span className={`text-sm sm:text-lg font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] pr-2 sm:pr-4 ${openIndex === i ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>
                         {faq.question}
                       </span>
                       <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-[background-color,border-color,color,transform] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i
-                        ? 'bg-violet-600 border-violet-600 text-white shadow-lg'
-                        : 'bg-slate-50 border-slate-100 text-slate-400'
+                        ? 'bg-violet-700 border-violet-700 text-white shadow-lg'
+                        : 'bg-[#F5F5F0] border-[#EBEBE6] text-[#808080]'
                         }`}>
                         <ChevronDown size={16} className={`transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i ? 'rotate-180' : 'rotate-0'}`} />
                       </div>
                     </button>
                     <div className={`transition-[max-height,opacity,padding-bottom] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] overflow-hidden ${openIndex === i ? 'max-h-[500px] opacity-100 pb-6 sm:pb-8' : 'max-h-0 opacity-0'}`}>
-                      <div className="px-6 sm:px-8 text-xs sm:text-base text-slate-500 font-medium leading-relaxed pt-4 sm:pt-6 border-t border-slate-50/50 mx-2">
+                      <div className="px-6 sm:px-8 text-xs sm:text-base text-[#808080] font-medium leading-relaxed pt-4 sm:pt-6 border-t border-[#EBEBE6]/50 mx-2">
                         {faq.answer}
                       </div>
                     </div>
@@ -2554,7 +2552,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
   return (
     <section className="relative py-16 sm:py-24 md:py-36 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
       {/* Dekorative glød-effekter */}
-      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-violet-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#F5F5F0] rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-indigo-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
@@ -2580,7 +2578,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={scrollToPricing}
-              className="group ui-motion ui-lift w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-violet-700 rounded-full text-base sm:text-lg font-black tracking-tight flex items-center justify-center gap-3 shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50"
+              className="group ui-motion ui-lift w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-[#1A1A1A] rounded-full text-base sm:text-lg font-black tracking-tight flex items-center justify-center gap-3 shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]"
             >
               Se pakkene
               <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
@@ -2644,25 +2642,25 @@ const ValuePropositionSection = () => {
     {
       title: "Rapporter på norsk du faktisk leser",
       desc: "Ingen grafer med engelske forkortelser. Du får vite hva vi har gjort, hva som har skjedd med bedriften din, og hva som kommer — på plain norsk.",
-      icon: <FileText className="text-violet-600" />,
+      icon: <FileText className="text-[#3F8F38]" />,
       illu: <FileText className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     },
     {
       title: "Spør Sikt AI hva som helst",
       desc: "Ikke en anelse hva et søkeord eller en backlink er? Spør dashboardet. Du får svar som en 10-åring kan forstå på 10 sekunder.",
-      icon: <Sparkles className="text-violet-600" />,
+      icon: <Sparkles className="text-[#3F8F38]" />,
       illu: <Sparkles className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     },
     {
       title: "Vi måler i kunder, ikke i bounce rate",
       desc: "Du ser ekte forretningstall: hvor mange besøkende, hvor mange potensielle kunder, hvor mye omsetning. Ikke tall du må google for å forstå.",
-      icon: <TrendingUp className="text-violet-600" />,
+      icon: <TrendingUp className="text-[#3F8F38]" />,
       illu: <TrendingUp className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     }
   ];
 
   return (
-    <section className="py-16 sm:py-32 bg-slate-50/20 relative overflow-hidden text-center">
+    <section className="py-16 sm:py-32 bg-[#F5F5F0]/20 relative overflow-hidden text-center">
       <div className="absolute inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-20%] left-[-10%] w-[50rem] h-[50rem] bg-violet-200/10 rounded-full blur-[140px] animate-mesh opacity-60"></div>
       </div>
@@ -2671,20 +2669,20 @@ const ValuePropositionSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20 items-center">
           <RevealOnScroll direction="left">
             <div className="max-w-xl text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 text-violet-600 text-[10px] font-bold uppercase tracking-widest mb-6 border border-violet-100">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#EBEBE6]">
                 <Sparkles size={11} />
                 <span>Hvorfor Sikt</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight text-slate-950 mb-4 sm:mb-8 leading-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight text-[#1A1A1A] mb-4 sm:mb-8 leading-tight">
                 Andre byråer snakker tech.
                 <br />
-                <span className="text-violet-600">Vi snakker norsk.</span>
+                <span className="text-[#3F8F38]">Vi snakker norsk.</span>
               </h2>
-              <p className="text-sm sm:text-lg md:text-xl text-slate-600 leading-relaxed mb-8 font-medium opacity-80">
+              <p className="text-sm sm:text-lg md:text-xl text-[#808080] leading-relaxed mb-8 font-medium opacity-80">
                 Du driver en bedrift, ikke et IT-selskap. Sikt oversetter alt det tekniske til plain norsk — så du kan fokusere på det viktigste: kundene dine.
               </p>
               <div className="hidden lg:flex gap-4">
-                <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-400 rotate-6 shadow-sm"><FileText size={32} /></div>
+                <div className="w-20 h-20 bg-[#F5F5F0] rounded-2xl flex items-center justify-center text-[#1A1A1A] rotate-6 shadow-sm"><FileText size={32} /></div>
                 <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Sparkles size={32} /></div>
                 <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><TrendingUp size={32} /></div>
               </div>
@@ -2693,14 +2691,14 @@ const ValuePropositionSection = () => {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 text-left">
             {benefits.map((benefit, i) => (
               <RevealOnScroll key={i} direction="right" delay={i * 100}>
-                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-slate-100 ui-motion ui-lift-sm h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-100">
+                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] ui-motion ui-lift-sm h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6]">
                   {benefit.illu}
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 relative z-10">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#F5F5F0] flex items-center justify-center shrink-0 relative z-10">
                     {React.cloneElement(benefit.icon as React.ReactElement<any>, { size: 28 })}
                   </div>
                   <div className="flex-1 relative z-10">
-                    <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-2">{benefit.title}</h3>
-                    <p className="text-xs sm:text-base text-slate-500 leading-relaxed font-medium">{benefit.desc}</p>
+                    <h3 className="text-base sm:text-xl font-bold text-[#1A1A1A] mb-2">{benefit.title}</h3>
+                    <p className="text-xs sm:text-base text-[#808080] leading-relaxed font-medium">{benefit.desc}</p>
                   </div>
                 </div>
               </RevealOnScroll>
@@ -2727,8 +2725,8 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
         {/* Intro */}
         <RevealOnScroll direction="up">
           <div className="mb-12 sm:mb-24">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 mb-4 sm:mb-8">3 trinn til suksess</h2>
-            <p className="text-sm sm:text-lg md:text-xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed opacity-90 px-4">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1A1A1A] mb-4 sm:mb-8">3 trinn til suksess</h2>
+            <p className="text-sm sm:text-lg md:text-xl text-[#808080] font-medium max-w-2xl mx-auto leading-relaxed opacity-90 px-4">
               Vi har forenklet SEO. Slik tar vi din bedrift fra usynlig til markedsleder.
             </p>
           </div>
@@ -2736,33 +2734,33 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
 
         {/* Stegene */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-16 relative mb-16">
-          <div className="hidden md:block absolute top-[30%] left-[15%] right-[15%] h-[1px] bg-slate-100 -z-0"></div>
+          <div className="hidden md:block absolute top-[30%] left-[15%] right-[15%] h-[1px] bg-[#F5F5F0] -z-0"></div>
           {steps.map((step, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 150}>
               <div className="relative z-10 flex flex-col items-center group cursor-default">
 
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-8 relative [@media(hover:hover)_and_(pointer:fine)]:group-hover:-translate-y-2 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-visible">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-[#EBEBE6] shadow-sm flex items-center justify-center mb-8 relative [@media(hover:hover)_and_(pointer:fine)]:group-hover:-translate-y-2 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-visible">
 
                   {/* --- HER ER RABATT-BADGEN --- */}
                   {step.number === "1" && (
-                    <div className="absolute -top-4 -left-6 bg-violet-600 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform -rotate-12 whitespace-nowrap">
+                    <div className="absolute -top-4 -left-6 bg-[#1A1A1A] text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform -rotate-12 whitespace-nowrap">
                       70% RABATT
                     </div>
                   )}
                   {/* --------------------------- */}
 
-                  <div className="absolute -top-1 -right-1 w-8 h-8 sm:w-10 sm:h-10 bg-slate-950 text-white rounded-xl flex items-center justify-center text-xs sm:text-sm font-black border-2 border-white relative z-20">0{step.number}</div>
+                  <div className="absolute -top-1 -right-1 w-8 h-8 sm:w-10 sm:h-10 bg-[#1A1A1A] text-white rounded-xl flex items-center justify-center text-xs sm:text-sm font-black border-2 border-white relative z-20">0{step.number}</div>
 
                   {/* Ikoner og illustrasjoner */}
                   <div className="relative z-10 overflow-hidden w-full h-full rounded-[32px] sm:rounded-[44px] flex items-center justify-center">
                     {step.illu}
-                    {React.cloneElement(step.icon as React.ReactElement<any>, { size: 32, className: "text-violet-600 relative z-10" })}
+                    {React.cloneElement(step.icon as React.ReactElement<any>, { size: 32, className: "text-[#1A1A1A] relative z-10" })}
                   </div>
 
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-950 mb-3 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-600 transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">{step.title}</h3>
-                <p className="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-[#1A1A1A] mb-3 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">{step.title}</h3>
+                <p className="text-sm sm:text-lg text-[#808080] font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
               </div>
             </RevealOnScroll>
           ))}
@@ -2775,7 +2773,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
               // Dette fungerer som en heis direkte ned til pris-seksjonen
               document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
-            className="group ui-motion w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-950 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200"
+            className="group ui-motion w-full sm:w-auto flex items-center justify-center gap-3 bg-[#1A1A1A] text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200"
           >
             Ta meg til toppen av Google <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1 shrink-0" />
           </button>
@@ -2795,15 +2793,15 @@ const InsightSection = () => {
           {/* Venstre side: Kontekst og emosjonell tekst */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <RevealOnScroll direction="left">
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-black uppercase tracking-widest mb-4 border border-violet-100">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-black uppercase tracking-widest mb-4 border border-[#EBEBE6]">
                 <Sparkles size={12} />
                 <span>Vi forstår problemet</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.15] sm:leading-[1.1] tracking-tight">
-                Føles markedsføringen <span className="text-violet-600">ineffektiv?</span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#1A1A1A] leading-[1.15] sm:leading-[1.1] tracking-tight">
+                Føles markedsføringen <span className="text-[#1A1A1A]">ineffektiv?</span>
               </h2>
-              <div className="space-y-4 sm:space-y-6 text-slate-600 font-medium leading-relaxed mt-6 sm:mt-8">
-                <p className="text-base sm:text-lg md:text-xl text-slate-900 font-bold">
+              <div className="space-y-4 sm:space-y-6 text-[#808080] font-medium leading-relaxed mt-6 sm:mt-8">
+                <p className="text-base sm:text-lg md:text-xl text-[#1A1A1A] font-bold">
                   Du legger ned timer og kroner — men telefonen ringer ikke.
                 </p>
                 <p className="text-sm sm:text-base md:text-lg opacity-80">
@@ -2819,7 +2817,7 @@ const InsightSection = () => {
 
             {/* Kort 1: Frustrasjon (Stor) */}
             <RevealOnScroll direction="up" className="md:col-span-2">
-              <div className="p-6 sm:p-8 md:p-10 bg-white border border-slate-100 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+              <div className="p-6 sm:p-8 md:p-10 bg-white border border-[#EBEBE6] rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
                 <div className="absolute -right-6 -bottom-6 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-10 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-110 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <HeartHandshake size={180} />
                 </div>
@@ -2827,9 +2825,9 @@ const InsightSection = () => {
                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shrink-0 shadow-inner">
                     <SearchCheck size={24} />
                   </div>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950">Full åpenhet, null gjetting</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[#1A1A1A]">Full åpenhet, null gjetting</h3>
                 </div>
-                <p className="text-sm sm:text-base md:text-lg text-slate-500 font-medium leading-relaxed max-w-xl">
+                <p className="text-sm sm:text-base md:text-lg text-[#808080] font-medium leading-relaxed max-w-xl">
                   Du ser nøyaktig hva vi gjør, hvorfor, og hvilken effekt det har. Ingen svarte bokser, ingen månedsrapporter fulle av stammespråk.
                 </p>
               </div>
@@ -2845,8 +2843,8 @@ const InsightSection = () => {
                   <Cpu size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-950 mb-2 sm:mb-3">Drevet av moderne AI</h3>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+                  <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] mb-2 sm:mb-3">Drevet av moderne AI</h3>
+                  <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">
                     Vi bruker banebrytende teknologi for å maksimere rekkevidden din og automatisere suksess på en måte tradisjonelle metoder ikke kan.
                   </p>
                 </div>
@@ -2855,16 +2853,16 @@ const InsightSection = () => {
 
             {/* Kort 3: Vekst (Liten) */}
             <RevealOnScroll direction="up" delay={200}>
-              <div className="group p-6 sm:p-8 bg-emerald-50/30 border border-emerald-100/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+              <div className="group p-6 sm:p-8 bg-[#F5F5F0]/30 border border-[#EBEBE6]/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
                 <div className="absolute -right-4 -top-4 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:-rotate-12 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <BarChart4 size={100} />
                 </div>
-                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-emerald-100">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-[#1A1A1A] rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 shadow-lg shadow-emerald-100">
                   <TrendingUp size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-950 mb-2 sm:mb-3">Velprøvde strategier</h3>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+                  <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] mb-2 sm:mb-3">Velprøvde strategier</h3>
+                  <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">
                     Utviklet spesifikt for små bedrifter i Norge med fokus på vekst. Vi leverer målbare resultater som faktisk merkes på trafikken din.
                   </p>
                 </div>
@@ -2879,8 +2877,11 @@ const InsightSection = () => {
 };
 
 const TrustSection = () => {
+  const iconTileClass =
+    'w-12 h-12 rounded-xl flex items-center justify-center mb-4 sm:mb-6 shrink-0 border border-white/10 bg-white/[0.08] transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-[1.04]';
+
   return (
-    <section className="py-16 sm:py-20 md:py-24 bg-slate-950 text-white relative overflow-hidden">
+    <section className="py-16 sm:py-20 md:py-24 bg-[#1A1A1A] text-white relative overflow-hidden">
       {/* Bakgrunnseffekt */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
         <div className="absolute top-[-50%] left-[-10%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-violet-900 blur-[100px] sm:blur-[120px]"></div>
@@ -2890,15 +2891,15 @@ const TrustSection = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-5 relative z-10 text-center">
 
         <div className="mb-10 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-xs sm:text-sm font-bold mb-6 sm:mb-8">
-            <ShieldCheck size={14} />
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/15 text-violet-200 text-xs sm:text-sm font-bold mb-6 sm:mb-8">
+            <ShieldCheck size={14} className="text-[#6BBF63]" />
             <span>Null risiko. Full kontroll.</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">
-            Vår <span className="text-violet-400">Kvalitetsgaranti</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight text-white">
+            Vår <span className="text-violet-300">Kvalitetsgaranti</span>
           </h2>
-          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed px-2">
+          <p className="text-base sm:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed px-2">
             Vi vet at du har brent deg på byråer før. Derfor har vi fjernet usikkerheten og lagt risikoen på våre skuldre, ikke dine.
           </p>
         </div>
@@ -2907,72 +2908,72 @@ const TrustSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-left">
 
           {/* Punkt 1: Økonomi (OPPDATERT MED 70% RABATT) */}
-          <div className="bg-gradient-to-br from-violet-900/40 to-slate-900/40 border border-violet-500/30 p-6 sm:p-8 rounded-3xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 bg-violet-600 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-bl-xl">
+          <div className="bg-gradient-to-br from-violet-900/50 to-indigo-950/40 border border-violet-500/25 p-6 sm:p-8 rounded-3xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 bg-violet-700 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-bl-xl">
               ØKONOMISK TRYGGHET
             </div>
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-violet-900/20 mt-2">
+            <div className={`${iconTileClass} bg-violet-500/20 border-violet-400/20 text-white shadow-lg shadow-violet-900/30 mt-2`}>
               <span className="text-xl font-black">70%</span>
             </div>
             <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">70% rabatt start</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-white/60 text-sm leading-relaxed">
               Er du usikker på effekten? Vi gir deg 70% rabatt den første måneden. Vi tar den økonomiske risikoen for å bevise at vi leverer verdi før du betaler fullpris. Ingen bindingstid.
             </p>
           </div>
 
           {/* Punkt 2: Sikkerhet */}
-          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+          <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
+            <div className={`${iconTileClass} text-[#6BBF63]`}>
               <ShieldCheck size={22} />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Din side er trygg</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Din side er trygg</h3>
+            <p className="text-white/60 text-sm leading-relaxed">
               Frykt ikke for nettsiden din. Vi tar alltid full backup før arbeid. Ingen endringer publiseres uten din godkjenning. Vi passer på merkevaren din.
             </p>
           </div>
 
           {/* Punkt 3: Kvalitet */}
-          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+          <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
+            <div className={`${iconTileClass} text-violet-300`}>
               <User size={22} />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Ekte eksperter</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Ekte eksperter</h3>
+            <p className="text-white/60 text-sm leading-relaxed">
               Ingen automatiserte søppel-rapporter. En rådgiver analyserer din bedrift manuelt og legger en konkret slagplan for å slå dine konkurrenter.
             </p>
           </div>
 
           {/* Punkt 4: Arbeidsmengde (Med Zap i stedet for Coffee for å unngå feil) */}
-          <div className="bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400 mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+          <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
+            <div className={`${iconTileClass} text-amber-300`}>
               <Zap size={22} />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Vi gjør jobben</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Vi gjør jobben</h3>
+            <p className="text-white/60 text-sm leading-relaxed">
               Slipp å lære deg SEO. Vi tar det tunge tekniske løftet. Din eneste oppgave er å si "ja" eller "nei" til våre forslag.
             </p>
           </div>
 
           {/* Punkt 5: Fremtiden */}
-          <div className="md:col-span-2 bg-white/5 border border-white/10 p-6 sm:p-8 rounded-3xl hover:bg-white/10 transition-colors group relative overflow-hidden">
+          <div className="md:col-span-2 bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group relative overflow-hidden">
             <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
-              <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-rose-400 shrink-0 group-hover:scale-110 transition-transform">
+              <div className={`${iconTileClass} text-rose-300 mb-0 sm:mb-0`}>
                 <TrendingUp size={22} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Hva skjer på toppen?</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Hva skjer på toppen?</h3>
+                <p className="text-white/60 text-sm leading-relaxed mb-3 sm:mb-4">
                   Når vi når 1. plassen, er ikke jobben over. Da velger du veien videre:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="bg-slate-900/50 p-3 sm:p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/[0.06] p-3 sm:p-4 rounded-xl border border-white/10">
                     <strong className="text-white block text-sm mb-1">A) Forsvar</strong>
-                    <span className="text-xs text-slate-500">Vi overvåker og nøytraliserer konkurrenter som prøver å ta plassen din.</span>
+                    <span className="text-xs text-white/55">Vi overvåker og nøytraliserer konkurrenter som prøver å ta plassen din.</span>
                   </div>
-                  <div className="bg-slate-900/50 p-3 sm:p-4 rounded-xl border border-white/5">
+                  <div className="bg-white/[0.06] p-3 sm:p-4 rounded-xl border border-white/10">
                     <strong className="text-white block text-sm mb-1">B) Dominans</strong>
-                    <span className="text-xs text-slate-500">Vi bruker tilliten Google nå har til deg for å vinne enda flere lønnsomme søkeord.</span>
+                    <span className="text-xs text-white/55">Vi bruker tilliten Google nå har til deg for å vinne enda flere lønnsomme søkeord.</span>
                   </div>
                 </div>
               </div>
@@ -2985,11 +2986,11 @@ const TrustSection = () => {
         <div className="mt-10 sm:mt-16">
           <button
             onClick={handleLogin}
-            className="w-full sm:w-auto bg-white text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg ui-motion shadow-lg shadow-white/10 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-200"
+            className="w-full sm:w-auto bg-white text-[#1A1A1A] px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg ui-motion shadow-lg shadow-white/10 transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-100 active:scale-[0.98]"
           >
             Start risikofritt i dag <ArrowRight className="inline ml-2" size={20} />
           </button>
-          <p className="text-slate-500 text-xs mt-4">Ingen liten skrift. Ingen skjulte gebyrer.</p>
+          <p className="text-white/45 text-xs mt-4">Ingen liten skrift. Ingen skjulte gebyrer.</p>
         </div>
 
       </div>
@@ -3005,14 +3006,14 @@ const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
   <section className="py-20 sm:py-32 bg-white relative overflow-hidden text-center">
     <div className="max-w-4xl mx-auto px-5 relative z-10">
       <RevealOnScroll direction="up">
-        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-950 mb-6 sm:mb-8 tracking-tighter">Klar for en teknisk fordel?</h2>
-        <p className="text-base sm:text-xl text-slate-600 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
+        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-[#1A1A1A] mb-6 sm:mb-8 tracking-tighter">Klar for en teknisk fordel?</h2>
+        <p className="text-base sm:text-xl text-[#808080] font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
           Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
         </p>
         <button
           // 2. Legg til onClick her:
           onClick={() => onNavigate('login')}
-          className="ui-motion ui-lift px-10 py-4 sm:px-12 sm:py-5 bg-slate-950 text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600"
+          className="ui-motion ui-lift px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
         >
           Ta meg til toppen av Google
         </button>
@@ -3035,29 +3036,29 @@ const LegalPage = ({ title, lastUpdated, onBack, children }: {
     <div className="max-w-3xl mx-auto px-5 sm:px-6">
       <button
         onClick={onBack}
-        className="ui-motion inline-flex items-center gap-2 text-sm font-bold text-slate-500 mb-10 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600"
+        className="ui-motion inline-flex items-center gap-2 text-sm font-bold text-[#808080] mb-10 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]"
       >
         <ArrowLeft size={16} />
         Tilbake til forsiden
       </button>
 
       <div className="mb-12">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-950 tracking-tight mb-4 leading-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#1A1A1A] tracking-tight mb-4 leading-tight">
           {title}
         </h1>
-        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">
+        <p className="text-sm text-[#808080] font-bold uppercase tracking-widest">
           Sist oppdatert: {lastUpdated}
         </p>
       </div>
 
-      <div className="prose-legal space-y-8 text-slate-700 leading-relaxed">
+      <div className="prose-legal space-y-8 text-[#1A1A1A] leading-relaxed">
         {children}
       </div>
 
-      <div className="mt-16 pt-10 border-t border-slate-100 text-sm text-slate-500">
+      <div className="mt-16 pt-10 border-t border-[#EBEBE6] text-sm text-[#808080]">
         <p className="mb-2">
           Har du spørsmål? Kontakt oss på{" "}
-          <a href="mailto:siktseo@gmail.com" className="text-violet-600 font-bold hover:underline">
+          <a href="mailto:siktseo@gmail.com" className="text-[#1A1A1A] font-bold hover:underline">
             siktseo@gmail.com
           </a>
         </p>
@@ -3239,38 +3240,38 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
 
 
 const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
-  <footer className="bg-slate-950 text-white py-16 sm:py-20 border-t border-slate-900 overflow-hidden relative text-center">
+  <footer className="bg-[#1A1A1A] text-white py-16 sm:py-20 border-t border-slate-900 overflow-hidden relative text-center">
     <div className="max-w-6xl mx-auto px-5 relative z-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10 sm:gap-12 mb-16 sm:mb-20">
         <div className="md:col-span-2 text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-950 font-black text-xl">S</div>
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#1A1A1A] font-black text-xl">S</div>
             <span className="text-2xl font-black tracking-tight">Sikt</span>
           </div>
-          <p className="text-slate-400 font-medium max-w-sm leading-relaxed mb-8 mx-auto md:mx-0 text-sm">
+          <p className="text-[#808080] font-medium max-w-sm leading-relaxed mb-8 mx-auto md:mx-0 text-sm">
             Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
           </p>
-          <div className="flex items-center justify-center md:justify-start gap-3 text-slate-400 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">
-            <Mail size={16} className="text-violet-500" />
+          <div className="flex items-center justify-center md:justify-start gap-3 text-[#808080] transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">
+            <Mail size={16} className="text-[#1A1A1A]" />
             <span className="font-bold text-xs">siktseo@gmail.com</span>
           </div>
         </div>
         <div className="text-center md:text-left">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6 sm:mb-8">Selskap</h4>
-          <ul className="space-y-3 sm:space-y-4 text-slate-400 font-bold text-sm">
-            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400">Om Sikt</a></li>
-            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400">Tjenester</a></li>
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-[#808080] mb-6 sm:mb-8">Selskap</h4>
+          <ul className="space-y-3 sm:space-y-4 text-[#808080] font-bold text-sm">
+            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Om Sikt</a></li>
+            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Tjenester</a></li>
           </ul>
         </div>
         <div className="text-center md:text-left">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6 sm:mb-8">Kontakt</h4>
-          <div className="flex justify-center md:justify-start gap-4 text-slate-400">
-            <Linkedin size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400" />
-            <Twitter size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-400" />
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-[#808080] mb-6 sm:mb-8">Kontakt</h4>
+          <div className="flex justify-center md:justify-start gap-4 text-[#808080]">
+            <Linkedin size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]" />
+            <Twitter size={20} className="cursor-pointer transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]" />
           </div>
         </div>
       </div>
-      <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-600 text-center">
+      <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#808080] text-center">
         <p>© 2026 SIKT TECHNOLOGIES AS. NORSK DESIGN.</p>
         <div className="flex gap-6 sm:gap-10">
           <button
@@ -3314,13 +3315,13 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const getAvatarUrl = (u: any) => u?.user_metadata?.avatar_url || u?.user_metadata?.picture;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 navbar-shell-t ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 navbar-shell-t ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-[#EBEBE6] py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
 
         {/* LOGO */}
         <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-600 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">S</div>
-          <span className="text-lg sm:text-xl font-black text-slate-900 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-600 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">Sikt</span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#1A1A1A] rounded-xl flex items-center justify-center text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">S</div>
+          <span className="text-lg sm:text-xl font-black text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">Sikt</span>
         </div>
 
         {/* DESKTOP MENY */}
@@ -3330,50 +3331,50 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
           {user && hasAccess && (
             <button
               onClick={() => onNavigate('dashboard')}
-              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'dashboard' ? 'bg-violet-100 text-violet-700' : 'text-slate-600 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}
+              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'dashboard' ? 'bg-[#EBEBE6] text-[#1A1A1A]' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}
             >
               <BarChart3 size={18} />
               Dashboard
             </button>
           )}
 
-          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'deepdive' ? 'text-violet-600' : 'text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900'}`}>Bli synlig på google</button>
-          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'technology' ? 'text-violet-600' : 'text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900'}`}>Teknologien</button>
+          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'deepdive' ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}>Bli synlig på google</button>
+          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'technology' ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}>Teknologien</button>
 
           {user ? (
             <div className="relative">
               {/* Profilbilde-knapp */}
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 focus:outline-none">
                 <img src={getAvatarUrl(user)} className="w-9 h-9 rounded-full border-2 border-white shadow-sm" alt="" />
-                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-[#808080] transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* DROPDOWN MENYEN */}
               {isProfileOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 animate-in zoom-in-95 duration-200 z-50 origin-top-right">
-                    <div className="px-4 py-3 border-b border-slate-50 mb-1">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Innlogget som</p>
-                      <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-[#EBEBE6] py-2 animate-in zoom-in-95 duration-200 z-50 origin-top-right">
+                    <div className="px-4 py-3 border-b border-[#EBEBE6] mb-1">
+                      <p className="text-[10px] font-black text-[#808080] uppercase tracking-widest">Innlogget som</p>
+                      <p className="text-sm font-bold text-[#1A1A1A] truncate">{user.email}</p>
                     </div>
 
                     {/* Dashboard også i dropdown for enkel tilgang */}
                     {hasAccess && (
-                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-violet-50/80">
+                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
                         <BarChart3 size={16} /> Gå til Dashboard
                       </button>
                     )}
 
-                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-slate-50/80">
+                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
                       <Settings size={16} /> Innstillinger
                     </button>
 
-                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-600 active:bg-slate-50/80">
+                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
                       <CreditCard size={16} /> Abonnement
                     </button>
 
-                    <div className="my-1 border-b border-slate-50"></div>
+                    <div className="my-1 border-b border-[#EBEBE6]"></div>
 
                     <button onClick={() => { onLogout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-rose-50 active:bg-rose-50/80">
                       <LogOut size={16} /> Logg ut
@@ -3383,29 +3384,29 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               )}
             </div>
           ) : (
-            <button onClick={onLoginTrigger} className="ui-motion bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-slate-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600">Kom i gang</button>
+            <button onClick={onLoginTrigger} className="ui-motion bg-[#1A1A1A] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
           )}
         </div>
 
         {/* MOBIL MENY KNAPP */}
-        <button className="md:hidden p-2 -mr-2 text-slate-900" aria-label={isMobileMenuOpen ? "Lukk meny" : "Åpne meny"} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button>
+        <button className="md:hidden p-2 -mr-2 text-[#1A1A1A]" aria-label={isMobileMenuOpen ? "Lukk meny" : "Åpne meny"} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button>
       </div>
 
       {/* MOBIL MENY (Expandable) */}
       {isMobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5 duration-200">
+        <div className="absolute top-full left-0 w-full bg-white border-b border-[#EBEBE6] p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5 duration-200">
           {user && hasAccess && (
-            <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-violet-700 bg-violet-50 p-3 rounded-xl">
+            <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-[#1A1A1A] bg-[#F5F5F0] p-3 rounded-xl">
               <BarChart3 size={20} /> Dashboard
             </button>
           )}
-          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">Bli synlig på google</button>
-          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-slate-600 p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">Teknologien</button>
+          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Bli synlig på google</button>
+          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Teknologien</button>
           {user && (
             <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-left font-bold text-rose-500 p-2 flex items-center gap-2"><LogOut size={16} /> Logg ut</button>
           )}
           {!user && (
-            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-slate-900 text-white py-3 rounded-xl font-bold ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600">Kom i gang</button>
+            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-[#1A1A1A] text-white py-3 rounded-xl font-bold ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
           )}
         </div>
       )}
@@ -3440,19 +3441,19 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-[280ms]">
-      <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-slate-400 flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-slate-900">
+      <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-[#808080] flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">
         <ArrowRight className="rotate-180" size={16} /> Tilbake
       </button>
 
-      <h1 className="text-3xl font-black mb-10 text-slate-900">Innstillinger</h1>
+      <h1 className="text-3xl font-black mb-10 text-[#1A1A1A]">Innstillinger</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* MENY SIDEBAR */}
         <div className="w-full md:w-64 flex flex-col gap-2">
-          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'general' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}>
+          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'general' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}>
             <User size={18} /> Profil & Bedrift
           </button>
-          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'billing' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-50'}`}>
+          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'billing' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}>
             <CreditCard size={18} /> Abonnement
           </button>
         </div>
@@ -3465,57 +3466,57 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
             <div className="space-y-6">
 
               {/* Nettadresse med Lås */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-slate-900">Nettadresse</h3>
+                  <h3 className="font-bold text-[#1A1A1A]">Nettadresse</h3>
                   {isUrlLocked && <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-full flex items-center gap-1"><Shield size={10} /> Låst</span>}
                 </div>
 
-                <div className={`flex items-center border rounded-lg p-2 transition-colors ${isUrlLocked ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200 focus-within:ring-2 focus-within:ring-violet-500'}`}>
-                  <Globe size={18} className="text-slate-400 mx-2" />
+                <div className={`flex items-center border rounded-lg p-2 transition-colors ${isUrlLocked ? 'bg-[#F5F5F0] border-[#EBEBE6]' : 'bg-white border-[#EBEBE6] focus-within:ring-2 focus-within:ring-violet-500'}`}>
+                  <Globe size={18} className="text-[#808080] mx-2" />
                   <input
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     disabled={isUrlLocked}
-                    className={`flex-1 outline-none font-medium ${isUrlLocked ? 'bg-transparent text-slate-500 cursor-not-allowed' : 'text-slate-900'}`}
+                    className={`flex-1 outline-none font-medium ${isUrlLocked ? 'bg-transparent text-[#808080] cursor-not-allowed' : 'text-[#1A1A1A]'}`}
                   />
                   {!isUrlLocked && (
-                    <button onClick={handleSaveUrl} className="bg-slate-900 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-violet-600 transition-colors">
+                    <button onClick={handleSaveUrl} className="bg-[#1A1A1A] text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-violet-700 transition-colors">
                       Lagre
                     </button>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2">
-                  <span className="font-bold text-slate-500">OBS:</span> Du kan kun endre nettadressen 1 gang.
+                <p className="text-[11px] text-[#808080] mt-2">
+                  <span className="font-bold text-[#808080]">OBS:</span> Du kan kun endre nettadressen 1 gang.
                 </p>
               </div>
 
               {/* Bransje (Søkbar) */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <h3 className="font-bold mb-4 text-slate-900">Bransje</h3>
+              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
+                <h3 className="font-bold mb-4 text-[#1A1A1A]">Bransje</h3>
                 <div className="relative">
-                  <Briefcase className="absolute left-3 top-3 text-slate-400" size={18} />
+                  <Briefcase className="absolute left-3 top-3 text-[#808080]" size={18} />
                   <input
                     type="text"
                     placeholder="Søk bransje..."
                     value={industrySearch}
                     onFocus={() => setIsIndustryOpen(true)}
                     onChange={(e) => { setIndustrySearch(e.target.value); setIsIndustryOpen(true); }}
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white outline-none font-medium text-slate-900 focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-10 pr-4 py-2.5 border border-[#EBEBE6] rounded-lg bg-white outline-none font-medium text-[#1A1A1A] focus:ring-2 focus:ring-violet-500"
                   />
                   {/* Dropdown liste */}
                   {isIndustryOpen && industrySearch.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#EBEBE6] rounded-xl shadow-xl z-20">
                       {filteredIndustries.map((item) => (
-                        <button key={item} onClick={() => { setIndustry(item); setIndustrySearch(item); setIsIndustryOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-violet-50 hover:text-violet-600 transition-colors">
+                        <button key={item} onClick={() => { setIndustry(item); setIndustrySearch(item); setIsIndustryOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-[#808080] hover:bg-[#F5F5F0] hover:text-[#1A1A1A] transition-colors">
                           {item}
                         </button>
                       ))}
-                      {filteredIndustries.length === 0 && <div className="p-3 text-sm text-slate-400 italic">Ingen treff...</div>}
+                      {filteredIndustries.length === 0 && <div className="p-3 text-sm text-[#808080] italic">Ingen treff...</div>}
                     </div>
                   )}
                 </div>
-                {industry && <p className="mt-2 text-sm text-slate-600 font-bold">Valgt: <span className="text-violet-600">{industry}</span></p>}
+                {industry && <p className="mt-2 text-sm text-[#808080] font-bold">Valgt: <span className="text-[#1A1A1A]">{industry}</span></p>}
               </div>
 
               {/* Slett Konto */}
@@ -3531,18 +3532,18 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
           {/* FANE 2: ABONNEMENT */}
           {activeTab === 'billing' && (
             <div className="space-y-6">
-              <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
+              <div className="bg-[#1A1A1A] text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
+                  <p className="text-[#808080] text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
                   <h3 className="text-3xl font-black mb-2">Gratis</h3>
-                  <button className="bg-white text-slate-900 px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50">Endre plan</button>
+                  <button className="bg-white text-[#1A1A1A] px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]">Endre plan</button>
                 </div>
-                <div className="absolute top-0 right-0 p-32 bg-violet-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                <div className="absolute top-0 right-0 p-32 bg-[#808080] rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <h3 className="font-bold mb-4 text-slate-900">Fakturahistorikk</h3>
-                <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-400 text-sm font-medium">Ingen fakturaer funnet</div>
+              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
+                <h3 className="font-bold mb-4 text-[#1A1A1A]">Fakturahistorikk</h3>
+                <div className="p-4 bg-[#F5F5F0] rounded-lg text-center text-[#808080] text-sm font-medium">Ingen fakturaer funnet</div>
               </div>
             </div>
           )}
@@ -3609,25 +3610,25 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F5F5F0] flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
       <div className="absolute inset-0 grid-pattern opacity-[0.04] pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-100/40 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F5F5F0] blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
 
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-[280ms]">
 
-        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200 rotate-3 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:rotate-6">
+        <div className="w-16 h-16 bg-[#1A1A1A] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-[rgba(26,26,26,0.08)] rotate-3 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:rotate-6">
           <Sparkles className="text-white w-8 h-8" />
         </div>
 
-        <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Velkommen</h2>
-        <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+        <h2 className="text-3xl font-black text-[#1A1A1A] mb-3 tracking-tight">Velkommen</h2>
+        <p className="text-[#808080] font-medium mb-8 leading-relaxed">
           Logg inn for å få tilgang til analysen din.
         </p>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-bold py-4 px-6 rounded-xl ui-motion transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm group [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-200 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-50 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-[#EBEBE6] text-[#1A1A1A] font-bold py-4 px-6 rounded-xl ui-motion transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -3647,19 +3648,19 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
               fill="#EA4335"
             />
           </svg>
-          <span className="group-hover:text-violet-700 transition-colors">Fortsett med Google</span>
+          <span className="group-hover:text-[#1A1A1A] transition-colors">Fortsett med Google</span>
         </button>
 
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-slate-200"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">eller</span>
-          <div className="flex-1 h-px bg-slate-200"></div>
+          <div className="flex-1 h-px bg-[#EBEBE6]"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#808080]">eller</span>
+          <div className="flex-1 h-px bg-[#EBEBE6]"></div>
         </div>
 
         {magicLinkSent ? (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-left">
+          <div className="bg-[#F5F5F0] border border-emerald-200 rounded-xl p-5 text-left">
             <div className="flex items-center gap-3 mb-2">
-              <Mail size={18} className="text-emerald-600" />
+              <Mail size={18} className="text-[#1A1A1A]" />
               <p className="text-sm font-bold text-emerald-900">Lenke sendt</p>
             </div>
             <p className="text-xs text-emerald-800 leading-relaxed">
@@ -3674,20 +3675,20 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
           </div>
         ) : (
           <form onSubmit={handleMagicLink} className="space-y-3 text-left">
-            <label className="text-xs font-bold text-slate-500 block">Logg inn med e-post (uten passord)</label>
+            <label className="text-xs font-bold text-[#808080] block">Logg inn med e-post (uten passord)</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="din@bedrift.no"
-              className="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-600 focus:border-transparent outline-none text-sm"
+              className="w-full p-3 bg-white border border-[#EBEBE6] rounded-xl focus:ring-2 focus:ring-[#808080]/25 focus:border-transparent outline-none text-sm"
               disabled={magicLinkLoading}
             />
             <button
               type="submit"
               disabled={magicLinkLoading || !email.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl ui-motion transition-[background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm enabled:hover:bg-slate-800 enabled:hover:shadow-md"
+              className="w-full flex items-center justify-center gap-2 bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl ui-motion transition-[background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm enabled:hover:bg-[#1A1A1A] enabled:hover:shadow-md"
             >
               {magicLinkLoading ? (
                 <>
@@ -3699,7 +3700,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
                 </>
               )}
             </button>
-            <p className="text-[10px] text-slate-400 text-center pt-1">
+            <p className="text-[10px] text-[#808080] text-center pt-1">
               Vi sender en engangs-lenke til e-posten din. Ingen passord å huske på.
             </p>
           </form>
@@ -3707,14 +3708,14 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
         <button
           onClick={onBack}
-          className="mt-8 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center gap-2 mx-auto"
+          className="mt-8 text-sm font-bold text-[#808080] hover:text-[#808080] transition-colors flex items-center justify-center gap-2 mx-auto"
         >
           <ArrowLeft size={16} /> Gå tilbake til forsiden
         </button>
 
       </div>
 
-      <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-slate-300 uppercase tracking-widest">
+      <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-[#808080] uppercase tracking-widest">
         <span className="flex items-center gap-1"><ShieldCheck size={12} /> Sikker innlogging</span>
         <span className="flex items-center gap-1"><Key size={12} /> Kryptert</span>
       </div>
@@ -3732,16 +3733,16 @@ const DashboardView = ({ user, onBack }: { user: any, onBack: () => void }) => {
   const REPORT_URL = "https://lookerstudio.google.com/embed/reporting/b20556ef-7296-4ce3-b391-2d6acb70dc13/page/4flmF?rm=minimal";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col h-screen">
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
+    <div className="min-h-screen bg-[#F5F5F0] flex flex-col h-screen">
+      <div className="bg-white border-b border-[#EBEBE6] px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">{user?.email?.charAt(0).toUpperCase()}</div>
-          <div><h2 className="font-bold text-slate-800">Ditt SEO Dashboard</h2><p className="text-xs text-slate-500">Live data fra Google</p></div>
+          <div className="w-10 h-10 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-xl">{user?.email?.charAt(0).toUpperCase()}</div>
+          <div><h2 className="font-bold text-[#1A1A1A]">Ditt SEO Dashboard</h2><p className="text-xs text-[#808080]">Live data fra Google</p></div>
         </div>
-        <button onClick={onBack} className="text-sm font-bold text-slate-600 hover:text-slate-900">Tilbake</button>
+        <button onClick={onBack} className="text-sm font-bold text-[#808080] hover:text-[#1A1A1A]">Tilbake</button>
       </div>
       <div className="flex-grow relative bg-white w-full h-full overflow-hidden">
-        {loading && <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10 text-slate-500">Henter ferske tall...</div>}
+        {loading && <div className="absolute inset-0 flex items-center justify-center bg-[#F5F5F0] z-10 text-[#808080]">Henter ferske tall...</div>}
         <iframe src={REPORT_URL} className="w-full h-full border-0" frameBorder="0" allowFullScreen onLoad={() => setLoading(false)} title="SEO Rapport" />
       </div>
     </div>
@@ -3984,7 +3985,7 @@ const Sparkline: React.FC<{
   fill?: boolean;
 }> = ({ data, color = '#7c3aed', height = 32, fill = true }) => {
   if (!data || data.length < 2) {
-    return <div className="text-xs text-slate-400">—</div>;
+    return <div className="text-[10px] leading-snug text-slate-400">For få målinger til trend</div>;
   }
   const points = data.map((v, i) => ({ i, v }));
   return (
@@ -4044,8 +4045,8 @@ const RadialScore: React.FC<{
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-          {hasValue ? Math.round(v) : '—'}
+        <span className={`text-sm font-semibold text-center px-1 leading-tight ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+          {hasValue ? Math.round(v) : 'Ikke målt'}
         </span>
         <span className={`text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>/ 100</span>
         <span className={`text-[10px] font-medium mt-0.5 ${meta.textClass}`}>{meta.shortLabel}</span>
@@ -4920,12 +4921,12 @@ const KonkurrenterPage: React.FC<{
                 <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexShrink: 0 }}>
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkeord</p>
-                    <p style={{ fontSize: 38, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>{selectedComp.keyword_count || '—'}</p>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3 }}>{selectedComp.keyword_count ? selectedComp.keyword_count : 'Skann for å telle søkeord'}</p>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Snitt pos.</p>
                     <p style={{ fontSize: 38, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>
-                      {selectedComp.avg_position ? `#${selectedComp.avg_position}` : '—'}
+                      {selectedComp.avg_position ? `#${selectedComp.avg_position}` : 'Måles ved skann'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2 }}>
@@ -4979,7 +4980,7 @@ const KonkurrenterPage: React.FC<{
                   </div>
                 ) : compRankings.length === 0 ? (
                   <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '24px 0', margin: 0 }}>
-                    Ingen rangeringer ennå — trykk «Skann» for å hente data.
+                    Ingen rangeringer ennå — trykk «Skann». Første tall kommer vanligvis innen noen minutter.
                   </p>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
@@ -5303,6 +5304,1178 @@ const KonkurrenterPage: React.FC<{
   );
 };
 
+// --- SIKT ACTIONS: flerlinje-logging fra skann (kun ekte tall fra respons) ---
+type SiktLogEntry = {
+  actionType: string;
+  category: 'finding' | 'suggestion' | 'fix' | 'alert';
+  title: string;
+  details?: Record<string, unknown>;
+  pageUrl?: string;
+};
+
+const buildAnalysisLogEntries = (mobile: AnalysisResult, pageUrl: string): SiktLogEntry[] => {
+  const entries: SiktLogEntry[] = [
+    { actionType: 'analysis_run', category: 'finding', title: `Mobil ytelse: ${mobile.performance}/100 (Lighthouse)`, details: { score: mobile.performance }, pageUrl },
+    { actionType: 'analysis_run', category: 'finding', title: `Mobil SEO: ${mobile.seo}/100`, details: { seo: mobile.seo }, pageUrl },
+    { actionType: 'analysis_run', category: 'finding', title: `Mobil tilgjengelighet: ${mobile.accessibility}/100`, details: { accessibility: mobile.accessibility }, pageUrl },
+    { actionType: 'analysis_run', category: 'finding', title: `Mobil beste praksis: ${mobile.bestPractices}/100`, details: { best_practices: mobile.bestPractices }, pageUrl },
+  ];
+  const failed = (mobile.diagnostics || []).filter((d) => !d.passed);
+  if (failed.length > 0) {
+    entries.push({
+      actionType: 'analysis_run',
+      category: 'finding',
+      title: `${failed.length} tekniske sjekkpunkter trenger oppmerksomhet`,
+      details: { checks: failed.map((d) => d.title) },
+      pageUrl,
+    });
+  }
+  const opps = mobile.opportunities || [];
+  if (opps.length > 0) {
+    entries.push({
+      actionType: 'analysis_run',
+      category: 'finding',
+      title: `${opps.length} forbedringsmuligheter identifisert på mobil`,
+      details: { count: opps.length },
+      pageUrl,
+    });
+    opps.slice(0, 3).forEach((o) => {
+      entries.push({
+        actionType: 'analysis_run',
+        category: 'suggestion',
+        title: o.savings ? `${o.title} (${o.savings})` : o.title,
+        details: { savings: o.savings || null },
+        pageUrl,
+      });
+    });
+  }
+  return entries.slice(0, 8);
+};
+
+const buildContentScanLogEntries = (pages: any[], pageUrl?: string): SiktLogEntry[] => {
+  if (!pages.length) return [];
+  const critical = pages.filter((p) => p.status === 'Kritisk').length;
+  const warning = pages.filter((p) => p.status === 'Advarsel').length;
+  const good = pages.filter((p) => p.status === 'Bra').length;
+  const missingMeta = pages.filter((p) => (p.issues || []).some((i: string) => /meta/i.test(i))).length;
+  const missingH1 = pages.filter((p) => (p.issues || []).some((i: string) => /H1/i.test(i))).length;
+  const entries: SiktLogEntry[] = [
+    { actionType: 'content_scan', category: 'finding', title: `Skannet ${pages.length} sider på nettsiden`, details: { total_pages: pages.length }, pageUrl },
+  ];
+  if (critical > 0) entries.push({ actionType: 'content_scan', category: 'finding', title: `${critical} sider med kritisk innhold`, details: { critical }, pageUrl });
+  if (warning > 0) entries.push({ actionType: 'content_scan', category: 'finding', title: `${warning} sider med advarsler (tynt innhold m.m.)`, details: { warning }, pageUrl });
+  if (good > 0) entries.push({ actionType: 'content_scan', category: 'finding', title: `${good} sider uten alvorlige innholdsfunn`, details: { good }, pageUrl });
+  if (missingMeta > 0) entries.push({ actionType: 'content_scan', category: 'suggestion', title: `${missingMeta} sider mangler meta-beskrivelse`, details: { missing_meta: missingMeta }, pageUrl });
+  if (missingH1 > 0) entries.push({ actionType: 'content_scan', category: 'suggestion', title: `${missingH1} sider mangler H1`, details: { missing_h1: missingH1 }, pageUrl });
+  return entries.slice(0, 6);
+};
+
+const buildLinkScanLogEntries = (linkPages: any[], pageUrl?: string): SiktLogEntry[] => {
+  if (!linkPages.length) return [];
+  const isolated = linkPages.filter((p) => p.status === 'Isolert' || p.inlinks === 0).length;
+  const healthy = linkPages.filter((p) => p.status === 'Bra').length;
+  const entries: SiktLogEntry[] = [
+    { actionType: 'link_scan', category: 'finding', title: `Kartla lenker på ${linkPages.length} sider`, details: { total_pages: linkPages.length }, pageUrl },
+  ];
+  if (isolated > 0) entries.push({ actionType: 'link_scan', category: 'finding', title: `${isolated} isolerte sider uten innkommende lenker`, details: { isolated }, pageUrl });
+  if (healthy > 0) entries.push({ actionType: 'link_scan', category: 'finding', title: `${healthy} sider med god lenkestruktur`, details: { healthy }, pageUrl });
+  return entries.slice(0, 4);
+};
+
+type ContentFixFieldType = 'meta-description' | 'seo-title' | 'h1' | 'content';
+
+type WordPressFetchYoast = {
+  installed: boolean;
+  title?: string;
+  description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+};
+
+type WordPressFetchResponse = {
+  ok: boolean;
+  page: {
+    id: number;
+    type: string;
+    slug: string;
+    link: string;
+    title: string;
+    content: string;
+    excerpt: string;
+  };
+  yoast: WordPressFetchYoast;
+};
+
+type PageContextQaEntry = {
+  question: string;
+  answer: string;
+};
+
+type PageContextAnswersLegacy = {
+  goal: string;
+  audience: string;
+  differentiator: string;
+};
+
+type PageContextAnswersQa = {
+  qa: PageContextQaEntry[];
+};
+
+type PageContextAnswers = PageContextAnswersLegacy | PageContextAnswersQa;
+
+type ContextQuestion = {
+  question: string;
+  options: string[];
+  optional?: boolean;
+};
+
+type ContentFixCacheEntry = {
+  pageData: WordPressFetchResponse;
+  aiSuggestion: string | null;
+  fieldType: ContentFixFieldType;
+  pageContextAnswers?: PageContextAnswers | null;
+  contextQuestions?: ContextQuestion[];
+};
+
+type ContentFixActiveState = {
+  todoId: string | null;
+  loading:
+    | 'fetching'
+    | 'generating-questions'
+    | 'questionnaire'
+    | 'generating'
+    | 'idle'
+    | 'error';
+  error: string | null;
+};
+
+const PAGE_CONTEXT_GOAL_OPTIONS = [
+  'Få henvendelser / kontakt',
+  'Selge et produkt eller en tjeneste',
+  'Bygge tillit og troverdighet',
+  'Informere eller forklare noe',
+] as const;
+
+const PAGE_CONTEXT_AUDIENCE_OPTIONS = [
+  'Privatkunder',
+  'Bedrifter',
+  'Lokale kunder i nærområdet',
+  'Hele landet / bredt publikum',
+] as const;
+
+const FALLBACK_QUESTIONS: ContextQuestion[] = [
+  {
+    question: 'Hva er hovedmålet med denne siden?',
+    options: [...PAGE_CONTEXT_GOAL_OPTIONS],
+  },
+  {
+    question: 'Hvem snakker siden til?',
+    options: [...PAGE_CONTEXT_AUDIENCE_OPTIONS],
+  },
+  {
+    question: 'Hva skiller deg fra konkurrentene?',
+    options: [],
+    optional: true,
+  },
+];
+
+function stripJsonFences(text: string): string {
+  return text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+}
+
+function parseContextQuestionsResponse(raw: string): ContextQuestion[] | null {
+  try {
+    const parsed = JSON.parse(stripJsonFences(raw)) as unknown;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const questionsRaw = (parsed as { questions?: unknown }).questions;
+    if (!Array.isArray(questionsRaw)) return null;
+    if (questionsRaw.length === 0) return [];
+
+    const questions: ContextQuestion[] = [];
+    for (const item of questionsRaw) {
+      if (!item || typeof item !== 'object') continue;
+      const row = item as Record<string, unknown>;
+      const question = typeof row.question === 'string' ? row.question.trim() : '';
+      if (!question) continue;
+      const options = Array.isArray(row.options)
+        ? row.options
+            .filter((opt): opt is string => typeof opt === 'string' && opt.trim().length > 0)
+            .map((opt) => opt.trim())
+        : [];
+      questions.push({ question, options });
+    }
+
+    return questions.length > 0 ? questions : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildContextQuestionsPrompt(pageData: WordPressFetchResponse): string {
+  const contentRaw = decodeHtmlEntities(stripHtmlTags(pageData.page.content || ''));
+  const content = truncateText(contentRaw, 2000);
+  return `Du skal hjelpe med å forbedre teksten på denne siden. Her er sidens innhold: ${content}. Lag 2-4 spørsmål som hjelper deg å forstå siden godt nok til å skrive best mulig innhold. Hvis du allerede forstår nok, returner færre eller ingen spørsmål. Hvert spørsmål skal ha 3-4 konkrete svaralternativer tilpasset denne siden. Kunden kan også skrive eget svar. Svar KUN med gyldig JSON, ingen forklaring, på dette formatet: {"questions":[{"question":"...","options":["...","..."]}]}`;
+}
+
+async function generateContextQuestions(
+  pageData: WordPressFetchResponse,
+  signal: AbortSignal,
+  token: string,
+): Promise<ContextQuestion[]> {
+  try {
+    const aiRes = await fetch('/api/openai-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        prompt: buildContextQuestionsPrompt(pageData),
+        model: 'gpt-4o-mini',
+        maxTokens: 600,
+      }),
+      signal,
+    });
+    const aiData = await aiRes.json().catch(() => ({}));
+    if (signal.aborted) return [];
+    if (!aiRes.ok) return FALLBACK_QUESTIONS;
+
+    const parsed = parseContextQuestionsResponse(String(aiData.content || ''));
+    if (parsed === null) return FALLBACK_QUESTIONS;
+    return parsed;
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && (err as { name?: string }).name === 'AbortError') {
+      throw err;
+    }
+    return FALLBACK_QUESTIONS;
+  }
+}
+
+function normalizePageContextAnswers(raw: unknown): PageContextAnswers | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+
+  if (Array.isArray(o.qa)) {
+    const qa = o.qa
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const row = item as Record<string, unknown>;
+        const question = typeof row.question === 'string' ? row.question.trim() : '';
+        const answer = typeof row.answer === 'string' ? row.answer.trim() : '';
+        if (!question || !answer) return null;
+        return { question, answer };
+      })
+      .filter((entry): entry is PageContextQaEntry => entry != null);
+    if (qa.length > 0) return { qa };
+    return null;
+  }
+
+  const goal = typeof o.goal === 'string' ? o.goal.trim() : '';
+  const audience = typeof o.audience === 'string' ? o.audience.trim() : '';
+  const differentiator = typeof o.differentiator === 'string' ? o.differentiator.trim() : '';
+  if (!goal || !audience) return null;
+  return { goal, audience, differentiator };
+}
+
+function buildPageContextPromptBlock(normalized: PageContextAnswers): string {
+  if ('qa' in normalized && normalized.qa.length > 0) {
+    return `\n\nKontekst om siden (oppgitt av kunden):
+${normalized.qa.map((x) => `- ${x.question}: ${x.answer}`).join('\n')}
+
+Bruk denne konteksten til å gjøre forslaget relevant. Ikke dikt opp fakta utover det som er oppgitt.`;
+  }
+  if ('goal' in normalized) {
+    return `\n\nKontekst om siden (oppgitt av kunden):
+- Sidens hovedmål: ${normalized.goal}
+- Målgruppe: ${normalized.audience}${normalized.differentiator ? `\n- Det som skiller bedriften ut: ${normalized.differentiator}` : ''}
+
+Bruk denne konteksten til å gjøre forslaget relevant for kundens faktiske situasjon. Ikke dikt opp fakta om bedriften utover det som er oppgitt.`;
+  }
+  return '';
+}
+
+async function savePageContextAnswers(
+  pageUrl: string,
+  answers: PageContextAnswers,
+  userId: string,
+  clientHostId: string | null,
+): Promise<void> {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from('sikt_page_context').upsert(
+      {
+        user_id: userId,
+        client_host_id: clientHostId,
+        page_url: pageUrl,
+        answers,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,page_url' },
+    );
+    if (error) {
+      console.warn('[Verksted] Kunne ikke lagre page context:', error.message);
+    }
+  } catch (err: unknown) {
+    console.warn('[Verksted] Kunne ikke lagre page context:', err);
+  }
+}
+
+const INITIAL_CONTENT_FIX_ACTIVE: ContentFixActiveState = {
+  todoId: null,
+  loading: 'idle',
+  error: null,
+};
+
+function detectFieldType(issueString: string): ContentFixFieldType {
+  const lower = (issueString || '').toLowerCase();
+  if (
+    lower.includes('meta') &&
+    (lower.includes('beskrivelse') || lower.includes('description'))
+  ) {
+    return 'meta-description';
+  }
+  if (
+    (lower.includes('seo') || lower.includes('meta')) &&
+    (lower.includes('tittel') || lower.includes('title'))
+  ) {
+    return 'seo-title';
+  }
+  if (lower.includes('h1')) {
+    return 'h1';
+  }
+  if (lower.includes('innhold') || lower.includes('tynt') || lower.includes('thin')) {
+    return 'content';
+  }
+  return 'content';
+}
+
+type ContentChangeRow = {
+  id: string;
+  page_url: string;
+  field: string;
+  old_value: string | null;
+  new_value: string;
+  pushed_at: string;
+  client_host_id: string | null;
+};
+
+type TodoChangeData = {
+  field: string;
+  old_value: string | null;
+  new_value: string;
+  pushed_at: string;
+};
+
+function pathLabelFromPageUrl(pageUrl: string): string {
+  try {
+    const parsed = new URL(pageUrl);
+    return parsed.pathname.replace(/\/$/, '') || '/';
+  } catch {
+    return pageUrl;
+  }
+}
+
+function pageTitleFromPageUrl(pageUrl: string): string {
+  try {
+    const parsed = new URL(pageUrl);
+    const path = parsed.pathname.replace(/\/$/, '');
+    if (!path || path === '/') return 'Forside';
+    const segments = path.split('/').filter(Boolean);
+    const last = segments[segments.length - 1] || 'Forside';
+    return last.charAt(0).toUpperCase() + last.slice(1);
+  } catch {
+    return 'Forside';
+  }
+}
+
+function solvedTitleForField(field: string): string {
+  if (field === 'meta-description') return 'Mangler meta description (løst)';
+  if (field === 'seo-title') return 'Mangler SEO-tittel (løst)';
+  if (field === 'h1') return 'Mangler H1 (løst)';
+  if (field === 'content') return 'Tynt innhold (løst)';
+  return 'Innhold endret (løst)';
+}
+
+function formatPushedAt(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('nb-NO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+function googleSnippetBreadcrumb(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const domain = parsed.hostname.replace(/^www\./i, '');
+    const path = parsed.pathname.replace(/\/$/, '');
+    if (!path || path === '/') return domain;
+    const pathPart = path.split('/').filter(Boolean).join(' › ');
+    return `${domain} › ${pathPart}`;
+  } catch {
+    return url;
+  }
+}
+
+function googleSnippetDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, '');
+  } catch {
+    return url;
+  }
+}
+
+function googleSnippetSiteName(url: string): string {
+  const domain = googleSnippetDomain(url);
+  const base = domain.split('.')[0] || domain;
+  if (!base) return domain;
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+function GoogleSnippetPreview({
+  title,
+  url,
+  description,
+  variant = 'desktop',
+}: {
+  title: string;
+  url: string;
+  description: string;
+  variant?: 'desktop' | 'mobile';
+}) {
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const isMobile = variant === 'mobile';
+  const domain = googleSnippetDomain(url);
+  const siteName = googleSnippetSiteName(url);
+  const breadcrumb = googleSnippetBreadcrumb(url);
+  const displayTitle = title?.trim() || '(Ingen tittel)';
+  const faviconSize = isMobile ? 24 : 32;
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+
+  useEffect(() => {
+    setFaviconFailed(false);
+  }, [domain, url]);
+
+  const fontStack = "system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
+
+  return (
+    <div
+      className="ws-snippet-preview-enter"
+      style={{
+        padding: isMobile ? '10px 12px' : '14px 16px',
+        background: '#FFFFFF',
+        maxWidth: isMobile ? 380 : undefined,
+        fontFamily: fontStack,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: isMobile ? 10 : 12, marginBottom: isMobile ? 8 : 10 }}>
+        {faviconFailed ? (
+          <span
+            style={{
+              width: faviconSize,
+              height: faviconSize,
+              borderRadius: '50%',
+              background: '#EBEBE6',
+              flexShrink: 0,
+              marginTop: 2,
+            }}
+          />
+        ) : (
+          <img
+            src={faviconUrl}
+            alt=""
+            width={faviconSize}
+            height={faviconSize}
+            onError={() => setFaviconFailed(true)}
+            style={{ borderRadius: '50%', flexShrink: 0, marginTop: 2, objectFit: 'cover' }}
+          />
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: isMobile ? 13 : 14,
+              fontWeight: 500,
+              color: '#202124',
+              lineHeight: 1.3,
+              wordBreak: 'break-word',
+            }}
+          >
+            {siteName}
+          </p>
+          <p
+            style={{
+              margin: '2px 0 0',
+              fontSize: 12,
+              color: '#5f6368',
+              lineHeight: 1.35,
+              wordBreak: 'break-word',
+            }}
+          >
+            {breadcrumb}
+          </p>
+        </div>
+      </div>
+      <p
+        style={{
+          margin: '0 0 6px',
+          fontSize: isMobile ? 18 : 20,
+          fontWeight: 400,
+          color: '#1a0dab',
+          lineHeight: 1.3,
+          display: '-webkit-box',
+          WebkitLineClamp: 1,
+          WebkitBoxOrient: 'vertical' as const,
+          overflow: 'hidden',
+          wordBreak: 'break-word',
+        }}
+      >
+        {displayTitle}
+      </p>
+      {description?.trim() ? (
+        <p
+          style={{
+            margin: 0,
+            fontSize: 14,
+            color: '#4d5156',
+            lineHeight: 1.58,
+            display: '-webkit-box',
+            WebkitLineClamp: isMobile ? 3 : 2,
+            WebkitBoxOrient: 'vertical' as const,
+            overflow: 'hidden',
+            wordBreak: 'break-word',
+          }}
+        >
+          {description}
+        </p>
+      ) : (
+        <p style={{ margin: 0, fontSize: 14, color: '#808080', fontStyle: 'italic', lineHeight: 1.58 }}>
+          (Ingen beskrivelse — Google vil generere én automatisk)
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SnippetPreviewVariantToggle({
+  value,
+  onChange,
+  ink,
+  borderColor,
+}: {
+  value: 'desktop' | 'mobile';
+  onChange: (next: 'desktop' | 'mobile') => void;
+  ink: string;
+  borderColor: string;
+  muted: string;
+}) {
+  const options: Array<{ key: 'desktop' | 'mobile'; label: string }> = [
+    { key: 'desktop', label: 'Desktop' },
+    { key: 'mobile', label: 'Mobil' },
+  ];
+  return (
+    <div
+      role="group"
+      aria-label="Forhåndsvisning"
+      style={{
+        display: 'inline-flex',
+        border: `1px solid ${borderColor}`,
+        borderRadius: 9,
+        overflow: 'hidden',
+        background: '#FFFFFF',
+      }}
+    >
+      {options.map((option) => {
+        const active = value === option.key;
+        return (
+          <button
+            key={option.key}
+            type="button"
+            onClick={() => onChange(option.key)}
+            style={{
+              border: 'none',
+              background: active ? ink : '#FFFFFF',
+              color: active ? '#FFFFFF' : ink,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 100ms ease-out',
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'scale(0.97)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const CONTENT_FIX_VALUE_COPY: Record<
+  ContentFixFieldType,
+  {
+    title: string;
+    whatItIs: string;
+    whyItMatters: string;
+    recommendations: string[];
+  }
+> = {
+  'meta-description': {
+    title: 'Hva du tjener på en god meta-beskrivelse',
+    whatItIs: 'Den 2-3 setninger lange teksten under tittelen i Google-søk.',
+    whyItMatters:
+      'Påvirker hvor mange som klikker på linken din. Påvirker ikke rangering direkte. Hvis siden mangler meta-beskrivelse, lager Google én automatisk — sjelden like overbevisende.',
+    recommendations: [
+      '120–155 tegn (vises i sin helhet uten å bli kuttet av)',
+      'Inkluder hovednøkkelordet for siden',
+      'Avslutt med en handlingsoppfordring',
+    ],
+  },
+  'seo-title': {
+    title: 'Hva du tjener på en god SEO-tittel',
+    whatItIs: 'Tittelen som vises som klikkbar link i Google-søk.',
+    whyItMatters:
+      'Det første brukere ser. En av de viktigste enkeltfaktorene for både klikk-frekvens og hvordan Google rangerer siden.',
+    recommendations: [
+      '50–60 tegn (vises i sin helhet)',
+      'Inkluder hovednøkkelordet tidlig i tittelen',
+      'Beskriv konkret hva siden tilbyr',
+    ],
+  },
+  h1: {
+    title: 'Hva du tjener på en god H1-overskrift',
+    whatItIs: 'Sidens hovedoverskrift, det største synlige tekstelementet på siden.',
+    whyItMatters:
+      'Forteller Google og besøkende hva siden handler om. Mangler den, mister du en grunnleggende strukturmarkør for både SEO og brukeropplevelse.',
+    recommendations: [
+      'Én tydelig H1 per side',
+      'Inkluder hovednøkkelordet',
+      'Hold den beskrivende og konkret',
+    ],
+  },
+  content: {
+    title: 'Hva du tjener på dypere innhold',
+    whatItIs: 'Antall ord i sidens hovedinnhold.',
+    whyItMatters:
+      'Sider under 300 ord regnes ofte som tynt innhold av Google. Dypere innhold gir flere kontekst-signaler for hva siden handler om.',
+    recommendations: [
+      'Minimum 300 ord for grunnleggende SEO',
+      '1000+ ord for konkurranseutsatte søk',
+      'Strukturer med tydelige underoverskrifter',
+    ],
+  },
+};
+
+function ContentFixValueCard({
+  fieldType,
+  borderColor,
+}: {
+  fieldType: ContentFixFieldType;
+  borderColor: string;
+}) {
+  const copy = CONTENT_FIX_VALUE_COPY[fieldType];
+  const sectionTitleStyle = {
+    margin: '0 0 6px',
+    fontSize: 12,
+    fontWeight: 700,
+    color: '#808080',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+  };
+  const bodyStyle = { margin: 0, color: '#1A1A1A', fontSize: 13, lineHeight: 1.6 };
+  return (
+    <div
+      style={{
+        background: '#F5F5F0',
+        border: `1px solid ${borderColor}`,
+        borderRadius: 12,
+        padding: '18px 20px',
+      }}
+    >
+      <p style={{ margin: '0 0 16px', color: '#1A1A1A', fontSize: 15, fontWeight: 700 }}>{copy.title}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <p style={sectionTitleStyle}>Hva det er</p>
+          <p style={bodyStyle}>{copy.whatItIs}</p>
+        </div>
+        <div>
+          <p style={sectionTitleStyle}>Hvorfor det påvirker deg</p>
+          <p style={bodyStyle}>{copy.whyItMatters}</p>
+        </div>
+        <div>
+          <p style={sectionTitleStyle}>Sikt anbefaler</p>
+          <ul style={{ margin: 0, paddingLeft: 18, color: '#1A1A1A', fontSize: 13, lineHeight: 1.6 }}>
+            {copy.recommendations.map((item) => (
+              <li key={item} style={{ marginBottom: 4 }}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getContentFixCharLimit(fieldType: ContentFixFieldType): number | null {
+  if (fieldType === 'meta-description') return 155;
+  if (fieldType === 'seo-title') return 60;
+  return null;
+}
+
+function getContentFixCharCounter(count: number, fieldType: ContentFixFieldType) {
+  const max = getContentFixCharLimit(fieldType);
+  if (max == null) {
+    return { color: '#808080', label: `${count} tegn`, overMax: false };
+  }
+  const ratio = count / max;
+  let color = '#52A447';
+  if (ratio > 1) color = '#C42E2E';
+  else if (ratio >= 0.8) color = '#D97706';
+  return { color, label: `${count} / ${max}`, overMax: count > max };
+}
+
+function ContentFixPreviewSection({
+  fieldType,
+  pageData,
+  editedSuggestion,
+  previewVariant,
+  onPreviewVariantChange,
+  borderColor,
+  green,
+  muted,
+  ink,
+}: {
+  fieldType: ContentFixFieldType;
+  pageData: WordPressFetchResponse;
+  editedSuggestion: string;
+  previewVariant: 'desktop' | 'mobile';
+  onPreviewVariantChange: (next: 'desktop' | 'mobile') => void;
+  borderColor: string;
+  green: string;
+  muted: string;
+  ink: string;
+}) {
+  const pageLink = pageData.page.link || '';
+  const beforeTitle = decodeHtmlEntities(
+    pageData.yoast?.title?.trim() || pageData.page.title || '',
+  );
+  const beforeDescription = decodeHtmlEntities(pageData.yoast?.description?.trim() || '');
+  const beforeH1 = decodeHtmlEntities(pageData.page.title || '(Tom)');
+
+  const previewCardStyle = (accent?: 'green') => ({
+    background: '#FFFFFF',
+    border: `1px solid ${borderColor}`,
+    borderTop: accent === 'green' ? `3px solid ${green}` : undefined,
+    borderRadius: 12,
+    padding: accent === 'green' ? '12px 14px 14px' : '12px 14px 14px',
+    overflow: 'hidden' as const,
+  });
+
+  const labelStyle = {
+    margin: '0 0 10px',
+    fontSize: 11,
+    fontWeight: 700,
+    color: muted,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+  };
+
+  if (fieldType === 'meta-description' || fieldType === 'seo-title') {
+    const beforeSnippet = {
+      title: beforeTitle,
+      url: pageLink,
+      description: beforeDescription,
+      variant: previewVariant,
+    };
+    const afterSnippet =
+      fieldType === 'meta-description'
+        ? { title: beforeTitle, url: pageLink, description: editedSuggestion, variant: previewVariant }
+        : { title: editedSuggestion, url: pageLink, description: beforeDescription, variant: previewVariant };
+    const previewGridClass =
+      previewVariant === 'mobile' ? 'ws-content-preview-stack' : 'ws-content-diff-grid';
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <SnippetPreviewVariantToggle
+            value={previewVariant}
+            onChange={onPreviewVariantChange}
+            ink={ink}
+            borderColor={borderColor}
+            muted={muted}
+          />
+        </div>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: muted }}>Slik ser det ut i Google</p>
+        <div className={previewGridClass} key={previewVariant}>
+          <div style={previewCardStyle()}>
+            <p style={labelStyle}>Før</p>
+            <GoogleSnippetPreview {...beforeSnippet} />
+          </div>
+          <div style={previewCardStyle('green')}>
+            <p style={{ ...labelStyle, color: green }}>Etter</p>
+            <GoogleSnippetPreview {...afterSnippet} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (fieldType === 'h1') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: muted }}>Slik ser overskriften ut på siden</p>
+        <div className="ws-content-diff-grid">
+          <div style={previewCardStyle()}>
+            <p style={labelStyle}>Før</p>
+            <div style={{ background: '#F5F5F0', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
+              <h1 style={{ margin: 0, color: ink, fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>{beforeH1}</h1>
+            </div>
+          </div>
+          <div style={previewCardStyle('green')}>
+            <p style={{ ...labelStyle, color: green }}>Etter</p>
+            <div style={{ background: '#F5F5F0', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
+              <h1 style={{ margin: 0, color: ink, fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>
+                {editedSuggestion.trim() || '(Tom)'}
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (fieldType === 'content') {
+    return null;
+  }
+
+  return null;
+}
+
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  try {
+    if (typeof DOMParser !== 'undefined') {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return (doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+  } catch { /* fallback */ }
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+  try {
+    if (typeof DOMParser !== 'undefined') {
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      return doc.documentElement.textContent || '';
+    }
+  } catch { /* fallback */ }
+  return text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&hellip;/gi, '…')
+    .replace(/&rsquo;/gi, '\u2019')
+    .replace(/&lsquo;/gi, '\u2018')
+    .replace(/&rdquo;/gi, '\u201D')
+    .replace(/&ldquo;/gi, '\u201C');
+}
+
+function truncateText(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, maxLen).trimEnd()}…`;
+}
+
+function buildContentFixAiPrompt(
+  fieldType: ContentFixFieldType,
+  pageData: WordPressFetchResponse,
+  pageContextAnswers?: PageContextAnswers | null,
+): string {
+  const title = decodeHtmlEntities(stripHtmlTags(pageData.page.title || ''));
+  const contextRaw = decodeHtmlEntities(
+    stripHtmlTags(pageData.page.excerpt || pageData.page.content || ''),
+  );
+  const context = truncateText(contextRaw, 500);
+
+  switch (fieldType) {
+    case 'meta-description':
+      return `Skriv en konkret meta-beskrivelse på norsk for denne nettsiden, maks 155 tegn. Bruk informasjonen fra sidens innhold til å gjøre den relevant. Returner KUN meta-beskrivelsen, ingen forklaring eller anførselstegn.\n\nSidetittel: ${title}\n\nInnhold:\n${context}`;
+    case 'seo-title':
+      return `Skriv en SEO-tittel på norsk, maks 60 tegn. Bruk informasjonen fra sidens innhold til å gjøre den relevant og klikkbar. Returner KUN tittelen, ingen forklaring eller anførselstegn.\n\nSidetittel: ${title}\n\nInnhold:\n${context}`;
+    case 'h1':
+      return `Forslå en H1-overskrift basert på sideinnholdet. Returner KUN overskriften, ingen forklaring eller anførselstegn.\n\nNåværende sidetittel: ${title}\n\nInnhold:\n${context}`;
+    case 'content':
+    default: {
+      const normalized = pageContextAnswers ? normalizePageContextAnswers(pageContextAnswers) : null;
+      const contextBlock = normalized ? buildPageContextPromptBlock(normalized) : '';
+      return `Du skal skrive forbedret brødtekst for denne nettsiden. Behold tema og tone fra eksisterende innhold.
+
+Returner kun selve den forbedrede sideteksten som rene avsnitt, klar til å være sidens innhold. Ikke skriv etiketter som "Sidetittel:" eller "Ny tekst:", ikke forklar endringene, ikke gjenta sidens tittel, og ikke inkluder metadata eller kommentarer. Skriv teksten slik en besøkende skal lese den på siden — naturlige avsnitt, ikke en rapport om hva som er endret.
+
+Bakgrunn for deg (skal ikke gjenspeiles ordrett i svaret):
+- Sidens tittel er «${title}» (ikke gjenta denne i brødteksten)
+- Nåværende innhold på siden:
+${truncateText(contextRaw, 800)}${contextBlock}`;
+    }
+  }
+}
+
+const ContentPageContextQuestionnaire: React.FC<{
+  questions: ContextQuestion[];
+  onSubmit: (answers: PageContextAnswers) => void;
+  onSkip: () => void;
+}> = ({ questions, onSubmit, onSkip }) => {
+  const [responses, setResponses] = useState<Array<{ choice: string | null; custom: string }>>(() =>
+    questions.map(() => ({ choice: null, custom: '' })),
+  );
+
+  useEffect(() => {
+    setResponses(questions.map(() => ({ choice: null, custom: '' })));
+  }, [questions]);
+
+  const resolvedAnswers = responses.map((r) => r.custom.trim() || r.choice?.trim() || '');
+  const canSubmit = questions.every((q, i) => q.optional || Boolean(resolvedAnswers[i]));
+
+  const chipStyle = (selected: boolean): React.CSSProperties => ({
+    border: `1px solid ${selected ? '#52A447' : '#EBEBE6'}`,
+    background: selected ? 'rgba(82,164,71,0.1)' : '#FFFFFF',
+    color: '#1A1A1A',
+    borderRadius: 999,
+    padding: '10px 16px',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease, border-color 160ms ease',
+    textAlign: 'left' as const,
+  });
+
+  const pressHandlers = {
+    onMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.transform = 'scale(0.97)';
+    },
+    onMouseUp: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.transform = 'scale(1)';
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.transform = 'scale(1)';
+    },
+  };
+
+  const fieldStyle: React.CSSProperties = {
+    width: '100%',
+    boxSizing: 'border-box',
+    marginTop: 4,
+    padding: '10px 12px',
+    borderRadius: 10,
+    border: '1px solid #EBEBE6',
+    background: '#F5F5F0',
+    color: '#1A1A1A',
+    fontSize: 13,
+    outline: 'none',
+  };
+
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #EBEBE6',
+        borderRadius: 16,
+        padding: '24px 22px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 28,
+      }}
+    >
+      <div>
+        <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#808080' }}>
+          Før vi lager forslag
+        </p>
+        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#1A1A1A', lineHeight: 1.3 }}>
+          Hjelp Sikt å forstå siden din
+        </h3>
+        <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.55, color: '#808080' }}>
+          {questions.length === 1
+            ? 'Et kort svar gir et mer relevant innholdsforslag. Svarene lagres for denne siden.'
+            : `${questions.length} korte svar gir et mer relevant innholdsforslag. Svarene lagres for denne siden.`}
+        </p>
+      </div>
+
+      {questions.map((q, index) => {
+        const response = responses[index] || { choice: null, custom: '' };
+        const hasCustom = Boolean(response.custom.trim());
+        const useTextarea = q.options.length === 0;
+
+        return (
+          <div key={`${q.question}-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>
+              {q.question}
+              {q.optional ? (
+                <span style={{ fontWeight: 500, color: '#808080' }}> (valgfritt)</span>
+              ) : null}
+            </p>
+            {q.options.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {q.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    {...pressHandlers}
+                    style={chipStyle(response.choice === option && !hasCustom)}
+                    onClick={() => {
+                      setResponses((prev) => {
+                        const next = [...prev];
+                        next[index] = { choice: option, custom: '' };
+                        return next;
+                      });
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+            {useTextarea ? (
+              <textarea
+                value={response.custom}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setResponses((prev) => {
+                    const next = [...prev];
+                    next[index] = { choice: null, custom: value };
+                    return next;
+                  });
+                }}
+                placeholder="Skriv ditt svar …"
+                rows={3}
+                style={{ ...fieldStyle, lineHeight: 1.55, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                type="text"
+                value={response.custom}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setResponses((prev) => {
+                    const next = [...prev];
+                    const current = next[index] || { choice: null, custom: '' };
+                    next[index] = { choice: value.trim() ? null : current.choice, custom: value };
+                    return next;
+                  });
+                }}
+                placeholder="Eller skriv ditt eget …"
+                style={fieldStyle}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+        <button
+          type="button"
+          disabled={!canSubmit}
+          {...pressHandlers}
+          onClick={() => {
+            if (!canSubmit) return;
+            const qa = questions
+              .map((q, i) => ({
+                question: q.question,
+                answer: resolvedAnswers[i] || '',
+              }))
+              .filter((entry, i) => {
+                if (questions[i].optional && !entry.answer) return false;
+                return Boolean(entry.answer);
+              });
+            onSubmit({ qa });
+          }}
+          style={{
+            border: 'none',
+            borderRadius: 11,
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            background: canSubmit ? '#52A447' : '#EBEBE6',
+            color: canSubmit ? '#FFFFFF' : '#808080',
+            transition: 'transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease',
+          }}
+        >
+          Lag forslag
+        </button>
+        <button
+          type="button"
+          onClick={onSkip}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            padding: 0,
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#808080',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            textUnderlineOffset: 3,
+          }}
+        >
+          Hopp over
+        </button>
+      </div>
+    </div>
+  );
+};
+
+function getContentFixCurrentValue(
+  fieldType: ContentFixFieldType,
+  pageData: WordPressFetchResponse,
+): { value: string; hint?: string } {
+  switch (fieldType) {
+    case 'meta-description':
+      return {
+        value:
+          (pageData.yoast?.description?.trim()
+            ? decodeHtmlEntities(pageData.yoast.description.trim())
+            : '') ||
+          '(Tom — siden har ingen meta-beskrivelse)',
+      };
+    case 'seo-title':
+      return {
+        value: decodeHtmlEntities(
+          pageData.yoast?.title?.trim() || pageData.page.title || '(Tom)',
+        ),
+      };
+    case 'h1':
+      return {
+        value: decodeHtmlEntities(pageData.page.title || '(Tom)'),
+        hint: 'Vi viser sidetittelen som referanse — H1 må sjekkes i selve innholdet',
+      };
+    case 'content':
+    default: {
+      const plain = decodeHtmlEntities(
+        stripHtmlTags(pageData.page.excerpt || pageData.page.content || ''),
+      );
+      return { value: truncateText(plain, 300) || '(Tom innhold)' };
+    }
+  }
+}
+
 // --- HOVEDKOMPONENT: CLIENT PORTAL ---
 // Her tar vi imot ALLE verktøyene fra App (theme, setView, selectedPlan osv.)
 // Vi døper om 'clientData' til 'startData' midlertidig her oppe:
@@ -5373,6 +6546,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [visibilitySubTab, setVisibilitySubTab] = useState<'pagespeed' | 'content' | 'links'>('pagespeed');
   // Verksted-fane: hvilket problem som er ekspandert inline.
   const [expandedWorkshopProblem, setExpandedWorkshopProblem] = useState<string | null>(null);
+  const [contentFixCache, setContentFixCache] = useState<Record<string, ContentFixCacheEntry>>({});
+  const [editedSuggestions, setEditedSuggestions] = useState<Record<string, string>>({});
+  const [snippetPreviewVariant, setSnippetPreviewVariant] = useState<'desktop' | 'mobile'>('desktop');
+  const [contentFixActive, setContentFixActive] = useState<ContentFixActiveState>(INITIAL_CONTENT_FIX_ACTIVE);
+  const [contentFixRetry, setContentFixRetry] = useState(0);
+  const contentFixAbortRef = useRef<AbortController | null>(null);
+  const lastSyncedAiRef = useRef<Record<string, string>>({});
+  const [pushState, setPushState] = useState<
+    'idle' | 'content-warning' | 'confirming' | 'pushing' | 'success' | 'error'
+  >('idle');
+  const [pushError, setPushError] = useState<string | null>(null);
+  const [lastChangeId, setLastChangeId] = useState<string | null>(null);
+  const [lastOldValue, setLastOldValue] = useState<string | null>(null);
+  const [lastH1Rendered, setLastH1Rendered] = useState<boolean | null>(null);
+  const [rollbackState, setRollbackState] = useState<'idle' | 'confirming' | 'rolling_back' | 'success' | 'error'>('idle');
+  const [rollbackError, setRollbackError] = useState<string | null>(null);
+  const [contentChanges, setContentChanges] = useState<ContentChangeRow[]>([]);
   // Verksted-filter: alle / aapne / loste
   const [workshopFilter, setWorkshopFilter] = useState<'all' | 'open' | 'done'>('all');
   const [workshopQuery, setWorkshopQuery] = useState('');
@@ -5381,10 +6571,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   // Settings-tab: hvilken seksjon som redigeres akkurat nå (kun én om gangen).
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [showHostModal, setShowHostModal] = useState(false);
-  const [hostPlatform, setHostPlatform] = useState<string>('');
-  const [hostInputValue, setHostInputValue] = useState<string>('');
-  const [hostSaving, setHostSaving] = useState(false);
+  const [showWpWizard, setShowWpWizard] = useState(false);
+  const [wpWizardStep, setWpWizardStep] = useState<1 | 2 | 3>(1);
+  const [wpSiteUrl, setWpSiteUrl] = useState('');
+  const [wpUsername, setWpUsername] = useState('');
+  const [wpAppPassword, setWpAppPassword] = useState('');
+  const [wpSiteUrlError, setWpSiteUrlError] = useState<string | null>(null);
+  const [wpConnecting, setWpConnecting] = useState(false);
+  const [wpConnectError, setWpConnectError] = useState<string | null>(null);
+  const [wpConnectResult, setWpConnectResult] = useState<{ site: string; wpUser: string } | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [planChangeTarget, setPlanChangeTarget] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
   const [switchingPlan, setSwitchingPlan] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ weeklyReport: true, criticalAlerts: true, rankChanges: false });
@@ -5482,9 +6680,331 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // Denne funksjonen avfyres automatisk når kunden velger et problem i Verkstedet.
   // Sender webhost + URL til serveren, slik at AI kan hente HTML og finne eksakt kode
   // å fjerne/erstatte (når webhost er koblet til).
+  const runContentFixAi = useCallback(
+    async (
+      todoId: string,
+      pageData: WordPressFetchResponse,
+      fieldType: ContentFixFieldType,
+      signal: AbortSignal,
+      pageContextAnswers?: PageContextAnswers | null,
+    ) => {
+      const token = getStoredAccessToken();
+      if (!token) {
+        if (signal.aborted) return;
+        setContentFixActive((prev) =>
+          prev.todoId === todoId
+            ? { ...prev, loading: 'error', error: 'Du må være logget inn.' }
+            : prev,
+        );
+        return;
+      }
+
+      try {
+        const aiRes = await fetch('/api/openai-chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            prompt: buildContentFixAiPrompt(fieldType, pageData, pageContextAnswers),
+            model: 'gpt-4o-mini',
+            maxTokens: 450,
+          }),
+          signal,
+        });
+        const aiData = await aiRes.json().catch(() => ({}));
+        if (signal.aborted) return;
+        if (!aiRes.ok) {
+          setContentFixActive((prev) =>
+            prev.todoId === todoId
+              ? {
+                  ...prev,
+                  loading: 'error',
+                  error:
+                    typeof aiData?.error === 'string'
+                      ? aiData.error
+                      : `Feil ${aiRes.status}`,
+                }
+              : prev,
+          );
+          return;
+        }
+        const aiSuggestion = decodeHtmlEntities(String(aiData.content || '').trim());
+        setContentFixCache((prev) => ({
+          ...prev,
+          [todoId]: {
+            pageData,
+            fieldType,
+            aiSuggestion,
+            pageContextAnswers: pageContextAnswers ?? prev[todoId]?.pageContextAnswers ?? null,
+          },
+        }));
+        setContentFixActive((prev) =>
+          prev.todoId === todoId
+            ? { ...prev, loading: 'idle', error: null }
+            : prev,
+        );
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+        setContentFixActive((prev) =>
+          prev.todoId === todoId
+            ? { ...prev, loading: 'error', error: err?.message || 'Kunne ikke nå AI.' }
+            : prev,
+        );
+      }
+    },
+    [],
+  );
+
+  const startContentFixGeneration = useCallback(
+    async (
+      todoId: string,
+      pageUrl: string,
+      pageData: WordPressFetchResponse,
+      answers: PageContextAnswers | null,
+      saveAnswers: boolean,
+    ) => {
+      if (saveAnswers && answers && user?.id) {
+        await savePageContextAnswers(
+          pageUrl,
+          answers,
+          user.id,
+          hostConnection?.id ?? null,
+        );
+      }
+
+      contentFixAbortRef.current?.abort();
+      const ac = new AbortController();
+      contentFixAbortRef.current = ac;
+
+      setContentFixCache((prev) => ({
+        ...prev,
+        [todoId]: {
+          ...(prev[todoId] || { pageData, fieldType: 'content', aiSuggestion: null }),
+          pageData,
+          fieldType: 'content',
+          aiSuggestion: null,
+          pageContextAnswers: answers,
+        },
+      }));
+      delete lastSyncedAiRef.current[todoId];
+      setContentFixActive((prev) =>
+        prev.todoId === todoId
+          ? { ...prev, loading: 'generating', error: null }
+          : prev,
+      );
+      await runContentFixAi(todoId, pageData, 'content', ac.signal, answers);
+    },
+    [user?.id, hostConnection?.id, runContentFixAi],
+  );
+
+  const regenerateContentFixAi = useCallback(() => {
+    const todoId = contentFixActive.todoId;
+    if (!todoId) return;
+    const entry = contentFixCache[todoId];
+    if (!entry?.pageData || !entry.fieldType) return;
+    contentFixAbortRef.current?.abort();
+    const ac = new AbortController();
+    contentFixAbortRef.current = ac;
+    setContentFixCache((prev) => ({
+      ...prev,
+      [todoId]: { ...entry, aiSuggestion: null },
+    }));
+    delete lastSyncedAiRef.current[todoId];
+    setContentFixActive((prev) =>
+      prev.todoId === todoId
+        ? { ...prev, loading: 'generating', error: null }
+        : prev,
+    );
+    runContentFixAi(
+      todoId,
+      entry.pageData,
+      entry.fieldType,
+      ac.signal,
+      entry.pageContextAnswers ?? null,
+    );
+  }, [contentFixActive.todoId, contentFixCache, runContentFixAi]);
+
+  const activeAiSuggestion =
+    contentFixActive.todoId != null
+      ? contentFixCache[contentFixActive.todoId]?.aiSuggestion ?? null
+      : null;
+
+  useEffect(() => {
+    const todoId = contentFixActive.todoId;
+    if (!todoId || activeAiSuggestion == null) return;
+    if (lastSyncedAiRef.current[todoId] === activeAiSuggestion) return;
+    lastSyncedAiRef.current[todoId] = activeAiSuggestion;
+    setEditedSuggestions((prev) => ({ ...prev, [todoId]: activeAiSuggestion }));
+  }, [contentFixActive.todoId, activeAiSuggestion]);
+
+  const resetContentFixPushUi = useCallback(() => {
+    setPushState('idle');
+    setPushError(null);
+    setRollbackState('idle');
+    setRollbackError(null);
+    setLastChangeId(null);
+    setLastOldValue(null);
+    setLastH1Rendered(null);
+  }, []);
+
+  const userIdRef = useRef<string | undefined>(user?.id);
+  userIdRef.current = user?.id;
+
+  const fetchContentChanges = useCallback(async () => {
+    if (!supabase || !userIdRef.current) {
+      setContentChanges([]);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('sikt_changes')
+        .select('id, page_url, field, old_value, new_value, pushed_at, client_host_id')
+        .eq('status', 'active');
+      if (error) {
+        console.warn('[Verksted] Kunne ikke hente sikt_changes:', error.message);
+        return;
+      }
+      const rows = Array.isArray(data) ? (data as ContentChangeRow[]) : [];
+      const uniqueRows = Array.from(new Map(rows.map((row) => [row.id, row])).values());
+      setContentChanges(uniqueRows);
+    } catch (err: any) {
+      console.warn('[Verksted] Kunne ikke hente sikt_changes:', err?.message || err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'workshop' || !userIdRef.current) return;
+    fetchContentChanges();
+  }, [activeTab, fetchContentChanges]);
+
+  useEffect(() => {
+    resetContentFixPushUi();
+  }, [expandedWorkshopProblem, resetContentFixPushUi]);
+
+  useEffect(() => {
+    if (pushState === 'idle') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (pushState === 'pushing' || rollbackState === 'rolling_back') return;
+      resetContentFixPushUi();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pushState, rollbackState, resetContentFixPushUi]);
+
+  useEffect(() => {
+    if (pushState !== 'idle') return;
+    if (rollbackState !== 'confirming' && rollbackState !== 'error') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setRollbackState('idle');
+      setRollbackError(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pushState, rollbackState]);
+
+  const executeContentFixPush = useCallback(
+    async (
+      pageUrl: string,
+      field: 'meta-description' | 'seo-title' | 'h1' | 'content',
+      newValue: string,
+    ) => {
+      setPushState('pushing');
+      setPushError(null);
+      const token = getStoredAccessToken();
+      if (!token) {
+        setPushState('error');
+        setPushError('Du må være logget inn.');
+        return;
+      }
+      try {
+        const res = await fetch('/api/wordpress-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ pageUrl, field, newValue }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setPushState('error');
+          setPushError(
+            typeof data?.error === 'string' ? data.error : `Feil ${res.status}`,
+          );
+          return;
+        }
+        setLastChangeId(typeof data?.changeId === 'string' ? data.changeId : null);
+        const prevOld =
+          data?.previous && Object.prototype.hasOwnProperty.call(data.previous, 'oldValue')
+            ? data.previous.oldValue
+            : null;
+        setLastOldValue(typeof prevOld === 'string' ? prevOld : null);
+        setLastH1Rendered(
+          field === 'h1' && typeof data?.h1Rendered === 'boolean' ? data.h1Rendered : null,
+        );
+        setPushState('success');
+        fetchContentChanges();
+      } catch (err: any) {
+        setPushState('error');
+        setPushError(err?.message || 'Kunne ikke pushe til WordPress.');
+      }
+    },
+    [fetchContentChanges],
+  );
+
+  const executeContentFixRollback = useCallback(async (
+    changeIdOverride?: string,
+    options?: { deferListRefetch?: boolean },
+  ) => {
+    setRollbackState('rolling_back');
+    setRollbackError(null);
+    const token = getStoredAccessToken();
+    if (!token) {
+      setRollbackState('error');
+      setRollbackError('Du må være logget inn.');
+      return;
+    }
+    const targetChangeId = changeIdOverride || lastChangeId;
+    if (!targetChangeId) {
+      setRollbackState('error');
+      setRollbackError('Fant ikke endrings-ID. Lukk og prøv push på nytt.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/wordpress-rollback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ changeId: targetChangeId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRollbackState('error');
+        setRollbackError(
+          typeof data?.error === 'string' ? data.error : `Feil ${res.status}`,
+        );
+        return;
+      }
+      setRollbackState('success');
+      if (!options?.deferListRefetch) {
+        fetchContentChanges();
+      }
+    } catch (err: any) {
+      setRollbackState('error');
+      setRollbackError(err?.message || 'Kunne ikke rulle tilbake endringen.');
+    }
+  }, [lastChangeId, fetchContentChanges]);
+
   useEffect(() => {
     const fetchAiSolution = async () => {
       if (!activeSolveProblem) return;
+      if (expandedWorkshopProblem?.startsWith('content-')) return;
 
       setAiIsThinking(true);
       setAiSolution(null);
@@ -5535,7 +7055,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     };
 
     fetchAiSolution();
-  }, [activeSolveProblem]);
+  }, [activeSolveProblem, expandedWorkshopProblem]);
 
   // Når vi får ny data fra App (sjefen), oppdaterer vi vår lokale data
   useEffect(() => {
@@ -6151,18 +7671,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
         setLinkPages(formattedLinkPages);
 
-        // Logg til Ukens kvittering
-        const criticalCount = data.pages.filter((p: any) => p.status === 'Kritisk').length;
-        const isolatedCount = formattedLinkPages.filter((p: any) => p.status === 'Isolert').length;
         if (user?.id) {
-          await supabase.from('sikt_actions').insert({
-            user_id: user.id,
-            action_type: 'content_scan',
-            category: 'finding',
-            title: `Skannet ${data.pages.length} sider — fant ${criticalCount} med kritisk innhold`,
-            details: { total_pages: data.pages.length, critical: criticalCount, isolated: isolatedCount },
-            page_url: formData.websiteUrl,
-          }).then(() => {}, () => {});
+          await logSiktActionsBatch(buildContentScanLogEntries(data.pages, formData.websiteUrl));
         }
       } else {
         toastWarning("Fant ingen sider på dette domenet. Er URL-en riktig?");
@@ -6261,17 +7771,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         // Bonus: Siden vi allerede hentet all dataen, fyller vi Innholds-fanen samtidig!
         setContentPages(data.pages);
 
-        // Logg til Ukens kvittering
-        const isolatedCount = formattedLinkPages.filter((p: any) => p.status === 'Isolert').length;
         if (user?.id) {
-          await supabase.from('sikt_actions').insert({
-            user_id: user.id,
-            action_type: 'link_scan',
-            category: 'finding',
-            title: `Kartla lenker på ${formattedLinkPages.length} sider — fant ${isolatedCount} isolerte sider`,
-            details: { total_pages: formattedLinkPages.length, isolated: isolatedCount },
-            page_url: formData.websiteUrl,
-          }).then(() => {}, () => {});
+          await logSiktActionsBatch(buildLinkScanLogEntries(formattedLinkPages, formData.websiteUrl));
         }
       } else {
         toastWarning("Fant ingen lesbare sider på dette domenet.");
@@ -6651,8 +8152,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     afterValue?: string;
   }) => {
     if (!user?.id) return;
+    const localRow = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      created_at: new Date().toISOString(),
+      user_id: user.id,
+      action_type: params.actionType,
+      category: params.category,
+      title: params.title,
+      details: params.details ?? null,
+      page_url: params.pageUrl ?? null,
+      before_value: params.beforeValue ?? null,
+      after_value: params.afterValue ?? null,
+    };
+    setSiktActions((prev) => dedupeSiktActions([localRow, ...prev]));
     try {
-      // Rå REST — unngår supabase-js som kan henge ved auth-lock
       await supabaseRest('sikt_actions', {
         method: 'POST',
         body: {
@@ -6674,6 +8187,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         q.push({ ...params, savedAt: new Date().toISOString() });
         localStorage.setItem(key, JSON.stringify(q.slice(-50)));
       } catch { /* ignore */ }
+    }
+  };
+
+  const logSiktActionsBatch = async (entries: SiktLogEntry[]) => {
+    for (const entry of entries) {
+      await logSiktAction(entry);
     }
   };
 
@@ -6738,14 +8257,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             return next;
           });
 
-          const issuesFound = (mobile.opportunities?.length ?? 0) + (mobile.diagnostics?.filter((d: any) => !d.passed)?.length ?? 0);
-          await logSiktAction({
-            actionType: 'analysis_run',
-            category: 'finding',
-            title: `Kjørte teknisk helsesjekk — fant ${issuesFound} punkter å fikse`,
-            details: { mobile_score: mobile.performance, desktop_score: desktop.performance, seo_score: mobile.seo },
-            pageUrl: formattedUrl,
-          });
+          await logSiktActionsBatch(buildAnalysisLogEntries(mobile, formattedUrl));
           return;
         }
 
@@ -6933,9 +8445,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const activePlanKey: 'BASIC' | 'STANDARD' | 'PREMIUM' =
     /premium/i.test(planBundle) ? 'PREMIUM' : /standard/i.test(planBundle) ? 'STANDARD' : 'BASIC';
 
-  // Webhost-status (for settings-fanen)
+  // Webhost-status (for settings-fanen). Kun connection_mode 'full' telles som ekte tilkobling.
   const hostMode: string = hostConnection?.connectionMode || 'none';
-  const hostIsConnected = hostMode === 'light' || hostMode === 'full';
+  const hostIsFullyConnected = hostMode === 'full';
+  const hostWasLightOnly = hostMode === 'light';
 
   // URL-lås (én endring per uke)
   const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -6975,43 +8488,129 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   };
 
-  // Webhost-tilkobling-handler (speiler logikken fra gamle PortalSettings)
-  const saveHostConnection = async () => {
-    if (!hostPlatform || !hostInputValue.trim()) return;
-    setHostSaving(true);
+  const resetWpWizardForm = () => {
+    setWpWizardStep(1);
+    setWpSiteUrl('');
+    setWpUsername('');
+    setWpAppPassword('');
+    setWpSiteUrlError(null);
+    setWpConnecting(false);
+    setWpConnectError(null);
+    setWpConnectResult(null);
+  };
+
+  const openWpWizard = () => {
+    resetWpWizardForm();
+    setShowWpWizard(true);
+  };
+
+  const closeWpWizard = () => {
+    if (wpConnecting) return;
+    setShowWpWizard(false);
+    resetWpWizardForm();
+  };
+
+  const wpStep2Valid =
+    wpSiteUrl.trim().startsWith('https://') &&
+    !!wpUsername.trim() &&
+    !!wpAppPassword.trim();
+
+  const connectWordPress = async () => {
+    if (!wpStep2Valid) return;
+    const accessToken = getStoredAccessToken();
+    setWpWizardStep(3);
+    setWpConnectError(null);
+    setWpConnectResult(null);
+    if (!accessToken) {
+      setWpConnectError('Du må være innlogget for å koble til.');
+      return;
+    }
+    setWpConnecting(true);
     try {
-      const body: any = {
-        user_id: user.id,
-        platform: hostPlatform,
-        connection_mode: 'light',
-        repo_url: hostPlatform === 'github' ? hostInputValue.trim() : null,
-        admin_url: (hostPlatform !== 'github' && hostPlatform !== 'custom') ? hostInputValue.trim() : null,
-        notes: hostPlatform === 'custom' ? hostInputValue.trim() : null,
-        last_changed_at: new Date().toISOString(),
-      };
-      await supabaseRest('client_hosts?on_conflict=user_id', {
+      const res = await fetch('/api/wordpress-connect', {
         method: 'POST',
-        body,
-        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          siteUrl: wpSiteUrl.trim(),
+          wpUsername: wpUsername.trim(),
+          appPassword: wpAppPassword,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setWpConnectError(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
+        return;
+      }
+      setWpConnectResult({
+        site: data.site || wpSiteUrl.trim(),
+        wpUser: data.wpUser || wpUsername.trim(),
       });
       setHostConnection({
-        platform: body.platform,
-        connectionMode: 'light',
-        repoUrl: body.repo_url || '',
-        adminUrl: body.admin_url || '',
-        notes: body.notes || '',
-        lastChangedAt: body.last_changed_at,
+        platform: 'wordpress',
+        connectionMode: 'full',
+        repoUrl: '',
+        adminUrl: data.site || wpSiteUrl.trim(),
+        notes: wpUsername.trim(),
+        lastChangedAt: new Date().toISOString(),
       });
-      toastSuccess('CMS koblet til. Sikt kan nå pushe fikser direkte.');
-      setShowHostModal(false);
-      setHostPlatform('');
-      setHostInputValue('');
-    } catch (err: any) {
-      toastError('Kunne ikke koble til: ' + (err?.message || 'ukjent feil'));
+    } catch {
+      setWpConnectError('Kunne ikke nå Sikt-serveren. Sjekk internett og prøv igjen.');
     } finally {
-      setHostSaving(false);
+      setWpConnecting(false);
     }
   };
+
+  const disconnectWordPress = async () => {
+    const accessToken = getStoredAccessToken();
+    setDisconnectError(null);
+    if (!accessToken) {
+      setDisconnectError('Du må være innlogget for å koble fra.');
+      return;
+    }
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch('/api/wordpress-disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDisconnectError(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
+        return;
+      }
+      setHostConnection((prev: any) => (prev ? { ...prev, connectionMode: 'skipped' } : null));
+      setShowDisconnectConfirm(false);
+      setDisconnectError(null);
+      toastInfo('Frakoblet fra WordPress.');
+    } catch {
+      setDisconnectError('Kunne ikke nå Sikt-serveren. Sjekk internett og prøv igjen.');
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!showWpWizard && !showDisconnectConfirm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showDisconnectConfirm) {
+        if (!isDisconnecting) {
+          setShowDisconnectConfirm(false);
+          setDisconnectError(null);
+        }
+        return;
+      }
+      if (showWpWizard && !wpConnecting) closeWpWizard();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showWpWizard, showDisconnectConfirm, wpConnecting, isDisconnecting]);
 
   const toggleNotif = (key: keyof typeof notifPrefs) =>
     setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -7020,7 +8619,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // TODOS — aggregert "i dag"-liste fra alle kilder, sortert etter impact.
   // Brukes paa Hjem (3 oeverst + "mer") og er kilden til Verksted-fanen.
   // ===================================================================
-  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'onboarding' | 'competitor' | 'geo';
+  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'content-page' | 'onboarding' | 'competitor' | 'geo';
   type Todo = {
     id: string;
     kind: TodoKind;
@@ -7029,6 +8628,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     impact: number; // 0-100, hoyere = viktigere
     action: { label: string; onClick: () => void };
     raw?: any; // for verksted-drawer (PageSpeed-opportunity)
+    pageUrl?: string;
+    pageTitle?: string;
+    status?: 'open' | 'solved';
+    changeId?: string;
+    changeData?: TodoChangeData;
   };
 
   const todos = useMemo<Todo[]>(() => {
@@ -7064,14 +8668,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         action: { label: 'Legg til', onClick: () => setActiveTab('keywords') },
       });
     }
-    if (hasStandardOrHigher && !hostConnection) {
+    if (hasStandardOrHigher && !hostIsFullyConnected) {
       items.push({
         id: 'onboarding-cms',
         kind: 'onboarding',
-        title: 'Koble til CMS',
-        desc: 'Lar Sikt pushe fikser direkte til siden, og gir AI eksakt kode-context.',
+        title: hostWasLightOnly ? 'Koble til WordPress (på nytt)' : 'Koble til WordPress',
+        desc: 'Lar Sikt pushe fikser direkte til siden din med et trygt Application Password.',
         impact: 80,
-        action: { label: 'Koble til', onClick: () => { setActiveTab('settings'); setShowHostModal(true); } },
+        action: { label: 'Koble til', onClick: () => { setActiveTab('settings'); openWpWizard(); } },
       });
     }
 
@@ -7099,6 +8703,119 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
     }
 
+    // 2b. Innhold — én todo per issue per side (maks 20 viktigste etter impact)
+    const contentPageTodos: Todo[] = [];
+    for (const p of contentPages) {
+      if (!p.fullUrl || typeof p.fullUrl !== 'string' || !p.fullUrl.trim()) continue;
+      let resolvedPageUrl: string;
+      try {
+        resolvedPageUrl = new URL(p.url, p.fullUrl).toString();
+      } catch {
+        continue;
+      }
+      const issueList = Array.isArray(p.issues) ? p.issues : [];
+      const impactByStatus =
+        p.status === 'Kritisk' ? 75 : p.status === 'Advarsel' ? 60 : 40;
+      for (const issue of issueList) {
+        if (!issue || typeof issue !== 'string') continue;
+        contentPageTodos.push({
+          id: `content-${p.url}-${issue}`,
+          kind: 'content-page',
+          title: `${issue} — ${p.title || p.url}`,
+          desc: `Side: ${p.url}`,
+          impact: impactByStatus,
+          pageUrl: resolvedPageUrl,
+          pageTitle: p.title,
+          action: {
+            label: 'Åpne i Verksted',
+            onClick: () => {
+              setActiveTab('workshop');
+              setExpandedWorkshopProblem(`content-${p.url}-${issue}`);
+            },
+          },
+        });
+      }
+    }
+    contentPageTodos.sort((a, b) => b.impact - a.impact);
+
+    const uniqueChanges = Array.from(
+      new Map(contentChanges.map((change) => [change.id, change])).values(),
+    ) as ContentChangeRow[];
+    const handledChangeIds = new Set<string>();
+    const openContentTodos: Todo[] = [];
+    const solvedContentTodos: Todo[] = [];
+
+    for (const todo of contentPageTodos) {
+      if (todo.status === 'solved') {
+        if (todo.changeId) handledChangeIds.add(todo.changeId);
+        solvedContentTodos.push(todo);
+        continue;
+      }
+
+      const issue = todo.title.includes(' — ')
+        ? todo.title.split(' — ')[0]
+        : todo.title;
+      const field = detectFieldType(issue);
+      const match = uniqueChanges.find(
+        (change) =>
+          !handledChangeIds.has(change.id) &&
+          change.page_url === todo.pageUrl &&
+          change.field === field,
+      );
+
+      if (match) {
+        handledChangeIds.add(match.id);
+        solvedContentTodos.push({
+          ...todo,
+          status: 'solved',
+          changeId: match.id,
+          changeData: {
+            field: match.field,
+            old_value: match.old_value,
+            new_value: match.new_value,
+            pushed_at: match.pushed_at,
+          },
+        });
+      } else {
+        openContentTodos.push({ ...todo, status: 'open' });
+      }
+    }
+
+    items.push(...openContentTodos.slice(0, 20));
+    items.push(...solvedContentTodos);
+
+    for (const change of uniqueChanges) {
+      if (handledChangeIds.has(change.id)) continue;
+      if (change.field !== 'meta-description' && change.field !== 'seo-title' && change.field !== 'h1' && change.field !== 'content') continue;
+
+      handledChangeIds.add(change.id);
+      const pathLabel = pathLabelFromPageUrl(change.page_url);
+      items.push({
+        id: `solved-${change.id}`,
+        kind: 'content-page',
+        status: 'solved',
+        changeId: change.id,
+        changeData: {
+          field: change.field,
+          old_value: change.old_value,
+          new_value: change.new_value,
+          pushed_at: change.pushed_at,
+        },
+        pageUrl: change.page_url,
+        pageTitle: pageTitleFromPageUrl(change.page_url),
+        title: solvedTitleForField(change.field),
+        desc: `Side: ${pathLabel}`,
+        impact: 35,
+        action: {
+          label: 'Åpne i Verksted',
+          onClick: () => {
+            setActiveTab('workshop');
+            setExpandedWorkshopProblem(`solved-${change.id}`);
+          },
+        },
+      });
+    }
+
     // 3. Sokeord pa pos 4-20 (lavt-hengende frukt)
     for (const r of realRankings) {
       const pos = (r as any).position;
@@ -7114,11 +8831,217 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
     }
 
-    return items.sort((a, b) => b.impact - a.impact);
-  }, [analysisResults, realRankings, websiteUrl, hostConnection, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing]);
+    return Array.from(new Map(items.map((todo) => [todo.id, todo])).values())
+      .sort((a, b) => b.impact - a.impact);
+  }, [analysisResults, realRankings, websiteUrl, hostIsFullyConnected, hostWasLightOnly, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing, contentPages, contentChanges]);
 
   const todayTodos = todos.slice(0, 3);
   const moreTodos = todos.slice(3);
+  const todosRef = useRef(todos);
+  todosRef.current = todos;
+
+  useEffect(() => {
+    if (rollbackState !== 'success') return;
+    const todo = todosRef.current.find((t) => t.id === expandedWorkshopProblem);
+    if (todo?.status !== 'solved') return;
+    const timer = setTimeout(() => {
+      fetchContentChanges();
+      setExpandedWorkshopProblem(null);
+      resetContentFixPushUi();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [rollbackState, expandedWorkshopProblem, resetContentFixPushUi, fetchContentChanges]);
+
+  useEffect(() => {
+    const abortInFlight = () => {
+      contentFixAbortRef.current?.abort();
+      contentFixAbortRef.current = null;
+    };
+
+    if (!expandedWorkshopProblem?.startsWith('content-')) {
+      abortInFlight();
+      return;
+    }
+
+    const todo = todos.find(
+      (t) => t.id === expandedWorkshopProblem && t.kind === 'content-page',
+    );
+    const todoId = expandedWorkshopProblem;
+
+    if (todo?.status === 'solved') {
+      abortInFlight();
+      return;
+    }
+
+    if (!todo?.pageUrl) {
+      abortInFlight();
+      setContentFixActive({
+        todoId,
+        loading: 'error',
+        error: 'Mangler side-URL for dette funnet.',
+      });
+      return;
+    }
+
+    const cached = contentFixCache[todoId];
+    if (cached?.pageData && cached?.aiSuggestion) {
+      setContentFixActive({ todoId, loading: 'idle', error: null });
+      return () => abortInFlight();
+    }
+
+    const issue = todo.title.includes(' — ')
+      ? todo.title.split(' — ')[0]
+      : todo.title;
+    const fieldType = detectFieldType(issue);
+
+    abortInFlight();
+    const ac = new AbortController();
+    contentFixAbortRef.current = ac;
+
+    setContentFixActive({
+      todoId,
+      loading: 'fetching',
+      error: null,
+    });
+
+    const run = async () => {
+      const token = getStoredAccessToken();
+      if (!token) {
+        if (ac.signal.aborted) return;
+        setContentFixActive((prev) =>
+          prev.todoId === todoId
+            ? { ...prev, loading: 'error', error: 'Du må være logget inn.' }
+            : prev,
+        );
+        return;
+      }
+
+      try {
+        const fetchRes = await fetch('/api/wordpress-fetch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ pageUrl: todo.pageUrl }),
+          signal: ac.signal,
+        });
+        const fetchData = await fetchRes.json().catch(() => ({}));
+        if (ac.signal.aborted) return;
+        if (!fetchRes.ok) {
+          setContentFixActive((prev) =>
+            prev.todoId === todoId
+              ? {
+                  ...prev,
+                  loading: 'error',
+                  error:
+                    typeof fetchData?.error === 'string'
+                      ? fetchData.error
+                      : `Feil ${fetchRes.status}`,
+                }
+              : prev,
+          );
+          return;
+        }
+
+        const pageData = fetchData as WordPressFetchResponse;
+        setContentFixCache((prev) => ({
+          ...prev,
+          [todoId]: { pageData, fieldType, aiSuggestion: null },
+        }));
+
+        if (fieldType === 'content') {
+          let savedAnswers: PageContextAnswers | null = null;
+          if (supabase) {
+            try {
+              const { data: ctxRow, error: ctxErr } = await supabase
+                .from('sikt_page_context')
+                .select('answers')
+                .eq('page_url', todo.pageUrl)
+                .maybeSingle();
+              if (ctxErr) {
+                console.warn('[Verksted] Kunne ikke hente page context:', ctxErr.message);
+              } else {
+                savedAnswers = normalizePageContextAnswers(ctxRow?.answers);
+              }
+            } catch (ctxCatch: unknown) {
+              console.warn('[Verksted] Kunne ikke hente page context:', ctxCatch);
+            }
+          }
+          if (ac.signal.aborted) return;
+
+          if (savedAnswers) {
+            setContentFixCache((prev) => ({
+              ...prev,
+              [todoId]: {
+                pageData,
+                fieldType,
+                aiSuggestion: null,
+                pageContextAnswers: savedAnswers,
+              },
+            }));
+            setContentFixActive((prev) =>
+              prev.todoId === todoId ? { ...prev, loading: 'generating' } : prev,
+            );
+            await runContentFixAi(todoId, pageData, fieldType, ac.signal, savedAnswers);
+            return;
+          }
+
+          setContentFixActive((prev) =>
+            prev.todoId === todoId ? { ...prev, loading: 'generating-questions', error: null } : prev,
+          );
+
+          let contextQuestions: ContextQuestion[];
+          try {
+            contextQuestions = await generateContextQuestions(pageData, ac.signal, token);
+          } catch (err: unknown) {
+            if (err && typeof err === 'object' && (err as { name?: string }).name === 'AbortError') {
+              return;
+            }
+            contextQuestions = FALLBACK_QUESTIONS;
+          }
+          if (ac.signal.aborted) return;
+
+          if (contextQuestions.length === 0) {
+            setContentFixActive((prev) =>
+              prev.todoId === todoId ? { ...prev, loading: 'generating' } : prev,
+            );
+            await runContentFixAi(todoId, pageData, fieldType, ac.signal, null);
+            return;
+          }
+
+          setContentFixCache((prev) => ({
+            ...prev,
+            [todoId]: {
+              pageData,
+              fieldType,
+              aiSuggestion: null,
+              contextQuestions,
+            },
+          }));
+          setContentFixActive((prev) =>
+            prev.todoId === todoId ? { ...prev, loading: 'questionnaire', error: null } : prev,
+          );
+          return;
+        }
+
+        setContentFixActive((prev) =>
+          prev.todoId === todoId ? { ...prev, loading: 'generating' } : prev,
+        );
+        await runContentFixAi(todoId, pageData, fieldType, ac.signal);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+        setContentFixActive((prev) =>
+          prev.todoId === todoId
+            ? { ...prev, loading: 'error', error: err?.message || 'Kunne ikke hente fra WordPress.' }
+            : prev,
+        );
+      }
+    };
+
+    run();
+    return () => abortInFlight();
+  }, [expandedWorkshopProblem, todos, contentFixRetry, runContentFixAi]);
 
   // Aktivitetsfeed paa Hjem - siste 8 sikt_actions
   const homeFeedActions = dedupeSiktActions(siktActions || []).slice(0, 8);
@@ -7817,10 +9740,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <span className={`w-1 h-1 rounded-full ${isLight ? 'bg-slate-400' : 'bg-slate-500'}`} />
                       <button onClick={() => setActiveTab('keywords')} className="text-violet-600 hover:text-violet-500 font-medium">Legg til flere søkeord å spore</button>
                     </li>
-                    {hasStandardOrHigher && !hostConnection && (
+                    {hasStandardOrHigher && !hostIsFullyConnected && (
                       <li className="flex items-center gap-3">
                         <span className={`w-1 h-1 rounded-full ${isLight ? 'bg-slate-400' : 'bg-slate-500'}`} />
-                        <button onClick={() => { setActiveTab('settings'); setShowHostModal(true); }} className="text-violet-600 hover:text-violet-500 font-medium">Koble til CMS for auto-fiks</button>
+                        <button onClick={() => { setActiveTab('settings'); openWpWizard(); }} className="text-violet-600 hover:text-violet-500 font-medium">Koble til WordPress for auto-fiks</button>
                       </li>
                     )}
                   </ul>
@@ -7832,6 +9755,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       pagespeed:  { label: 'P', bg: isLight ? 'bg-violet-100'  : 'bg-violet-500/15',  fg: 'text-violet-700' },
                       keyword:    { label: 'K', bg: isLight ? 'bg-emerald-100' : 'bg-emerald-500/15', fg: 'text-emerald-700' },
                       content:    { label: 'I', bg: isLight ? 'bg-sky-100'     : 'bg-sky-500/15',     fg: 'text-sky-700' },
+                      'content-page': { label: 'S', bg: isLight ? 'bg-sky-100' : 'bg-sky-500/15', fg: 'text-sky-700' },
                       onboarding: { label: '!', bg: isLight ? 'bg-amber-100'   : 'bg-amber-500/15',   fg: 'text-amber-700' },
                       competitor: { label: 'C', bg: isLight ? 'bg-rose-100'    : 'bg-rose-500/15',    fg: 'text-rose-700' },
                       geo:        { label: 'A', bg: isLight ? 'bg-violet-100'  : 'bg-violet-500/15',  fg: 'text-violet-700' },
@@ -8082,7 +10006,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <article className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
                           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: palette.muted }}>Total score</p>
-                          <p className="text-5xl font-semibold mt-2 leading-none" style={{ color: palette.ink }}>{totalScore ?? '—'}</p>
+                          <p className="text-5xl font-semibold mt-2 leading-none" style={{ color: palette.ink }}>{totalScore ?? 'Venter på score'}</p>
                           <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold" style={{ background: totalScore != null && totalScore >= 60 ? palette.successBg : palette.warnBg, color: totalScore != null && totalScore >= 60 ? palette.success : palette.warn }}>
                             {totalTone}
                           </div>
@@ -8374,7 +10298,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Koble til Google Search Console</p>
-                    <p className="text-xs" style={{ color: '#808080' }}>Hent dine faktiske søkeord, posisjoner, klikk og visninger direkte fra Google.</p>
+                    <p className="text-xs" style={{ color: '#808080' }}>Google sender søkeorddata vanligvis 1–2 uker etter tilkobling. Vi varsler deg når tallene er klare.</p>
                   </div>
                 </div>
                 {!showGscPreCheck ? (
@@ -8479,7 +10403,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <div className="flex-1 overflow-y-auto rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6', maxHeight: 420 }}>
                       {filtered.length === 0 ? (
                         <div className="p-6 text-center text-sm" style={{ color: '#808080' }}>
-                          {kwSearch ? 'Ingen treff' : 'Ingen søkeord ennå'}
+                          {kwSearch
+                            ? 'Ingen treff på søket — prøv et annet ord'
+                            : gscConnected
+                              ? 'Google sender flere søkeord fortløpende — typisk 1–2 uker etter tilkobling. Vi varsler deg når listen fylles.'
+                              : 'Koble til Google Search Console, eller legg til egne søkeord nedenfor. Rangering måles ved første sjekk.'}
                         </div>
                       ) : (
                         <ul>
@@ -8509,7 +10437,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     )}
                                     {posUp && <span className="text-[11px] font-semibold ml-1" style={{ color: '#52A447' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
                                     {posDown && <span className="text-[11px] font-semibold ml-1" style={{ color: '#ef4444' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#808080' }}>—0,0</span>}
+                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#808080' }}>0,0</span>}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -8616,25 +10544,39 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               label: 'Posisjon',
                               value: selected.position != null
                                 ? (selected.source === 'gsc' ? (selected.position as number).toFixed(1) : `#${selected.position}`)
-                                : '—',
+                                : selected.source === 'gsc'
+                                  ? 'Oppdateres med nye GSC-data'
+                                  : 'Måles ved «Sjekk rangering nå»',
                               delta: selected.change,
                               positive: (selected.change ?? 0) > 0,
                             },
                             {
                               label: 'Klikk',
-                              value: selected.clicks != null ? (selected.clicks as number).toLocaleString('no-NO') : '—',
+                              value: selected.clicks != null
+                                ? (selected.clicks as number).toLocaleString('no-NO')
+                                : selected.source === 'gsc'
+                                  ? 'Kommer med GSC-data (1–2 uker)'
+                                  : 'Kun via Search Console',
                               delta: null,
                               positive: false,
                             },
                             {
                               label: 'Visninger',
-                              value: selected.impressions != null ? (selected.impressions as number).toLocaleString('no-NO') : '—',
+                              value: selected.impressions != null
+                                ? (selected.impressions as number).toLocaleString('no-NO')
+                                : selected.source === 'gsc'
+                                  ? 'Kommer med GSC-data (1–2 uker)'
+                                  : 'Kun via Search Console',
                               delta: null,
                               positive: false,
                             },
                             {
                               label: 'CTR',
-                              value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—',
+                              value: selected.ctr != null
+                                ? `${((selected.ctr as number) * 100).toFixed(1)} %`
+                                : selected.source === 'gsc'
+                                  ? 'Beregnes når klikk er inne'
+                                  : 'Kun via Search Console',
                               delta: null,
                               positive: false,
                             },
@@ -8645,7 +10587,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               {stat.delta !== null && (
                                 <p className="text-xs font-semibold mt-1" style={{ color: stat.positive ? '#52A447' : '#ef4444' }}>
                                   {stat.positive ? '▲' : stat.delta === 0 ? '' : '▼'}
-                                  {stat.delta !== 0 ? `${Math.abs(stat.delta as number).toFixed(1)}` : '—0,0'}
+                                  {stat.delta !== 0 ? `${Math.abs(stat.delta as number).toFixed(1)}` : '0,0'}
                                 </p>
                               )}
                             </div>
@@ -8731,9 +10673,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   >
                                     {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
                                   </a>
-                                  <span className="text-xs tabular-nums text-right" style={{ color: '#1A1A1A' }}>—</span>
+                                  <span className="text-xs tabular-nums text-right" style={{ color: '#808080' }}>Ikke fra GSC</span>
                                   <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
-                                    {selected.position ?? '—'}
+                                    {selected.position != null ? `#${selected.position}` : 'Måles ved rangeringssjekk'}
                                   </span>
                                 </div>
                               </div>
@@ -8776,7 +10718,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 events.push({ text: 'Koblet via Google Search Console', sub: '' });
                               }
                               if (!events.length) {
-                                return <p className="text-xs" style={{ color: '#808080' }}>Ingen hendelser ennå.</p>;
+                                return <p className="text-xs" style={{ color: '#808080' }}>Sikt jobber i bakgrunnen — første hendelser dukker opp her etter analyse eller søkeordsjekk.</p>;
                               }
                               return (
                                 <ul className="space-y-2.5">
@@ -8882,14 +10824,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* VERKSTED — liste-view, ekspander inline for AI-løsning.         */}
         {/* =============================================================== */}
         {activeTab === 'workshop' && (() => {
-          const opportunities = analysisResults?.mobile?.opportunities || [];
-          const problems = opportunities.map((o: any) => ({
-            id: `ps-${o.title}`,
-            title: o.title,
-            desc: o.savings ? `Sparer ${o.savings}` : 'Forbedring foreslått av Lighthouse',
-            raw: o,
-            status: 'open' as const,
-          }));
+          const workshopKinds: TodoKind[] = ['pagespeed', 'content-page', 'keyword'];
+          const problems = todos
+            .filter((t) => workshopKinds.includes(t.kind))
+            .map((todo) => ({
+              id: todo.id,
+              kind: todo.kind,
+              title: todo.title,
+              desc: todo.desc,
+              raw: todo.raw,
+              status: todo.status ?? 'open',
+              pageUrl: todo.pageUrl,
+              pageTitle: todo.pageTitle,
+              changeId: todo.changeId,
+              changeData: todo.changeData,
+            }));
           const W = {
             bg: '#F5F5F0',
             card: '#FFFFFF',
@@ -8903,8 +10852,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const pressReset = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
           const filteredProblems =
             (workshopFilter === 'all' ? problems :
-              workshopFilter === 'open' ? problems.filter((p) => p.status === 'open') :
-              problems.filter((p) => p.status !== 'open'))
+              workshopFilter === 'open' ? problems.filter((p) => p.status !== 'solved') :
+              problems.filter((p) => p.status === 'solved'))
               .filter((p) => {
                 const q = workshopQuery.trim().toLowerCase();
                 if (!q) return true;
@@ -8916,8 +10865,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             problems[0] ||
             null;
           const selectedIndex = selectedProblem ? problems.findIndex((p) => p.id === selectedProblem.id) : -1;
-          const openCount = problems.filter((p) => p.status === 'open').length;
-          const doneCount = problems.filter((p) => p.status !== 'open').length;
+          const openCount = problems.filter((p) => p.status !== 'solved').length;
+          const doneCount = problems.filter((p) => p.status === 'solved').length;
           const latestScore = scoreHistory[scoreHistory.length - 1];
           const analyzedLabel = latestScore?.at
             ? new Date(latestScore.at).toLocaleString('nb-NO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -8938,8 +10887,38 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
           const selectProblem = (p: typeof problems[number]) => {
             setExpandedWorkshopProblem(p.id);
-            setActiveSolveProblem({ raw: p.raw, title: p.title });
+            if (p.kind === 'content-page') {
+              setActiveSolveProblem(null);
+              setAiSolution(null);
+              setAiIsThinking(false);
+            } else {
+              setActiveSolveProblem({ raw: p.raw, title: p.title });
+            }
           };
+          const contentFixReady =
+            selectedProblem?.kind === 'content-page' &&
+            contentFixActive.todoId === selectedProblem.id;
+          const contentFixEntry = contentFixReady ? contentFixCache[selectedProblem.id] : undefined;
+          const contentFixLoading = !contentFixReady
+            ? 'fetching'
+            : contentFixActive.loading === 'idle' &&
+                !contentFixEntry?.pageData &&
+                !contentFixActive.error
+              ? 'fetching'
+              : contentFixActive.loading;
+          const showYoastMissingNote =
+            contentFixReady &&
+            contentFixEntry?.pageData &&
+            contentFixEntry.pageData.yoast?.installed === false &&
+            (contentFixEntry.fieldType === 'meta-description' || contentFixEntry.fieldType === 'seo-title');
+          const showPushPlaceholder =
+            contentFixReady &&
+            contentFixEntry?.pageData &&
+            (contentFixEntry.fieldType === 'content' ||
+              contentFixEntry.fieldType === 'h1' ||
+              (contentFixEntry.pageData.yoast?.installed === true &&
+                (contentFixEntry.fieldType === 'meta-description' ||
+                  contentFixEntry.fieldType === 'seo-title')));
           const goRelative = (delta: number) => {
             if (!problems.length) return;
             const current = selectedIndex >= 0 ? selectedIndex : 0;
@@ -8966,6 +10945,41 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     from { opacity: 0; }
                     to   { opacity: 1; }
                   }
+                }
+                @keyframes ws-spin {
+                  to { transform: rotate(360deg); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  .ws-content-spin { animation: none !important; }
+                }
+                .ws-content-diff-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 16px;
+                }
+                .ws-content-preview-stack {
+                  display: grid;
+                  grid-template-columns: 1fr;
+                  gap: 12px;
+                }
+                @keyframes ws-snippet-fade {
+                  from { opacity: 0; transform: translateY(4px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+                .ws-snippet-preview-enter {
+                  animation: ws-snippet-fade 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  @keyframes ws-snippet-fade {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                  }
+                  .ws-snippet-preview-enter {
+                    animation-duration: 0ms;
+                  }
+                }
+                @media (max-width: 768px) {
+                  .ws-content-diff-grid { grid-template-columns: 1fr; }
                 }
               `}</style>
               <div style={{ background: 'transparent', overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', display: 'flex', flexDirection: 'column' }}>
@@ -9314,9 +11328,855 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       )}
                     </div>
 
+                  ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData ? (
+                    /* ═══════════════════════════════════
+                       SCREEN B — INNHOLD (løst via push)
+                       ═══════════════════════════════════ */
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedWorkshopProblem(null);
+                            resetContentFixPushUi();
+                          }}
+                          onMouseDown={pressDown}
+                          onMouseUp={pressReset}
+                          onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        >
+                          <ChevronLeft size={12} /> Verksted
+                        </button>
+                        <span style={{ color: W.border, fontSize: 14 }}>/</span>
+                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: W.muted }}>
+                          Innhold · {String(selectedIndex + 1).padStart(2, '0')} av {String(problems.length).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      <div style={{ padding: '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        <div>
+                          <h2 style={{ margin: '0 0 10px', color: W.ink, fontSize: 'clamp(24px,3.2vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+                            {selectedProblem.title}
+                          </h2>
+                          {selectedProblem.pageUrl && (
+                            <p style={{ margin: 0, fontSize: 13, color: W.muted, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span>Side:</span>
+                              <a
+                                href={selectedProblem.pageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: W.ink, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              >
+                                {selectedProblem.pageUrl}
+                                <ExternalLink size={13} style={{ flexShrink: 0 }} />
+                              </a>
+                            </p>
+                          )}
+                        </div>
+
+                        {rollbackState === 'success' ? (
+                          <div style={{ background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                            <CheckCircle2 size={22} style={{ color: W.green, flexShrink: 0, marginTop: 2 }} />
+                            <div>
+                              <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Rullet tilbake ✓</p>
+                              <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.55 }}>
+                                Feltet er satt tilbake til den gamle verdien på WordPress.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                              <CheckCircle2 size={22} style={{ color: W.green, flexShrink: 0, marginTop: 2 }} />
+                              <div>
+                                <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Pushet til WordPress ✓</p>
+                                <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.55 }}>
+                                  Pushet {formatPushedAt(selectedProblem.changeData.pushed_at)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                              <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: W.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Verdi før push</p>
+                                <p style={{
+                                  margin: 0,
+                                  color: W.ink,
+                                  fontSize: 14,
+                                  lineHeight: 1.55,
+                                  whiteSpace: 'pre-wrap',
+                                  ...(selectedProblem.changeData.field === 'content'
+                                    ? { maxHeight: 240, overflowY: 'auto' as const }
+                                    : {}),
+                                }}>
+                                  {selectedProblem.changeData.old_value && selectedProblem.changeData.old_value.trim()
+                                    ? selectedProblem.changeData.old_value
+                                    : '(Tom)'}
+                                </p>
+                              </div>
+                              <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: W.green, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sikt-AI sitt forslag</p>
+                                <p style={{
+                                  margin: 0,
+                                  color: W.ink,
+                                  fontSize: 14,
+                                  lineHeight: 1.55,
+                                  whiteSpace: 'pre-wrap',
+                                  ...(selectedProblem.changeData.field === 'content'
+                                    ? { maxHeight: 240, overflowY: 'auto' as const }
+                                    : {}),
+                                }}>
+                                  {selectedProblem.changeData.new_value}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedWorkshopProblem(null);
+                                  resetContentFixPushUi();
+                                }}
+                                onMouseDown={pressDown}
+                                onMouseUp={pressReset}
+                                onMouseLeave={pressReset}
+                                style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              >
+                                Lukk
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRollbackError(null);
+                                  setRollbackState('confirming');
+                                }}
+                                onMouseDown={pressDown}
+                                onMouseUp={pressReset}
+                                onMouseLeave={pressReset}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              >
+                                Angre push
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {rollbackState === 'success' && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                fetchContentChanges();
+                                setExpandedWorkshopProblem(null);
+                                resetContentFixPushUi();
+                              }}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              Lukk
+                            </button>
+                          </div>
+                        )}
+
+                        {rollbackState !== 'idle' && rollbackState !== 'success' && selectedProblem.changeData && (() => {
+                          const solvedOldValueLabel =
+                            selectedProblem.changeData.old_value && selectedProblem.changeData.old_value.trim()
+                              ? `'${selectedProblem.changeData.old_value}'`
+                              : '(tom)';
+                          const rollbackBusy = rollbackState === 'rolling_back';
+                          return (
+                            <div
+                              style={{
+                                position: 'fixed',
+                                inset: 0,
+                                zIndex: 50,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 16,
+                              }}
+                            >
+                              <button
+                                type="button"
+                                aria-label="Lukk"
+                                onClick={() => {
+                                  if (rollbackBusy) return;
+                                  setRollbackState('idle');
+                                  setRollbackError(null);
+                                }}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  background: 'rgba(26,26,26,0.45)',
+                                  border: 'none',
+                                  cursor: rollbackBusy ? 'default' : 'pointer',
+                                }}
+                              />
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  width: '100%',
+                                  maxWidth: 480,
+                                  background: W.card,
+                                  border: `1px solid ${W.border}`,
+                                  borderRadius: 16,
+                                  padding: '24px 22px',
+                                  boxShadow: '0 16px 48px rgba(26,26,26,0.12)',
+                                }}
+                              >
+                                <h3 style={{ margin: '0 0 10px', color: W.ink, fontSize: 18, fontWeight: 700 }}>
+                                  Rull tilbake endringen?
+                                </h3>
+                                <p style={{ margin: '0 0 18px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                                  Vi setter feltet tilbake til den gamle verdien: {solvedOldValueLabel}
+                                </p>
+
+                                {rollbackState === 'error' && rollbackError && (
+                                  <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
+                                  </div>
+                                )}
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                  {rollbackBusy ? (
+                                    <button
+                                      type="button"
+                                      disabled
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
+                                    >
+                                      <Loader2 size={14} className="ws-content-spin" style={{ animation: 'ws-spin 1s linear infinite' }} />
+                                      Ruller tilbake …
+                                    </button>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRollbackState('idle');
+                                          setRollbackError(null);
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Avbryt
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (!selectedProblem.changeId) return;
+                                          executeContentFixRollback(selectedProblem.changeId, { deferListRefetch: true });
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Rull tilbake nå
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                  ) : selectedProblem?.kind === 'content-page' ? (
+                    /* ═══════════════════════════════════
+                       SCREEN B — INNHOLD (WordPress diff)
+                       ═══════════════════════════════════ */
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedWorkshopProblem(null)}
+                          onMouseDown={pressDown}
+                          onMouseUp={pressReset}
+                          onMouseLeave={pressReset}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                        >
+                          <ChevronLeft size={12} /> Verksted
+                        </button>
+                        <span style={{ color: W.border, fontSize: 14 }}>/</span>
+                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: W.muted }}>
+                          Innhold · {String(selectedIndex + 1).padStart(2, '0')} av {String(problems.length).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      <div style={{ padding: '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                            <span style={{ background: 'rgba(14,165,233,0.12)', color: '#0369a1', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
+                            <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.ink, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: W.green, flexShrink: 0 }} /> Åpen
+                            </span>
+                          </div>
+                          <h2 style={{ margin: '0 0 10px', color: W.ink, fontSize: 'clamp(24px,3.2vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+                            {selectedProblem.title}
+                          </h2>
+                          {selectedProblem.pageUrl && (
+                            <p style={{ margin: 0, fontSize: 13, color: W.muted, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span>Side:</span>
+                              <a
+                                href={selectedProblem.pageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: W.ink, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              >
+                                {selectedProblem.pageUrl}
+                                <ExternalLink size={13} style={{ flexShrink: 0 }} />
+                              </a>
+                            </p>
+                          )}
+                        </div>
+
+                        {showYoastMissingNote && (
+                          <div style={{ background: W.bg, border: `1px solid ${W.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                            <p style={{ margin: 0, color: W.muted, fontSize: 13, lineHeight: 1.55 }}>
+                              Vi ser at Yoast SEO ikke er installert. For å pushe meta-felter må Yoast være aktivt på siden.
+                            </p>
+                          </div>
+                        )}
+
+                        {contentFixLoading === 'fetching' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0' }}>
+                            <Loader2 size={20} className="ws-content-spin" style={{ color: W.green, animation: 'ws-spin 1s linear infinite', flexShrink: 0 }} />
+                            <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 600 }}>Henter nåværende side fra WordPress …</p>
+                          </div>
+                        )}
+
+                        {contentFixLoading === 'generating-questions' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0' }}>
+                            <Loader2 size={20} className="ws-content-spin" style={{ color: W.green, animation: 'ws-spin 1s linear infinite', flexShrink: 0 }} />
+                            <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 600 }}>Sikt leser siden …</p>
+                          </div>
+                        )}
+
+                        {contentFixLoading === 'error' && (
+                          <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+                            <p style={{ margin: 0, color: '#8B2E2E', fontSize: 14, lineHeight: 1.5 }}>{contentFixActive.error || 'Noe gikk galt.'}</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (selectedProblem?.id) {
+                                  setContentFixCache((prev) => {
+                                    const next = { ...prev };
+                                    delete next[selectedProblem.id];
+                                    return next;
+                                  });
+                                }
+                                setContentFixRetry((n) => n + 1);
+                              }}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              Prøv igjen
+                            </button>
+                          </div>
+                        )}
+
+                        {contentFixLoading === 'questionnaire' &&
+                          contentFixEntry?.pageData &&
+                          contentFixEntry.fieldType === 'content' &&
+                          contentFixEntry.contextQuestions &&
+                          contentFixEntry.contextQuestions.length > 0 &&
+                          selectedProblem.pageUrl && (
+                          <ContentPageContextQuestionnaire
+                            questions={contentFixEntry.contextQuestions}
+                            onSubmit={(answers) => {
+                              startContentFixGeneration(
+                                selectedProblem.id,
+                                selectedProblem.pageUrl!,
+                                contentFixEntry.pageData,
+                                answers,
+                                true,
+                              );
+                            }}
+                            onSkip={() => {
+                              startContentFixGeneration(
+                                selectedProblem.id,
+                                selectedProblem.pageUrl!,
+                                contentFixEntry.pageData,
+                                null,
+                                false,
+                              );
+                            }}
+                          />
+                        )}
+
+                        {contentFixLoading === 'generating' && contentFixEntry?.pageData && contentFixEntry.fieldType && (() => {
+                          const cur = getContentFixCurrentValue(contentFixEntry.fieldType, contentFixEntry.pageData);
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                              <ContentFixValueCard fieldType={contentFixEntry.fieldType} borderColor={W.border} />
+                              <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: '18px 20px' }}>
+                                <p style={{ margin: '0 0 8px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Nåværende</p>
+                                {cur.hint && <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 11, lineHeight: 1.45 }}>{cur.hint}</p>}
+                                <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{cur.value}</p>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <Loader2 size={20} className="ws-content-spin" style={{ color: W.green, animation: 'ws-spin 1s linear infinite', flexShrink: 0 }} />
+                                <p style={{ margin: 0, color: W.ink, fontSize: 14, fontWeight: 600 }}>Sikt-AI lager et forslag …</p>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {contentFixLoading === 'idle' && contentFixEntry?.aiSuggestion && contentFixEntry.pageData && contentFixEntry.fieldType && (() => {
+                          const cur = getContentFixCurrentValue(contentFixEntry.fieldType, contentFixEntry.pageData);
+                          const todoId = selectedProblem.id;
+                          const editedSuggestion =
+                            editedSuggestions[todoId] ?? contentFixEntry.aiSuggestion ?? '';
+                          const charCounter = getContentFixCharCounter(
+                            editedSuggestion.length,
+                            contentFixEntry.fieldType,
+                          );
+                          return (
+                            <>
+                              <ContentFixValueCard fieldType={contentFixEntry.fieldType} borderColor={W.border} />
+                              <ContentFixPreviewSection
+                                fieldType={contentFixEntry.fieldType}
+                                pageData={contentFixEntry.pageData}
+                                editedSuggestion={editedSuggestion}
+                                previewVariant={snippetPreviewVariant}
+                                onPreviewVariantChange={setSnippetPreviewVariant}
+                                borderColor={W.border}
+                                green={W.green}
+                                muted={W.muted}
+                                ink={W.ink}
+                              />
+                              <div className="ws-content-diff-grid">
+                                <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: '18px 20px', minHeight: 120 }}>
+                                  <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Nåværende</p>
+                                  {cur.hint && <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 11, lineHeight: 1.45 }}>{cur.hint}</p>}
+                                  <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{cur.value}</p>
+                                </div>
+                                <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '18px 20px', minHeight: 120 }}>
+                                  <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.green, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Sikt foreslår</p>
+                                  <textarea
+                                    value={editedSuggestion}
+                                    onChange={(e) => {
+                                      setEditedSuggestions((prev) => ({
+                                        ...prev,
+                                        [todoId]: e.target.value,
+                                      }));
+                                    }}
+                                    placeholder="Sikt-AI sitt forslag vil vises her …"
+                                    rows={5}
+                                    style={{
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      margin: 0,
+                                      padding: '10px 12px',
+                                      border: `1px solid ${W.border}`,
+                                      borderRadius: 10,
+                                      background: '#fff',
+                                      color: W.ink,
+                                      fontSize: 14,
+                                      lineHeight: 1.65,
+                                      fontFamily: 'inherit',
+                                      resize: 'vertical',
+                                      minHeight: 88,
+                                      outline: 'none',
+                                    }}
+                                    onFocus={(e) => {
+                                      e.currentTarget.style.borderColor = W.green;
+                                    }}
+                                    onBlur={(e) => {
+                                      e.currentTarget.style.borderColor = W.border;
+                                    }}
+                                  />
+                                  <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 600, color: charCounter.color }}>
+                                    {charCounter.label}
+                                  </p>
+                                  {charCounter.overMax && (
+                                    <p style={{ margin: '4px 0 0', fontSize: 12, color: '#C42E2E', lineHeight: 1.45 }}>
+                                      Lengre enn anbefalt — kan bli kuttet av i søk
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
+                                <button
+                                  type="button"
+                                  onClick={regenerateContentFixAi}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={pressReset}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                >
+                                  <RefreshCw size={14} /> Generer på nytt
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (editedSuggestion.trim()) {
+                                      navigator.clipboard?.writeText(editedSuggestion);
+                                      toastSuccess('Kopiert til utklippstavle');
+                                    }
+                                  }}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={pressReset}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                >
+                                  <Copy size={14} /> Kopier forslag
+                                </button>
+                                {showPushPlaceholder && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPushError(null);
+                                      if (contentFixEntry.fieldType === 'content') {
+                                        setPushState('content-warning');
+                                      } else {
+                                        setPushState('confirming');
+                                      }
+                                    }}
+                                    onMouseDown={pressDown}
+                                    onMouseUp={pressReset}
+                                    onMouseLeave={pressReset}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                  >
+                                    Push til WordPress
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+
+                        {pushState !== 'idle' && showPushPlaceholder && contentFixEntry?.fieldType && contentFixEntry.pageData && (() => {
+                          const cur = getContentFixCurrentValue(contentFixEntry.fieldType, contentFixEntry.pageData);
+                          const pushEditedSuggestion =
+                            editedSuggestions[selectedProblem.id] ?? contentFixEntry.aiSuggestion ?? '';
+                          const pushTitle =
+                            contentFixEntry.fieldType === 'seo-title'
+                              ? 'Push SEO-tittel til WordPress?'
+                              : contentFixEntry.fieldType === 'h1'
+                                ? 'Push H1 til WordPress?'
+                                : contentFixEntry.fieldType === 'content'
+                                  ? 'Push innhold til WordPress?'
+                                  : 'Push meta-beskrivelse til WordPress?';
+                          const isContentField = contentFixEntry.fieldType === 'content';
+                          const scrollableValueStyle: React.CSSProperties = isContentField
+                            ? { maxHeight: 200, overflowY: 'auto' }
+                            : {};
+                          const rollbackBusy = rollbackState === 'rolling_back';
+                          const pushBusy = pushState === 'pushing';
+                          const overlayBusy = pushBusy || rollbackBusy;
+                          const oldValueLabel =
+                            lastOldValue && lastOldValue.trim()
+                              ? `'${lastOldValue}'`
+                              : '(tom)';
+                          const popupTitle =
+                            rollbackState === 'success'
+                              ? 'Rullet tilbake ✓'
+                              : rollbackState === 'confirming'
+                                ? 'Rull tilbake endringen?'
+                                : pushState === 'content-warning'
+                                  ? 'Erstatt sideinnhold?'
+                                  : pushState === 'success'
+                                    ? 'Pushet til WordPress ✓'
+                                    : pushTitle;
+                          return (
+                            <div
+                              style={{
+                                position: 'fixed',
+                                inset: 0,
+                                zIndex: 50,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 16,
+                              }}
+                            >
+                              <button
+                                type="button"
+                                aria-label="Lukk"
+                                onClick={() => {
+                                  if (overlayBusy) return;
+                                  resetContentFixPushUi();
+                                }}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  background: 'rgba(26,26,26,0.45)',
+                                  border: 'none',
+                                  cursor: overlayBusy ? 'default' : 'pointer',
+                                }}
+                              />
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  width: '100%',
+                                  maxWidth: 480,
+                                  background: W.card,
+                                  border: `1px solid ${W.border}`,
+                                  borderRadius: 16,
+                                  padding: '24px 22px',
+                                  boxShadow: '0 16px 48px rgba(26,26,26,0.12)',
+                                }}
+                              >
+                                <h3 style={{ margin: '0 0 10px', color: W.ink, fontSize: 18, fontWeight: 700 }}>
+                                  {popupTitle}
+                                </h3>
+
+                                {rollbackState === 'success' ? (
+                                  <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.55 }}>
+                                    Feltet er satt tilbake til den gamle verdien på WordPress.
+                                  </p>
+                                ) : rollbackState === 'confirming' ? (
+                                  <p style={{ margin: '0 0 18px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                                    Vi setter feltet tilbake til den gamle verdien: {oldValueLabel}
+                                  </p>
+                                ) : pushState === 'content-warning' ? (
+                                  <p style={{ margin: '0 0 18px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                                    Dette erstatter HELE tekstinnholdet på siden med den nye teksten. Bilder og spesial-formatering på siden kan gå tapt. Du kan angre når som helst i Løste-fanen.
+                                  </p>
+                                ) : pushState === 'success' ? (
+                                  <>
+                                    <p style={{ margin: '0 0 6px', color: W.muted, fontSize: 14, lineHeight: 1.55 }}>
+                                      Endringen er lagret på siden din.
+                                    </p>
+                                    {contentFixEntry.fieldType === 'h1' && lastH1Rendered === false && (
+                                      <p style={{ margin: '0 0 6px', color: W.muted, fontSize: 13, lineHeight: 1.55 }}>
+                                        Vi oppdaterte sidetittelen, men temaet ditt viser den kanskje ikke som H1 på siden. Dette kan kreve en tema-endring.
+                                      </p>
+                                    )}
+                                    <p style={{ margin: 0, color: W.muted, fontSize: 13, lineHeight: 1.55 }}>
+                                      Den gamle verdien er lagret. Du kan rulle tilbake hvis du ombestemmer deg.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p style={{ margin: '0 0 18px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                                      Den nye verdien skrives direkte til siden din. Den gamle verdien lagres, så du kan rulle tilbake etterpå om du ombestemmer deg.
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
+                                      <div style={{ background: W.bg, border: `1px solid ${W.border}`, borderRadius: 10, padding: '12px 14px' }}>
+                                        <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: W.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Nåværende</p>
+                                        <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', ...scrollableValueStyle }}>{cur.value}</p>
+                                      </div>
+                                      <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 10, padding: '12px 14px' }}>
+                                        <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: W.green, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ny</p>
+                                        <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', ...scrollableValueStyle }}>{pushEditedSuggestion}</p>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+
+                                {pushState === 'error' && pushError && (
+                                  <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{pushError}</p>
+                                  </div>
+                                )}
+
+                                {rollbackState === 'error' && rollbackError && (
+                                  <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
+                                  </div>
+                                )}
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: rollbackState === 'confirming' || pushState === 'success' || rollbackState === 'success' || pushState === 'content-warning' ? 18 : 0 }}>
+                                  {rollbackState === 'success' ? (
+                                    <button
+                                      type="button"
+                                      onClick={resetContentFixPushUi}
+                                      onMouseDown={pressDown}
+                                      onMouseUp={pressReset}
+                                      onMouseLeave={pressReset}
+                                      style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                    >
+                                      Lukk
+                                    </button>
+                                  ) : rollbackState === 'confirming' ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={rollbackBusy}
+                                        onClick={() => {
+                                          setRollbackState('idle');
+                                          setRollbackError(null);
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                      >
+                                        Avbryt
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={rollbackBusy}
+                                        onClick={() => executeContentFixRollback()}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                      >
+                                        Rull tilbake nå
+                                      </button>
+                                    </>
+                                  ) : rollbackState === 'rolling_back' ? (
+                                    <button
+                                      type="button"
+                                      disabled
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
+                                    >
+                                      <Loader2 size={14} className="ws-content-spin" style={{ animation: 'ws-spin 1s linear infinite' }} />
+                                      Ruller tilbake …
+                                    </button>
+                                  ) : rollbackState === 'error' ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRollbackState('idle');
+                                          setRollbackError(null);
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Avbryt
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => executeContentFixRollback()}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Rull tilbake nå
+                                      </button>
+                                    </>
+                                  ) : pushState === 'content-warning' ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={resetContentFixPushUi}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Avbryt
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={!pushEditedSuggestion.trim() || !selectedProblem.pageUrl}
+                                        onClick={() => {
+                                          if (!pushEditedSuggestion.trim() || !selectedProblem.pageUrl) return;
+                                          executeContentFixPush(
+                                            selectedProblem.pageUrl,
+                                            'content',
+                                            pushEditedSuggestion,
+                                          );
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Ja, erstatt innholdet
+                                      </button>
+                                    </>
+                                  ) : pushState === 'success' ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={resetContentFixPushUi}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Lukk
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRollbackError(null);
+                                          setRollbackState('confirming');
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Angre push
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={pushBusy}
+                                        onClick={resetContentFixPushUi}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: pushBusy ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.5 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                      >
+                                        Avbryt
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={pushBusy || !pushEditedSuggestion.trim() || !selectedProblem.pageUrl}
+                                        onClick={() => {
+                                          if (
+                                            !pushEditedSuggestion.trim() ||
+                                            !selectedProblem.pageUrl ||
+                                            (contentFixEntry.fieldType !== 'meta-description' &&
+                                              contentFixEntry.fieldType !== 'seo-title' &&
+                                              contentFixEntry.fieldType !== 'h1' &&
+                                              contentFixEntry.fieldType !== 'content')
+                                          ) return;
+                                          executeContentFixPush(
+                                            selectedProblem.pageUrl,
+                                            contentFixEntry.fieldType,
+                                            pushEditedSuggestion,
+                                          );
+                                        }}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: pushBusy ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.7 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                      >
+                                        {pushBusy ? (
+                                          <>
+                                            <Loader2 size={14} className="ws-content-spin" style={{ animation: 'ws-spin 1s linear infinite' }} />
+                                            Pusher …
+                                          </>
+                                        ) : (
+                                          'Push nå'
+                                        )}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
                   ) : selectedProblem ? (
                     /* ═══════════════════════════════════
-                       SCREEN B — DETALJ
+                       SCREEN B — DETALJ (PageSpeed)
                        ═══════════════════════════════════ */
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
 
@@ -9951,7 +12811,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </p>
                       <p style={{ margin: '0 0 20px', color: L.muted, fontSize: 14, lineHeight: 1.6 }}>
                         {weekOffset === 0
-                          ? 'Kjør en analyse eller legg til søkeord for å fylle loggen med konkrete funn.'
+                          ? 'Sikt jobber i bakgrunnen — første funn dukker opp her i løpet av kort tid etter at nettsiden er koblet til.'
                           : 'Sikt logget ingenting i denne perioden.'}
                       </p>
                       {weekOffset === 0 && (
@@ -10147,13 +13007,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const settingsMono = "ui-monospace,'SF Mono',Menlo,monospace";
           const settingsDomain = domainLabel || 'ingen-nettside';
           const profileDisplayFields = [
-            { label: 'Bedrift', value: clientData?.companyName || '—' },
-            { label: 'Kontaktperson', value: clientData?.contactPerson || '—' },
-            { label: 'E-post', value: clientData?.email || user?.email || '—' },
-            { label: 'Telefon', value: clientData?.phone || '—' },
-            { label: 'Nettside', value: websiteUrl || '—' },
-            { label: 'Bransje', value: clientData?.industry || '—' },
-            { label: 'Målgruppe', value: clientData?.targetAudience || '—' },
+            { label: 'Bedrift', value: clientData?.companyName || 'Ikke oppgitt' },
+            { label: 'Kontaktperson', value: clientData?.contactPerson || 'Ikke oppgitt' },
+            { label: 'E-post', value: clientData?.email || user?.email || 'Ikke oppgitt' },
+            { label: 'Telefon', value: clientData?.phone || 'Ikke oppgitt' },
+            { label: 'Nettside', value: websiteUrl || 'Legg inn under rediger profil' },
+            { label: 'Bransje', value: clientData?.industry || 'Ikke oppgitt' },
+            { label: 'Målgruppe', value: clientData?.targetAudience || 'Ikke oppgitt' },
           ];
           const profileEditFields = [
             { key: 'companyName', label: 'Bedrift', placeholder: 'Min Bedrift AS' },
@@ -10167,17 +13027,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
             { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
           ];
-          const cmsRows = hostIsConnected
-            ? [
-                { label: 'Plattform', value: hostConnection?.platform || '—' },
-                { label: 'URL', value: hostConnection?.repoUrl || hostConnection?.adminUrl || '—' },
-                { label: 'Status', value: 'synced' },
-              ]
-            : [
-                { label: 'Status', value: 'ikke koblet' },
-              ];
           const sectionCountProfile = editingSection === 'profile' ? profileEditFields.length + 2 : profileDisplayFields.length;
-          const sectionCountCms = (/basic/i.test(planBundle) && !hasStandardOrHigher) ? 0 : cmsRows.length;
+          const sectionCountCms = (/basic/i.test(planBundle) && !hasStandardOrHigher) ? 0 : 3;
           const sectionCountNotif = notifRows.length;
           const sectionCountTheme = 2;
           const planCost = planPrices[activePlanKey];
@@ -10206,8 +13057,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
                 <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
                   <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>CMS</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsConnected ? '#52A447' : '#1A1A1A' }}>
-                    {hostIsConnected ? 'Synced' : 'Ikke koblet'}
+                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected ? '#52A447' : '#1A1A1A' }}>
+                    {hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
                   </p>
                 </div>
               </div>
@@ -10324,42 +13175,86 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               {!(/basic/i.test(planBundle) && !hasStandardOrHigher) && (
                 <details className={sectionShell} open>
                   <summary className={sectionSummary}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>02</span>
-                        <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>CMS-tilkobling · {sectionCountCms} felt</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setHostPlatform(hostConnection?.platform || '');
-                          setHostInputValue(hostConnection?.repoUrl || hostConnection?.adminUrl || hostConnection?.notes || '');
-                          setShowHostModal(true);
-                        }}
-                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
-                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
-                        style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
-                      >
-                        sync
-                      </button>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>02</span>
+                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>CMS-tilkobling · {sectionCountCms} plattformer</p>
                     </div>
                   </summary>
-                  <div className="px-4 sm:px-6 pb-5">
-                    <dl>
-                      {cmsRows.map((row) => (
-                        <div key={row.label} className={rowShell}>
-                          <dt className="text-sm" style={{ color: '#808080' }}>{row.label}</dt>
-                          <dd className="text-sm text-right max-w-[70%] break-words" style={{ color: row.value === 'synced' ? '#52A447' : '#1A1A1A', fontFamily: settingsMono }}>
-                            {row.value}
-                          </dd>
+                  <div className="px-4 sm:px-6 pb-5 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress</p>
+                          {hostIsFullyConnected && (
+                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#52A447', background: '#F5F5F0', fontFamily: settingsMono }}>
+                              tilkoblet
+                            </span>
+                          )}
+                        </div>
+                        {hostIsFullyConnected ? (
+                          <>
+                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: '#808080' }}>
+                              Tilkoblet: {hostConnection?.adminUrl || '—'} som {hostConnection?.notes || '—'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => { setDisconnectError(null); setShowDisconnectConfirm(true); }}
+                              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              className="mt-4 text-sm text-left"
+                              style={{ color: '#808080', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            >
+                              Koble fra
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                              {hostWasLightOnly
+                                ? 'Tidligere registrert uten skrivetilgang. Koble til på nytt med Application Password.'
+                                : 'Koble til for at Sikt kan gjøre endringer direkte på siden din.'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={openWpWizard}
+                              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                              style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            >
+                              {hostWasLightOnly ? 'Koble til WordPress (på nytt)' : 'Koble til'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {[
+                        { name: 'Shopify' },
+                        { name: 'Webflow' },
+                      ].map((p) => (
+                        <div
+                          key={p.name}
+                          className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]"
+                          style={{ pointerEvents: 'none', opacity: 0.5 }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{p.name}</p>
+                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#808080', background: '#F5F5F0', fontFamily: settingsMono }}>
+                              Kommer snart
+                            </span>
+                          </div>
+                          <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                            Vi bygger denne integrasjonen etter hva kundene bruker mest.
+                          </p>
                         </div>
                       ))}
-                    </dl>
-                    {!hostIsConnected && (
-                      <p className="text-sm mt-3" style={{ color: '#808080' }}>
+                    </div>
+                    <p className="text-sm" style={{ color: '#808080' }}>
+                      Bruker du en annen plattform? Ta kontakt — vi prioriterer hvilke vi bygger neste etter hva kundene faktisk bruker.
+                    </p>
+                    {!hostIsFullyConnected && (
+                      <p className="text-sm" style={{ color: '#808080' }}>
                         Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
                       </p>
                     )}
@@ -10565,77 +13460,281 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     </main>
 
       {/* =============================================================== */}
-      {/* HOST CONNECT MODAL                                              */}
+      {/* WORDPRESS CONNECT WIZARD                                        */}
       {/* =============================================================== */}
-      {showHostModal && (
+      {showWpWizard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <style>{`
+            @keyframes wp-wizard-in {
+              from { opacity: 0; transform: translateY(8px) scale(0.98); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              @keyframes wp-wizard-in {
+                from { opacity: 0; }
+                to   { opacity: 1; }
+              }
+            }
+          `}</style>
           <button
             type="button"
             aria-label="Lukk"
-            onClick={() => setShowHostModal(false)}
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            onClick={closeWpWizard}
+            disabled={wpConnecting}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
+            style={{ transition: 'opacity 200ms ease-out' }}
           />
-          <div className={`relative w-full max-w-md rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6`}>
-            <header className="flex items-center justify-between mb-5">
-              <h3 className={`text-base font-semibold ${textMain}`}>Koble til CMS</h3>
-              <button type="button" onClick={() => setShowHostModal(false)} className={`p-1.5 rounded-md ${textDim} hover:${textMain}`}>
+          <div
+            className="relative w-full max-w-lg rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
+            style={{ animation: 'wp-wizard-in 220ms cubic-bezier(0.23,1,0.32,1) forwards' }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <header className="flex items-center justify-between mb-4">
+              <p className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
+                {wpWizardStep === 3 ? 'Resultat' : `Trinn ${wpWizardStep} av 3`}
+              </p>
+              <button
+                type="button"
+                onClick={closeWpWizard}
+                disabled={wpConnecting}
+                className="p-1.5 rounded-md disabled:opacity-40"
+                style={{ color: '#808080', transition: 'opacity 160ms ease-out' }}
+              >
                 <X size={16} />
               </button>
             </header>
 
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm ${textDim} mb-1.5`}>Plattform</label>
-                <select
-                  value={hostPlatform}
-                  onChange={(e) => setHostPlatform(e.target.value)}
-                  className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
-                >
-                  <option value="">Velg plattform…</option>
-                  <option value="github">GitHub (repo)</option>
-                  <option value="wordpress">WordPress</option>
-                  <option value="shopify">Shopify</option>
-                  <option value="wix">Wix</option>
-                  <option value="webflow">Webflow</option>
-                  <option value="vercel">Vercel</option>
-                  <option value="custom">Annet (eget webhotell)</option>
-                </select>
+            {wpWizardStep === 1 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Lag et Application Password i WordPress</h3>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  Sikt trenger et eget passord for å gjøre endringer på siden din. Det er trygt, du kan trekke det tilbake når som helst, og det erstatter ikke vanlig innlogging.
+                </p>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                  <li>Logg inn på WordPress-admin på siden din.</li>
+                  <li>Gå til Brukere → Profil.</li>
+                  <li>Bla ned til &quot;Application Passwords&quot;.</li>
+                  <li>Skriv &quot;Sikt&quot; som navn, klikk &quot;Add New&quot;.</li>
+                  <li>Kopier den 24-tegns koden som vises — den vises kun én gang.</li>
+                </ol>
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#1A1A1A' }}>
+                  Hvis du ikke ser Application Passwords-seksjonen, kan WordPress-versjonen din være for gammel. Du må ha WordPress 5.6 eller nyere.
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeWpWizard}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
+                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWpWizardStep(2)}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Jeg har koden, fortsett →
+                  </button>
+                </div>
               </div>
+            )}
 
-              {hostPlatform && (
+            {wpWizardStep === 2 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til WordPress</h3>
                 <div>
-                  <label className={`block text-sm ${textDim} mb-1.5`}>
-                    {hostPlatform === 'github' ? 'URL til repository' : hostPlatform === 'custom' ? 'Beskrivelse' : 'URL til admin/side'}
-                  </label>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>WordPress-adresse</label>
+                  <input
+                    type="url"
+                    value={wpSiteUrl}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setWpSiteUrl(v);
+                      if (!v.trim()) setWpSiteUrlError(null);
+                      else if (!v.trim().startsWith('https://')) setWpSiteUrlError('Må starte med https://');
+                      else setWpSiteUrlError(null);
+                    }}
+                    placeholder="https://dinside.no"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
+                  />
+                  {wpSiteUrlError ? (
+                    <p className="text-xs mt-1.5" style={{ color: '#c0392b' }}>{wpSiteUrlError}</p>
+                  ) : (
+                    <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Må starte med https://</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Brukernavn</label>
                   <input
                     type="text"
-                    value={hostInputValue}
-                    onChange={(e) => setHostInputValue(e.target.value)}
-                    placeholder={
-                      hostPlatform === 'github' ? 'https://github.com/brukernavn/repo' :
-                      hostPlatform === 'wordpress' ? 'https://dinside.no/wp-admin' :
-                      hostPlatform === 'shopify' ? 'https://dinside.myshopify.com' :
-                      hostPlatform === 'custom' ? 'F.eks. one.com cPanel' :
-                      'https://…'
-                    }
-                    className={`w-full rounded-lg px-3 py-2.5 text-sm border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-950 border-white/10'} ${textMain} focus:outline-none focus:border-violet-500`}
+                    value={wpUsername}
+                    onChange={(e) => setWpUsername(e.target.value)}
+                    placeholder="ditt-wp-brukernavn"
+                    autoComplete="username"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
                   />
                 </div>
-              )}
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Application Password</label>
+                  <input
+                    type="password"
+                    value={wpAppPassword}
+                    onChange={(e) => setWpAppPassword(e.target.value)}
+                    placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
+                    autoComplete="new-password"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: '#808080' }}>
+                    Lim inn akkurat slik WordPress viste den, med mellomrom
+                  </p>
+                </div>
+                <div className="flex justify-between gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setWpWizardStep(1)}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
+                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Tilbake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={connectWordPress}
+                    disabled={!wpStep2Valid}
+                    onMouseDown={(e) => { if (!wpStep2Valid) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Koble til
+                  </button>
+                </div>
+              </div>
+            )}
 
-              <p className={`text-xs ${textLabel}`}>
-                URL-en brukes som kontekst for AI-analyse. Sikt får ikke skrive-tilgang.
-              </p>
+            {wpWizardStep === 3 && (
+              <div className="space-y-4">
+                {wpConnecting && (
+                  <div className="flex flex-col items-center py-8 gap-3">
+                    <Loader2 size={28} className="animate-spin" style={{ color: '#52A447' }} />
+                    <p className="text-sm text-center" style={{ color: '#808080' }}>
+                      Verifiserer mot WordPress-siden din — dette tar opp til 10 sekunder.
+                    </p>
+                  </div>
+                )}
+                {!wpConnecting && wpConnectResult && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl px-4 py-4" style={{ background: '#F5F5F0' }}>
+                      <p className="text-lg font-semibold" style={{ color: '#52A447' }}>Tilkoblet ✓</p>
+                      <p className="text-sm mt-2" style={{ color: '#808080' }}>
+                        {wpConnectResult.site} · {wpConnectResult.wpUser}
+                      </p>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={closeWpWizard}
+                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                        style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      >
+                        Ferdig
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!wpConnecting && wpConnectError && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl px-4 py-4 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                      {wpConnectError}
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setWpConnectError(null); setWpWizardStep(2); }}
+                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                        className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                        style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      >
+                        Prøv igjen
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              <PrimaryButton
-                onClick={saveHostConnection}
-                disabled={!hostPlatform || !hostInputValue.trim() || hostSaving}
-                className="w-full"
-                size="lg"
+      {showDisconnectConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={() => { if (!isDisconnecting) { setShowDisconnectConfirm(false); setDisconnectError(null); } }}
+            disabled={isDisconnecting}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6">
+            <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Koble fra WordPress?</h3>
+            <p className="text-sm" style={{ color: '#808080' }}>
+              Sikt kan ikke lenger gjøre endringer på siden din. Du kan koble til på nytt når som helst.
+            </p>
+            <p className="text-sm mt-3 mb-4" style={{ color: '#808080' }}>
+              Tips: Application Password-et i WordPress er fortsatt aktivt etter at du kobler fra her. Hvis du vil fjerne det helt, gå til Brukere → Profil → Application Passwords i WordPress og klikk Revoke.
+            </p>
+            {disconnectError && (
+              <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                {disconnectError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowDisconnectConfirm(false); setDisconnectError(null); }}
+                disabled={isDisconnecting}
+                onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
+                style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
               >
-                {hostSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                Lagre tilkobling
-              </PrimaryButton>
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={disconnectWordPress}
+                disabled={isDisconnecting}
+                onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                className={`rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white inline-flex items-center gap-2${isDisconnecting ? ' opacity-50 cursor-not-allowed' : ''}`}
+                style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+              >
+                {isDisconnecting ? <Loader2 size={14} className="animate-spin" /> : null}
+                Koble fra
+              </button>
             </div>
           </div>
         </div>
@@ -11443,7 +14542,7 @@ function App() {
   // 🏠 HOVEDHUSET (For nye besøkende / ikke-kunder)
   // ---------------------------------------------------------
   return (
-    <div className="min-h-screen selection:bg-violet-100 selection:text-violet-900 bg-[#fcfcfd] relative overflow-x-hidden">
+    <div className="min-h-screen selection:bg-[#EBEBE6] selection:text-[#1A1A1A] bg-[#F5F5F0] relative overflow-x-hidden">
       {devOverlay}
       <GlobalDecorations />
 

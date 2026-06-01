@@ -323,7 +323,15 @@ const ScoreCard = ({
   period: number;
   setPeriod: (v: number) => void;
   gradientId: string;
-}) => (
+}) => {
+  const emptyScoreCopy =
+    label === 'Teknisk'
+      ? 'Måles ved første analyse'
+      : label === 'Synlighet'
+        ? 'Google sender søkeorddata ~1–2 uker etter tilkobling'
+        : 'Ikke målt ennå';
+
+  return (
   <div className="score-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-center justify-between gap-2">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -332,21 +340,29 @@ const ScoreCard = ({
       <PeriodSwitch value={period} onChange={setPeriod} />
     </div>
 
-    <div className="mb-3 mt-5 flex items-baseline gap-1.5">
-      <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
-        {score ?? '—'}
-      </span>
-      <span className="text-base font-normal text-slate-300">/100</span>
-      {delta != null && delta !== 0 && (
-        <span
-          className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${
-            delta > 0
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-red-50 text-red-700'
-          }`}
-        >
-          {delta > 0 ? '↑' : '↓'}{Math.abs(delta)}
-        </span>
+    <div className="mb-3 mt-5">
+      {score != null ? (
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
+            {score}
+          </span>
+          <span className="text-base font-normal text-slate-300">/100</span>
+          {delta != null && delta !== 0 && (
+            <span
+              className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+                delta > 0
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {delta > 0 ? '↑' : '↓'}{Math.abs(delta)}
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="text-[13px] font-medium leading-snug text-slate-400">
+          {emptyScoreCopy}
+        </p>
       )}
     </div>
 
@@ -384,7 +400,8 @@ const ScoreCard = ({
       {data.length > 0 ? `${data.length} målinger · siste ${data.length > 1 ? `${data.length} analyser` : 'analyse'}` : 'Ingen data ennå'}
     </p>
   </div>
-);
+  );
+};
 
 /* ── Main component ───────────────────────────────────────────────── */
 export const DashboardHome: React.FC<DashboardHomeProps> = ({
@@ -636,30 +653,47 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#888888]">
               Samlet score
             </p>
-            <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
-              <span className="text-[76px] font-bold leading-[0.82] tracking-[-0.055em] text-white">
-                {combinedScore ?? '—'}
-              </span>
-              <span className="pb-[10px] text-[20px] font-normal text-[#888888]">
-                /100
-              </span>
-              {weekDelta != null && weekDelta !== 0 && (
-                <span
-                  className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                    weekDelta >= 0
-                      ? 'bg-[#064E3B] text-[#A7F3D0]'
-                      : 'bg-[#7F1D1D] text-[#FECACA]'
-                  }`}
-                >
-                  <span aria-hidden>{weekDelta >= 0 ? '↑' : '↓'}</span>
-                  {weekDelta >= 0 ? '+' : ''}
-                  {weekDelta} siste uke
+            {combinedScore != null ? (
+              <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
+                <span className="text-[76px] font-bold leading-[0.82] tracking-[-0.055em] text-white">
+                  {combinedScore}
                 </span>
-              )}
-            </div>
+                <span className="pb-[10px] text-[20px] font-normal text-[#888888]">
+                  /100
+                </span>
+                {weekDelta != null && weekDelta !== 0 && (
+                  <span
+                    className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      weekDelta >= 0
+                        ? 'bg-[#064E3B] text-[#A7F3D0]'
+                        : 'bg-[#7F1D1D] text-[#FECACA]'
+                    }`}
+                  >
+                    <span aria-hidden>{weekDelta >= 0 ? '↑' : '↓'}</span>
+                    {weekDelta >= 0 ? '+' : ''}
+                    {weekDelta} siste uke
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="mt-3 pr-2">
+                <p className="text-[15px] font-medium leading-relaxed text-[#D4D4D4]">
+                  Kjør din første analyse — teknisk score er klar på ~60 sekunder.
+                </p>
+                <p className="mt-2 text-[12px] leading-relaxed text-[#888888]">
+                  Bruk «Kjør ny analyse» over for å komme i gang.
+                </p>
+              </div>
+            )}
             <p className="mt-3 text-[11px] font-medium leading-snug text-[#888888]">
-              Basert på Lighthouse-teknisk · siste kjøring{' '}
-              {formatLastAnalysis(latestAt)}
+              {combinedScore != null ? (
+                <>
+                  Basert på Lighthouse-teknisk · siste kjøring{' '}
+                  {formatLastAnalysis(latestAt)}
+                </>
+              ) : (
+                'Etter første kjøring ser du trend og samlet score her.'
+              )}
             </p>
           </div>
 
@@ -786,10 +820,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               Kommer
             </span>
           </div>
-          <p className="mt-6 text-[40px] font-semibold leading-none tracking-[-0.04em] text-slate-300">
-            —
-          </p>
-          <p className="mt-4 text-[12px] leading-relaxed text-slate-400">
+          <p className="mt-8 text-[13px] font-medium leading-relaxed text-slate-500">
             AI-synlighet i ChatGPT, Perplexity og Gemini. Lansering Q3.
           </p>
         </div>
@@ -815,8 +846,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {!analysisResults && !realRankings.length ? (
             <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
-              <p className="text-sm font-medium text-slate-500">
-                Kjør analyse for å se oppgaver
+              <p className="text-sm font-medium leading-relaxed text-slate-500">
+                Etter første analyse finner og prioriterer Sikt ting du bør fikse — de dukker opp her.
               </p>
               <button
                 type="button"
@@ -895,8 +926,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {logs.length === 0 ? (
             <div className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
-              <p className="text-sm text-slate-400">
-                Ingen hendelser ennå
+              <p className="text-sm leading-relaxed text-slate-400">
+                Sikt jobber i bakgrunnen — første funn dukker opp her i løpet av kort tid.
               </p>
             </div>
           ) : (
