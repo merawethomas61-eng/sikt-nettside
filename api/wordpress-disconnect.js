@@ -6,12 +6,13 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_lib/require-auth.js';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Kun POST er tillatt' });
   }
@@ -42,6 +43,7 @@ export default async function handler(req, res) {
 
     if (fetchErr) {
       console.error('[wordpress-disconnect] Kunne ikke lese client_hosts:', fetchErr.message);
+      Sentry.captureException(fetchErr);
       return res.status(500).json({ error: 'Kunne ikke frakoble.' });
     }
 
@@ -63,6 +65,7 @@ export default async function handler(req, res) {
 
     if (writeErr) {
       console.error('[wordpress-disconnect] Kunne ikke oppdatere client_hosts:', writeErr.message);
+      Sentry.captureException(writeErr);
       return res.status(500).json({ error: 'Kunne ikke frakoble.' });
     }
 
@@ -71,9 +74,10 @@ export default async function handler(req, res) {
     const status = err?.statusCode || 500;
     if (status >= 500) {
       console.error('[wordpress-disconnect] Feil:', err?.message || err);
+      Sentry.captureException(err);
     }
     return res.status(status).json({
       error: err?.message || 'Noe gikk galt',
     });
   }
-}
+});

@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 20;
 const ipTracker = new Map();
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Kun POST tillatt' });
     }
@@ -94,6 +95,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ content });
     } catch (error) {
         console.error('openai-chat error:', error);
+        Sentry.captureException(error);
         return res.status(500).json({ error: 'Intern feil ved AI-kall' });
     }
-}
+});

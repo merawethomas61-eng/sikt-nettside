@@ -6048,6 +6048,11 @@ function getContentFixCharCounter(count: number, fieldType: ContentFixFieldType)
   return { color, label: `${count} / ${max}`, overMax: count > max };
 }
 
+function findPlaceholders(text: string): string[] {
+  const m = (text || '').match(/\[[^\]\n]{1,80}\]/g);
+  return m ? Array.from(new Set(m)) : [];
+}
+
 function ContentFixPreviewSection({
   fieldType,
   pageData,
@@ -6552,6 +6557,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [contentFixActive, setContentFixActive] = useState<ContentFixActiveState>(INITIAL_CONTENT_FIX_ACTIVE);
   const [contentFixRetry, setContentFixRetry] = useState(0);
   const contentFixAbortRef = useRef<AbortController | null>(null);
+  const questionsGeneratedRef = useRef<Record<string, boolean>>({});
+  const contentFixCacheRef = useRef(contentFixCache);
+  contentFixCacheRef.current = contentFixCache;
   const lastSyncedAiRef = useRef<Record<string, string>>({});
   const [pushState, setPushState] = useState<
     'idle' | 'content-warning' | 'confirming' | 'pushing' | 'success' | 'error'
@@ -6912,6 +6920,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       field: 'meta-description' | 'seo-title' | 'h1' | 'content',
       newValue: string,
     ) => {
+      if (findPlaceholders(newValue).length > 0) return;
       setPushState('pushing');
       setPushError(null);
       const token = getStoredAccessToken();
@@ -8721,7 +8730,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         contentPageTodos.push({
           id: `content-${p.url}-${issue}`,
           kind: 'content-page',
-          title: `${issue} — ${p.title || p.url}`,
+          title: issue,
           desc: `Side: ${p.url}`,
           impact: impactByStatus,
           pageUrl: resolvedPageUrl,
@@ -8840,6 +8849,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const todosRef = useRef(todos);
   todosRef.current = todos;
 
+  const workshopContentFixFieldType = useMemo((): ContentFixFieldType | null => {
+    const todoId = expandedWorkshopProblem;
+    if (!todoId?.startsWith('content-')) return null;
+    const todo = todosRef.current.find(
+      (t) => t.id === todoId && t.kind === 'content-page',
+    );
+    if (!todo) return null;
+    const issue = todo.title.includes(' — ')
+      ? todo.title.split(' — ')[0]
+      : todo.title;
+    return detectFieldType(issue);
+  }, [expandedWorkshopProblem]);
+
   useEffect(() => {
     if (rollbackState !== 'success') return;
     const todo = todosRef.current.find((t) => t.id === expandedWorkshopProblem);
@@ -8863,7 +8885,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       return;
     }
 
-    const todo = todos.find(
+    const todo = todosRef.current.find(
       (t) => t.id === expandedWorkshopProblem && t.kind === 'content-page',
     );
     const todoId = expandedWorkshopProblem;
@@ -8883,16 +8905,28 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       return;
     }
 
-    const cached = contentFixCache[todoId];
+    const cached = contentFixCacheRef.current[todoId];
     if (cached?.pageData && cached?.aiSuggestion) {
       setContentFixActive({ todoId, loading: 'idle', error: null });
       return () => abortInFlight();
     }
+    if (cached?.pageData && cached?.contextQuestions && cached.contextQuestions.length > 0) {
+      setContentFixActive({ todoId, loading: 'questionnaire', error: null });
+      return () => abortInFlight();
+    }
+    if (cached?.pageData && cached?.pageContextAnswers != null) {
+      return () => abortInFlight();
+    }
+    if (questionsGeneratedRef.current[todoId] && cached?.pageData) {
+      if (cached.contextQuestions && cached.contextQuestions.length > 0) {
+        setContentFixActive({ todoId, loading: 'questionnaire', error: null });
+      }
+      return;
+    }
 
-    const issue = todo.title.includes(' — ')
-      ? todo.title.split(' — ')[0]
-      : todo.title;
-    const fieldType = detectFieldType(issue);
+    const fieldType = workshopContentFixFieldType ?? detectFieldType(
+      todo.title.includes(' — ') ? todo.title.split(' — ')[0] : todo.title,
+    );
 
     abortInFlight();
     const ac = new AbortController();
@@ -8971,6 +9005,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           if (ac.signal.aborted) return;
 
           if (savedAnswers) {
+            questionsGeneratedRef.current[todoId] = true;
             setContentFixCache((prev) => ({
               ...prev,
               [todoId]: {
@@ -8986,6 +9021,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             await runContentFixAi(todoId, pageData, fieldType, ac.signal, savedAnswers);
             return;
           }
+
+          if (questionsGeneratedRef.current[todoId]) {
+            const lockedEntry = contentFixCacheRef.current[todoId];
+            if (lockedEntry?.contextQuestions && lockedEntry.contextQuestions.length > 0) {
+              setContentFixActive((prev) =>
+                prev.todoId === todoId ? { ...prev, loading: 'questionnaire', error: null } : prev,
+              );
+              return;
+            }
+            return;
+          }
+
+          questionsGeneratedRef.current[todoId] = true;
 
           setContentFixActive((prev) =>
             prev.todoId === todoId ? { ...prev, loading: 'generating-questions', error: null } : prev,
@@ -9041,7 +9089,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
     run();
     return () => abortInFlight();
-  }, [expandedWorkshopProblem, todos, contentFixRetry, runContentFixAi]);
+  }, [expandedWorkshopProblem, workshopContentFixFieldType, contentFixRetry]);
 
   // Aktivitetsfeed paa Hjem - siste 8 sikt_actions
   const homeFeedActions = dedupeSiktActions(siktActions || []).slice(0, 8);
@@ -11264,7 +11312,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProblem(p); } }}
                                 style={{
                                   display: 'grid',
-                                  gridTemplateColumns: '36px 1fr auto auto',
+                                  gridTemplateColumns: '36px 1fr auto',
                                   alignItems: 'center',
                                   gap: 16,
                                   padding: '18px 4px',
@@ -11284,17 +11332,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   <p style={{ margin: 0, fontSize: 12, color: p.raw?.savings ? W.green : W.muted }}>{p.desc}</p>
                                 </div>
                                 <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 13, fontWeight: 600, color: p.raw?.savings ? W.green : 'transparent', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{p.raw?.savings || '\u00a0'}</p>
-                                <button
-                                  type="button"
-                                  onClick={e => { e.stopPropagation(); selectProblem(p); }}
-                                  onMouseDown={pressDown}
-                                  onMouseUp={pressReset}
-                                  onMouseLeave={e => { e.currentTarget.style.borderColor = W.border; e.currentTarget.style.transform = 'scale(1)'; }}
-                                  onMouseEnter={e => { e.currentTarget.style.borderColor = W.ink; }}
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: 'transparent', color: W.ink, borderRadius: 9, padding: '7px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}, border-color 160ms ${EASE}` }}
-                                >
-                                  <Sparkles size={12} /> AI-løsning
-                                </button>
                               </div>
                             );
                           })
@@ -11666,6 +11703,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               type="button"
                               onClick={() => {
                                 if (selectedProblem?.id) {
+                                  delete questionsGeneratedRef.current[selectedProblem.id];
                                   setContentFixCache((prev) => {
                                     const next = { ...prev };
                                     delete next[selectedProblem.id];
@@ -11740,6 +11778,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             editedSuggestion.length,
                             contentFixEntry.fieldType,
                           );
+                          const placeholders = findPlaceholders(editedSuggestion);
+                          const pushBlockedByPlaceholders = placeholders.length > 0;
                           return (
                             <>
                               <ContentFixValueCard fieldType={contentFixEntry.fieldType} borderColor={W.border} />
@@ -11803,6 +11843,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       Lengre enn anbefalt — kan bli kuttet av i søk
                                     </p>
                                   )}
+                                  {placeholders.length > 0 && (
+                                    <div
+                                      style={{
+                                        marginTop: 8,
+                                        background: 'rgba(245,158,11,0.08)',
+                                        border: '1px solid rgba(245,158,11,0.35)',
+                                        borderRadius: 10,
+                                        padding: '10px 12px',
+                                      }}
+                                    >
+                                      <p style={{ margin: 0, fontSize: 12, color: '#92400E', lineHeight: 1.5 }}>
+                                        ⚠ Teksten inneholder plassholdere du må fylle inn før du pusher:{' '}
+                                        {placeholders.join(', ')}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
@@ -11834,7 +11890,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 {showPushPlaceholder && (
                                   <button
                                     type="button"
+                                    disabled={pushBlockedByPlaceholders}
+                                    title={pushBlockedByPlaceholders ? 'Fyll inn plassholderne først' : undefined}
                                     onClick={() => {
+                                      if (pushBlockedByPlaceholders) return;
                                       setPushError(null);
                                       if (contentFixEntry.fieldType === 'content') {
                                         setPushState('content-warning');
@@ -11842,10 +11901,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         setPushState('confirming');
                                       }
                                     }}
-                                    onMouseDown={pressDown}
-                                    onMouseUp={pressReset}
-                                    onMouseLeave={pressReset}
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                    onMouseDown={pushBlockedByPlaceholders ? undefined : pressDown}
+                                    onMouseUp={pushBlockedByPlaceholders ? undefined : pressReset}
+                                    onMouseLeave={pushBlockedByPlaceholders ? undefined : pressReset}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 7,
+                                      border: `1px solid ${W.border}`,
+                                      background: W.card,
+                                      color: W.ink,
+                                      borderRadius: 11,
+                                      padding: '11px 16px',
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      cursor: pushBlockedByPlaceholders ? 'not-allowed' : 'pointer',
+                                      opacity: pushBlockedByPlaceholders ? 0.5 : 1,
+                                      transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}`,
+                                    }}
                                   >
                                     Push til WordPress
                                   </button>
@@ -11859,6 +11932,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           const cur = getContentFixCurrentValue(contentFixEntry.fieldType, contentFixEntry.pageData);
                           const pushEditedSuggestion =
                             editedSuggestions[selectedProblem.id] ?? contentFixEntry.aiSuggestion ?? '';
+                          const pushPlaceholders = findPlaceholders(pushEditedSuggestion);
+                          const pushBlockedByPlaceholders = pushPlaceholders.length > 0;
                           const pushTitle =
                             contentFixEntry.fieldType === 'seo-title'
                               ? 'Push SEO-tittel til WordPress?'
@@ -12076,19 +12151,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       </button>
                                       <button
                                         type="button"
-                                        disabled={!pushEditedSuggestion.trim() || !selectedProblem.pageUrl}
+                                        disabled={
+                                          pushBlockedByPlaceholders ||
+                                          !pushEditedSuggestion.trim() ||
+                                          !selectedProblem.pageUrl
+                                        }
+                                        title={pushBlockedByPlaceholders ? 'Fyll inn plassholderne først' : undefined}
                                         onClick={() => {
-                                          if (!pushEditedSuggestion.trim() || !selectedProblem.pageUrl) return;
+                                          if (
+                                            pushBlockedByPlaceholders ||
+                                            !pushEditedSuggestion.trim() ||
+                                            !selectedProblem.pageUrl
+                                          ) return;
                                           executeContentFixPush(
                                             selectedProblem.pageUrl,
                                             'content',
                                             pushEditedSuggestion,
                                           );
                                         }}
-                                        onMouseDown={pressDown}
-                                        onMouseUp={pressReset}
-                                        onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                        onMouseDown={pushBlockedByPlaceholders ? undefined : pressDown}
+                                        onMouseUp={pushBlockedByPlaceholders ? undefined : pressReset}
+                                        onMouseLeave={pushBlockedByPlaceholders ? undefined : pressReset}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 7,
+                                          background: W.ink,
+                                          color: '#fff',
+                                          border: 'none',
+                                          borderRadius: 10,
+                                          padding: '10px 16px',
+                                          fontSize: 13,
+                                          fontWeight: 700,
+                                          cursor: pushBlockedByPlaceholders ? 'not-allowed' : 'pointer',
+                                          opacity: pushBlockedByPlaceholders ? 0.5 : 1,
+                                          transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}`,
+                                        }}
                                       >
                                         Ja, erstatt innholdet
                                       </button>
@@ -12134,9 +12232,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       </button>
                                       <button
                                         type="button"
-                                        disabled={pushBusy || !pushEditedSuggestion.trim() || !selectedProblem.pageUrl}
+                                        disabled={
+                                          pushBusy ||
+                                          pushBlockedByPlaceholders ||
+                                          !pushEditedSuggestion.trim() ||
+                                          !selectedProblem.pageUrl
+                                        }
+                                        title={pushBlockedByPlaceholders ? 'Fyll inn plassholderne først' : undefined}
                                         onClick={() => {
                                           if (
+                                            pushBlockedByPlaceholders ||
                                             !pushEditedSuggestion.trim() ||
                                             !selectedProblem.pageUrl ||
                                             (contentFixEntry.fieldType !== 'meta-description' &&
@@ -12150,10 +12255,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                             pushEditedSuggestion,
                                           );
                                         }}
-                                        onMouseDown={pressDown}
-                                        onMouseUp={pressReset}
-                                        onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: pushBusy ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.7 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                        onMouseDown={pushBlockedByPlaceholders || pushBusy ? undefined : pressDown}
+                                        onMouseUp={pushBlockedByPlaceholders || pushBusy ? undefined : pressReset}
+                                        onMouseLeave={pushBlockedByPlaceholders || pushBusy ? undefined : pressReset}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: pushBusy || pushBlockedByPlaceholders ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.7 : pushBlockedByPlaceholders ? 0.5 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
                                       >
                                         {pushBusy ? (
                                           <>

@@ -1,11 +1,12 @@
 import * as cheerio from 'cheerio';
 import { createClient } from '@supabase/supabase-js';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 5;
 const ipTracker = new Map();
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Kun POST tillatt' });
     }
@@ -136,6 +137,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error("Scraper Error:", error);
+        Sentry.captureException(error);
         res.status(500).json({ error: 'Klarte ikke skanne nettsiden', details: error.message });
     }
-}
+});

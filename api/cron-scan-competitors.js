@@ -12,6 +12,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { detectSitemapChanges, detectRankingChanges } from './_lib/competitor-monitor.js';
+import { withSentry } from './_lib/sentry.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -168,7 +169,7 @@ async function scanOneCompetitor(supabase, competitor) {
     };
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: kun Vercel Cron eller med riktig secret ---
     const authHeader = req.headers.authorization;
     if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
@@ -218,4 +219,4 @@ export default async function handler(req, res) {
         scanned: summary.length,
         results: summary,
     });
-}
+});

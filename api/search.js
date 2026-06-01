@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { withSentry } from './_lib/sentry.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 5;
 const ipTracker = new Map();
 
-export default async function handler(request, response) {
+export default withSentry(async function handler(request, response) {
     if (request.method !== 'POST') {
         return response.status(405).json({ error: 'Kun POST er tillatt' });
     }
@@ -69,4 +70,4 @@ export default async function handler(request, response) {
     } catch (error) {
         return response.status(500).json({ error: 'Noe gikk galt på serveren', details: error.message });
     }
-}
+});

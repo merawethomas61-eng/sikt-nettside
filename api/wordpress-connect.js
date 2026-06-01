@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_lib/require-auth.js';
 import { encrypt } from './_lib/crypto.js';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -218,7 +219,7 @@ async function verifyWordPressCredentials(siteUrl, wpUsername, appPassword) {
   return { displayName };
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Kun POST er tillatt' });
   }
@@ -256,6 +257,7 @@ export default async function handler(req, res) {
       encryptedPassword = encrypt(appPassword);
     } catch (encErr) {
       console.error('[wordpress-connect] Kryptering feilet:', encErr?.message || encErr);
+      Sentry.captureException(encErr);
       return res.status(500).json({ error: 'Serveren kan ikke kryptere nøkkelen (sjekk ENCRYPTION_KEY).' });
     }
 
@@ -281,6 +283,7 @@ export default async function handler(req, res) {
 
     if (fetchErr) {
       console.error('[wordpress-connect] Kunne ikke lese client_hosts:', fetchErr.message);
+      Sentry.captureException(fetchErr);
       return res.status(500).json({ error: 'Kunne ikke lagre tilkoblingen.' });
     }
 
@@ -291,6 +294,7 @@ export default async function handler(req, res) {
     const { error: writeErr } = await write;
     if (writeErr) {
       console.error('[wordpress-connect] Kunne ikke lagre client_hosts:', writeErr.message);
+      Sentry.captureException(writeErr);
       return res.status(500).json({ error: 'Kunne ikke lagre tilkoblingen.' });
     }
 
@@ -304,9 +308,10 @@ export default async function handler(req, res) {
     const status = err?.statusCode || 500;
     if (status >= 500) {
       console.error('[wordpress-connect] Feil:', err?.message || err);
+      Sentry.captureException(err);
     }
     return res.status(status).json({
       error: err?.message || 'Noe gikk galt',
     });
   }
-}
+});

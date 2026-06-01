@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 10;
@@ -74,7 +75,7 @@ async function fetchRelevantHtml(pageUrl, problemTitle) {
     }
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Metode ikke tillatt' });
     }
@@ -250,9 +251,10 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
 
     } catch (error) {
         console.error('solve-problem error:', error);
+        Sentry.captureException(error);
         return res.status(500).json({
             steps: [{ title: 'Feil ved AI-kall', description: error.message }],
             codePatch: null
         });
     }
-}
+});

@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_lib/require-auth.js';
 import { decrypt } from './_lib/crypto.js';
+import { withSentry, Sentry } from './_lib/sentry.js';
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -230,7 +231,7 @@ async function rollbackViaSiktConnector(adminUrl, authorization, postId, field, 
   };
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Kun POST er tillatt' });
   }
@@ -267,6 +268,7 @@ export default async function handler(req, res) {
 
     if (changeErr) {
       console.error('[wordpress-rollback] Kunne ikke lese sikt_changes:', changeErr.message);
+      Sentry.captureException(changeErr);
       return res.status(500).json({ error: 'Kunne ikke hente endringen.' });
     }
 
@@ -294,10 +296,12 @@ export default async function handler(req, res) {
       .from('client_hosts')
       .select('id, connection_mode, admin_url, notes, access_token_encrypted')
       .eq('id', changeRow.client_host_id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (hostErr) {
       console.error('[wordpress-rollback] Kunne ikke lese client_hosts:', hostErr.message);
+      Sentry.captureException(hostErr);
       return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkobling.' });
     }
 
@@ -331,6 +335,7 @@ export default async function handler(req, res) {
       appPassword = decrypt(hostRow.access_token_encrypted);
     } catch (decErr) {
       console.error('[wordpress-rollback] Dekryptering feilet:', decErr?.message || decErr);
+      Sentry.captureException(decErr);
       return res.status(500).json({ error: 'Serveren kan ikke lese lagret nøkkel (sjekk ENCRYPTION_KEY).' });
     }
 
@@ -382,6 +387,7 @@ export default async function handler(req, res) {
 
     if (updateErr) {
       console.error('[wordpress-rollback] Kunne ikke oppdatere sikt_changes:', updateErr.message);
+      Sentry.captureException(updateErr);
       return res.status(500).json({ error: 'Endringen ble skrevet til WordPress, men kunne ikke markeres som rullet tilbake.' });
     }
 
@@ -394,9 +400,10 @@ export default async function handler(req, res) {
     const status = err?.statusCode || 500;
     if (status >= 500) {
       console.error('[wordpress-rollback] Feil:', err?.message || err);
+      Sentry.captureException(err);
     }
     return res.status(status).json({
       error: err?.message || 'Noe gikk galt',
     });
   }
-}
+});
