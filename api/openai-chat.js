@@ -6,6 +6,7 @@ const maxRequestsPerWindow = 20;
 const ipTracker = new Map();
 
 export default withSentry(async function handler(req, res) {
+    if (req.query.sentrytest === '1') throw new Error('sentry backend test');
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Kun POST tillatt' });
     }
