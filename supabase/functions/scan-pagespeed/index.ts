@@ -91,9 +91,15 @@ Deno.serve(async (req) => {
 
   // Surface quota / rate-limit errors directly so App.tsx retry logic kicks in
   if (mobileRes.status === 429 || desktopRes.status === 429) {
-    const errBody = await (mobileRes.status === 429 ? mobileRes : desktopRes).json().catch(() => ({}));
+    const limitedRes = mobileRes.status === 429 ? mobileRes : desktopRes;
+    const retryRaw = limitedRes.headers.get('retry-after');
+    const retryAfterSeconds = retryRaw ? Math.max(1, parseInt(retryRaw, 10) || 60) : 60;
     return new Response(
-      JSON.stringify({ error: errBody?.error?.message || 'quota exceeded' }),
+      JSON.stringify({
+        error: 'rate_limited',
+        retryAfterSeconds,
+        message: 'For mange forespørsler akkurat nå. Prøv igjen om litt.',
+      }),
       { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }

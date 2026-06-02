@@ -12,7 +12,11 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { detectSitemapChanges, detectRankingChanges } from './_lib/competitor-monitor.js';
-import { withSentry } from './_lib/sentry.js';
+import { withSentry, Sentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry429,
+    isSerpApiRateLimitedResponse,
+} from './_lib/external-rate-limit.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -92,9 +96,19 @@ async function scanOneCompetitor(supabase, competitor) {
     for (const kw of allKeywords) {
         try {
             const serpUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(kw.keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent((kw.location || 'Norway') + ', Norway')}&num=20&device=desktop&api_key=${SERP_API_KEY}`;
-            const serpRes = await fetch(serpUrl);
+            const serpRes = await fetchExternalWithOptionalRetry429(serpUrl);
+            if (serpRes.status === 429) {
+                console.warn(`[cron] SerpAPI rate limited for ${competitor.domain} (${kw.keyword}) — hopper over søkeord`);
+                Sentry.captureMessage(`[cron] SerpAPI rate limited: ${competitor.domain}`, 'warning');
+                continue;
+            }
+            const serpData = await serpRes.json().catch(() => ({}));
+            if (isSerpApiRateLimitedResponse(serpRes.status, serpData)) {
+                console.warn(`[cron] SerpAPI throttle for ${competitor.domain} (${kw.keyword}) — hopper over søkeord`);
+                Sentry.captureMessage(`[cron] SerpAPI throttle: ${competitor.domain}`, 'warning');
+                continue;
+            }
             if (!serpRes.ok) continue;
-            const serpData = await serpRes.json();
             const organic = serpData.organic_results || [];
 
             let pos = null, url = '';

@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { withSentry, Sentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry,
+    isOpenAiRateLimited,
+    respondRateLimited,
+} from './_lib/external-rate-limit.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 20;
@@ -69,7 +74,7 @@ export default withSentry(async function handler(req, res) {
     messages.push({ role: 'user', content: prompt });
 
     try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetchExternalWithOptionalRetry('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -83,6 +88,10 @@ export default withSentry(async function handler(req, res) {
                 ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
             }),
         });
+
+        if (isOpenAiRateLimited(response.status)) {
+            return respondRateLimited(res, response);
+        }
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

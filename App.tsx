@@ -2606,21 +2606,14 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
 
 const velgPakke = async (pakkeNavn) => {
   try {
-    // 1. Lagre valget i Supabase (hvis bruker er logget inn)
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const { error } = await supabase
-        .from('clients')
-        .update({ package_name: pakkeNavn })
-        .eq('user_id', user.id);
-      if (error) throw error;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sikt_pending_plan', pakkeNavn);
     }
-  } catch (error: any) {
-    toastWarning(error?.message || 'Kunne ikke lagre pakkevalget, men du kan fortsatt gå videre.');
+  } catch {
+    /* ignore — hint for UI, ikke tilgang */
   }
 
-  // 2. Send brukeren til riktig betalingsside (Stripe/Vipps)
+  // Send brukeren til riktig betalingsside (Stripe/Vipps)
   // DU MÅ BYTTE UT LENKENE UNDER MED DINE EGNE
   if (pakkeNavn === "Basic Pakke") {
     window.location.href = 'https://buy.stripe.com/DIN_BASIC_LINK';
@@ -4650,7 +4643,9 @@ const KonkurrenterPage: React.FC<{
         body: JSON.stringify({ competitor_id: newComp.id }),
       });
       const scanData = await scanRes.json().catch(() => ({}));
-      if (!scanRes.ok) {
+      if (isApiRateLimited(scanRes.status, scanData)) {
+        toastWarning(apiRateLimitUserMessage(scanData));
+      } else if (!scanRes.ok) {
         const msg = [scanData?.error, scanData?.hint].filter(Boolean).join(' — ');
         toastError(msg || 'Scanning feilet — prøv igjen om litt.');
       } else toastSuccess(scanData?.message || `${raw} er lagt til og skannet.`);
@@ -4678,7 +4673,9 @@ const KonkurrenterPage: React.FC<{
         body: JSON.stringify({ competitor_id: comp.id }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (isApiRateLimited(res.status, data)) {
+        toastWarning(apiRateLimitUserMessage(data));
+      } else if (!res.ok) {
         const msg = [data?.error, data?.hint].filter(Boolean).join(' — ');
         toastError(msg || 'Scanning feilet.');
       } else toastSuccess(data?.message || 'Scanning fullført.');
@@ -5511,6 +5508,18 @@ function parseContextQuestionsResponse(raw: string): ContextQuestion[] | null {
   }
 }
 
+const RATE_LIMIT_USER_MESSAGE =
+  'Vi har mange forespørsler akkurat nå — prøv igjen om et minutt.';
+
+function isApiRateLimited(status: number, data: Record<string, unknown> | null | undefined): boolean {
+  return status === 429 || data?.error === 'rate_limited';
+}
+
+function apiRateLimitUserMessage(data: Record<string, unknown> | null | undefined): string {
+  const msg = data?.message;
+  return typeof msg === 'string' && msg.trim() ? msg : RATE_LIMIT_USER_MESSAGE;
+}
+
 function buildContextQuestionsPrompt(pageData: WordPressFetchResponse): string {
   const contentRaw = decodeHtmlEntities(stripHtmlTags(pageData.page.content || ''));
   const content = truncateText(contentRaw, 2000);
@@ -5538,6 +5547,10 @@ async function generateContextQuestions(
     });
     const aiData = await aiRes.json().catch(() => ({}));
     if (signal.aborted) return [];
+    if (isApiRateLimited(aiRes.status, aiData)) {
+      toastWarning(apiRateLimitUserMessage(aiData));
+      return FALLBACK_QUESTIONS;
+    }
     if (!aiRes.ok) return FALLBACK_QUESTIONS;
 
     const parsed = parseContextQuestionsResponse(String(aiData.content || ''));
@@ -6447,6 +6460,48 @@ const ContentPageContextQuestionnaire: React.FC<{
   );
 };
 
+function getWixFieldInstruction(fieldType: ContentFixFieldType): string {
+  switch (fieldType) {
+    case 'meta-description':
+      return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Meta description → Publiser.';
+    case 'seo-title':
+      return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Title tag → Publiser.';
+    case 'h1':
+      return 'I Wix-editoren: klikk på overskriften øverst på siden, endre teksten, og Publiser.';
+    case 'content':
+    default:
+      return 'I Wix-editoren: klikk på tekstområdet, lim inn den nye teksten, og Publiser.';
+  }
+}
+
+function buildAdvisoryPageDataFromContentScan(
+  pageUrl: string,
+  pages: ContentPage[],
+): WordPressFetchResponse | null {
+  const match = pages.find((p) => p.fullUrl === pageUrl);
+  if (!match) return null;
+  let slug = '/';
+  try {
+    slug = new URL(pageUrl).pathname || '/';
+  } catch {
+    slug = match.url || '/';
+  }
+  const title = match.title.replace(/\.\.\.$/, '').trim() || match.url;
+  return {
+    ok: true,
+    page: {
+      id: 0,
+      type: 'page',
+      slug,
+      link: pageUrl,
+      title,
+      content: '',
+      excerpt: '',
+    },
+    yoast: { installed: false },
+  };
+}
+
 function getContentFixCurrentValue(
   fieldType: ContentFixFieldType,
   pageData: WordPressFetchResponse,
@@ -6580,7 +6635,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // Settings-tab: hvilken seksjon som redigeres akkurat nå (kun én om gangen).
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showWpWizard, setShowWpWizard] = useState(false);
+  const [connectWizardPlatform, setConnectWizardPlatform] = useState<'wordpress' | 'wix' | null>(null);
   const [wpWizardStep, setWpWizardStep] = useState<1 | 2 | 3>(1);
+  const [wixSiteUrl, setWixSiteUrl] = useState('');
+  const [wixSiteUrlError, setWixSiteUrlError] = useState<string | null>(null);
+  const [wixConnecting, setWixConnecting] = useState(false);
+  const [wixConnectError, setWixConnectError] = useState<string | null>(null);
   const [wpSiteUrl, setWpSiteUrl] = useState('');
   const [wpUsername, setWpUsername] = useState('');
   const [wpAppPassword, setWpAppPassword] = useState('');
@@ -6594,6 +6654,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [planChangeTarget, setPlanChangeTarget] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
   const [switchingPlan, setSwitchingPlan] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ weeklyReport: true, criticalAlerts: true, rankChanges: false });
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState('');
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Host-tilkoblings-info (fra client_hosts-tabellen). null = ikke hentet ennå eller
   // ingen rad finnes. Relevante felt: connectionMode ('light' | 'full' | 'skipped'),
@@ -6723,6 +6787,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         });
         const aiData = await aiRes.json().catch(() => ({}));
         if (signal.aborted) return;
+        if (isApiRateLimited(aiRes.status, aiData)) {
+          toastWarning(apiRateLimitUserMessage(aiData));
+          setContentFixActive((prev) =>
+            prev.todoId === todoId
+              ? { ...prev, loading: 'error', error: apiRateLimitUserMessage(aiData) }
+              : prev,
+          );
+          return;
+        }
         if (!aiRes.ok) {
           setContentFixActive((prev) =>
             prev.todoId === todoId
@@ -7041,6 +7114,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         });
 
         const data = await response.json().catch(() => ({}));
+        if (isApiRateLimited(response.status, data)) {
+          const msg = apiRateLimitUserMessage(data);
+          toastWarning(msg);
+          setAiSolution({
+            steps: [{ title: 'Midlertidig begrensning', description: msg }],
+            explanation: msg,
+            codePatch: null,
+          });
+          return;
+        }
         if (!response.ok) {
           const msg = data?.error || data?.message || `HTTP ${response.status}`;
           setAiSolution({
@@ -7619,6 +7702,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         body: JSON.stringify({ prompt, model: 'gpt-4o-mini', maxTokens: 450 }),
       });
       const data = await res.json().catch(() => ({}));
+      if (isApiRateLimited(res.status, data)) {
+        toastWarning(apiRateLimitUserMessage(data));
+        setGeoChatReply(null);
+        return;
+      }
       if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : (data?.message || `Feil ${res.status}`));
       const text = String(data.content || '').trim();
       setGeoChatReply(text || 'Tomt svar fra modellen.');
@@ -7655,6 +7743,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       });
 
       const data = await response.json().catch(() => ({}));
+
+      if (isApiRateLimited(response.status, data)) {
+        toastWarning(apiRateLimitUserMessage(data));
+        return;
+      }
 
       if (!response.ok || data.error) {
         toastError("Feil ved skanning: " + data.error);
@@ -7753,6 +7846,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       });
 
       const data = await response.json().catch(() => ({}));
+
+      if (isApiRateLimited(response.status, data)) {
+        toastWarning(apiRateLimitUserMessage(data));
+        return;
+      }
 
       if (!response.ok || data.error) {
         toastError("Feil ved skanning: " + data.error);
@@ -7931,6 +8029,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
 
     try {
+      let rateLimitNotified = false;
       const promises = activeList.map(async (entry: any) => {
         const keyword = typeof entry === 'string' ? entry : entry.keyword;
         const location = typeof entry === 'string' ? 'Oslo' : entry.location;
@@ -7947,6 +8046,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           });
 
           const data = await response.json().catch(() => ({}));
+
+          if (isApiRateLimited(response.status, data)) {
+            if (!rateLimitNotified) {
+              rateLimitNotified = true;
+              toastWarning(apiRateLimitUserMessage(data));
+            }
+            return null;
+          }
 
           if (!response.ok || data.error) {
             return null; // Hopper over dette ordet hvis serveren feiler
@@ -8243,6 +8350,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
         const errBody = await res.json().catch(() => ({}));
 
+        if (isApiRateLimited(res.status, errBody)) {
+          setAnalyzeError(apiRateLimitUserMessage(errBody));
+          return;
+        }
+
         if (res.ok) {
           const { mobile: mobileRaw, desktop: desktopRaw } = errBody;
           const mobile = formatLighthouseData(mobileRaw);
@@ -8458,6 +8570,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const hostMode: string = hostConnection?.connectionMode || 'none';
   const hostIsFullyConnected = hostMode === 'full';
   const hostWasLightOnly = hostMode === 'light';
+  const hostIsWix = hostConnection?.platform === 'wix';
 
   // URL-lås (én endring per uke)
   const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -8498,6 +8611,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   };
 
   const resetWpWizardForm = () => {
+    setConnectWizardPlatform(null);
     setWpWizardStep(1);
     setWpSiteUrl('');
     setWpUsername('');
@@ -8506,15 +8620,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setWpConnecting(false);
     setWpConnectError(null);
     setWpConnectResult(null);
+    setWixSiteUrl('');
+    setWixSiteUrlError(null);
+    setWixConnecting(false);
+    setWixConnectError(null);
   };
 
-  const openWpWizard = () => {
+  const openHostConnectWizard = (platform?: 'wordpress' | 'wix') => {
     resetWpWizardForm();
+    setConnectWizardPlatform(platform ?? null);
     setShowWpWizard(true);
   };
 
+  const openWpWizard = () => {
+    openHostConnectWizard();
+  };
+
   const closeWpWizard = () => {
-    if (wpConnecting) return;
+    if (wpConnecting || wixConnecting) return;
     setShowWpWizard(false);
     resetWpWizardForm();
   };
@@ -8523,6 +8646,127 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     wpSiteUrl.trim().startsWith('https://') &&
     !!wpUsername.trim() &&
     !!wpAppPassword.trim();
+
+  const wixStepValid = wixSiteUrl.trim().startsWith('https://');
+
+  const connectWixAdvisory = async () => {
+    if (!wixStepValid) return;
+    if (!user?.id || !supabase) {
+      setWixConnectError('Du må være innlogget for å koble til.');
+      return;
+    }
+    setWixConnecting(true);
+    setWixConnectError(null);
+    try {
+      const { error } = await supabase.from('client_hosts').upsert(
+        {
+          user_id: user.id,
+          platform: 'wix',
+          connection_mode: 'advisory',
+          admin_url: wixSiteUrl.trim(),
+          access_token_encrypted: null,
+          repo_url: null,
+          notes: null,
+          last_changed_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+      if (error) {
+        setWixConnectError(error.message || 'Kunne ikke lagre tilkoblingen.');
+        return;
+      }
+      setHostConnection({
+        platform: 'wix',
+        connectionMode: 'advisory',
+        repoUrl: '',
+        adminUrl: wixSiteUrl.trim(),
+        notes: '',
+        lastChangedAt: new Date().toISOString(),
+      });
+      toastSuccess('Wix er koblet til. Sikt viser forslag du limer inn selv i editoren.');
+      setShowWpWizard(false);
+      resetWpWizardForm();
+    } catch {
+      setWixConnectError('Kunne ikke lagre tilkoblingen. Prøv igjen.');
+    } finally {
+      setWixConnecting(false);
+    }
+  };
+
+  const resetDeleteAccountModal = () => {
+    setDeleteAccountConfirmText('');
+    setDeleteAccountError(null);
+    setDeletingAccount(false);
+  };
+
+  const closeDeleteAccountModal = () => {
+    if (deletingAccount) return;
+    setShowDeleteAccountModal(false);
+    resetDeleteAccountModal();
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (deleteAccountConfirmText !== 'SLETT') return;
+    setDeletingAccount(true);
+    setDeleteAccountError(null);
+    const { error } = await supabase.rpc('delete_current_user');
+    if (error) {
+      setDeleteAccountError(error.message || 'Kunne ikke slette kontoen.');
+      setDeletingAccount(false);
+      return;
+    }
+    try {
+      await supabase.auth.signOut();
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-') || key === 'sikt_pending_plan') {
+          localStorage.removeItem(key);
+        }
+      });
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('sikt_current_view');
+      }
+      setShowDeleteAccountModal(false);
+      resetDeleteAccountModal();
+      onLogout();
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message?: string }).message) : 'Kunne ikke logge ut etter sletting.';
+      setDeleteAccountError(msg);
+      setDeletingAccount(false);
+    }
+  };
+
+  const disconnectWixAdvisory = async () => {
+    if (!user?.id || !supabase) {
+      setDisconnectError('Du må være innlogget for å koble fra.');
+      return;
+    }
+    setIsDisconnecting(true);
+    setDisconnectError(null);
+    try {
+      const { error } = await supabase.from('client_hosts').upsert(
+        {
+          user_id: user.id,
+          connection_mode: 'skipped',
+          platform: null,
+          admin_url: null,
+          access_token_encrypted: null,
+          last_changed_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+      if (error) {
+        setDisconnectError(error.message || 'Kunne ikke frakoble.');
+        return;
+      }
+      setHostConnection(null);
+      setShowDisconnectConfirm(false);
+      toastSuccess('Wix-tilkoblingen er fjernet.');
+    } catch {
+      setDisconnectError('Kunne ikke frakoble. Prøv igjen.');
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
 
   const connectWordPress = async () => {
     if (!wpStep2Valid) return;
@@ -8606,6 +8850,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   useEffect(() => {
     if (!showWpWizard && !showDisconnectConfirm) return;
+    const wizardBusy = wpConnecting || wixConnecting;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (showDisconnectConfirm) {
@@ -8615,11 +8860,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         }
         return;
       }
-      if (showWpWizard && !wpConnecting) closeWpWizard();
+      if (showWpWizard && !wpConnecting && !wixConnecting) closeWpWizard();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showWpWizard, showDisconnectConfirm, wpConnecting, isDisconnecting]);
+  }, [showWpWizard, showDisconnectConfirm, wpConnecting, wixConnecting, isDisconnecting]);
 
   const toggleNotif = (key: keyof typeof notifPrefs) =>
     setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -8848,6 +9093,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const moreTodos = todos.slice(3);
   const todosRef = useRef(todos);
   todosRef.current = todos;
+  const contentPagesRef = useRef(contentPages);
+  contentPagesRef.current = contentPages;
+  const hostConnectionRef = useRef(hostConnection);
+  hostConnectionRef.current = hostConnection;
 
   const workshopContentFixFieldType = useMemo((): ContentFixFieldType | null => {
     const todoId = expandedWorkshopProblem;
@@ -8951,34 +9200,57 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
 
       try {
-        const fetchRes = await fetch('/api/wordpress-fetch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ pageUrl: todo.pageUrl }),
-          signal: ac.signal,
-        });
-        const fetchData = await fetchRes.json().catch(() => ({}));
-        if (ac.signal.aborted) return;
-        if (!fetchRes.ok) {
-          setContentFixActive((prev) =>
-            prev.todoId === todoId
-              ? {
-                  ...prev,
-                  loading: 'error',
-                  error:
-                    typeof fetchData?.error === 'string'
-                      ? fetchData.error
-                      : `Feil ${fetchRes.status}`,
-                }
-              : prev,
+        let pageData: WordPressFetchResponse;
+        if (hostConnectionRef.current?.platform === 'wix') {
+          const advisoryPageData = buildAdvisoryPageDataFromContentScan(
+            todo.pageUrl,
+            contentPagesRef.current,
           );
-          return;
-        }
+          if (ac.signal.aborted) return;
+          if (!advisoryPageData) {
+            setContentFixActive((prev) =>
+              prev.todoId === todoId
+                ? {
+                    ...prev,
+                    loading: 'error',
+                    error:
+                      'Kjør innholdsskanning under Synlighet først, så Sikt vet hvilken side dette gjelder.',
+                  }
+                : prev,
+            );
+            return;
+          }
+          pageData = advisoryPageData;
+        } else {
+          const fetchRes = await fetch('/api/wordpress-fetch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ pageUrl: todo.pageUrl }),
+            signal: ac.signal,
+          });
+          const fetchData = await fetchRes.json().catch(() => ({}));
+          if (ac.signal.aborted) return;
+          if (!fetchRes.ok) {
+            setContentFixActive((prev) =>
+              prev.todoId === todoId
+                ? {
+                    ...prev,
+                    loading: 'error',
+                    error:
+                      typeof fetchData?.error === 'string'
+                        ? fetchData.error
+                        : `Feil ${fetchRes.status}`,
+                  }
+                : prev,
+            );
+            return;
+          }
 
-        const pageData = fetchData as WordPressFetchResponse;
+          pageData = fetchData as WordPressFetchResponse;
+        }
         setContentFixCache((prev) => ({
           ...prev,
           [todoId]: { pageData, fieldType, aiSuggestion: null },
@@ -10960,6 +11232,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             contentFixEntry.pageData.yoast?.installed === false &&
             (contentFixEntry.fieldType === 'meta-description' || contentFixEntry.fieldType === 'seo-title');
           const showPushPlaceholder =
+            !hostIsWix &&
             contentFixReady &&
             contentFixEntry?.pageData &&
             (contentFixEntry.fieldType === 'content' ||
@@ -10967,6 +11240,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               (contentFixEntry.pageData.yoast?.installed === true &&
                 (contentFixEntry.fieldType === 'meta-description' ||
                   contentFixEntry.fieldType === 'seo-title')));
+          const showWixAdvisoryActions =
+            hostIsWix &&
+            contentFixReady &&
+            contentFixEntry?.pageData &&
+            contentFixEntry.fieldType;
           const goRelative = (delta: number) => {
             if (!problems.length) return;
             const current = selectedIndex >= 0 ? selectedIndex : 0;
@@ -11365,7 +11643,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       )}
                     </div>
 
-                  ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData ? (
+                  ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData && !hostIsWix ? (
                     /* ═══════════════════════════════════
                        SCREEN B — INNHOLD (løst via push)
                        ═══════════════════════════════════ */
@@ -11924,6 +12202,64 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   </button>
                                 )}
                               </div>
+                              {showWixAdvisoryActions && contentFixLoading === 'idle' && contentFixEntry?.aiSuggestion && (() => {
+                                const wixEditedSuggestion =
+                                  editedSuggestions[selectedProblem.id] ?? contentFixEntry.aiSuggestion ?? '';
+                                const wixPlaceholders = findPlaceholders(wixEditedSuggestion);
+                                const wixCopyBlocked = wixPlaceholders.length > 0;
+                                return (
+                                  <div
+                                    style={{
+                                      marginTop: 4,
+                                      background: 'rgba(245,158,11,0.06)',
+                                      border: `1px solid ${W.border}`,
+                                      borderRadius: 14,
+                                      padding: '16px 18px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: 12,
+                                    }}
+                                  >
+                                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: W.ink }}>
+                                      Lim inn i Wix selv
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: 13, color: W.muted, lineHeight: 1.55 }}>
+                                      {getWixFieldInstruction(contentFixEntry.fieldType)}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      disabled={wixCopyBlocked || !wixEditedSuggestion.trim()}
+                                      title={wixCopyBlocked ? 'Fyll inn plassholderne først' : undefined}
+                                      onClick={() => {
+                                        if (wixCopyBlocked || !wixEditedSuggestion.trim()) return;
+                                        navigator.clipboard?.writeText(wixEditedSuggestion);
+                                        toastSuccess('Kopiert til utklippstavle');
+                                      }}
+                                      onMouseDown={wixCopyBlocked ? undefined : pressDown}
+                                      onMouseUp={wixCopyBlocked ? undefined : pressReset}
+                                      onMouseLeave={wixCopyBlocked ? undefined : pressReset}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 7,
+                                        alignSelf: 'flex-start',
+                                        background: W.ink,
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: 11,
+                                        padding: '11px 16px',
+                                        fontSize: 13,
+                                        fontWeight: 700,
+                                        cursor: wixCopyBlocked ? 'not-allowed' : 'pointer',
+                                        opacity: wixCopyBlocked ? 0.5 : 1,
+                                        transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}`,
+                                      }}
+                                    >
+                                      <Copy size={14} /> Kopier
+                                    </button>
+                                  </div>
+                                );
+                              })()}
                             </>
                           );
                         })()}
@@ -13162,8 +13498,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
                 <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
                   <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>CMS</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected ? '#52A447' : '#1A1A1A' }}>
-                    {hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
+                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsWix ? '#52A447' : '#1A1A1A' }}>
+                    {hostIsWix ? 'Wix' : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
                   </p>
                 </div>
               </div>
@@ -13322,7 +13658,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             </p>
                             <button
                               type="button"
-                              onClick={openWpWizard}
+                              onClick={() => openHostConnectWizard('wordpress')}
                               onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
@@ -13334,31 +13670,70 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </>
                         )}
                       </div>
-                      {[
-                        { name: 'Shopify' },
-                        { name: 'Webflow' },
-                      ].map((p) => (
-                        <div
-                          key={p.name}
-                          className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]"
-                          style={{ pointerEvents: 'none', opacity: 0.5 }}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{p.name}</p>
-                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#808080', background: '#F5F5F0', fontFamily: settingsMono }}>
-                              Kommer snart
+                      <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Wix</p>
+                          {hostIsWix && (
+                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#52A447', background: '#F5F5F0', fontFamily: settingsMono }}>
+                              tilkoblet
                             </span>
-                          </div>
-                          <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
-                            Vi bygger denne integrasjonen etter hva kundene bruker mest.
-                          </p>
+                          )}
                         </div>
-                      ))}
+                        {hostIsWix ? (
+                          <>
+                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: '#808080' }}>
+                              Rådgiver-modus: {hostConnection?.adminUrl || '—'}. Du kopierer Sikt-forslag inn i Wix selv.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => { setDisconnectError(null); setShowDisconnectConfirm(true); }}
+                              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              className="mt-4 text-sm text-left"
+                              style={{ color: '#808080', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            >
+                              Koble fra
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                              Koble til med nettside-URL. Sikt lager forslag du limer inn i Wix-editoren.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => openHostConnectWizard('wix')}
+                              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                              style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            >
+                              Koble til
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      <div
+                        className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]"
+                        style={{ pointerEvents: 'none', opacity: 0.5 }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Shopify</p>
+                          <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#808080', background: '#F5F5F0', fontFamily: settingsMono }}>
+                            Kommer snart
+                          </span>
+                        </div>
+                        <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                          Vi bygger denne integrasjonen etter hva kundene bruker mest.
+                        </p>
+                      </div>
                     </div>
                     <p className="text-sm" style={{ color: '#808080' }}>
                       Bruker du en annen plattform? Ta kontakt — vi prioriterer hvilke vi bygger neste etter hva kundene faktisk bruker.
                     </p>
-                    {!hostIsFullyConnected && (
+                    {!hostIsFullyConnected && !hostIsWix && (
                       <p className="text-sm" style={{ color: '#808080' }}>
                         Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
                       </p>
@@ -13498,6 +13873,30 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   Felles svar om analyseintervall, GSC-forsinkelse, GEO-status og Technical Score.
                 </p>
               </div>
+
+              <div
+                className="rounded-2xl border p-5 sm:p-6"
+                style={{ borderColor: 'rgba(192,57,43,0.35)', background: 'rgba(192,57,43,0.04)' }}
+              >
+                <h3 className="text-lg font-semibold" style={{ color: '#8B2E2E' }}>Slett konto</h3>
+                <p className="text-sm mt-2 mb-4" style={{ color: '#808080', lineHeight: 1.55 }}>
+                  Dette sletter kontoen din og alle data permanent. Handlingen kan ikke angres.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetDeleteAccountModal();
+                    setShowDeleteAccountModal(true);
+                  }}
+                  onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                  onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                  style={{ background: '#C0392B', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                >
+                  Slett konto
+                </button>
+              </div>
               </div>
             </div>
           );
@@ -13585,7 +13984,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             type="button"
             aria-label="Lukk"
             onClick={closeWpWizard}
-            disabled={wpConnecting}
+            disabled={wpConnecting || wixConnecting}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
             style={{ transition: 'opacity 200ms ease-out' }}
           />
@@ -13597,12 +13996,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           >
             <header className="flex items-center justify-between mb-4">
               <p className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
-                {wpWizardStep === 3 ? 'Resultat' : `Trinn ${wpWizardStep} av 3`}
+                {connectWizardPlatform === null
+                  ? 'Velg plattform'
+                  : connectWizardPlatform === 'wix'
+                    ? 'Wix'
+                    : wpWizardStep === 3
+                      ? 'Resultat'
+                      : `Trinn ${wpWizardStep} av 3`}
               </p>
               <button
                 type="button"
                 onClick={closeWpWizard}
-                disabled={wpConnecting}
+                disabled={wpConnecting || wixConnecting}
                 className="p-1.5 rounded-md disabled:opacity-40"
                 style={{ color: '#808080', transition: 'opacity 160ms ease-out' }}
               >
@@ -13610,7 +14015,121 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </button>
             </header>
 
-            {wpWizardStep === 1 && (
+            {connectWizardPlatform === null && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Hvilken plattform bruker du?</h3>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  WordPress kan kobles med skrivetilgang. Wix bruker rådgiver-modus — du kopierer forslag inn selv.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConnectWizardPlatform('wordpress');
+                      setWpWizardStep(1);
+                    }}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
+                  >
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress</p>
+                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Push endringer direkte fra Sikt</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConnectWizardPlatform('wix')}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
+                  >
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Wix</p>
+                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Kun URL — kopier forslag selv</p>
+                  </button>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={closeWpWizard}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
+                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connectWizardPlatform === 'wix' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til Wix</h3>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  Lim inn adressen til Wix-siden din (https). Sikt lager forslag du kopierer inn i editoren.
+                </p>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Nettside-URL</label>
+                  <input
+                    type="url"
+                    value={wixSiteUrl}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setWixSiteUrl(v);
+                      if (!v.trim()) setWixSiteUrlError(null);
+                      else if (!v.trim().startsWith('https://')) setWixSiteUrlError('Må starte med https://');
+                      else setWixSiteUrlError(null);
+                    }}
+                    placeholder="https://dinside.wixsite.com/hjem"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
+                  />
+                  {wixSiteUrlError ? (
+                    <p className="text-xs mt-1.5" style={{ color: '#c0392b' }}>{wixSiteUrlError}</p>
+                  ) : (
+                    <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Må starte med https://</p>
+                  )}
+                </div>
+                {wixConnectError && (
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                    {wixConnectError}
+                  </div>
+                )}
+                <div className="flex justify-between gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setConnectWizardPlatform(null)}
+                    disabled={wixConnecting}
+                    onMouseDown={(e) => { if (wixConnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
+                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Tilbake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={connectWixAdvisory}
+                    disabled={!wixStepValid || wixConnecting}
+                    onMouseDown={(e) => { if (!wixStepValid || wixConnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    {wixConnecting ? <Loader2 size={14} className="animate-spin" /> : null}
+                    Koble til
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connectWizardPlatform === 'wordpress' && wpWizardStep === 1 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Lag et Application Password i WordPress</h3>
                 <p className="text-sm" style={{ color: '#808080' }}>
@@ -13653,7 +14172,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             )}
 
-            {wpWizardStep === 2 && (
+            {connectWizardPlatform === 'wordpress' && wpWizardStep === 2 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til WordPress</h3>
                 <div>
@@ -13733,7 +14252,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             )}
 
-            {wpWizardStep === 3 && (
+            {connectWizardPlatform === 'wordpress' && wpWizardStep === 3 && (
               <div className="space-y-4">
                 {wpConnecting && (
                   <div className="flex flex-col items-center py-8 gap-3">
@@ -13792,6 +14311,79 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         </div>
       )}
 
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={closeDeleteAccountModal}
+            disabled={deletingAccount}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-semibold mb-2" style={{ color: '#8B2E2E' }}>Slett konto permanent?</h3>
+            <p className="text-sm mb-3" style={{ color: '#808080', lineHeight: 1.55 }}>
+              Dette sletter følgende permanent og kan ikke angres:
+            </p>
+            <ul className="text-sm mb-3 space-y-1.5 list-disc pl-5" style={{ color: '#1A1A1A', lineHeight: 1.5 }}>
+              <li>WordPress-tilkoblinger</li>
+              <li>Skann og analyser</li>
+              <li>Konkurrentdata</li>
+              <li>Søkeord og rangeringer</li>
+              <li>Selve kontoen din</li>
+            </ul>
+            <p className="text-sm mb-4 font-semibold" style={{ color: '#8B2E2E', lineHeight: 1.55 }}>
+              Sletting kansellerer IKKE abonnementet ditt. Si opp abonnementet separat for å unngå videre trekk.
+            </p>
+            <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>
+              Skriv SLETT for å bekrefte
+            </label>
+            <input
+              type="text"
+              value={deleteAccountConfirmText}
+              onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
+              autoComplete="off"
+              disabled={deletingAccount}
+              placeholder="SLETT"
+              className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none disabled:opacity-60"
+              style={{ color: '#1A1A1A', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}
+            />
+            {deleteAccountError && (
+              <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid rgba(192,57,43,0.25)' }}>
+                {deleteAccountError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                type="button"
+                onClick={closeDeleteAccountModal}
+                disabled={deletingAccount}
+                onMouseDown={(e) => { if (deletingAccount) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
+                style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteAccount}
+                disabled={deletingAccount || deleteAccountConfirmText !== 'SLETT'}
+                onMouseDown={(e) => { if (deletingAccount || deleteAccountConfirmText !== 'SLETT') return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                className={`rounded-full px-4 py-2 text-sm text-white inline-flex items-center gap-2${deletingAccount || deleteAccountConfirmText !== 'SLETT' ? ' opacity-50 cursor-not-allowed' : ''}`}
+                style={{ background: '#C0392B', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+              >
+                {deletingAccount ? <Loader2 size={14} className="animate-spin" /> : null}
+                Slett konto permanent
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDisconnectConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <button
@@ -13802,13 +14394,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
           <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6">
-            <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Koble fra WordPress?</h3>
+            <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>
+              {hostIsWix ? 'Koble fra Wix?' : 'Koble fra WordPress?'}
+            </h3>
             <p className="text-sm" style={{ color: '#808080' }}>
-              Sikt kan ikke lenger gjøre endringer på siden din. Du kan koble til på nytt når som helst.
+              {hostIsWix
+                ? 'Sikt husker ikke lenger at du bruker Wix. Du kan koble til på nytt når som helst.'
+                : 'Sikt kan ikke lenger gjøre endringer på siden din. Du kan koble til på nytt når som helst.'}
             </p>
-            <p className="text-sm mt-3 mb-4" style={{ color: '#808080' }}>
-              Tips: Application Password-et i WordPress er fortsatt aktivt etter at du kobler fra her. Hvis du vil fjerne det helt, gå til Brukere → Profil → Application Passwords i WordPress og klikk Revoke.
-            </p>
+            {!hostIsWix && (
+              <p className="text-sm mt-3 mb-4" style={{ color: '#808080' }}>
+                Tips: Application Password-et i WordPress er fortsatt aktivt etter at du kobler fra her. Hvis du vil fjerne det helt, gå til Brukere → Profil → Application Passwords i WordPress og klikk Revoke.
+              </p>
+            )}
+            {hostIsWix && <div className="mb-4" />}
             {disconnectError && (
               <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
                 {disconnectError}
@@ -13829,7 +14428,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </button>
               <button
                 type="button"
-                onClick={disconnectWordPress}
+                onClick={hostIsWix ? disconnectWixAdvisory : disconnectWordPress}
                 disabled={isDisconnecting}
                 onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
@@ -14020,7 +14619,7 @@ function App() {
   }, [theme]);
 
   // --- VISNING & KAMERA (Holder styr på hvor kunden er) ---
-  const [view, setView] = useState(isPaymentSuccess ? 'onboarding' : 'home');
+  const [view, setView] = useState('home');
   const viewRef = useRef(view);
 
   useEffect(() => {
@@ -14137,51 +14736,57 @@ function App() {
       const justPaid = isPaymentSuccess;
 
       try {
-        // 1. Sjekk om vi har "lappen" med pakke-valget fra betalingen.
-        // VIKTIG: Vi skriver kun til databasen hvis brukeren faktisk kom tilbake
-        // fra Stripe (?payment_success=true). Uten denne sjekken ville en bruker
-        // som valgte pakke og deretter logget inn uten å betale bli feilaktig
-        // ruter til onboarding-skjemaet.
         const savedPlan = localStorage.getItem('sikt_pending_plan');
-        if (savedPlan && justPaid) {
-          localStorage.removeItem('sikt_pending_plan');
-          try {
-            await supabaseRest('clients?on_conflict=user_id', {
-              method: 'POST',
-              body: { user_id: user.id, package_name: savedPlan },
-              headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-            });
-          } catch (e: any) {
-            console.error('[Routing] Kunne ikke lagre pakke:', e?.message || e);
-          }
-          setSelectedPlan(savedPlan);
-        } else if (savedPlan && !justPaid) {
-          // Brukeren valgte pakke men betalte ikke — behold lappen i localStorage
-          // slik at vi kan preutfylle valget når de faktisk betaler.
+        if (savedPlan) {
           setSelectedPlan(savedPlan);
         }
 
-        // 2. Hent fasiten fra databasen (rå fetch — supabase-js kan henge ved auth-lock)
-        let client: { onboarding_completed?: boolean; package_name?: string } | null = null;
-        try {
-          const rows = await supabaseRest<any[]>(
-            `clients?user_id=eq.${user.id}&select=onboarding_completed,package_name&limit=1`,
-          );
-          client = Array.isArray(rows) && rows.length ? rows[0] : null;
-        } catch (e: any) {
-          console.error('[Routing] Kunne ikke hente client:', e?.message || e);
+        const fetchClientRow = async (): Promise<{
+          onboarding_completed?: boolean;
+          package_name?: string;
+        } | null> => {
+          try {
+            const rows = await supabaseRest<any[]>(
+              `clients?user_id=eq.${user.id}&select=onboarding_completed,package_name&limit=1`,
+            );
+            return Array.isArray(rows) && rows.length ? rows[0] : null;
+          } catch (e: any) {
+            console.error('[Routing] Kunne ikke hente client:', e?.message || e);
+            return null;
+          }
+        };
+
+        if (justPaid) setIsLoading(true);
+
+        let client = await fetchClientRow();
+        if (justPaid && !client?.package_name) {
+          const pollIntervalMs = 2000;
+          const pollMaxMs = 10000;
+          let waitedMs = 0;
+          while (!client?.package_name && waitedMs < pollMaxMs) {
+            await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+            waitedMs += pollIntervalMs;
+            if (!isMounted) return;
+            client = await fetchClientRow();
+          }
         }
 
         if (!isMounted) return;
 
-        // 3. Sett opp reglene
-        const harBetalt = !!client?.package_name || justPaid;
+        if (justPaid && !client?.package_name) {
+          setHasAccess(false);
+          setView('home');
+          toastWarning(
+            'Betaling ikke bekreftet ennå. Vent litt og oppdater siden, eller kontakt support@siktseo.com hvis problemet vedvarer.',
+          );
+          return;
+        }
+
+        const harBetalt = !!client?.package_name;
         const harFyltUtSkjema = !!client?.onboarding_completed;
 
         // --- DEN PERMANENTE RUTINGEN DIN ---
-        // Viktig: justPaid overstyrer IKKE fullført onboarding lenger.
-        // Det hindrer at eksisterende kunder blir sendt tilbake til skjemaet
-        // når de oppgraderer pakken og returnerer med ?payment_success=true.
+        // Tilgang (harBetalt) krever package_name satt av Stripe-webhooken.
 
         if (harBetalt && !harFyltUtSkjema) {
           // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!

@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { withSentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry429,
+    isSerpApiRateLimitedResponse,
+    respondRateLimited,
+    rateLimitedPayload,
+    retryAfterSecondsFromResponse,
+} from './_lib/external-rate-limit.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 5;
@@ -62,8 +69,15 @@ export default withSentry(async function handler(request, response) {
     try {
         const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ", Norway")}&num=20&device=desktop&api_key=${apiKey}`;
 
-        const res = await fetch(targetUrl);
-        const data = await res.json();
+        const res = await fetchExternalWithOptionalRetry429(targetUrl);
+        if (res.status === 429) {
+            return respondRateLimited(response, res);
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (isSerpApiRateLimitedResponse(res.status, data)) {
+            return response.status(429).json(rateLimitedPayload(retryAfterSecondsFromResponse(res)));
+        }
 
         return response.status(200).json(data);
 

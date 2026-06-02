@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { withSentry, Sentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry429,
+    respondRateLimited,
+} from './_lib/external-rate-limit.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 10;
@@ -61,44 +65,36 @@ export default withSentry(async function handler(req, res) {
     const categories = 'category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES';
     const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(formattedUrl)}&${categories}&locale=no&key=${apiKey}`;
 
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-    const fetchStrategy = async (strategy, attempt = 0) => {
+    const fetchStrategy = async (strategy) => {
         const url = `${base}&strategy=${strategy}`;
         const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
             ? AbortSignal.timeout(120000)
             : undefined;
-        const r = await fetch(url, ctrl ? { signal: ctrl } : {});
-        if ((r.status === 429 || r.status >= 500) && attempt < 2) {
-            await sleep(1500 * (attempt + 1));
-            return fetchStrategy(strategy, attempt + 1);
-        }
-        return r;
+        return fetchExternalWithOptionalRetry429(url, ctrl ? { signal: ctrl } : {});
     };
 
     try {
-        let lastDetail = '';
-        for (let round = 0; round < 3; round++) {
-            if (round > 0) await sleep(2000 * round);
+        const [resMobile, resDesktop] = await Promise.all([
+            fetchStrategy('mobile'),
+            fetchStrategy('desktop'),
+        ]);
 
-            const [resMobile, resDesktop] = await Promise.all([
-                fetchStrategy('mobile'),
-                fetchStrategy('desktop'),
-            ]);
-
-            if (resMobile.ok && resDesktop.ok) {
-                const [mobile, desktop] = await Promise.all([resMobile.json(), resDesktop.json()]);
-                return res.status(200).json({ mobile, desktop });
-            }
-
-            lastDetail = !resMobile.ok ? await resMobile.text() : await resDesktop.text();
-            const status = !resMobile.ok ? resMobile.status : resDesktop.status;
-            if (status !== 429 && status < 500) {
-                return res.status(502).json({ error: 'PageSpeed feilet', detail: lastDetail.slice(0, 500) });
-            }
+        if (resMobile.status === 429 || resDesktop.status === 429) {
+            return respondRateLimited(res, resMobile.status === 429 ? resMobile : resDesktop);
         }
 
-        return res.status(502).json({ error: 'PageSpeed feilet etter flere forsøk', detail: lastDetail.slice(0, 500) });
+        if (resMobile.ok && resDesktop.ok) {
+            const [mobile, desktop] = await Promise.all([resMobile.json(), resDesktop.json()]);
+            return res.status(200).json({ mobile, desktop });
+        }
+
+        const failedRes = !resMobile.ok ? resMobile : resDesktop;
+        const lastDetail = await failedRes.text();
+        if (failedRes.status < 500) {
+            return res.status(502).json({ error: 'PageSpeed feilet', detail: lastDetail.slice(0, 500) });
+        }
+
+        return res.status(502).json({ error: 'PageSpeed feilet', detail: lastDetail.slice(0, 500) });
     } catch (error) {
         console.error('pagespeed error:', error);
         Sentry.captureException(error);

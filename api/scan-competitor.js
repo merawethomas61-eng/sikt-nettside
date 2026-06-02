@@ -15,6 +15,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { detectSitemapChanges, detectRankingChanges } from './_lib/competitor-monitor.js';
 import { withSentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry429,
+    isSerpApiRateLimitedResponse,
+    respondRateLimited,
+    rateLimitedPayload,
+    retryAfterSecondsFromResponse,
+} from './_lib/external-rate-limit.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -186,9 +193,15 @@ export default withSentry(async function handler(req, res) {
 
         try {
             const serpUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ', Norway')}&num=20&device=desktop&api_key=${SERP_API_KEY}`;
-            const serpRes = await fetch(serpUrl);
+            const serpRes = await fetchExternalWithOptionalRetry429(serpUrl);
+            if (serpRes.status === 429) {
+                return respondRateLimited(res, serpRes);
+            }
+            const serpData = await serpRes.json().catch(() => ({}));
+            if (isSerpApiRateLimitedResponse(serpRes.status, serpData)) {
+                return res.status(429).json(rateLimitedPayload(retryAfterSecondsFromResponse(serpRes)));
+            }
             if (!serpRes.ok) continue;
-            const serpData = await serpRes.json();
             const organicResults = serpData.organic_results || [];
 
             let competitorPos = null;

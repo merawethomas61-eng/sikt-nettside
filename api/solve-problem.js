@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { withSentry, Sentry } from './_lib/sentry.js';
+import {
+    fetchExternalWithOptionalRetry,
+    isOpenAiRateLimited,
+    respondRateLimited,
+} from './_lib/external-rate-limit.js';
 
 const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 10;
@@ -209,7 +214,7 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
         : `URL: ${effectiveUrl || 'ukjent'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}`;
 
     try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetchExternalWithOptionalRetry('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -225,6 +230,10 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
                 temperature: 0.2
             })
         });
+
+        if (isOpenAiRateLimited(response.status)) {
+            return respondRateLimited(res, response);
+        }
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
