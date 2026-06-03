@@ -14582,7 +14582,8 @@ function App() {
   // 1. SJEKK URL FØR VI STARTER
   // Viktig: Disse må fanges ved render, FØR URL-vasken under kjører.
   // Ellers tror init() at det er en normal visning og logger deg ut.
-  const isPaymentSuccess = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment_success') === 'true';
+  const _sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isPaymentSuccess = !!_sp && (_sp.get('payment_success') === 'true' || _sp.get('payment') === 'success');
   const isAuthRedirect = typeof window !== 'undefined' && (
     window.location.hash.includes('access_token') ||
     window.location.search.includes('code=')
@@ -14744,10 +14745,11 @@ function App() {
         const fetchClientRow = async (): Promise<{
           onboarding_completed?: boolean;
           package_name?: string;
+          subscription_status?: string;
         } | null> => {
           try {
             const rows = await supabaseRest<any[]>(
-              `clients?user_id=eq.${user.id}&select=onboarding_completed,package_name&limit=1`,
+              `clients?user_id=eq.${user.id}&select=onboarding_completed,package_name,subscription_status&limit=1`,
             );
             return Array.isArray(rows) && rows.length ? rows[0] : null;
           } catch (e: any) {
@@ -14759,11 +14761,11 @@ function App() {
         if (justPaid) setIsLoading(true);
 
         let client = await fetchClientRow();
-        if (justPaid && !client?.package_name) {
+        if (justPaid && client?.subscription_status !== 'active') {
           const pollIntervalMs = 2000;
           const pollMaxMs = 10000;
           let waitedMs = 0;
-          while (!client?.package_name && waitedMs < pollMaxMs) {
+          while (client?.subscription_status !== 'active' && waitedMs < pollMaxMs) {
             await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
             waitedMs += pollIntervalMs;
             if (!isMounted) return;
@@ -14773,7 +14775,7 @@ function App() {
 
         if (!isMounted) return;
 
-        if (justPaid && !client?.package_name) {
+        if (justPaid && client?.subscription_status !== 'active') {
           setHasAccess(false);
           setView('home');
           toastWarning(
@@ -14782,11 +14784,11 @@ function App() {
           return;
         }
 
-        const harBetalt = !!client?.package_name;
+        const harBetalt = client?.subscription_status === 'active';
         const harFyltUtSkjema = !!client?.onboarding_completed;
 
         // --- DEN PERMANENTE RUTINGEN DIN ---
-        // Tilgang (harBetalt) krever package_name satt av Stripe-webhooken.
+        // Tilgang (harBetalt) krever subscription_status === 'active' fra Stripe-webhooken.
 
         if (harBetalt && !harFyltUtSkjema) {
           // REGEL 2: Betalt, men mangler skjema -> Rett til skjemaet!
