@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { createClient } from '@supabase/supabase-js';
+import { assertSafeUserUrl, fetchHtmlSafe } from './_lib/url-guard.js';
 import { withSentry, Sentry } from './_lib/sentry.js';
 
 const rateLimitWindowMs = 60000;
@@ -39,7 +40,9 @@ export default withSentry(async function handler(req, res) {
     const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: { Authorization: authHeader } },
+    });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
@@ -51,11 +54,33 @@ export default withSentry(async function handler(req, res) {
     let { url } = req.body;
     if (!url) return res.status(400).json({ error: 'Mangler URL' });
 
-    if (!url.startsWith('http')) url = 'https://' + url;
+    const { data: clientRow, error: clientErr } = await supabase
+        .from('clients')
+        .select('website_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (clientErr) {
+        return res.status(500).json({ error: 'Kunne ikke hente registrert nettside.' });
+    }
+
+    const websiteUrl = typeof clientRow?.website_url === 'string' ? clientRow.website_url.trim() : '';
+    if (!websiteUrl) {
+        return res.status(400).json({
+            error: 'Du må registrere nettsiden din i onboarding før du kan skanne den.',
+        });
+    }
+
+    let safeStartUrl;
+    try {
+        safeStartUrl = await assertSafeUserUrl(url, websiteUrl);
+    } catch (urlGuardErr) {
+        return res.status(400).json({ error: urlGuardErr?.message || 'URL er ikke tillatt.' });
+    }
 
     try {
-        const baseUrl = new URL(url).origin;
-        const response = await fetch(url);
+        const baseUrl = new URL(safeStartUrl).origin;
+        const { response } = await fetchHtmlSafe(safeStartUrl, websiteUrl);
         if (!response.ok) throw new Error(`Nettsiden svarte ikke: ${response.status}`);
         const html = await response.text();
         const $ = cheerio.load(html);
@@ -71,12 +96,13 @@ export default withSentry(async function handler(req, res) {
             }
         });
 
-        const pagesToScan = [url, ...Array.from(internalLinks)].slice(0, 15);
+        const pagesToScan = [safeStartUrl, ...Array.from(internalLinks)].slice(0, 15);
         const scannedPages = [];
 
         for (const targetUrl of pagesToScan) {
             try {
-                const pageRes = await fetch(targetUrl);
+                const safeTargetUrl = await assertSafeUserUrl(targetUrl, websiteUrl);
+                const { response: pageRes } = await fetchHtmlSafe(safeTargetUrl, websiteUrl);
                 if (!pageRes.ok) continue;
                 const pageHtml = await pageRes.text();
                 const page$ = cheerio.load(pageHtml);

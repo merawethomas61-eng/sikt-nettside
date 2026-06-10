@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
+import { assertSafeUserUrl, fetchHtmlSafe } from './_lib/url-guard.js';
 import { withSentry, Sentry } from './_lib/sentry.js';
 import {
     fetchExternalWithOptionalRetry,
@@ -13,18 +14,12 @@ const ipTracker = new Map();
 
 // Henter HTML-en fra kundens side og trekker ut en relevant bit
 // (maks ~8000 tegn) basert på hvilken type problem AI skal løse.
-async function fetchRelevantHtml(pageUrl, problemTitle) {
+async function fetchRelevantHtml(pageUrl, problemTitle, userWebsiteUrl) {
     if (!pageUrl) return null;
-    let normalized = pageUrl.trim();
-    if (!/^https?:\/\//i.test(normalized)) normalized = 'https://' + normalized;
 
     try {
-        const res = await fetch(normalized, {
-            redirect: 'follow',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; SiktBot/1.0; +https://sikt.no)'
-            },
-        });
+        const safeUrl = await assertSafeUserUrl(pageUrl, userWebsiteUrl);
+        const { response: res } = await fetchHtmlSafe(safeUrl, userWebsiteUrl);
         if (!res.ok) return { error: `Nettsiden svarte med HTTP ${res.status}` };
         const html = await res.text();
 
@@ -144,21 +139,24 @@ export default withSentry(async function handler(req, res) {
         console.warn('[solve-problem] Kunne ikke hente client_hosts:', hostErr?.message || hostErr);
     }
 
+    let websiteUrl = '';
+    try {
+        const { data: clientRow } = await supabase
+            .from('clients')
+            .select('website_url, websiteUrl')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+        websiteUrl = (clientRow?.website_url || clientRow?.websiteUrl || '').trim();
+    } catch (urlErr) {
+        console.warn('[solve-problem] Kunne ikke hente website_url:', urlErr?.message || urlErr);
+    }
+
     // Finn URL server-side også (fallback) slik at vi ikke er avhengig av at frontend
     // alltid sender riktig adresse i body.
     let effectiveUrl = typeof url === 'string' ? url.trim() : '';
     if (!effectiveUrl) {
-        try {
-            const { data: clientRow } = await supabase
-                .from('clients')
-                .select('website_url, websiteUrl')
-                .eq('user_id', user.id)
-                .limit(1)
-                .maybeSingle();
-            effectiveUrl = clientRow?.website_url || clientRow?.websiteUrl || '';
-        } catch (urlErr) {
-            console.warn('[solve-problem] Kunne ikke hente website_url:', urlErr?.message || urlErr);
-        }
+        effectiveUrl = websiteUrl;
     }
 
     // Hvis kunden har koblet til webhost, henter vi faktisk HTML fra siden.
@@ -168,9 +166,18 @@ export default withSentry(async function handler(req, res) {
     let htmlContext = null;
     let htmlError = null;
     if (hasHost && effectiveUrl) {
-        const fetched = await fetchRelevantHtml(effectiveUrl, problemTitle);
-        if (fetched?.html) htmlContext = fetched.html;
-        if (fetched?.error) htmlError = fetched.error;
+        try {
+            await assertSafeUserUrl(effectiveUrl, websiteUrl);
+            const fetched = await fetchRelevantHtml(effectiveUrl, problemTitle, websiteUrl);
+            if (fetched?.html) htmlContext = fetched.html;
+            if (fetched?.error) htmlError = fetched.error;
+        } catch (urlGuardErr) {
+            return res.status(400).json({
+                error: urlGuardErr?.message || 'URL er ikke tillatt.',
+                steps: [{ title: 'Ugyldig URL', description: urlGuardErr?.message || 'URL er ikke tillatt.' }],
+                codePatch: null,
+            });
+        }
     }
 
     // Bygg instruks: strengere struktur når vi faktisk har HTML å peke på.

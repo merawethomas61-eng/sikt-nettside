@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { assertSafeUserUrl, getUserWebsiteUrl } from './_lib/url-guard.js';
 import { withSentry, Sentry } from './_lib/sentry.js';
 import {
     fetchExternalWithOptionalRetry429,
@@ -53,13 +54,12 @@ export default withSentry(async function handler(req, res) {
         return res.status(400).json({ error: 'Mangler URL' });
     }
 
-    let formattedUrl = String(url).trim();
-    if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
-
+    let formattedUrl;
     try {
-        new URL(formattedUrl);
-    } catch {
-        return res.status(400).json({ error: 'Ugyldig URL' });
+        const websiteUrl = await getUserWebsiteUrl(supabase, user.id);
+        formattedUrl = await assertSafeUserUrl(String(url).trim(), websiteUrl);
+    } catch (urlGuardErr) {
+        return res.status(400).json({ error: urlGuardErr?.message || 'URL er ikke tillatt.' });
     }
 
     const categories = 'category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES';

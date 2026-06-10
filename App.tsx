@@ -829,7 +829,7 @@ const Hero = () => {
       <div className="max-w-6xl mx-auto px-5 sm:px-6 text-center relative z-10">
         <RevealOnScroll direction="up" delay={200}>
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-[#1A1A1A] mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
-            Ranger høyere på Google <span className="text-[#3F8F38] font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
+            Ranger høyere på Google <span className="text-violet-600 font-script font-normal relative inline-block px-1 lowercase">automatisk.</span>
           </h1>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={300}>
@@ -1347,7 +1347,6 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
-  const [showGscStep, setShowGscStep] = useState(false);
   const [websiteUrlStatus, setWebsiteUrlStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
 
   const [formData, setFormData] = useState({
@@ -1475,24 +1474,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     saveDraft(next);
   };
 
-  const handleConnectSearchConsole = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const redirectUri = `${supabaseUrl}/functions/v1/google-oauth-callback`;
-    const scope = 'https://www.googleapis.com/auth/webmasters.readonly';
-
-    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-      `?client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code` +
-      `&scope=${encodeURIComponent(scope)}` +
-      `&access_type=offline` +
-      `&prompt=consent` +
-      `&state=${encodeURIComponent(user?.id || '')}`;
-
-    window.location.href = oauthUrl;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -1592,7 +1573,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk INSERT/UPDATE-policy på clients-tabellen.");
       }
 
-      setShowGscStep(true);
+      onComplete();
 
     } catch (error: any) {
       const rawMsg = error?.message || String(error);
@@ -1605,17 +1586,6 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       setLoading(false);
     }
   };
-
-  if (showGscStep) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F5F5F0] to-[#F5F5F0] flex items-center justify-center p-4">
-        <GscPreCheck
-          onConfirm={handleConnectSearchConsole}
-          onCancel={onComplete}
-        />
-      </div>
-    );
-  }
 
   return (
     <section className="min-h-screen bg-[#F5F5F0] py-20 px-5 flex items-center justify-center">
@@ -14493,6 +14463,64 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   );
 };
 
+const LOADING_STATUS_MESSAGES = [
+  'Klargjør portalen din',
+  'Henter dine SEO-data',
+  'Verifiserer tilgang',
+  'Nesten klar',
+] as const;
+
+function SiktLoadingScreen() {
+  const [statusIndex, setStatusIndex] = useState(0);
+  const [statusOpacity, setStatusOpacity] = useState(1);
+
+  useEffect(() => {
+    let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
+    const interval = setInterval(() => {
+      setStatusOpacity(0);
+      fadeTimeout = setTimeout(() => {
+        setStatusIndex((i) => (i + 1) % LOADING_STATUS_MESSAGES.length);
+        setStatusOpacity(1);
+      }, 500);
+    }, 2200);
+    return () => {
+      clearInterval(interval);
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+    };
+  }, []);
+
+  return (
+    <div
+      className="sikt-loading-screen fixed inset-0 z-[100] bg-[#F5F5F0] flex flex-col items-center justify-center overflow-hidden"
+      style={{ animation: 'sikt-loader-fade-in 400ms cubic-bezier(0.23, 1, 0.32, 1) forwards', opacity: 0 }}
+    >
+      <span className="absolute top-5 left-6 text-xl font-black tracking-tight text-slate-900">Sikt.</span>
+
+      <div className="flex flex-col items-center gap-[30px] px-6 max-w-lg w-full">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tighter text-slate-950 leading-tight text-center max-w-md mx-auto">
+          Ranger høyere på Google{' '}
+          <span className="font-script font-normal text-violet-600 lowercase">automatisk.</span>
+        </h1>
+
+        <div className="relative w-[200px] h-[2px] bg-[#EBEBE6] rounded-full overflow-hidden">
+          <div className="sikt-loading-sweep h-full w-[35%] bg-[#1A1A1A] rounded-full" />
+        </div>
+
+        <p
+          aria-live="polite"
+          className="text-[13px] font-semibold text-[#808080] min-h-[1.25rem] text-center"
+          style={{
+            opacity: statusOpacity,
+            transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1)',
+          }}
+        >
+          {LOADING_STATUS_MESSAGES[statusIndex]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // --- MAIN APP COMPONENT ---
 // ------------------------------------------------------------
 // DEV BYPASS PANEL
@@ -15038,121 +15066,7 @@ function App() {
     return (
       <>
       {devOverlay}
-      <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center overflow-hidden font-sans">
-
-        {/* --- BAKGRUNN: DOT MATRIX (Fyller tomrommet) --- */}
-        {/* Dette lager et svakt mønster av prikker over hele skjermen */}
-        <div className="absolute inset-0 opacity-[0.4]"
-          style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
-        </div>
-
-        {/* Myk lys-vignett i midten for å fremheve sentrum */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(248,250,252,0.8)_70%)] pointer-events-none"></div>
-
-
-        {/* --- PERIFERE ELEMENTER (De svevende kortene rundt) --- */}
-
-        {/* 1. TOPP VENSTRE: Server Status */}
-        <div className="absolute top-[10%] left-[10%] hidden md:block animate-[float_6s_ease-in-out_infinite]">
-          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg w-48">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01" /></svg>
-              </div>
-              <div className="h-2 w-20 bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-400 w-2/3 animate-[loading_2s_ease-in-out_infinite]"></div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-1.5 w-full bg-slate-100 rounded-full"></div>
-              <div className="h-1.5 w-2/3 bg-slate-100 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. TOPP HØYRE: Sikkerhetssjekk */}
-        <div className="absolute top-[15%] right-[12%] hidden md:block animate-[float_7s_ease-in-out_infinite_1s]">
-          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg w-40 flex flex-col items-center">
-            <div className="mb-2 relative">
-              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-20"></div>
-              <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sikkerhet OK</p>
-          </div>
-        </div>
-
-        {/* 3. BUNN VENSTRE: Database Kobling */}
-        <div className="absolute bottom-[15%] left-[12%] hidden md:block animate-[float_8s_ease-in-out_infinite_0.5s]">
-          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-4 rounded-2xl shadow-lg flex gap-3 items-center">
-            <div className="flex space-x-1">
-              <div className="w-1.5 h-6 bg-violet-400 rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
-              <div className="w-1.5 h-4 bg-violet-300 rounded-full animate-[pulse_1s_ease-in-out_infinite_0.2s]"></div>
-              <div className="w-1.5 h-8 bg-violet-500 rounded-full animate-[pulse_1s_ease-in-out_infinite_0.4s]"></div>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-700">Henter data...</p>
-              <p className="text-[10px] text-slate-400">Synkroniserer</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. BUNN HØYRE: Optimalisering */}
-        <div className="absolute bottom-[10%] right-[10%] hidden md:block animate-[float_6s_ease-in-out_infinite_2s]">
-          <div className="bg-white/60 backdrop-blur-md border border-white/50 p-3 rounded-2xl shadow-lg">
-            <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-violet-500 animate-spin"></div>
-          </div>
-        </div>
-
-
-        {/* --- SENTRUM (Hovedfokus) --- */}
-        <div className="relative z-20 scale-125 mb-10">
-          {/* Ytre ring */}
-          <div className="absolute inset-[-30px] rounded-full border border-violet-100/80 animate-[spin_8s_linear_infinite]">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[4px] w-3 h-3 bg-violet-400 rounded-full shadow-[0_0_15px_rgba(167,139,250,0.6)]"></div>
-          </div>
-          {/* Mellomste ring */}
-          <div className="absolute inset-[-15px] rounded-full border border-slate-200 animate-[spin_5s_linear_reverse_infinite]">
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[3px] w-2 h-2 bg-indigo-400 rounded-full"></div>
-          </div>
-          {/* KJERNEN (Prismet) */}
-          <div className="relative w-28 h-28 bg-white/40 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(124,58,237,0.2)] border border-white/60 flex items-center justify-center rotate-45 animate-[pulse_3s_ease-in-out_infinite]">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl shadow-inner rotate-[-45deg] flex items-center justify-center">
-              <svg className="w-6 h-6 text-white animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            </div>
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/80 to-transparent rounded-t-3xl pointer-events-none"></div>
-          </div>
-        </div>
-
-        {/* --- TEKST --- */}
-        <div className="relative z-20 flex flex-col items-center space-y-3">
-          <h2 className="text-3xl font-black text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-violet-700 to-slate-900 bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite]">
-            Klargjør Portal
-          </h2>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Verifiserer tilgang</p>
-            <div className="w-64 h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner mt-2">
-              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full animate-[loading_1.5s_ease-in-out_infinite] w-1/3"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- CSS --- */}
-        <style>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-          }
-          @keyframes shimmer {
-            0% { background-position: -200% center; }
-            100% { background-position: 200% center; }
-          }
-          @keyframes loading {
-            0% { transform: translateX(-150%); }
-            50% { transform: translateX(0%); }
-            100% { transform: translateX(150%); }
-          }
-        `}</style>
-      </div>
+      <SiktLoadingScreen />
       </>
     );
   }
