@@ -7279,6 +7279,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   // --- UKENS KVITTERING (Sikt-handlinger) ---
   const [siktActions, setSiktActions] = useState<any[]>([]);
+  // --- GODKJENNINGS-KØ (hybrid auto-fiks: synlige felt som venter på ja) ---
+  const [fixQueue, setFixQueue] = useState<any[]>([]);
+  const [queueBusyId, setQueueBusyId] = useState<string | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = denne uken, -1 = forrige, osv.
   const [receiptCategoryFilter, setReceiptCategoryFilter] = useState<'all' | 'finding' | 'suggestion' | 'fix' | 'alert'>('all');
@@ -7582,6 +7585,64 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     },
     [fetchContentChanges],
   );
+
+  // --- GODKJENNINGS-KØ: hent + godkjenn/avvis synlige fikser fra cron-auto-fix ---
+  const fetchFixQueue = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const rows = await supabaseRest<any[]>(
+        `sikt_fix_queue?user_id=eq.${user.id}&status=eq.pending&order=created_at.desc&limit=20`,
+      );
+      setFixQueue(Array.isArray(rows) ? rows : []);
+    } catch { /* stille — kø er valgfri */ }
+  }, [user?.id]);
+
+  useEffect(() => { fetchFixQueue(); }, [fetchFixQueue]);
+
+  const approveQueuedFix = useCallback(async (item: any) => {
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setQueueBusyId(item.id);
+    try {
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pageUrl: item.page_url, field: item.field, newValue: item.suggested_value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        toastError(typeof data?.error === 'string' ? data.error : 'Kunne ikke publisere endringen.');
+        return;
+      }
+      await supabaseRest(`sikt_fix_queue?id=eq.${item.id}`, {
+        method: 'PATCH',
+        body: { status: 'approved', resolved_at: new Date().toISOString() },
+        headers: { Prefer: 'return=minimal' },
+      });
+      setFixQueue((prev) => prev.filter((q) => q.id !== item.id));
+      toastSuccess('Publisert til siden din.');
+    } catch (err: any) {
+      toastError(err?.message || 'Noe gikk galt.');
+    } finally {
+      setQueueBusyId(null);
+    }
+  }, []);
+
+  const rejectQueuedFix = useCallback(async (item: any) => {
+    setQueueBusyId(item.id);
+    try {
+      await supabaseRest(`sikt_fix_queue?id=eq.${item.id}`, {
+        method: 'PATCH',
+        body: { status: 'rejected', resolved_at: new Date().toISOString() },
+        headers: { Prefer: 'return=minimal' },
+      });
+      setFixQueue((prev) => prev.filter((q) => q.id !== item.id));
+    } catch (err: any) {
+      toastError(err?.message || 'Noe gikk galt.');
+    } finally {
+      setQueueBusyId(null);
+    }
+  }, []);
 
   const executeContentFixRollback = useCallback(async (
     changeIdOverride?: string,
@@ -10171,6 +10232,53 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <p className={`text-base mt-3 ${textDim}`}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
               </div>
             </header>
+
+            {/* Godkjenningskø: synlige fikser Sikt har klargjort, venter på ditt ja */}
+            {fixQueue.length > 0 && (
+              <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-white/[0.03]'} p-5 sm:p-6`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles size={16} className="text-violet-500 shrink-0" />
+                  <h2 className={`text-lg font-bold ${textMain}`}>Venter på din godkjenning</h2>
+                  <span className="ml-auto text-[11px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">{fixQueue.length}</span>
+                </div>
+                <p className={`text-sm ${textDim} mb-4`}>Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
+                <div className="space-y-3">
+                  {fixQueue.map((item) => {
+                    const label = item.field === 'h1' ? 'Overskrift (H1)' : item.field === 'content' ? 'Sideinnhold' : item.field;
+                    const busy = queueBusyId === item.id;
+                    return (
+                      <div key={item.id} className={`rounded-xl border ${divider} p-4`}>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-0.5 rounded">{label}</span>
+                          <span className={`text-xs ${textDim} truncate max-w-full`}>{item.page_url}</span>
+                        </div>
+                        <p className={`text-sm font-semibold ${textMain} mb-1`}>{item.suggested_value}</p>
+                        {item.explanation && <p className={`text-xs ${textDim} mb-3 leading-relaxed`}>{item.explanation}</p>}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => approveQueuedFix(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1A1A1A] text-white text-xs font-bold ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
+                          >
+                            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                            Godkjenn og publiser
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => rejectQueuedFix(item)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border ${divider} ${textDim} text-xs font-bold ui-motion disabled:opacity-60`}
+                          >
+                            <X size={13} /> Avvis
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className={`${tabFadeInClass} space-y-6`}>
               <DashboardHome
                 user={user}
