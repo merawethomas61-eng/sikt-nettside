@@ -3951,77 +3951,6 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
     toastSuccess("Nettadresse oppdatert! Den er nå låst for fremtidige endringer.");
   };
 
-  // --- ABONNEMENT: oppgrader / nedgrader ---
-  const PLAN_TIERS = [
-    { name: 'Basic', level: 1, price: '499', tagline: 'Fiks grunnmuren — selv.' },
-    { name: 'Standard', level: 2, price: '1 499', tagline: 'Vi gjør jobben for deg.' },
-    { name: 'Premium', level: 3, price: '4 999', tagline: 'Dominér Google og AI.' },
-  ];
-  const planLevel = (n?: string | null) => {
-    const s = (n || '').toLowerCase();
-    return s.includes('premium') ? 3 : s.includes('standard') ? 2 : 1;
-  };
-
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [planLoading, setPlanLoading] = useState(true);
-  const [planTarget, setPlanTarget] = useState<{ name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
-  const [switchingPlan, setSwitchingPlan] = useState(false);
-
-  // Dev-modus (lokal vite dev / mock-bruker) → soft-bytte uten ekte Stripe-kall,
-  // ellers samme PATCH mot clients.package_name som dashbordet bruker.
-  const isMockUser =
-    user?.id === 'dev-mock-user-id' ||
-    user?.app_metadata?.provider === 'dev' ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user?.id || '');
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const devPlan = typeof window !== 'undefined' ? localStorage.getItem('sikt_dev_plan') : null;
-        if (devPlan) {
-          if (!cancelled) setCurrentPlan(devPlan);
-          return;
-        }
-        if (!user?.id) return;
-        const rows = await supabaseRest<any[]>(`clients?user_id=eq.${user.id}&select=package_name&limit=1`);
-        if (!cancelled) setCurrentPlan(rows?.[0]?.package_name || 'Basic');
-      } catch {
-        if (!cancelled) setCurrentPlan('Basic');
-      } finally {
-        if (!cancelled) setPlanLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id]);
-
-  const performPlanChange = async () => {
-    if (!planTarget || !user?.id) return;
-    setSwitchingPlan(true);
-    try {
-      if (isMockUser) {
-        setCurrentPlan(planTarget.name);
-        try { localStorage.setItem('sikt_dev_plan', planTarget.name); } catch { /* ignore */ }
-        toastSuccess(`Byttet til ${planTarget.name} (dev-modus, kun lokalt).`);
-        setPlanTarget(null);
-      } else {
-        await supabaseRest(`clients?user_id=eq.${user.id}`, {
-          method: 'PATCH',
-          body: { package_name: planTarget.name },
-          headers: { Prefer: 'return=representation' },
-        });
-        toastSuccess(`Byttet til ${planTarget.name}.`);
-        setTimeout(() => window.location.reload(), 800);
-      }
-    } catch (err: any) {
-      toastError('Kunne ikke bytte plan: ' + (err?.message || 'ukjent feil'));
-    } finally {
-      setSwitchingPlan(false);
-    }
-  };
-
-  const currentLevel = planLevel(currentPlan);
-
   return (
     <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-[280ms]">
       <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-[#808080] flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">
@@ -4118,58 +4047,10 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
               <div className="bg-[#1A1A1A] text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-[#808080] text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
-                  <h3 className="text-3xl font-black mb-1">
-                    {planLoading && !currentPlan ? '…' : (PLAN_TIERS.find(p => planLevel(p.name) === currentLevel)?.name || 'Basic')}
-                  </h3>
-                  <p className="text-[#B0B0AA] text-sm font-medium">
-                    {PLAN_TIERS.find(p => planLevel(p.name) === currentLevel)?.price}
-                    ,- /mnd · ingen bindingstid
-                  </p>
+                  <h3 className="text-3xl font-black mb-2">Gratis</h3>
+                  <button className="bg-white text-[#1A1A1A] px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]">Endre plan</button>
                 </div>
                 <div className="absolute top-0 right-0 p-32 bg-[#808080] rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
-              </div>
-
-              {/* Plan-velger: oppgrader / nedgrader */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {PLAN_TIERS.map((plan) => {
-                  const isCurrent = planLevel(plan.name) === currentLevel;
-                  const type: 'upgrade' | 'downgrade' = plan.level > currentLevel ? 'upgrade' : 'downgrade';
-                  return (
-                    <div
-                      key={plan.name}
-                      className={`relative bg-white p-5 rounded-2xl border shadow-sm flex flex-col ${isCurrent ? 'border-violet-400 ring-1 ring-violet-300' : 'border-[#EBEBE6]'}`}
-                    >
-                      {isCurrent && (
-                        <span className="absolute -top-2.5 left-5 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                          Nåværende
-                        </span>
-                      )}
-                      <h4 className="font-black text-[#1A1A1A] text-lg mb-0.5">{plan.name}</h4>
-                      <p className="text-[11px] text-[#808080] font-medium mb-3 uppercase tracking-wide">{plan.tagline}</p>
-                      <div className="flex items-baseline gap-1 mb-4">
-                        <span className="text-2xl font-black text-[#1A1A1A]">{plan.price},-</span>
-                        <span className="text-[#808080] text-xs font-medium">/mnd</span>
-                      </div>
-                      {isCurrent ? (
-                        <button
-                          disabled
-                          className="mt-auto w-full py-2.5 rounded-xl font-bold text-sm bg-[#F5F5F0] text-[#808080] cursor-default flex items-center justify-center gap-1.5"
-                        >
-                          <Check size={14} /> Din plan
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setPlanTarget({ name: plan.name, price: plan.price, type })}
-                          className={`mt-auto w-full py-2.5 rounded-xl font-bold text-sm ui-motion transition-[background-color,color] duration-200 ${type === 'upgrade'
-                            ? 'bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700'
-                            : 'bg-white text-[#1A1A1A] border border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}
-                        >
-                          {type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
@@ -4180,48 +4061,6 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
           )}
         </div>
       </div>
-
-      {/* Bekreftelse: oppgrader / nedgrader */}
-      {planTarget && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-150"
-          onClick={() => { if (!switchingPlan) setPlanTarget(null); }}
-        >
-          <div
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-black text-[#1A1A1A] mb-2">
-              {planTarget.type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'} til {planTarget.name}?
-            </h3>
-            <p className="text-sm text-[#808080] leading-relaxed mb-6">
-              {planTarget.type === 'upgrade'
-                ? `Du får tilgang til alt i ${planTarget.name} umiddelbart. Nytt beløp ${planTarget.price},-/mnd belastes ved neste faktura.`
-                : `Du beholder nåværende funksjoner ut faktureringsperioden, deretter byttes du til ${planTarget.name} (${planTarget.price},-/mnd).`}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setPlanTarget(null)}
-                disabled={switchingPlan}
-                className="flex-1 py-3 rounded-xl font-bold text-sm bg-white border border-[#EBEBE6] text-[#1A1A1A] ui-motion disabled:opacity-50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={performPlanChange}
-                disabled={switchingPlan}
-                className="flex-1 py-3 rounded-xl font-bold text-sm bg-[#1A1A1A] text-white ui-motion flex items-center justify-center gap-2 disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
-              >
-                {switchingPlan ? (
-                  <><Loader2 size={15} className="animate-spin" /> Bytter…</>
-                ) : (
-                  <>Bekreft {planTarget.type === 'upgrade' ? 'oppgradering' : 'nedgradering'}</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
