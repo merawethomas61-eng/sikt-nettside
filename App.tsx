@@ -14,8 +14,12 @@ import {
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2, ChevronsUpDown,
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink, Circle,
-  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info
+  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type
 } from 'lucide-react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 import {
   DashboardCompetitorWidget,
@@ -295,520 +299,1081 @@ const GoogleCTA = () => (
   </div>
 );
 
-// --- TECHNOLOGY VIEW COMPONENTS ---
+// --- TECHNOLOGY VIEW COMPONENTS (V2) ---
 
-const TechnologyHero = () => (
-  <section className="relative pt-24 pb-16 md:pt-48 md:pb-32 overflow-hidden bg-white/40">
-    <div className="max-w-5xl mx-auto px-5 text-center relative z-10">
-      <RevealOnScroll direction="down">
-        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-[#1A1A1A] mb-6 md:mb-8 leading-[1.05] tracking-tight">
-          Under panseret: AI. <br className="hidden md:block" />
-          <span className="text-[#1A1A1A]">For deg: plain norsk.</span>
-        </h1>
-        <p className="text-base sm:text-lg md:text-2xl text-[#808080] font-medium leading-relaxed max-w-3xl mx-auto mb-12 md:mb-16">
-          Vi overvåker siden din døgnet rundt, leser Google-dataene dine, og bruker AI til å finne ting du burde gjøre. Du får én rapport i måneden som forteller deg hva som skjer — uten forkortelser eller engelske ord.
-        </p>
-      </RevealOnScroll>
+const TECH_EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
-      <RevealOnScroll direction="up" delay={200} className="max-w-4xl mx-auto">
-        <div className="relative p-1.5 sm:p-2 bg-[#1A1A1A] rounded-[28px] sm:rounded-[40px] shadow-2xl overflow-hidden">
-          <div className="bg-white rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 md:p-10 border border-white/20 relative overflow-hidden h-[240px] sm:h-[350px] md:h-[450px]">
-            <div className="flex justify-between items-center mb-6 sm:mb-8">
-              <div className="flex gap-1.5 sm:gap-2">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-400"></div>
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400"></div>
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#1A1A1A]"></div>
-              </div>
-              <div className="h-4 sm:h-6 w-20 sm:w-32 bg-[#F5F5F0] rounded-full"></div>
-            </div>
-            <div className="grid grid-cols-12 gap-2 sm:gap-4">
-              <div className="col-span-4 h-24 sm:h-32 bg-[#F5F5F0] rounded-xl sm:rounded-2xl border border-[#EBEBE6] p-2 sm:p-4">
-                <div className="h-1.5 sm:h-2 w-8 sm:w-12 bg-[#EBEBE6] rounded mb-1.5 sm:mb-2"></div>
-                <div className="h-3 sm:h-4 w-12 sm:w-20 bg-violet-200 rounded"></div>
-              </div>
-              <div className="col-span-8 h-24 sm:h-32 bg-[#F5F5F0] rounded-xl sm:rounded-2xl border border-[#EBEBE6] flex items-end p-2 sm:p-4 gap-1 sm:gap-2">
-                {[40, 70, 45, 90, 65, 80, 50, 95].map((h, i) => (
-                  <div key={i} className="flex-1 bg-[#F5F5F0] rounded-t" style={{ height: `${h}%` }}></div>
-                ))}
-              </div>
-              <div className="col-span-12 h-32 sm:h-48 bg-[#F5F5F0] rounded-[20px] sm:rounded-3xl border border-[#EBEBE6]"></div>
-            </div>
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20">
-              <div className="w-full h-1 bg-[#EBEBE6] shadow-[0_0_25px_4px_rgba(124,58,237,0.6)] animate-scan-tech"></div>
-              <div className="w-full h-20 bg-gradient-to-b from-violet-500/5 to-transparent absolute top-0 animate-scan-area-tech"></div>
-            </div>
-          </div>
-        </div>
-      </RevealOnScroll>
-    </div>
+function useTechReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
 
-    <style dangerouslySetInnerHTML={{
-      __html: `
-      @keyframes scan-tech {
-        0% { transform: translateY(-50px); }
-        100% { transform: translateY(500px); }
-      }
-      @keyframes scan-area-tech {
-        0% { transform: translateY(-100%); opacity: 0; }
-        20% { opacity: 1; }
-        100% { transform: translateY(500px); opacity: 0; }
-      }
-      .animate-scan-tech { animation: scan-tech 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-      .animate-scan-area-tech { animation: scan-area-tech 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-    `}} />
-  </section>
-);
+const TechDarkBackground = ({ glowStrength = 'default' }: { glowStrength?: 'default' | 'strong' }) => {
+  const uid = React.useId().replace(/:/g, '');
+  const opacity = glowStrength === 'strong' ? 0.18 : 0.12;
+  return (
+    <>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+        <defs>
+          <pattern id={`tech-dots-${uid}`} width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="20" cy="20" r="0.75" fill="#1c2433" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#tech-dots-${uid})`} opacity="0.7" />
+        <g stroke="#1c2433" strokeWidth="0.5" opacity="0.35">
+          <line x1="20" y1="20" x2="60" y2="20" />
+          <line x1="20" y1="20" x2="20" y2="60" />
+          <line x1="60" y1="20" x2="60" y2="60" />
+          <line x1="20" y1="60" x2="60" y2="60" />
+        </g>
+      </svg>
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] max-w-[90vw] pointer-events-none"
+        style={{ background: `radial-gradient(closest-side, rgba(124,58,237,${opacity}), transparent)` }}
+      />
+    </>
+  );
+};
 
-const FeatureMatrix = () => (
-  <section className="py-16 sm:py-32 bg-transparent relative overflow-hidden">
-    {/* Subtle Animated Background Blobs */}
-    <div className="absolute inset-0 pointer-events-none -z-10">
-      <div className="absolute top-0 -left-24 w-[40rem] h-[40rem] bg-violet-200/20 rounded-full blur-[120px] animate-blob-slow"></div>
-      <div className="absolute bottom-0 -right-24 w-[35rem] h-[35rem] bg-indigo-200/20 rounded-full blur-[140px] animate-blob-slow" style={{ animationDelay: '-5s' }}></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.05] grid-pattern"></div>
-    </div>
+// Page-agnostic scroll progress ring. Computes progress from a plain scroll
+// listener (no GSAP/ScrollTrigger) so it can be dropped into any view.
+const ScrollProgressRing = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<SVGCircleElement>(null);
+  const numberRef = useRef<HTMLSpanElement>(null);
+  const reducedMotion = useTechReducedMotion();
+  const radius = 22;
+  const circumference = 2 * Math.PI * radius;
 
-    <div className="max-w-6xl mx-auto px-5 relative z-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-12">
-        <RevealOnScroll direction="left">
-          <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
-              <Wrench size={24} />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4">Vi passer på siden din</h3>
-            <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed mb-6">
-              Hastighet, ødelagte lenker, feilmeldinger og brukeropplevelse — vi sjekker alt sammen hvert døgn. Hvis noe hindrer Google i å vise siden din, får vi beskjed med en gang og fikser det.
-            </p>
-            <div className="mt-auto flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Basic</span>
-              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Standard</span>
-            </div>
-          </div>
-        </RevealOnScroll>
+  useEffect(() => {
+    const container = containerRef.current;
+    const progressEl = progressRef.current;
+    const numberEl = numberRef.current;
+    if (!container || !progressEl || !numberEl) return;
 
-        <RevealOnScroll direction="right">
-          <div className="premium-card p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] h-full flex flex-col group backdrop-blur-xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
-              <Globe2 size={24} />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-4">Ekte tall rett fra Google</h3>
-            <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed mb-6">
-              Ingen gjetninger. Vi henter data direkte fra Google: hva folk faktisk søker etter før de finner deg, hvilke sider de klikker på, og hvor mange som går videre til kjøp.
-            </p>
-            <div className="mt-auto flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Basic</span>
-              <span className="px-2.5 py-1 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-[10px] font-bold text-[#808080] uppercase tracking-tighter">Standard</span>
-            </div>
-          </div>
-        </RevealOnScroll>
-      </div>
+    progressEl.style.strokeDasharray = `${circumference}`;
+    // prefers-reduced-motion: static ring at current progress, no animated transitions.
+    if (reducedMotion) container.style.transition = 'none';
 
-      <RevealOnScroll direction="up" className="mb-6 sm:mb-12">
-        <div className="p-1 rounded-[36px] sm:rounded-[44px] bg-gradient-to-r from-violet-500 to-indigo-600 shadow-2xl shadow-violet-200/50">
-          <div className="bg-white p-6 sm:p-12 md:p-16 rounded-[35px] sm:rounded-[43px] text-center relative overflow-hidden backdrop-blur-sm">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#F5F5F0] rounded-full blur-3xl"></div>
-            <div className="relative z-10 max-w-3xl mx-auto">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#1A1A1A] rounded-2xl sm:rounded-[28px] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-xl text-white">
-                <Cpu size={32} />
-              </div>
-              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6 tracking-tight">AI som skriver for deg</h3>
-              <p className="text-sm sm:text-lg md:text-xl text-[#808080] font-medium leading-relaxed mb-8 sm:mb-10">
-                AI-en vår skriver overskriftene og tekstene som vises når folk finner deg på Google — skreddersydd slik at de får lyst til å klikke. Du slipper å bry deg. Det bare blir gjort.
-              </p>
-              <div className="flex justify-center gap-3 sm:gap-4">
-                <span className="px-3 sm:px-4 py-1.5 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase">Standard</span>
-                <span className="px-3 sm:px-4 py-1.5 bg-[#F5F5F0] border border-[#EBEBE6] rounded-full text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase">Premium</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </RevealOnScroll>
+    let frame = 0;
+    const apply = () => {
+      frame = 0;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = scrollable > 0 ? window.scrollY / scrollable : 0;
+      const progress = Math.min(1, Math.max(0, ratio));
+      progressEl.style.strokeDashoffset = `${circumference * (1 - progress)}`;
+      numberEl.textContent = String(Math.round(progress * 100));
+      // Fade in only after the user has scrolled past ~80vh.
+      container.style.opacity = window.scrollY > window.innerHeight * 0.8 ? '1' : '0';
+    };
 
-      <RevealOnScroll direction="up">
-        <div className="bg-[#1A1A1A] p-8 sm:p-16 rounded-[36px] sm:rounded-[48px] text-white relative overflow-hidden group">
-          <div className="absolute inset-0 grid-pattern opacity-10"></div>
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#F5F5F0] rounded-full blur-[120px] pointer-events-none"></div>
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(apply);
+    };
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center relative z-10 text-center lg:text-left">
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 sm:mb-8 border border-white/10">
-                <Stars size={12} />
-                <span>Eksklusivt for Premium</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">Vi dekoder <br className="hidden sm:block" /> konkurrentene dine</h3>
-              <p className="text-[#808080] text-sm sm:text-lg md:text-xl font-medium leading-relaxed mb-8">
-                Hvorfor ligger de over deg på Google? Hva gjør de bedre? AI-en leser konkurrentene dine hver uke og forteller deg nøyaktig hva du må gjøre for å ta dem igjen.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
-                {[
-                  "Hvem du må slå — og hvordan",
-                  "Ideer til blogg og nye sider",
-                  "Hvilke lenker du mangler",
-                  "Strategimøte hver måned"
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-bold">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#1A1A1A] flex items-center justify-center shrink-0">
-                      <Check size={10} />
-                    </div>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="lg:col-span-5 flex justify-center mt-8 lg:mt-0">
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#F5F5F0] blur-[60px] sm:blur-[80px] rounded-full"></div>
-                <div className="relative p-6 sm:p-8 bg-white/5 border border-white/10 rounded-[32px] sm:rounded-[40px] shadow-2xl backdrop-blur-md text-center">
-                  <Target size={48} className="text-[#1A1A1A] mx-auto mb-4 sm:mb-6" />
-                  <div className="text-xl sm:text-2xl font-black mb-2">Markedsdominans</div>
-                  <div className="text-[#808080] text-[10px] sm:text-sm font-bold uppercase tracking-widest">Aktiv overvåking</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </RevealOnScroll>
-    </div>
-  </section>
-);
-
-const DashboardSection = () => (
-  <section className="py-16 sm:py-32 bg-[#F5F5F0]/50 border-y border-[#EBEBE6] relative overflow-hidden">
-    <div className="max-w-6xl mx-auto px-5">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <RevealOnScroll direction="left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-[#EBEBE6]">
-            <Sparkles size={11} />
-            <span>Handling, ikke grafer</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-[#1A1A1A] mb-6 sm:mb-8 leading-[1.05] tracking-tight">
-            Ikke tall og grafer. <br />
-            <span className="text-[#1A1A1A]">Bare gjøremål.</span>
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-[#808080] font-medium leading-relaxed mb-10 sm:mb-12">
-            Andre dashboards krever at du tolker tallene selv. Hos Sikt får du én klar beskjed: "Gjør dette nå." Ferdig.
-          </p>
-          <div className="space-y-6 sm:space-y-8">
-            {[
-              {
-                title: "AI som oversetter tallene",
-                desc: "I stedet for grafer får du en setning du skjønner.",
-                icon: <MessageCircle className="text-[#1A1A1A]" />,
-                example: "Eksempel: 'Siden om varmepumper får færre besøk. Skriv en seksjon om strømsparing.'"
-              },
-              {
-                title: "Bare det som gir kunder",
-                desc: "Vi kutter alt som ikke fører til flere kunder. Du jobber bare med det som betyr noe.",
-                icon: <TrendingUp className="text-[#1A1A1A]" />
-              },
-              {
-                title: "Vi følger med på konkurrentene",
-                desc: "Får du beskjed når noen gjør noe nytt som kan treffe kundene dine. Da kan du svare.",
-                icon: <Activity className="text-[#1A1A1A]" />
-              }
-            ].map((item, i) => (
-              <div key={i} className="flex gap-4 sm:gap-6 group">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-[#EBEBE6] transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105">
-                  {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
-                </div>
-                <div>
-                  <h4 className="text-lg sm:text-xl font-bold text-[#1A1A1A] mb-1.5 sm:mb-2">{item.title}</h4>
-                  <p className="text-xs sm:text-base text-[#808080] font-medium leading-relaxed mb-3">{item.desc}</p>
-                  {item.example && (
-                    <div className="inline-block p-3 sm:p-4 bg-[#F5F5F0] border-l-4 border-[#1A1A1A] rounded-r-xl italic text-[10px] sm:text-sm text-[#1A1A1A] font-bold">
-                      {item.example}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </RevealOnScroll>
-
-        <RevealOnScroll direction="scale" className="relative h-full flex items-center justify-center mt-12 lg:mt-0">
-          <div className="relative w-full max-w-sm sm:max-w-lg aspect-[4/5] bg-white/40 rounded-[36px] sm:rounded-[48px] border border-white/50 shadow-2xl backdrop-blur-md p-6 sm:p-8 overflow-hidden">
-            <div className="flex items-center justify-between mb-8 sm:mb-10">
-              <div className="flex items-center gap-2.5 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1A1A1A] rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-base">S</div>
-                <div>
-                  <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] uppercase">Sikt AI — Gjøremål</div>
-                  <div className="text-[8px] sm:text-[10px] text-[#1A1A1A] font-bold flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-[#808080] rounded-full animate-pulse"></div> Jobber nå
-                  </div>
-                </div>
-              </div>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#F5F5F0] flex items-center justify-center border border-[#EBEBE6]"><Search size={12} className="text-[#808080]" /></div>
-            </div>
-
-            <div className="space-y-4 sm:space-y-6">
-              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                <div className="flex gap-3 sm:gap-4 mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#1A1A1A] shrink-0"><Zap size={16} /></div>
-                  <div>
-                    <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] mb-1">Fiks innholdet</div>
-                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Høy prioritet · +15% kunder</div>
-                  </div>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#808080] font-medium leading-relaxed">
-                  "Legg til <span className="text-[#1A1A1A] font-bold">SEO-byrå Oslo</span> på tjeneste-siden. Det er dette kundene dine søker på."
-                </p>
-              </div>
-
-              <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                <div className="flex gap-3 sm:gap-4 mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#1A1A1A] shrink-0"><Target size={16} /></div>
-                  <div>
-                    <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] mb-1">Konkurrent-varsel</div>
-                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Nettopp publisert</div>
-                  </div>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#808080] font-medium leading-relaxed">
-                  "Nærmeste konkurrent la ut 3 nye blogger. Her er 3 ideer du kan publisere for å svare."
-                </p>
-              </div>
-
-              <div className="bg-[#1A1A1A] p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.6s' }}>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#EBEBE6] rounded-full blur-2xl"></div>
-                <div className="flex gap-3 sm:gap-4 mb-3 relative z-10">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center text-[#1A1A1A] shrink-0"><Sparkles size={16} /></div>
-                  <div>
-                    <div className="text-[10px] sm:text-xs font-black text-white mb-1">Gjør dette nå</div>
-                    <div className="text-[8px] sm:text-[10px] text-[#808080] font-medium uppercase tracking-wider">Anbefalt av Sikt AI</div>
-                  </div>
-                </div>
-                <div className="text-[11px] sm:text-sm text-white font-bold leading-relaxed relative z-10">
-                  "Oppdater produktsidene. 80% av kundene som besøker dem klikker seg ikke videre."
-                </div>
-                <div className="mt-4 pt-4 border-t border-white/10 flex justify-end relative z-10">
-                  <button className="text-[9px] sm:text-[10px] font-black text-[#1A1A1A] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-widest">
-                    Start nå <ArrowRight size={10} />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-violet-200/40 rounded-full blur-[100px] pointer-events-none"></div>
-          </div>
-        </RevealOnScroll>
-      </div>
-    </div>
-  </section>
-);
-
-const ComparisonTable = () => {
-  // Zero cognitive load: default er ren sjekkmark-visning. Detaljer er ett klikk unna.
-  // Vi bruker "gruppe-featureIndex" som nøkkel for hvilken rad som har detaljer åpne.
-  const [openDetail, setOpenDetail] = useState<string | null>(null);
-
-  type CellValue = boolean | string;
-  type FeatureRow = {
-    name: string;
-    detail?: string;
-    basic: CellValue;
-    standard: CellValue;
-    premium: CellValue;
-    highlight?: boolean;
-  };
-  type Group = { label: string; features: FeatureRow[] };
-
-  // Gruppert etter tema — gjør tabellen mye enklere å lese
-  // (zero cognitive load: fire tydelige bolker som matcher kundens reise: fundament → auto-fiks → vekst → AI-søk)
-  const groups: Group[] = [
-    {
-      label: "Grunnleggende (alle pakker)",
-      features: [
-        { name: "Hvor høyt du kommer opp på Google", detail: "Posisjon for alle søkeord du allerede rangerer på, rett fra Google Search Console. Ubegrenset antall søkeord i alle pakker.", basic: true, standard: true, premium: true },
-        { name: "Månedlig teknisk helsesjekk", detail: "Vi sjekker hastighet, mobilvennlighet, ødelagte lenker, SSL, redirect-kjeder og Core Web Vitals hver måned.", basic: true, standard: true, premium: true },
-        { name: "Data direkte fra Google", detail: "Klikk, visninger og posisjon siste 16 måneder fra Search Console og Analytics — forklart uten jargon.", basic: true, standard: true, premium: true },
-        { name: "AI-tekstforslag klar til bruk", detail: "Meta-titler, meta-beskrivelser, alt-tekster og JSON-LD schema generert av AI og klargjort for innliming.", basic: true, standard: true, premium: true },
-        { name: "Konkurrent-radar (du sover — Sikt holder øye)", detail: "Varsel når konkurrentene dine publiserer nytt innhold, endrer priser eller fikser tekniske ting. Du får beskjed før de løper fra deg.", basic: "2 konkurrenter", standard: "3 konkurrenter", premium: "Ubegrenset + AI", highlight: true },
-        { name: "Ukentlig «Dette har Sikt fikset for deg»-kvittering", detail: "Hver mandag: konkret arbeid Sikt har gjort denne uken. Basic: funn + AI-forslag klare til innliming («3 meta-titler skrevet, 2 ødelagte lenker funnet»). Standard/Premium: faktiske fikser pushet til siden («12 meta-titler oppdatert, 6 bilder komprimert, 1 redirect opprettet»).", basic: "Funn + forslag", standard: "Fikser pushet", premium: "Fikser + GEO", highlight: true },
-        { name: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som er endret og hva du bør gjøre — uten SEO-jargon.", basic: true, standard: true, premium: true },
-        { name: "Varsling når noe kritisk skjer", detail: "E-post med én gang ved trafikkdropp, nye 404-feil, nedetid eller mistet indeksering.", basic: true, standard: true, premium: true },
-      ]
-    },
-    {
-      label: "Innholdsjobben (Standard og Premium)",
-      features: [
-        { name: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger.", basic: false, standard: true, premium: true, highlight: true },
-        { name: "Meta-tekster skrives og publiseres", detail: "AI skriver meta-titler og -beskrivelser, og Sikt legger dem rett inn på siden. Du gjør ingenting.", basic: false, standard: true, premium: true },
-        { name: "Alt-tekster på bilder", detail: "Vision-AI ser på bildene dine og skriver beskrivende alt-tekster som både Google og skjermlesere forstår.", basic: false, standard: true, premium: true },
-        { name: "Schema markup legges inn automatisk", detail: "Organization, LocalBusiness, Article, Product, FAQ og BreadcrumbList injiseres slik at Google viser deg med stjerner, bilder og rik info i søk.", basic: false, standard: true, premium: true },
-        { name: "Intern lenking bygges opp", detail: "AI finner relaterte sider og legger inn lenker med gode ankertekster — uten at du løfter en finger.", basic: false, standard: true, premium: true },
-        { name: "Bildekomprimering og WebP", detail: "Sikt krymper bilder og konverterer til moderne format så siden laster raskere på mobil.", basic: false, standard: true, premium: true },
-        { name: "1-klikks angre (rollback)", detail: "Hver eneste endring Sikt gjør kan angres med ett klikk. Du er alltid i kontroll.", basic: false, standard: true, premium: true },
-        { name: "Full endringslogg", detail: "Se nøyaktig hva Sikt har gjort for deg, når, og på hvilken side.", basic: false, standard: true, premium: true },
-      ]
-    },
-    {
-      label: "Vekst og strategi (Standard og Premium)",
-      features: [
-        { name: "Ukentlig rangeringssjekk", detail: "Vi sporer hvor du rangerer hver uke, ikke bare hver måned, så du oppdager endringer raskt.", basic: false, standard: "50 søkeord", premium: "Ubegrenset" },
-        { name: "Dyp konkurrentanalyse", detail: "Utover radar-varslingen: AI analyserer innholdsstrategien deres, estimerer trafikken og viser hva som virker — så du vet nøyaktig hva du må gjøre for å gå forbi.", basic: false, standard: true, premium: "Inkl. AI-søk" },
-        { name: "Søkeord kundene faktisk bruker", detail: "Finner søkeord dine kunder leter etter, men som du ennå ikke rangerer på.", basic: false, standard: true, premium: true },
-        { name: "Månedlig innholdskalender", detail: "Månedlig plan med 4–8 artikkelforslag, skrevet av AI basert på det kundene dine faktisk søker etter.", basic: false, standard: true, premium: true },
-        { name: "A/B-test av meta-titler", detail: "Sikt roterer automatisk mellom varianter og måler hvilken tittel som får flest klikk i søkeresultatene.", basic: false, standard: false, premium: true },
-      ]
-    },
-    {
-      label: "AI-søk og eksperthjelp (kun Premium)",
-      features: [
-        { name: "Synlig i ChatGPT, Gemini og Perplexity (GEO)", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes.", basic: false, standard: false, premium: true, highlight: true },
-        { name: "GEO-score per side", detail: "0–100-poeng som forteller hvor godt innholdet ditt leses av AI. Vi forteller deg nøyaktig hva du må endre for å score høyere.", basic: false, standard: false, premium: true },
-        { name: "llms.txt publiseres automatisk", detail: "Vi lager og publiserer den nye standardfilen på /llms.txt som hjelper AI-søkemotorer forstå siden din.", basic: false, standard: false, premium: true },
-        { name: "Hvem på nettet nevner deg", detail: "Overvåkning av Reddit, forum og bransjesider for omtaler av bedriften din.", basic: false, standard: false, premium: true },
-        { name: "Citation-muligheter", detail: "Liste over autoritative norske nettsteder der du burde være nevnt — bransjeregistre, Wikipedia, bransjemedier.", basic: false, standard: false, premium: true },
-        { name: "Spør Sikt AI — 24/7", detail: "AI-chat som kjenner din SEO-data og svarer på alt du lurer på, når som helst.", basic: false, standard: false, premium: true, highlight: true },
-        { name: "Månedlig strategirapport (10+ sider)", detail: "Grundig analyse hver måned, inkludert GEO-konkurrentanalyse, vekststrategi og konkrete neste steg.", basic: false, standard: false, premium: true },
-        { name: "Prioritert support (4 timer)", detail: "Svar innen 4 timer på hverdager, mot 24 timer i Standard.", basic: false, standard: false, premium: true },
-      ]
-    }
-  ];
-
-  const Cell = ({ value, isPremiumCol = false }: { value: CellValue, isPremiumCol?: boolean }) => {
-    if (typeof value === 'string') {
-      return (
-        <span className={`text-[11px] sm:text-xs font-black ${isPremiumCol ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>
-          {value}
-        </span>
-      );
-    }
-    return value
-      ? <Check className={`mx-auto ${isPremiumCol ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`} size={18} />
-      : <div className="mx-auto w-4 sm:w-5 h-0.5 bg-[#EBEBE6]"></div>;
-  };
+    apply();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [reducedMotion, circumference]);
 
   return (
-    <section className="py-16 sm:py-32 bg-white">
-      <div className="max-w-6xl mx-auto px-5">
-        <RevealOnScroll direction="up">
-          <div className="text-center mb-12 sm:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
-              <Check size={11} />
-              <span>Hva får du i hver pakke</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-[#1A1A1A] mb-4 sm:mb-6 tracking-tighter">Sammenlign pakkene.</h2>
-            <p className="text-sm sm:text-lg text-[#808080] font-medium max-w-xl mx-auto">
-              Start med Basic, oppgrader når du er klar. Ingen bindingstid — du betaler måned for måned.
-            </p>
-          </div>
-        </RevealOnScroll>
+    <div
+      ref={containerRef}
+      className="fixed bottom-6 right-6 z-40 hidden md:flex items-center justify-center w-14 h-14 opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+      aria-hidden="true"
+    >
+      <svg width="56" height="56" viewBox="0 0 56 56" className="absolute inset-0">
+        <circle cx="28" cy="28" r={radius} fill="none" stroke="rgba(42,42,42,0.2)" strokeWidth="3" />
+        <circle
+          ref={progressRef}
+          cx="28"
+          cy="28"
+          r={radius}
+          fill="none"
+          stroke="#7c3aed"
+          strokeWidth="3"
+          strokeLinecap="round"
+          transform="rotate(-90 28 28)"
+        />
+      </svg>
+      <span ref={numberRef} className="relative text-[10px] font-bold text-white font-display tabular-nums">
+        0
+      </span>
+    </div>
+  );
+};
 
-        <div className="relative">
-          <div className="overflow-x-auto pb-4 scrollbar-hide">
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="border-b-2 border-[#EBEBE6]">
-                  <th className="py-6 sm:py-8 text-base sm:text-xl font-black text-[#1A1A1A] w-2/5"></th>
-                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A]">
-                    <div className="text-[9px] sm:text-xs font-black text-[#808080] uppercase mb-1 sm:mb-2">Basic</div>
-                    <div className="text-lg sm:text-2xl font-black">499,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
-                  </th>
-                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A]">
-                    <div className="text-[9px] sm:text-xs font-black text-[#808080] uppercase mb-1 sm:mb-2">Standard</div>
-                    <div className="text-lg sm:text-2xl font-black">1 499,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
-                  </th>
-                  <th className="py-6 sm:py-8 text-center text-[#1A1A1A] bg-[#F5F5F0] border-x border-[#EBEBE6] rounded-t-2xl">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1A1A1A] text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider mb-1.5">
-                      <Sparkles size={9} /> Anbefalt
-                    </div>
-                    <div className="text-[9px] sm:text-xs font-black text-[#1A1A1A] uppercase mb-1 sm:mb-2">Premium</div>
-                    <div className="text-lg sm:text-2xl font-black">4 999,-</div>
-                    <div className="text-[9px] sm:text-[10px] text-[#808080] font-medium mt-1">pr mnd</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {groups.map((group, gi) => (
-                  <React.Fragment key={gi}>
-                    {/* Gruppe-overskrift */}
-                    <tr>
-                      <td colSpan={4} className="pt-8 sm:pt-10 pb-3">
-                        <div className="text-[10px] sm:text-xs font-black text-[#1A1A1A] uppercase tracking-widest">
-                          {group.label}
-                        </div>
-                      </td>
-                    </tr>
-                    {group.features.map((f, i) => {
-                      const detailKey = `${gi}-${i}`;
-                      const isOpen = openDetail === detailKey;
-                      return (
-                        <React.Fragment key={detailKey}>
-                          <tr className="group border-b border-[#EBEBE6] hover:bg-[#F5F5F0]/50 transition-colors">
-                            <td className="py-4 sm:py-5 font-bold text-[#1A1A1A] text-xs sm:text-base">
-                              <div className="flex items-center gap-2">
-                                {f.highlight && <Sparkles size={12} className="text-[#1A1A1A] shrink-0" />}
-                                <span className="flex-1">{f.name}</span>
-                                {f.detail && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenDetail(isOpen ? null : detailKey)}
-                                    aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
-                                    aria-expanded={isOpen}
-                                    className={`shrink-0 transition-colors ${isOpen ? 'text-[#1A1A1A]' : 'text-[#808080] hover:text-[#1A1A1A]'}`}
-                                  >
-                                    <HelpCircle size={14} />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 sm:py-5 text-center">
-                              <Cell value={f.basic} />
-                            </td>
-                            <td className="py-4 sm:py-5 text-center">
-                              <Cell value={f.standard} />
-                            </td>
-                            <td className="py-4 sm:py-5 text-center bg-[#F5F5F0] border-x border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-[#F5F5F0] transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
-                              <Cell value={f.premium} isPremiumCol />
-                            </td>
-                          </tr>
-                          {isOpen && f.detail && (
-                            <tr className="border-b border-[#EBEBE6]">
-                              <td className="pb-4 sm:pb-5 pt-0" colSpan={3}>
-                                <div className="p-3 sm:p-4 bg-[#F5F5F0] border border-[#EBEBE6] rounded-xl text-xs sm:text-sm text-[#808080] leading-relaxed">
-                                  {f.detail}
-                                </div>
-                              </td>
-                              <td className="pb-4 sm:pb-5 pt-0 bg-[#F5F5F0] border-x border-[#EBEBE6]"></td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
-                {/* Bunn av Premium-kolonnen (avrundet hjørne) */}
-                <tr>
-                  <td colSpan={3}></td>
-                  <td className="bg-[#F5F5F0] border-x border-b border-[#EBEBE6] rounded-b-2xl h-4"></td>
-                </tr>
-              </tbody>
-            </table>
+const TECH_LIVE_FEED = [
+  'Skanner forsiden …',
+  'Leser sidetitler …',
+  'Måler hastighet: 1,2 s',
+  'Fant 3 forbedringer',
+  'Skriver løsning på norsk …',
+  'Overvåker — alt i orden',
+];
+
+const TechHeroV2 = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useTechReducedMotion();
+  const [feedIndex, setFeedIndex] = useState(reducedMotion ? TECH_LIVE_FEED.length - 1 : 0);
+  const [feedVisible, setFeedVisible] = useState(true);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (reducedMotion) {
+        gsap.set('.tech-hero-word', { y: 0, opacity: 1 });
+        return;
+      }
+      gsap.from('.tech-hero-word', {
+        y: 24,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 0.65,
+        ease: TECH_EASE,
+      });
+      if (cardRef.current) {
+        gsap.to(cardRef.current, {
+          y: -10,
+          duration: 3,
+          yoyo: true,
+          repeat: -1,
+          ease: 'sine.inOut',
+        });
+      }
+    }, sectionRef);
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const interval = setInterval(() => {
+      setFeedVisible(false);
+      setTimeout(() => {
+        setFeedIndex((i) => (i + 1) % TECH_LIVE_FEED.length);
+        setFeedVisible(true);
+      }, 280);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, [reducedMotion]);
+
+  const headlineWords = ['Maskinen', 'som', 'ser', 'det', 'Google', 'ser.'];
+
+  return (
+    <section
+      ref={sectionRef}
+      className="tech-hero-v2 relative min-h-[92vh] flex flex-col items-center justify-center bg-[#0B0E14] px-5 py-24 overflow-hidden"
+    >
+      <TechDarkBackground />
+      <div className="relative z-10 max-w-3xl mx-auto text-center w-full">
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-6 font-display">
+          SIKT-TEKNOLOGIEN
+        </p>
+        <h1 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.08] tracking-tight mb-4">
+          {headlineWords.map((word, i) => (
+            <span key={i} className="tech-hero-word inline-block mr-[0.28em]">
+              {word}
+            </span>
+          ))}
+          <br />
+          <span className="tech-hero-word inline-block font-script font-normal italic text-[#a78bfa] text-3xl sm:text-4xl md:text-5xl mt-2">
+            Døgnet rundt.
+          </span>
+        </h1>
+        <p className="tech-hero-word text-base sm:text-lg text-[#9ca3af] max-w-xl mx-auto mt-6 leading-relaxed font-medium">
+          Under panseret på Sikt jobber en AI som leser nettsiden din slik søkemotorer og AI-assistenter gjør — og gjør funnene om til vekst.
+        </p>
+
+        <div ref={cardRef} className="mt-12 mx-auto max-w-md w-full">
+          <div className="rounded-2xl bg-[#11161f] border border-[#232c3d] p-5 sm:p-6 text-left">
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-sm font-bold text-white font-display">Sikt Dashboard</span>
+              <span className="flex items-center gap-1.5 text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Overvåker live
+              </span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-extrabold text-white font-display tracking-tight">
+              94 <span className="text-lg sm:text-xl font-bold text-[#9ca3af]">/ 100 teknisk score</span>
+            </div>
+            <p className="text-sm font-bold text-[#a78bfa] mt-2">+12 denne måneden</p>
           </div>
-          <div className="md:hidden flex justify-center items-center gap-2 mt-4 text-[10px] text-[#808080] font-bold uppercase tracking-widest animate-pulse">
-            <ArrowRight size={10} className="rotate-0" />
-            <span>Sveip for å se alle pakker</span>
-            <ArrowRight size={10} className="rotate-180" />
+
+          <div className="mt-4 h-5 flex items-center justify-center gap-2 overflow-hidden">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#a78bfa] shrink-0 animate-pulse" />
+            <span
+              className="text-xs text-[#6b7280] font-mono transition-[opacity,transform] duration-300"
+              style={{
+                opacity: feedVisible ? 1 : 0,
+                transform: feedVisible ? 'translateY(0)' : 'translateY(-6px)',
+              }}
+            >
+              {TECH_LIVE_FEED[feedIndex]}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Myk CTA under tabellen — guider brukeren videre uten å tvinge */}
-        <RevealOnScroll direction="up" delay={200}>
-          <div className="mt-12 sm:mt-16 text-center">
-            <p className="text-xs sm:text-sm text-[#808080] font-medium mb-4">
-              Usikker på hvilken pakke som passer? Start med Basic — du kan oppgradere når som helst.
-            </p>
-            <a href="#priser" className="inline-flex items-center gap-2 text-sm sm:text-base font-black text-[#1A1A1A] transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] group">
-              Se pakkene og kom i gang
-              <ArrowRight size={16} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
-            </a>
-          </div>
-        </RevealOnScroll>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+        <ArrowDown
+          size={20}
+          className={`text-[#9ca3af] ${reducedMotion ? '' : 'animate-pulse'}`}
+          aria-hidden="true"
+        />
       </div>
     </section>
   );
 };
+
+const TechChapter1Scan = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const mockupBodyRef = useRef<HTMLDivElement>(null);
+  const scanlineRef = useRef<HTMLDivElement>(null);
+  const pill1Ref = useRef<HTMLDivElement>(null);
+  const pill2Ref = useRef<HTMLDivElement>(null);
+  const pill3Ref = useRef<HTMLDivElement>(null);
+  const blockTitleRef = useRef<HTMLDivElement>(null);
+  const blockImg1Ref = useRef<HTMLDivElement>(null);
+  const blockImg2Ref = useRef<HTMLDivElement>(null);
+  const reducedMotion = useTechReducedMotion();
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!sectionRef.current || !pinRef.current || !mockupBodyRef.current || !scanlineRef.current) return;
+
+      const pills = [pill1Ref.current, pill2Ref.current, pill3Ref.current].filter(Boolean) as HTMLElement[];
+
+      if (reducedMotion) {
+        const h = mockupBodyRef.current.offsetHeight;
+        gsap.set(scanlineRef.current, { y: h * 0.5 });
+        gsap.set(pills, { scale: 1, opacity: 1 });
+        return;
+      }
+
+      gsap.set(scanlineRef.current, { y: 0 });
+      gsap.set(pills, { scale: 0.9, opacity: 0 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          pin: pinRef.current,
+          scrub: 0.5,
+          start: 'top top',
+          end: '+=120%',
+        },
+      });
+
+      tl.to(scanlineRef.current, {
+        y: () => mockupBodyRef.current!.offsetHeight,
+        ease: 'none',
+        duration: 1,
+      }, 0);
+
+      if (pill1Ref.current) tl.to(pill1Ref.current, { scale: 1, opacity: 1, duration: 0.08, ease: TECH_EASE }, 0.3);
+      if (pill2Ref.current) tl.to(pill2Ref.current, { scale: 1, opacity: 1, duration: 0.08, ease: TECH_EASE }, 0.6);
+      if (pill3Ref.current) tl.to(pill3Ref.current, { scale: 1, opacity: 1, duration: 0.08, ease: TECH_EASE }, 0.85);
+
+      // As the scanline passes each block it briefly lights up. The tinted blocks
+      // (title → amber, first image → violet) settle on their tint; the second image
+      // flashes blue (#E6F1FB) then settles back to neutral.
+      if (blockTitleRef.current) {
+        gsap.set(blockTitleRef.current, { backgroundColor: '#F0F0EB' });
+        tl.to(blockTitleRef.current, { backgroundColor: '#FAEEDA', duration: 0.08, ease: 'none' }, 0.12);
+      }
+      if (blockImg1Ref.current) {
+        gsap.set(blockImg1Ref.current, { backgroundColor: '#F0F0EB' });
+        tl.to(blockImg1Ref.current, { backgroundColor: '#EEEDFE', duration: 0.08, ease: 'none' }, 0.5);
+      }
+      if (blockImg2Ref.current) {
+        gsap.set(blockImg2Ref.current, { backgroundColor: '#F0F0EB' });
+        tl.to(blockImg2Ref.current, { backgroundColor: '#E6F1FB', duration: 0.04, ease: 'none' }, 0.58);
+        tl.to(blockImg2Ref.current, { backgroundColor: '#F0F0EB', duration: 0.1, ease: 'none' }, 0.64);
+      }
+    }, sectionRef);
+
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="tech-chapter-1 relative bg-[#F5F5F0]" style={{ minHeight: reducedMotion ? 'auto' : '220vh' }}>
+      <div ref={pinRef} className="min-h-screen flex flex-col items-center justify-center px-5 py-20">
+        <div className="max-w-3xl mx-auto text-center mb-10 sm:mb-14">
+          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display">01 — RØNTGENSYNET</p>
+          <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] leading-tight tracking-tight mb-5">
+            Hver linje. Hvert bilde. Hver feil.
+          </h2>
+          <p className="text-base sm:text-lg text-[#808080] leading-relaxed max-w-2xl mx-auto">
+            Sikt leser nettsiden din fra topp til bunn — titler, tekster, lenker, hastighet, mobilvisning og over 200 andre faktorer Google bruker. Mens du scroller, ser du skanningen skje.
+          </p>
+        </div>
+
+        <div className="relative w-full max-w-lg mx-auto">
+          <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#EBEBE6] bg-[#FAFAF8]">
+              <div className="flex gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#F09595]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FAC775]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#97C459]" />
+              </div>
+              <span className="text-xs text-[#808080] font-mono flex-1 text-center truncate">dinbedrift.no</span>
+            </div>
+            <div ref={mockupBodyRef} className="relative p-5 sm:p-6 space-y-3 min-h-[220px] sm:min-h-[260px]">
+              <div ref={blockTitleRef} className="h-4 w-3/4 rounded" style={{ backgroundColor: '#FAEEDA' }} />
+              <div className="h-3 w-full rounded bg-[#F5F5F0]" />
+              <div className="h-3 w-5/6 rounded bg-[#F5F5F0]" />
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div ref={blockImg1Ref} className="h-20 rounded-lg" style={{ backgroundColor: '#EEEDFE' }} />
+                <div ref={blockImg2Ref} className="h-20 rounded-lg" style={{ backgroundColor: '#F0F0EB' }} />
+              </div>
+              <div className="h-16 rounded-lg bg-[#F5F5F0]" />
+              <div
+                ref={scanlineRef}
+                className="absolute left-0 right-0 top-0 h-0.5 bg-[#7c3aed] pointer-events-none z-20"
+                style={{ boxShadow: '0 0 12px rgba(124,58,237,0.5)' }}
+              >
+                {/* 24px fading trail beneath the scanline, moves with it */}
+                <div
+                  className="absolute left-0 right-0 top-full h-6"
+                  style={{ background: 'linear-gradient(to bottom, rgba(124,58,237,0.10), transparent)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div
+            ref={pill1Ref}
+            className="absolute -left-2 sm:-left-6 top-[28%] flex items-center gap-2 px-3 py-2 rounded-full bg-[#FAEEDA] text-xs font-bold text-[#854F0B] shadow-sm"
+            style={{ opacity: reducedMotion ? 1 : 0, transform: reducedMotion ? 'scale(1)' : 'scale(0.9)' }}
+          >
+            <AlertTriangle size={14} className="text-orange-500 shrink-0" />
+            Mangler beskrivelse
+          </div>
+          <div
+            ref={pill2Ref}
+            className="absolute -right-2 sm:-right-4 top-[48%] flex items-center gap-2 px-3 py-2 rounded-full bg-[#FAEEDA] text-xs font-bold text-[#854F0B] shadow-sm"
+            style={{ opacity: reducedMotion ? 1 : 0, transform: reducedMotion ? 'scale(1)' : 'scale(0.9)' }}
+          >
+            <Clock size={14} className="text-[#BA7517] shrink-0" />
+            Treg lasting
+          </div>
+          <div
+            ref={pill3Ref}
+            className="absolute left-1/2 -translate-x-1/2 -bottom-3 flex items-center gap-2 px-3 py-2 rounded-full bg-[#EEEDFE] text-xs font-bold text-[#534AB7] shadow-sm"
+            style={{ opacity: reducedMotion ? 1 : 0, transform: reducedMotion ? 'scale(1)' : 'scale(0.9)' }}
+          >
+            <Sparkles size={14} className="text-[#7c3aed] shrink-0" />
+            AI-løsning klar
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TECH_FACTORS = [
+  { icon: Type, title: 'Sidetitler', desc: 'Det første Google leser.' },
+  { icon: Gauge, title: 'Hastighet', desc: 'Trege sider taper kunder.' },
+  { icon: Smartphone, title: 'Mobilvisning', desc: 'De fleste søk skjer på mobil.' },
+  { icon: FileText, title: 'Innhold', desc: 'Svarer du på det folk spør om?' },
+  { icon: Link2, title: 'Lenker', desc: 'Tillit bygges av hvem som peker på deg.' },
+  { icon: Shield, title: 'Sikkerhet', desc: 'HTTPS er et rangeringssignal.' },
+];
+
+const TechHorizontalFactors = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useTechReducedMotion();
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!sectionRef.current || !containerRef.current || !trackRef.current || reducedMotion) return;
+
+      const getScroll = () => trackRef.current!.scrollWidth - containerRef.current!.offsetWidth;
+
+      gsap.to(trackRef.current, {
+        x: () => -getScroll(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          pin: true,
+          scrub: 0.5,
+          end: () => `+=${getScroll()}`,
+        },
+      });
+    }, sectionRef);
+
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="relative bg-[#0A0A0A] overflow-hidden" style={{ minHeight: reducedMotion ? 'auto' : '100vh' }}>
+      <TechDarkBackground />
+      <div className="relative z-10 px-5 py-20 sm:py-28">
+        <div className="max-w-6xl mx-auto mb-10 sm:mb-14">
+          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display">DET MASKINEN LESER</p>
+          <p className="text-lg sm:text-xl text-[#9ca3af] font-medium max-w-xl">
+            Et utvalg av faktorene som avgjør om du blir funnet.
+          </p>
+        </div>
+
+        <div
+          ref={containerRef}
+          className={`max-w-6xl mx-auto ${reducedMotion ? '' : 'overflow-hidden'}`}
+        >
+          <div
+            ref={trackRef}
+            className={`gap-6 ${reducedMotion ? 'grid grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto' : 'flex w-max pl-5 sm:pl-0'}`}
+          >
+            {TECH_FACTORS.map((factor) => {
+              const Icon = factor.icon;
+              return (
+                <div
+                  key={factor.title}
+                  className={`${reducedMotion ? 'w-full' : 'w-64'} shrink-0 rounded-2xl bg-[#11161f] border border-[#2a2a2a] p-6`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#1c2433] flex items-center justify-center mb-4">
+                    <Icon size={20} className="text-[#a78bfa]" />
+                  </div>
+                  <h3 className="font-display font-bold text-white text-lg mb-2">{factor.title}</h3>
+                  <p className="text-sm text-[#9ca3af] leading-relaxed">{factor.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TECH_KEYWORDS = [
+  { keyword: 'rørlegger oslo', clicks: 128, impressions: 2100, position: 3, color: 'green' as const },
+  { keyword: 'rørlegger akutt', clicks: 86, impressions: 1540, position: 5, color: 'green' as const },
+  { keyword: 'bad oppussing pris', clicks: 41, impressions: 980, position: 11, color: 'violet' as const },
+];
+
+const TechChapter2Data = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reducedMotion = useTechReducedMotion();
+  const counterRefs = useRef<(HTMLSpanElement | null)[]>([]);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!sectionRef.current) return;
+
+      const formatImpressions = (n: number) => n.toLocaleString('nb-NO');
+
+      const animateCounters = () => {
+        TECH_KEYWORDS.forEach((row, rowIdx) => {
+          const base = rowIdx * 3;
+          const pairs = [
+            { el: counterRefs.current[base], val: row.clicks },
+            { el: counterRefs.current[base + 1], val: row.impressions },
+            { el: counterRefs.current[base + 2], val: row.position },
+          ];
+          pairs.forEach(({ el, val }, colIdx) => {
+            if (!el) return;
+            const isImpressions = colIdx === 1;
+            if (reducedMotion) {
+              el.textContent = isImpressions ? formatImpressions(val) : String(val);
+              return;
+            }
+            const obj = { n: 0 };
+            gsap.to(obj, {
+              n: val,
+              duration: 1.4,
+              ease: TECH_EASE,
+              onUpdate: () => {
+                const rounded = Math.round(obj.n);
+                el.textContent = isImpressions ? formatImpressions(rounded) : String(rounded);
+              },
+            });
+          });
+        });
+      };
+
+      if (reducedMotion) {
+        animateCounters();
+        return;
+      }
+
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top 75%',
+        once: true,
+        onEnter: animateCounters,
+      });
+    }, sectionRef);
+
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="relative bg-white px-5 py-20 sm:py-32">
+      <div className="max-w-3xl mx-auto">
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display text-center">02 — EKTE DATA</p>
+        <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] text-center leading-tight tracking-tight mb-5">
+          Koblet rett på Google.
+        </h2>
+        <p className="text-base sm:text-lg text-[#808080] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
+          Søkeordene kundene dine faktisk skriver — med klikk, visninger og posisjon — rett fra Google Search Console. Du ser nøyaktig hvor du klatrer, uke for uke.
+        </p>
+
+        <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-[#EBEBE6] text-[10px] font-bold uppercase tracking-wider text-[#808080]">
+            <span>Søkeord</span>
+            <span className="text-right w-14">Klikk</span>
+            <span className="text-right w-16">Visn.</span>
+            <span className="text-right w-10">Pos.</span>
+          </div>
+          {TECH_KEYWORDS.map((row, rowIdx) => (
+            <div
+              key={row.keyword}
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 border-b border-[#EBEBE6] last:border-0 items-center text-sm"
+            >
+              <span className="font-medium text-[#111111] truncate">{row.keyword}</span>
+              <span className="text-right w-14 font-bold tabular-nums text-[#111111]">
+                <span ref={(el) => { counterRefs.current[rowIdx * 3] = el; }}>{reducedMotion ? row.clicks : 0}</span>
+              </span>
+              <span className="text-right w-16 font-bold tabular-nums text-[#111111]">
+                <span ref={(el) => { counterRefs.current[rowIdx * 3 + 1] = el; }}>{reducedMotion ? row.impressions : 0}</span>
+              </span>
+              <span className={`text-right w-10 font-bold tabular-nums flex items-center justify-end gap-0.5 ${row.color === 'green' ? 'text-emerald-600' : 'text-[#7c3aed]'}`}>
+                <span ref={(el) => { counterRefs.current[rowIdx * 3 + 2] = el; }}>{reducedMotion ? row.position : 0}</span>
+                <ArrowUp size={12} />
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-[#808080] mt-4 text-center">
+          Illustrasjon — dine tall kommer fra din egen Search Console
+        </p>
+      </div>
+    </section>
+  );
+};
+
+const TECH_AI_RESPONSE =
+  'Siden din mangler beskrivelser på 4 viktige sider, og forsiden laster tregt på mobil. Begynn der — jeg viser deg steg for steg.';
+
+const TechChapter3Brain = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const aiTextRef = useRef<HTMLParagraphElement>(null);
+  const reducedMotion = useTechReducedMotion();
+  const [typedLen, setTypedLen] = useState(reducedMotion ? TECH_AI_RESPONSE.length : 0);
+  const [showCaret, setShowCaret] = useState(!reducedMotion);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const el = sectionRef.current;
+    if (!el) return;
+
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        let i = 0;
+        interval = setInterval(() => {
+          i += 1;
+          setTypedLen(i);
+          if (i >= TECH_AI_RESPONSE.length) {
+            if (interval) clearInterval(interval);
+            setShowCaret(false);
+          }
+        }, 28);
+        observer.disconnect();
+      },
+      { threshold: 0.35, rootMargin: '0px' }
+    );
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (interval) clearInterval(interval);
+    };
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="relative bg-[#0A0A0A] px-5 py-20 sm:py-32 overflow-hidden">
+      <TechDarkBackground />
+      <div className="relative z-10 max-w-2xl mx-auto">
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display text-center">03 — HJERNEN</p>
+        <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white text-center leading-tight tracking-tight mb-5">
+          AI som snakker norsk. Ikke fagspråk.
+        </h2>
+        <p className="text-base sm:text-lg text-[#9ca3af] text-center leading-relaxed mb-12">
+          Alt maskinen finner, oversettes til klare beskjeder — hva som er galt, hvorfor det koster deg kunder, og hvordan du fikser det.
+        </p>
+
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-[#1f1f1f] px-4 py-3 text-sm text-[#e5e5e5]">
+              Hvorfor får jeg ikke flere kunder fra nettsiden?
+            </div>
+          </div>
+          <div className="flex justify-start">
+            <div className="max-w-[90%] rounded-2xl rounded-tl-md bg-[#2a1f47] border border-[#3a2a5a] px-4 py-3">
+              <div className="flex items-start gap-2">
+                <Sparkles size={16} className="text-[#a78bfa] shrink-0 mt-0.5" />
+                <p ref={aiTextRef} className="text-sm text-[#e9e2ff] leading-relaxed">
+                  {TECH_AI_RESPONSE.slice(0, typedLen)}
+                  {showCaret && <span className="inline-block w-0.5 h-4 bg-[#a78bfa] ml-0.5 align-middle animate-pulse" />}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TechChapter4Future = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reducedMotion = useTechReducedMotion();
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!sectionRef.current || reducedMotion) {
+        gsap.set('.tech-ch4-reveal', { opacity: 1 });
+        return;
+      }
+      gsap.utils.toArray<HTMLElement>('.tech-ch4-reveal').forEach((el) => {
+        gsap.fromTo(
+          el,
+          { opacity: 0.25 },
+          {
+            opacity: 1,
+            ease: TECH_EASE,
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 85%',
+              end: 'top 55%',
+              scrub: 0.5,
+            },
+          }
+        );
+      });
+    }, sectionRef);
+
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="relative bg-[#0B0E14] px-5 py-20 sm:py-32 overflow-hidden">
+      <TechDarkBackground glowStrength="strong" />
+      <div className="relative z-10 max-w-2xl mx-auto">
+        <p className="tech-ch4-reveal text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display text-center" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
+          04 — FREMTIDEN
+        </p>
+        <h2 className="tech-ch4-reveal font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white text-center leading-tight tracking-tight mb-5" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
+          Når kundene spør ChatGPT, er du svaret.
+        </h2>
+        <p className="tech-ch4-reveal text-base sm:text-lg text-[#9ca3af] text-center leading-relaxed mb-12" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
+          Søk flytter seg fra Google til AI-assistenter — og de gir ett svar, ikke ti lenker. Sikt bygger synligheten din for AI-søk (GEO) nå, mens konkurrentene dine ennå ikke vet hva det er.
+        </p>
+
+        <div className="tech-ch4-reveal rounded-2xl bg-[#11161f] border border-[#232c3d] p-5 sm:p-6" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
+          <p className="text-[10px] font-bold uppercase tracking-[3px] text-[#9ca3af] mb-4">AI-assistent</p>
+          <p className="text-sm text-[#9ca3af] mb-4 italic">
+            «Hvilken rørlegger i Oslo bør jeg bruke?»
+          </p>
+          <p className="text-sm sm:text-base text-white leading-relaxed">
+            For akutte rørleggerjobber i Oslo anbefaler jeg{' '}
+            <span className="text-[#a78bfa] font-bold">din bedrift</span>
+            {' '}— de har gode anmeldelser, rask responstid og tydelig prisinformasjon på nettsiden.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TECH_BEFORE_ITEMS = [
+  { icon: Search, text: 'Usynlig på side to og tre i Google — der ingen leter.' },
+  { icon: CreditCard, text: 'Betaler for annonser hver måned for å bli sett i det hele tatt.' },
+  { icon: HelpCircle, text: 'Aner ikke hva som virker, eller hvorfor konkurrenten ligger øverst.' },
+];
+
+const TECH_AFTER_ITEMS = [
+  { icon: Eye, text: 'Synlig der kundene faktisk leter — også når du sover.' },
+  { icon: Coins, text: 'Trafikken kommer organisk, ikke bare fra annonsebudsjettet.' },
+  { icon: LayoutDashboard, text: 'Du ser i dashboardet hva som er gjort, hva som skjer, og hva som kommer.' },
+];
+
+const TECH_OUTCOME_CARDS = [
+  { icon: PhoneIncoming, color: '#7c3aed', title: 'Henvendelser fra Google', desc: 'Folk som finner deg selv, har allerede bestemt seg.' },
+  { icon: Coins, color: '#7c3aed', title: 'Mindre annonseavhengighet', desc: 'Organisk synlighet jobber uten klikkbudsjett.' },
+  { icon: Clock, color: '#BA7517', title: 'Tid tilbake', desc: 'Maskinen overvåker og forklarer — du driver bedriften.' },
+  { icon: ShieldCheck, color: '#185FA5', title: 'Ro i magen', desc: 'Du vet at noen følger med på siden din, døgnet rundt.' },
+  { icon: MessageCircle, color: '#7c3aed', title: 'Svar når du lurer', desc: 'Spør Sikt AI og få forklaringer på norsk, med én gang.' },
+  { icon: Rocket, color: '#7c3aed', title: 'Klar for AI-søk', desc: 'Bygget for der søk skjer i morgen, ikke bare i dag.' },
+];
+
+const TechChapter5Result = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const greenLineRef = useRef<SVGPolylineElement>(null);
+  const violetLineRef = useRef<SVGPolylineElement>(null);
+  const marker2Ref = useRef<SVGGElement>(null);
+  const marker4Ref = useRef<SVGGElement>(null);
+  const marker6Ref = useRef<SVGGElement>(null);
+  const endDotRef = useRef<SVGGElement>(null);
+  const annot1Ref = useRef<SVGGElement>(null);
+  const annot2Ref = useRef<SVGGElement>(null);
+  const annot3Ref = useRef<SVGGElement>(null);
+  const reducedMotion = useTechReducedMotion();
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!sectionRef.current) return;
+
+      const prepLine = (line: SVGPolylineElement | null) => {
+        if (!line) return 0;
+        const length = line.getTotalLength();
+        line.style.strokeDasharray = `${length}`;
+        line.style.strokeDashoffset = `${length}`;
+        return length;
+      };
+
+      prepLine(greenLineRef.current);
+      prepLine(violetLineRef.current);
+
+      const popEls = [
+        marker2Ref.current,
+        annot1Ref.current,
+        marker4Ref.current,
+        annot2Ref.current,
+        marker6Ref.current,
+        annot3Ref.current,
+        endDotRef.current,
+      ].filter(Boolean);
+
+      if (reducedMotion) {
+        if (greenLineRef.current) greenLineRef.current.style.strokeDashoffset = '0';
+        if (violetLineRef.current) violetLineRef.current.style.strokeDashoffset = '0';
+        gsap.set('.tech-ch5-grid, .tech-ch5-axis, .tech-ch5-area', { opacity: 1 });
+        gsap.set(popEls, { opacity: 1, scale: 1, transformOrigin: 'center center' });
+        gsap.set('.tech-ch5-before', { opacity: 0.9, x: 0, y: 0 });
+        gsap.set('.tech-ch5-after, .tech-ch5-outcome, .tech-ch5-outcome-icon, .tech-ch5-closing-line', { opacity: 1, x: 0, y: 0, scale: 1 });
+        return;
+      }
+
+      gsap.set(popEls, { opacity: 0, scale: 0.9, transformOrigin: 'center center' });
+      gsap.set('.tech-ch5-grid, .tech-ch5-axis, .tech-ch5-area', { opacity: 0 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 60%',
+          end: 'top 15%',
+          scrub: 0.5,
+        },
+      });
+
+      tl.to('.tech-ch5-grid, .tech-ch5-axis, .tech-ch5-area', {
+        opacity: 1,
+        duration: 0.12,
+        ease: TECH_EASE,
+      }, 0);
+
+      if (greenLineRef.current) {
+        tl.to(greenLineRef.current, { strokeDashoffset: 0, ease: 'none', duration: 0.48 }, 0.08);
+      }
+      if (violetLineRef.current) {
+        tl.to(violetLineRef.current, { strokeDashoffset: 0, ease: 'none', duration: 0.44 }, 0.18);
+      }
+
+      const pop = (el: Element | null, at: number) => {
+        if (!el) return;
+        tl.to(el, { opacity: 1, scale: 1, duration: 0.06, ease: TECH_EASE }, at);
+      };
+
+      pop(marker2Ref.current, 0.28);
+      pop(annot1Ref.current, 0.3);
+      pop(marker4Ref.current, 0.48);
+      pop(annot2Ref.current, 0.5);
+      pop(marker6Ref.current, 0.72);
+      pop(annot3Ref.current, 0.74);
+      pop(endDotRef.current, 0.9);
+
+      gsap.fromTo('.tech-ch5-before', {
+        opacity: 0,
+        y: 12,
+      }, {
+        opacity: 0.9,
+        y: 0,
+        duration: 0.5,
+        ease: TECH_EASE,
+        scrollTrigger: { trigger: '.tech-ch5-compare', start: 'top 82%', once: true },
+      });
+
+      gsap.from('.tech-ch5-after', {
+        opacity: 0,
+        x: 24,
+        duration: 0.55,
+        ease: TECH_EASE,
+        delay: 0.12,
+        scrollTrigger: { trigger: '.tech-ch5-compare', start: 'top 82%', once: true },
+      });
+
+      gsap.from('.tech-ch5-outcome', {
+        y: 16,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 0.5,
+        ease: TECH_EASE,
+        scrollTrigger: { trigger: '.tech-ch5-outcomes', start: 'top 85%', once: true },
+      });
+
+      gsap.from('.tech-ch5-outcome-icon', {
+        scale: 0.8,
+        duration: 0.4,
+        stagger: 0.05,
+        ease: TECH_EASE,
+        scrollTrigger: { trigger: '.tech-ch5-outcomes', start: 'top 85%', once: true },
+      });
+
+      gsap.from('.tech-ch5-closing-line', {
+        y: 20,
+        opacity: 0,
+        stagger: 0.14,
+        duration: 0.6,
+        ease: TECH_EASE,
+        scrollTrigger: { trigger: '.tech-ch5-closing', start: 'top 88%', once: true },
+      });
+    }, sectionRef);
+
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => ctx.revert();
+  }, [reducedMotion]);
+
+  return (
+    <section ref={sectionRef} className="relative bg-[#F5F5F0] px-5 pt-20 sm:pt-32 pb-12">
+      <div className="max-w-4xl mx-auto">
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display text-center">05 — RESULTATET</p>
+        <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] text-center leading-tight tracking-tight mb-5">
+          Se for deg om seks måneder.
+        </h2>
+        <p className="text-base sm:text-lg text-[#808080] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
+          Kundene finner deg — ikke konkurrenten. Telefonen ringer fra folk som allerede har bestemt seg. Og du vet nøyaktig hvorfor, fordi tallene står i dashboardet ditt.
+        </p>
+
+        <div
+          className="max-w-xl mx-auto mb-12 rounded-2xl bg-white pt-[22px] px-5 pb-3.5"
+          style={{ border: '0.5px solid #EBEBE6' }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <span className="text-xs font-medium text-[#1A1A1A]">Synlighet i Google</span>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-[10px] text-[#808080]">
+                <span className="w-3.5 h-0.5 rounded-full bg-[#52A447]" />
+                Visninger
+              </span>
+              <span className="flex items-center gap-1.5 text-[10px] text-[#808080]">
+                <span className="w-3.5 h-0.5 rounded-full bg-[#7c3aed]" />
+                Klikk
+              </span>
+            </div>
+          </div>
+
+          <svg viewBox="0 0 460 200" className="w-full" aria-hidden="true">
+            {[20, 60, 100, 140, 170].map((y) => (
+              <line key={y} className="tech-ch5-grid" x1="40" y1={y} x2="440" y2={y} stroke="#F0F0EB" strokeWidth="1" />
+            ))}
+            <text className="tech-ch5-axis" x="12" y="23" fill="#b0b0aa" fontSize="9">2k</text>
+            <text className="tech-ch5-axis" x="10" y="103" fill="#b0b0aa" fontSize="9">1k</text>
+            <text className="tech-ch5-axis" x="14" y="173" fill="#b0b0aa" fontSize="9">0</text>
+            <text className="tech-ch5-axis" x="34" y="188" fill="#b0b0aa" fontSize="9">Mnd 1</text>
+            <text className="tech-ch5-axis" x="100" y="188" fill="#b0b0aa" fontSize="9">2</text>
+            <text className="tech-ch5-axis" x="166" y="188" fill="#b0b0aa" fontSize="9">3</text>
+            <text className="tech-ch5-axis" x="232" y="188" fill="#b0b0aa" fontSize="9">4</text>
+            <text className="tech-ch5-axis" x="298" y="188" fill="#b0b0aa" fontSize="9">5</text>
+            <text className="tech-ch5-axis" x="424" y="188" fill="#b0b0aa" fontSize="9">Mnd 6</text>
+
+            <path
+              className="tech-ch5-area"
+              d="M40,168 L106,160 L172,148 L238,118 L304,86 L370,52 L436,28 L436,170 L40,170 Z"
+              fill="#EAF3DE"
+              opacity="0.6"
+            />
+            <polyline
+              ref={greenLineRef}
+              fill="none"
+              stroke="#52A447"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points="40,168 106,160 172,148 238,118 304,86 370,52 436,28"
+            />
+            <polyline
+              ref={violetLineRef}
+              fill="none"
+              stroke="#7c3aed"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points="40,169 106,166 172,160 238,144 304,124 370,102 436,84"
+            />
+
+            <g ref={marker2Ref}>
+              <circle cx="106" cy="160" r="3.5" fill="#FFFFFF" stroke="#52A447" strokeWidth="2" />
+            </g>
+            <g ref={marker4Ref}>
+              <circle cx="238" cy="118" r="3.5" fill="#FFFFFF" stroke="#52A447" strokeWidth="2" />
+            </g>
+            <g ref={marker6Ref}>
+              <circle cx="370" cy="52" r="3.5" fill="#FFFFFF" stroke="#52A447" strokeWidth="2" />
+            </g>
+            <g ref={endDotRef}>
+              <circle cx="436" cy="28" r="4" fill="#52A447" />
+            </g>
+
+            <g ref={annot1Ref}>
+              <line x1="106" y1="144" x2="106" y2="156" stroke="#EF9F27" strokeWidth="1" />
+              <rect x="62" y="124" width="92" height="20" rx="10" fill="#FAEEDA" />
+              <text x="108" y="138" fill="#854F0B" fontSize="9" textAnchor="middle">Feil fikset</text>
+            </g>
+            <g ref={annot2Ref}>
+              <line x1="238" y1="104" x2="238" y2="114" stroke="#378ADD" strokeWidth="1" />
+              <rect x="186" y="84" width="104" height="20" rx="10" fill="#E6F1FB" />
+              <text x="238" y="98" fill="#185FA5" fontSize="9" textAnchor="middle">Innhold forbedret</text>
+            </g>
+            <g ref={annot3Ref}>
+              <line x1="370" y1="38" x2="370" y2="48" stroke="#7F77DD" strokeWidth="1" />
+              <rect x="306" y="18" width="128" height="20" rx="10" fill="#EEEDFE" />
+              <text x="370" y="32" fill="#534AB7" fontSize="9" textAnchor="middle">Klatrer på søkeordene</text>
+            </g>
+          </svg>
+
+          <p className="text-right text-[9px] text-[#b0b0aa] mt-2">
+            Illustrasjon av et typisk forløp — resultater varierer
+          </p>
+        </div>
+
+        <div className="tech-ch5-compare mt-16 sm:mt-20">
+          <h3 className="font-display font-bold text-lg text-[#1A1A1A] text-center mb-6">
+            Hverdagen, før og med Sikt
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="tech-ch5-before rounded-2xl bg-white border border-[#EBEBE6] p-5 sm:p-6">
+              <p className="text-[11px] tracking-wide uppercase text-[#808080] mb-4">Uten</p>
+              <ul className="space-y-4">
+                {TECH_BEFORE_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.text} className="flex items-start gap-3">
+                      <Icon size={16} className="shrink-0 mt-0.5 text-[#b0b0aa]" />
+                      <span className="text-[13px] text-[#5F5E5A] leading-relaxed">{item.text}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div
+              className="tech-ch5-after relative rounded-2xl bg-white border-2 border-[#52A447]/40 p-5 sm:p-6 overflow-hidden"
+              style={{ opacity: reducedMotion ? 1 : undefined }}
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-[#EAF3DE]" />
+              <p className="text-[11px] tracking-wide uppercase text-[#3B6D11] font-medium mb-4">Med Sikt</p>
+              <ul className="space-y-4">
+                {TECH_AFTER_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.text} className="flex items-start gap-3">
+                      <Icon size={16} className="shrink-0 mt-0.5 text-[#52A447]" />
+                      <span className="text-[13px] text-[#1A1A1A] leading-relaxed">{item.text}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="tech-ch5-outcomes mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {TECH_OUTCOME_CARDS.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.title}
+                className="tech-ch5-outcome rounded-2xl bg-white border border-[#EBEBE6] p-4 sm:p-5"
+                style={{ opacity: reducedMotion ? 1 : 0 }}
+              >
+                <div
+                  className="tech-ch5-outcome-icon mb-3"
+                  style={{ transform: reducedMotion ? 'scale(1)' : 'scale(0.8)' }}
+                >
+                  <Icon size={18} style={{ color: card.color }} />
+                </div>
+                <p className="text-[13px] font-medium text-[#1A1A1A] leading-snug mb-1">{card.title}</p>
+                <p className="text-[11px] text-[#808080] leading-relaxed">{card.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="tech-ch5-closing mt-14 text-center">
+          <p
+            className="tech-ch5-closing-line font-display font-extrabold text-[#1A1A1A] text-[28px] sm:text-[32px] leading-tight tracking-tight"
+            style={{ opacity: reducedMotion ? 1 : 0 }}
+          >
+            Fra usynlig
+          </p>
+          <p
+            className="tech-ch5-closing-line font-display font-extrabold text-[#1A1A1A] text-[28px] sm:text-[32px] leading-tight tracking-tight mt-1"
+            style={{ opacity: reducedMotion ? 1 : 0 }}
+          >
+            til{' '}
+            <span className="font-script font-normal italic text-violet-600">selvsagt.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TechCTAV2 = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
+  <section className="relative bg-[#0B0E14] px-5 pt-12 sm:pt-16 pb-20 sm:pb-32 overflow-hidden text-center">
+    <TechDarkBackground />
+    <div className="relative z-10 max-w-2xl mx-auto">
+      <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white leading-tight tracking-tight mb-5">
+        Teknologien er klar.
+      </h2>
+      <p className="text-base sm:text-lg text-[#9ca3af] mb-10 leading-relaxed">
+        Spørsmålet er om konkurrentene dine finner den først.
+      </p>
+      <button
+        type="button"
+        onClick={() => onNavigate('login')}
+        className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white text-[#111111] text-base font-bold font-display transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:hover:scale-[0.98]"
+      >
+        Se hva Sikt finner på din side
+      </button>
+      <p className="text-xs text-[#9ca3af] mt-6">Ingen bindingstid · Oppsett på minutter</p>
+    </div>
+  </section>
+);
+
 
 // --- HOME PAGE COMPONENTS ---
 
@@ -2339,6 +2904,7 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
 const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
+    <ScrollProgressRing />
     <Hero />
     <DashboardPreview />
     <StoryBrandOneLiner />
@@ -2362,6 +2928,7 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
 // RIKTIG: Legg merke til parentesen ( rett etter pila =>
 const DeepDiveView = ({ onBack, onSelectPlan }: { onBack: () => void; onSelectPlan?: (plan: string) => void }) => (
   <>
+    <ScrollProgressRing />
     <DeepDiveHero />
     <PainPointData />
     <AiProcessDeepDive />
@@ -2373,14 +2940,17 @@ const DeepDiveView = ({ onBack, onSelectPlan }: { onBack: () => void; onSelectPl
 
 
 const TechnologyView = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
-  <>
-    <TechnologyHero />
-    <FeatureMatrix />
-    <DashboardSection />
-    <ComparisonTable />
-    {/* Nå vet den hva onNavigate er, og rød strek forsvinner */}
-    <TechCTA onNavigate={onNavigate} />
-  </>
+  <div className="tech-page">
+    <ScrollProgressRing />
+    <TechHeroV2 />
+    <TechChapter1Scan />
+    <TechHorizontalFactors />
+    <TechChapter2Data />
+    <TechChapter3Brain />
+    <TechChapter4Future />
+    <TechChapter5Result />
+    <TechCTAV2 onNavigate={onNavigate} />
+  </div>
 );
 
 // --- OTHER SHARED COMPONENTS ---
@@ -2963,27 +3533,6 @@ const TrustSection = () => {
 
 
 
-
-// 1. Legg til { onNavigate } her
-const TechCTA = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
-  <section className="py-20 sm:py-32 bg-white relative overflow-hidden text-center">
-    <div className="max-w-4xl mx-auto px-5 relative z-10">
-      <RevealOnScroll direction="up">
-        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-[#1A1A1A] mb-6 sm:mb-8 tracking-tighter">Klar for en teknisk fordel?</h2>
-        <p className="text-base sm:text-xl text-[#808080] font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
-          Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
-        </p>
-        <button
-          // 2. Legg til onClick her:
-          onClick={() => onNavigate('login')}
-          className="ui-motion ui-lift px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
-        >
-          Ta meg til toppen av Google
-        </button>
-      </RevealOnScroll>
-    </div>
-  </section>
-);
 
 // ---------------------------------------------------------
 // LEGAL PAGES — Personvern & Vilkår
