@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Satisfy&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+    background: #F5F5F0;
+    position: relative;
+    color: #1A1A1A;
+  }
+  /* subtil fiolett glød oppe til høyre */
+  .glow {
+    position: absolute; top: -220px; right: -180px;
+    width: 620px; height: 620px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(124,58,237,0.16), transparent);
+    pointer-events: none;
+  }
+  /* fint rutenett-hint nederst */
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(26,26,26,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,26,26,0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.5), transparent 55%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.5), transparent 55%);
+  }
+  .wrap { position: relative; height: 100%; padding: 84px 90px; display: flex; flex-direction: column; }
+
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .logo {
+    width: 84px; height: 84px; border-radius: 22px;
+    background: #7c3aed; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 14px 34px rgba(124,58,237,0.32);
+  }
+  .logo span { color: #fff; font-weight: 800; font-size: 50px; line-height: 1; }
+  .wordmark { font-weight: 800; font-size: 44px; letter-spacing: -1px; }
+
+  .headline {
+    margin-top: auto; font-weight: 800; font-size: 82px; line-height: 1.04;
+    letter-spacing: -2.5px; max-width: 980px;
+  }
+  .script { font-family: 'Satisfy', cursive; font-weight: 400; color: #7c3aed; letter-spacing: 0; }
+
+  .sub { margin-top: 26px; font-size: 27px; font-weight: 500; color: #5F5E5A; }
+
+  .footer { margin-top: auto; display: flex; align-items: center; gap: 16px; }
+  .chip {
+    font-size: 18px; font-weight: 700; color: #534AB7;
+    background: #EEEDFE; padding: 9px 16px; border-radius: 999px;
+  }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: #B0B0AA; }
+  .url { font-size: 22px; font-weight: 700; color: #1A1A1A; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="grid"></div>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo"><span>S</span></div>
+      <div class="wordmark">Sikt</div>
+    </div>
+
+    <div class="headline">Ranger høyere på Google,<br><span class="script">automatisk.</span></div>
+    <div class="sub">AI-drevet SEO for norske bedrifter — på vanlig norsk.</div>
+
+    <div class="footer">
+      <span class="chip">AI-drevet SEO</span>
+      <span class="dot"></span>
+      <span class="url">siktapp.com</span>
+    </div>
+  </div>
+</body>
+</html>
