@@ -7282,6 +7282,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // --- GODKJENNINGS-KØ (hybrid auto-fiks: synlige felt som venter på ja) ---
   const [fixQueue, setFixQueue] = useState<any[]>([]);
   const [queueBusyId, setQueueBusyId] = useState<string | null>(null);
+  // --- GEO (AI-synlighet: ukentlig sjekk om ChatGPT/Gemini/Perplexity nevner deg) ---
+  const [geoSummary, setGeoSummary] = useState<any>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = denne uken, -1 = forrige, osv.
   const [receiptCategoryFilter, setReceiptCategoryFilter] = useState<'all' | 'finding' | 'suggestion' | 'fix' | 'alert'>('all');
@@ -7598,6 +7600,30 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   }, [user?.id]);
 
   useEffect(() => { fetchFixQueue(); }, [fetchFixQueue]);
+
+  const fetchGeo = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const since = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+      const rows = await supabaseRest<any[]>(
+        `geo_checks?user_id=eq.${user.id}&checked_at=gte.${since}&select=provider,mentioned,checked_at&order=checked_at.desc&limit=200`,
+      );
+      if (!Array.isArray(rows) || rows.length === 0) { setGeoSummary(null); return; }
+      const byProvider: Record<string, { total: number; mentioned: number }> = {};
+      let total = 0, mentioned = 0;
+      for (const r of rows) {
+        total += 1;
+        if (r.mentioned) mentioned += 1;
+        const p = r.provider || 'ukjent';
+        byProvider[p] = byProvider[p] || { total: 0, mentioned: 0 };
+        byProvider[p].total += 1;
+        if (r.mentioned) byProvider[p].mentioned += 1;
+      }
+      setGeoSummary({ total, mentioned, byProvider, lastCheckedAt: rows[0].checked_at });
+    } catch { setGeoSummary(null); }
+  }, [user?.id]);
+
+  useEffect(() => { fetchGeo(); }, [fetchGeo]);
 
   const approveQueuedFix = useCallback(async (item: any) => {
     const token = getStoredAccessToken();
@@ -10291,6 +10317,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 gscConnected={gscConnected}
                 gscKeywords={gscKeywords}
                 isAnalyzing={isAnalyzing}
+                geo={geoSummary}
                 onRunAnalysis={runRealAnalysis}
                 onNavigate={setActiveTab}
               />

@@ -42,6 +42,7 @@ type DashboardHomeProps = {
   gscConnected?: boolean;
   gscKeywords?: any[];
   isAnalyzing?: boolean;
+  geo?: { total: number; mentioned: number; byProvider: Record<string, { total: number; mentioned: number }>; lastCheckedAt?: string } | null;
   onRunAnalysis: () => void;
   onNavigate: (tab: PortalTab) => void;
 };
@@ -415,6 +416,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   gscConnected = false,
   gscKeywords = [],
   isAnalyzing = false,
+  geo = null,
   onRunAnalysis,
   onNavigate,
 }) => {
@@ -810,19 +812,54 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           )}
         </div>
 
-        {/* GEO */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 opacity-70 shadow-sm">
+        {/* GEO — AI-synlighet */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              GEO
+              GEO — AI-synlighet
             </p>
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400">
-              Kommer
-            </span>
+            {geo && geo.total > 0 ? (
+              <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-medium text-violet-600">
+                Denne uken
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400">
+                Venter
+              </span>
+            )}
           </div>
-          <p className="mt-8 text-[13px] font-medium leading-relaxed text-slate-500">
-            AI-synlighet i ChatGPT, Perplexity og Gemini. Lansering Q3.
-          </p>
+
+          {geo && geo.total > 0 ? (
+            <>
+              <p className="mt-5 text-[28px] font-bold leading-none text-slate-900">
+                {geo.mentioned}<span className="text-slate-400">/{geo.total}</span>
+              </p>
+              <p className="mt-1.5 text-[13px] font-medium text-slate-500">
+                AI-svar som nevner deg
+              </p>
+              <div className="mt-4 space-y-1.5">
+                {[
+                  { key: 'chatgpt', label: 'ChatGPT' },
+                  { key: 'gemini', label: 'Gemini' },
+                  { key: 'perplexity', label: 'Perplexity' },
+                ].map(({ key, label }) => {
+                  const p = geo.byProvider?.[key];
+                  return (
+                    <div key={key} className="flex items-center justify-between text-[12px]">
+                      <span className="font-medium text-slate-600">{label}</span>
+                      <span className={p && p.mentioned > 0 ? 'font-semibold text-violet-600' : 'text-slate-400'}>
+                        {p ? `${p.mentioned}/${p.total}` : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="mt-8 text-[13px] font-medium leading-relaxed text-slate-500">
+              Sjekker hver uke om ChatGPT, Gemini og Perplexity nevner deg. Første resultat kommer mandag.
+            </p>
+          )}
         </div>
       </section>
 
