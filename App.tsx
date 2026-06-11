@@ -6039,6 +6039,32 @@ function apiRateLimitUserMessage(data: Record<string, unknown> | null | undefine
   return typeof msg === 'string' && msg.trim() ? msg : RATE_LIMIT_USER_MESSAGE;
 }
 
+// Trekker ut ny meta-tittel/-beskrivelse fra et AI-kodeforslag, slik at vi kan
+// vise kunden en ekte Google-forhåndsvisning («slik ser du ut i søk»).
+function extractSerpPreview(
+  sol: { codePatch?: unknown; effectiveUrl?: unknown } | null | undefined,
+  fallbackUrl?: string,
+): { title: string | null; description: string | null; host: string } | null {
+  if (!sol) return null;
+  const code = typeof sol.codePatch === 'string' ? sol.codePatch : '';
+  if (!code) return null;
+  const titleMatch = code.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const descMatch =
+    code.match(/name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+    code.match(/content=["']([^"']+)["'][^>]*name=["']description["']/i);
+  const title = titleMatch?.[1]?.trim() || null;
+  const description = descMatch?.[1]?.trim() || null;
+  if (!title && !description) return null;
+  let host = '';
+  const rawUrl = (typeof sol.effectiveUrl === 'string' && sol.effectiveUrl) || fallbackUrl || '';
+  try {
+    host = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`).hostname.replace(/^www\./, '');
+  } catch {
+    host = '';
+  }
+  return { title, description, host };
+}
+
 function buildContextQuestionsPrompt(pageData: WordPressFetchResponse): string {
   const contentRaw = decodeHtmlEntities(stripHtmlTags(pageData.page.content || ''));
   const content = truncateText(contentRaw, 2000);
@@ -13242,6 +13268,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             </div>
                           ) : aiSolution ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                              {aiSolution.usedHtmlContext && (
+                                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 6, background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.green}`, color: W.green, borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 700 }}>
+                                  <Check size={12} /> Hentet fra din faktiske side
+                                </span>
+                              )}
+                              {aiSolution.qualityNote && (
+                                <div style={{ display: 'flex', gap: 8, background: 'rgba(186,117,23,0.07)', border: '1px solid rgba(186,117,23,0.35)', borderRadius: 10, padding: '10px 12px' }}>
+                                  <AlertTriangle size={14} style={{ color: '#BA7517', flexShrink: 0, marginTop: 1 }} />
+                                  <p style={{ margin: 0, fontSize: 12, color: '#854F0B', lineHeight: 1.5 }}>{aiSolution.qualityNote}</p>
+                                </div>
+                              )}
                               {aiSolution.replacementExplanation && (
                                 <div>
                                   <p style={{ margin: '0 0 6px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Forklaring</p>
@@ -13293,12 +13330,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* Right: code panels */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          {(() => {
+                            const serp = extractSerpPreview(aiSolution, formData.websiteUrl || clientData?.websiteUrl || '');
+                            if (!serp) return null;
+                            return (
+                              <div style={{ background: '#fff', border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
+                                <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                                  <SearchIcon size={12} style={{ color: W.muted }} />
+                                  <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Slik ser du ut på Google</span>
+                                </div>
+                                <div style={{ padding: '14px 16px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                    <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#F0F0EB', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: W.muted }}>
+                                      {(serp.host || 's')[0].toUpperCase()}
+                                    </span>
+                                    <span style={{ fontSize: 12, color: '#202124' }}>{serp.host || 'dinside.no'}</span>
+                                  </div>
+                                  <p style={{ margin: '0 0 3px', color: '#1a0dab', fontSize: 17, lineHeight: 1.3, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {serp.title || 'Sidetittelen din'}
+                                  </p>
+                                  <p style={{ margin: 0, color: '#4d5156', fontSize: 13, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {serp.description || 'Beskrivelsen din vises her under den blå lenken.'}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
                           {aiSolution?.originalCode && (
                             <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
                               <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.muted }} />
-                                  <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Gammel kode</span>
+                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: aiSolution.originalCodeVerified ? W.green : W.muted }} />
+                                  <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                                    {aiSolution.originalCodeVerified ? 'Gammel kode · funnet på siden din' : 'Gammel kode'}
+                                  </span>
                                 </div>
                                 {aiSolution.fileHint && <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{aiSolution.fileHint}</span>}
                               </div>

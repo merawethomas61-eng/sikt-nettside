@@ -103,7 +103,12 @@ export default withSentry(async function handler(req, res) {
     const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Send brukerens token videre slik at RLS-spørringene (auth.uid() = user_id)
+    // mot clients/sites/keywords faktisk returnerer kundens egne rader.
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
         return res.status(401).json({ error: 'Avvist: Ugyldig bruker' });
@@ -159,13 +164,44 @@ export default withSentry(async function handler(req, res) {
         effectiveUrl = websiteUrl;
     }
 
-    // Hvis kunden har koblet til webhost, henter vi faktisk HTML fra siden.
-    // Dette lar AI-en peke på KONKRET kode i stedet for å gi generiske svar.
+    // Hent kundens FAKTISKE Google-søk (Search Console) slik at AI-en kan målrette
+    // meta-tittel/-beskrivelse mot søkene folk virkelig bruker — ikke gjette.
+    let targetKeywords = [];
+    try {
+        const { data: siteRow } = await supabase
+            .from('sites')
+            .select('id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+        if (siteRow?.id) {
+            const { data: kwRows } = await supabase
+                .from('keywords')
+                .select('keyword, clicks, impressions, position')
+                .eq('site_id', siteRow.id)
+                .order('clicks', { ascending: false })
+                .limit(8);
+            if (Array.isArray(kwRows)) {
+                targetKeywords = kwRows
+                    .map((k) => (typeof k?.keyword === 'string' ? k.keyword.trim() : ''))
+                    .filter(Boolean);
+            }
+        }
+    } catch (kwErr) {
+        console.warn('[solve-problem] Kunne ikke hente GSC-søkeord:', kwErr?.message || kwErr);
+    }
+    const keywordHint = targetKeywords.length
+        ? `\n\nKUNDENS EKTE GOOGLE-SØK (fra Search Console, viktigst først):\n${targetKeywords.map((k) => `- ${k}`).join('\n')}\nNår du skriver meta-titler, beskrivelser eller tekst: målrett mot disse søkene der det er naturlig. Ikke keyword-stuff.`
+        : '';
+
+    // Vi leser ALLTID den faktiske siden (read-only HTTP GET) — det krever ingen
+    // host-tilkobling. Slik får også Basic-kunder sidespesifikke forslag i stedet
+    // for generiske gjetninger. Host-tilkobling brukes kun til å SKRIVE/pushe.
     const websiteHost = hostConnection?.platform || null;
     const hasHost = !!hostConnection;
     let htmlContext = null;
     let htmlError = null;
-    if (hasHost && effectiveUrl) {
+    if (effectiveUrl) {
         try {
             await assertSafeUserUrl(effectiveUrl, websiteUrl);
             const fetched = await fetchRelevantHtml(effectiveUrl, problemTitle, websiteUrl);
@@ -180,9 +216,19 @@ export default withSentry(async function handler(req, res) {
         }
     }
 
+    // Felles SEO-kvalitetskrav for tekst kunden limer inn (meta, tittel, alt).
+    const SEO_COPY_RULES = `
+
+SEO-KVALITETSKRAV (gjelder all tekst kunden skal lime inn):
+- META-BESKRIVELSE: 120–158 tegn. Aktiv stemme, konkret verdiløfte, gjerne en mild oppfordring. Plassér det viktigste søkeordet naturlig tidlig. IKKE kopier sidetittel/H1 ordrett. Unik per side.
+- META-TITTEL / <title>: 50–60 tegn. Søkeord først, deretter «| Merkenavn». Unik per side.
+- ALT-TEKST: beskriv hva bildet FAKTISK viser, maks ~125 tegn. Ikke start med «Bilde av». Ingen keyword-stuffing. Rent dekorative bilder = tom alt="".
+- Skriv naturlig norsk for et menneske, ikke for en robot. Ingen klisjeer («markedsledende», «skreddersydde løsninger»).
+- ALDRI plassholdere som «DIN_TEKST» eller «[sett inn …]» — lever ferdig tekst kunden kan lime rett inn.`;
+
     // Bygg instruks: strengere struktur når vi faktisk har HTML å peke på.
-    const systemPrompt = hasHost && htmlContext
-        ? `Du er en sylskarp teknisk ekspert på webutvikling. Kunden har gitt deg tilgang til HTML-en fra siden sin, og du skal finne NØYAKTIG hvilken kode som forårsaker problemet og hva den skal erstattes med.
+    const systemPrompt = (htmlContext
+        ? `Du er en sylskarp teknisk ekspert på webutvikling. Du har fått HTML-en fra siden kunden vil forbedre, og du skal finne NØYAKTIG hvilken kode som forårsaker problemet og hva den skal erstattes med.
 
 DU MÅ SVARE I ET STRENGT JSON-FORMAT:
 {
@@ -214,11 +260,12 @@ REGLER:
 VIKTIGE REGLER FOR KODE (COPY-PASTE):
 1. Du SKAL nesten alltid levere noe i 'codePatch'. Kundene våre betaler for copy-paste-kode!
 2. Hvis feilen er generell (f.eks. "Ubrukt JavaScript" eller "Ubrukt CSS"), skriv et kode-eksempel på hvordan man utsetter innlasting i React/Next.js eller en standard HTML defer-tag.
-3. Koden skal være ren, kommentert på norsk, og klar til å limes rett inn i prosjektet.`;
+3. Koden skal være ren, kommentert på norsk, og klar til å limes rett inn i prosjektet.`) + SEO_COPY_RULES;
 
-    const userContent = hasHost && htmlContext
-        ? `URL: ${effectiveUrl}\nWebhost/plattform: ${websiteHost}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}\n\nHTML-UTDRAG FRA SIDEN (bruk denne som kilde for originalCode):\n\`\`\`html\n${htmlContext}\n\`\`\``
-        : `URL: ${effectiveUrl || 'ukjent'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800)}`;
+    const problemDesc = typeof problemDetails === 'string' ? problemDetails : JSON.stringify(problemDetails || {}).slice(0, 800);
+    const userContent = htmlContext
+        ? `URL: ${effectiveUrl}\nWebhost/plattform: ${websiteHost || 'ukjent (kunden har ikke koblet til host)'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${problemDesc}${keywordHint}\n\nHTML-UTDRAG FRA SIDEN (bruk denne som kilde for originalCode):\n\`\`\`html\n${htmlContext}\n\`\`\``
+        : `URL: ${effectiveUrl || 'ukjent'}\nKategori: ${category || 'generell'}\nTittel: ${problemTitle}\nBeskrivelse: ${problemDesc}${keywordHint}`;
 
     try {
         const response = await fetchExternalWithOptionalRetry('https://api.openai.com/v1/chat/completions', {
@@ -252,10 +299,52 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
         rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
         const aiResult = JSON.parse(rawContent);
 
+        // --- GUARDRAILS på AI-output (kunden betaler for ferdig, sann copy-paste) ---
+        let steps = Array.isArray(aiResult.steps)
+            ? aiResult.steps.filter((s) => s && (s.title || s.description))
+            : [];
+        if (steps.length === 0) {
+            steps = [{ title: 'AI Formateringsfeil', description: 'AI-en klarte ikke å formatere listen riktig. Prøv igjen.' }];
+        }
+
+        let codePatch = typeof aiResult.codePatch === 'string' ? aiResult.codePatch.trim() : null;
+        let originalCode = typeof aiResult.originalCode === 'string' ? aiResult.originalCode.trim() : null;
+
+        // 1) Forkast hallusinert originalCode: den SKAL finnes ordrett i HTML-en vi hentet.
+        //    Ellers viser vi kunden falsk «slik ser koden din ut nå».
+        let originalCodeVerified = false;
+        if (originalCode && htmlContext) {
+            const norm = (s) => s.replace(/\s+/g, ' ').trim();
+            originalCodeVerified = norm(htmlContext).includes(norm(originalCode));
+            if (!originalCodeVerified) originalCode = null;
+        }
+
+        // 2) Plassholder-vakt: avvis copy-paste som ikke er ferdig utfylt.
+        const PLACEHOLDER_RE = /DIN_TEKST|DITT_SØKEORD|PLACEHOLDER|LOREM IPSUM|\[\s*sett inn|\[\s*din |\bTODO\b|\bFIXME\b|\bXXXX+\b/i;
+        if (codePatch && PLACEHOLDER_RE.test(codePatch)) {
+            steps = [...steps, {
+                title: 'Dobbeltsjekk før du limer inn',
+                description: 'Forslaget inneholdt en plassholder du må fylle inn selv — se teksten i klammer/hermetegn.',
+            }];
+        }
+
+        // 3) Meta-beskrivelse: valider lengde mot Googles visningsgrense (~158 tegn).
+        let qualityNote = null;
+        if (/meta|beskrivelse|description/i.test(problemTitle || '') && codePatch) {
+            const m = codePatch.match(/content\s*=\s*["']([^"']+)["']/i);
+            const metaText = m && m[1] ? m[1].trim() : null;
+            if (metaText) {
+                if (metaText.length < 110) qualityNote = `Meta-beskrivelsen er litt kort (${metaText.length} tegn). 120–158 tegn utnytter plassen i Google bedre.`;
+                else if (metaText.length > 165) qualityNote = `Meta-beskrivelsen er litt lang (${metaText.length} tegn). Google kutter rundt 158 tegn.`;
+            }
+        }
+
         return res.status(200).json({
-            steps: Array.isArray(aiResult.steps) ? aiResult.steps : [{ title: 'AI Formateringsfeil', description: 'AI-en klarte ikke å formatere listen riktig.' }],
-            codePatch: aiResult.codePatch || null,
-            originalCode: aiResult.originalCode || null,
+            steps,
+            codePatch: codePatch || null,
+            originalCode: originalCode || null,
+            originalCodeVerified,
+            qualityNote,
             fileHint: aiResult.fileHint || null,
             replacementExplanation: aiResult.replacementExplanation || null,
             usedHtmlContext: !!htmlContext,
