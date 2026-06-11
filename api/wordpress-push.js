@@ -23,6 +23,14 @@ const FIELD_MAX_LENGTH = {
   content: 20000,
 };
 
+// Lesbare norske navn for «Ukens kvittering»-loggen (sikt_actions).
+const FIELD_LABELS = {
+  'meta-description': 'Meta-beskrivelse',
+  'seo-title': 'SEO-tittel',
+  h1: 'Overskrift (H1)',
+  content: 'Sideinnhold',
+};
+
 const PLUGIN_NOT_INSTALLED_MESSAGE =
   'Sikt Connector-plugin er ikke installert på siden din. Last ned fra Sikt-portalen og installer i WordPress-admin.';
 
@@ -465,14 +473,28 @@ export default withSentry(async function handler(req, res) {
     return res.status(405).json({ error: 'Kun POST er tillatt' });
   }
 
+  // Server-kun bypass: den ukentlige auto-fiks-motoren (cron-auto-fix) pusher på
+  // vegne av en kunde. Gated på CRON_SECRET (samme hemmelighet som weekly-reports).
+  const cronSecret = req.headers['x-cron-secret'];
+  const isCronCall = !!process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET;
+
   let user;
-  try {
-    ({ user } = await requireAuth(req));
-  } catch (err) {
-    const status = err?.statusCode === 401 ? 401 : err?.statusCode || 500;
-    return res.status(status).json({
-      error: err?.message || 'Autentisering feilet',
-    });
+  if (isCronCall) {
+    const earlyBody = parseJsonBody(req);
+    const uid = typeof earlyBody.userId === 'string' ? earlyBody.userId.trim() : '';
+    if (!/^[0-9a-f-]{36}$/i.test(uid)) {
+      return res.status(400).json({ error: 'Gyldig userId kreves for cron-kall.' });
+    }
+    user = { id: uid };
+  } else {
+    try {
+      ({ user } = await requireAuth(req));
+    } catch (err) {
+      const status = err?.statusCode === 401 ? 401 : err?.statusCode || 500;
+      return res.status(status).json({
+        error: err?.message || 'Autentisering feilet',
+      });
+    }
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
@@ -648,6 +670,24 @@ export default withSentry(async function handler(req, res) {
     let h1Rendered;
     if (field === 'h1') {
       h1Rendered = await verifyRenderedH1(pageUrl, newValue);
+    }
+
+    // Logg fiksen i sikt_actions slik at den ukentlige kvitteringen («Fikset av Sikt»)
+    // faktisk viser ekte arbeid. Best-effort — skal aldri velte selve push-svaret.
+    try {
+      const label = FIELD_LABELS[field] || field;
+      await supabase.from('sikt_actions').insert({
+        user_id: user.id,
+        action_type: 'wordpress_push',
+        category: 'fix',
+        title: `${label} oppdatert`,
+        details: { explanation: `Sikt oppdaterte ${label.toLowerCase()} på siden din.`, field },
+        page_url: pageUrl,
+        before_value: typeof previousOldValue === 'string' ? previousOldValue : null,
+        after_value: newValue,
+      });
+    } catch (logErr) {
+      console.warn('[wordpress-push] Kunne ikke logge sikt_actions-fiks:', logErr?.message || logErr);
     }
 
     return res.status(200).json({
