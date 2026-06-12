@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
   }
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
   let sentCount = 0
   let errorCount = 0
@@ -80,17 +81,26 @@ Deno.serve(async (req) => {
     const suggestions = weekActions.filter(a => a.category === 'suggestion')
     const alerts = weekActions.filter(a => a.category === 'alert')
 
-    // GEO (Premium): nevner AI-assistentene bedriften denne uka?
+    // GEO (Premium): nevner AI-assistentene bedriften denne uka? + trend mot forrige uke.
     let geoMentioned = 0
     let geoTotal = 0
+    let geoScore = 0                       // 0–100 denne uka
+    let geoPrevScore: number | null = null // 0–100 forrige uke (null = ingen historikk)
     if (isPremium) {
       const { data: geo } = await supabase
         .from('geo_checks')
-        .select('mentioned')
+        .select('mentioned, checked_at')
         .eq('user_id', client.user_id)
-        .gte('checked_at', oneWeekAgo)
-      geoTotal = (geo ?? []).length
-      geoMentioned = (geo ?? []).filter((g: { mentioned: boolean }) => g.mentioned).length
+        .gte('checked_at', twoWeeksAgo)
+      const rows = (geo ?? []) as { mentioned: boolean; checked_at: string }[]
+      const thisWeek = rows.filter(g => g.checked_at >= oneWeekAgo)
+      const lastWeek = rows.filter(g => g.checked_at < oneWeekAgo)
+      geoTotal = thisWeek.length
+      geoMentioned = thisWeek.filter(g => g.mentioned).length
+      geoScore = geoTotal > 0 ? Math.round((geoMentioned / geoTotal) * 100) : 0
+      if (lastWeek.length > 0) {
+        geoPrevScore = Math.round((lastWeek.filter(g => g.mentioned).length / lastWeek.length) * 100)
+      }
     }
 
     const companyName = client.company_name ?? 'Din bedrift'
@@ -136,6 +146,8 @@ Deno.serve(async (req) => {
       weeksActive,
       geoMentioned,
       geoTotal,
+      geoScore,
+      geoPrevScore,
       topOpportunity,
     })
 
@@ -265,9 +277,11 @@ function buildEmailHtml(opts: {
   weeksActive: number
   geoMentioned: number
   geoTotal: number
+  geoScore: number
+  geoPrevScore: number | null
   topOpportunity: Opportunity | null
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, topOpportunity } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -293,6 +307,21 @@ function buildEmailHtml(opts: {
   } else {
     headlineHtml = `${italic('Denne uken')} holdt vi<br>vakt for deg.`
     sublineHtml = `Ingen nye feil, ingen drop${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''}. Vi overvåket siden og konkurrentene dine døgnet rundt så du slapp.`
+  }
+
+  // GEO-trend (Premium): badge som viser bevegelse i AI-synlighet mot forrige uke.
+  let geoTrendHtml = ''
+  if (geoPrevScore === null) {
+    geoTrendHtml = `<span style="display:inline-block;background:#f0e9fe;color:#6b21a8;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">Ny måling</span>`
+  } else {
+    const delta = geoScore - geoPrevScore
+    if (delta > 0) {
+      geoTrendHtml = `<span style="display:inline-block;background:#e7f7ee;color:#137a47;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#9650; +${delta} fra forrige uke</span>`
+    } else if (delta < 0) {
+      geoTrendHtml = `<span style="display:inline-block;background:#fdeeee;color:#b42318;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#9660; ${delta} fra forrige uke</span>`
+    } else {
+      geoTrendHtml = `<span style="display:inline-block;background:#f0eff4;color:#6b6880;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#8594; uendret fra forrige uke</span>`
+    }
   }
 
   return `<!DOCTYPE html>
@@ -349,21 +378,33 @@ function buildEmailHtml(opts: {
   ${isPremium ? `
   <tr><td style="padding-top:32px">
     <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">AI-synlighet</div>
+    ${geoTotal > 0 ? `
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:#faf7ff;border:1px solid #e4d8fb;border-radius:14px;padding:22px">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td valign="top">
+            <div style="font-size:42px;font-weight:800;color:#1a1a2e;line-height:1;letter-spacing:-1px">${geoScore}<span style="font-size:20px;color:#9591a8;font-weight:700">/100</span></div>
+            <div style="font-size:13px;color:#6b6880;font-weight:600;margin-top:6px">AI-synlighet denne uken</div>
+          </td>
+          <td valign="top" align="right">${geoTrendHtml}</td>
+        </tr></table>
+        <div style="font-size:13px;color:#6b6880;line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid #ece4fb">
+          Nevnt i <strong style="color:#1a1a2e">${geoMentioned} av ${geoTotal}</strong> AI-svar. Vi stilte ChatGPT, Gemini og Perplexity bransjespørsmål en kunde ville brukt${geoMentioned > 0 ? ' — og du dukket opp.' : '. Vi jobber med å få deg inn i svarene.'}
+        </div>
+      </td></tr>
+    </table>
+    ` : `
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="width:3px;background:#7c3aed;border-radius:2px" valign="top">&nbsp;</td>
         <td style="padding-left:16px;padding-bottom:16px">
-          ${geoTotal > 0 ? `
-          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Nevnt i ${geoMentioned} av ${geoTotal} AI-svar denne uken</div>
-          <div style="font-size:13px;color:#6b6880;line-height:1.6">Vi stilte ChatGPT, Gemini og Perplexity bransjespørsmål en kunde ville brukt. ${geoMentioned > 0 ? 'Bedriften din ble nevnt — det betyr at AI-assistentene kjenner deg.' : 'Bedriften din ble ikke nevnt ennå. Vi jobber med å øke synligheten din i AI-søk.'}</div>
-          ` : `
           <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Nevner ChatGPT deg?</div>
           <div style="font-size:13px;color:#6b6880;line-height:1.6">Stadig flere kunder spør AI-assistenter om anbefalinger istedenfor Google. Vi sjekker ukentlig om ChatGPT, Gemini og Perplexity nevner bedriften din.</div>
-          `}
-          <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
         </td>
       </tr>
     </table>
+    `}
+    <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
   </td></tr>
   <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
   ` : ''}
