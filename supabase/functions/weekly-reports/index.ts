@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktapp.com'
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com'
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
 
 type SiktAction = {
@@ -269,7 +269,7 @@ function buildEmailHtml(opts: {
         <td style="padding-left:16px;padding-bottom:16px">
           <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Vi holder øye mens du jobber</div>
           <div style="font-size:13px;color:#6b6880;line-height:1.6">Hvis en konkurrent publiserer noe nytt, endrer priser eller klatrer på Google får du vite det. Du slipper å følge med selv.</div>
-          <a href="https://siktapp.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se konkurrentoversikt</a>
+          <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se konkurrentoversikt</a>
         </td>
       </tr>
     </table>
@@ -291,7 +291,7 @@ function buildEmailHtml(opts: {
           <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Nevner ChatGPT deg?</div>
           <div style="font-size:13px;color:#6b6880;line-height:1.6">Stadig flere kunder spør AI-assistenter om anbefalinger istedenfor Google. Vi sjekker ukentlig om ChatGPT, Gemini og Perplexity nevner bedriften din.</div>
           `}
-          <a href="https://siktapp.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
+          <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
         </td>
       </tr>
     </table>
@@ -339,14 +339,14 @@ function buildEmailHtml(opts: {
 
   <!-- CTA -->
   <tr><td style="padding-top:24px;padding-bottom:0">
-    <a href="https://siktapp.com/portal" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:700;font-size:14px;padding:13px 26px;border-radius:9px;text-decoration:none">Åpne dashboardet</a>
+    <a href="https://siktseo.com/portal" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:700;font-size:14px;padding:13px 26px;border-radius:9px;text-decoration:none">Åpne dashboardet</a>
   </td></tr>
 
   <!-- FOOTER -->
   <tr><td style="padding:40px 0 48px;border-top:1px solid #e2e0ea;margin-top:40px">
     <div style="font-size:11px;color:#b8b5c8;line-height:1.9">
       Sikt · ${escapeHtml(plan)} · ${websiteUrl ? escapeHtml(websiteUrl) : ''}<br>
-      <a href="https://siktapp.com/portal" style="color:#b8b5c8;text-decoration:none">Administrer varsler</a> · <a href="https://siktapp.com/portal" style="color:#b8b5c8;text-decoration:none">Avslutt abonnement</a>
+      <a href="https://siktseo.com/portal" style="color:#b8b5c8;text-decoration:none">Administrer varsler</a> · <a href="https://siktseo.com/portal" style="color:#b8b5c8;text-decoration:none">Avslutt abonnement</a>
     </div>
   </td></tr>
 
