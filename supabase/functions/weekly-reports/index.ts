@@ -13,6 +13,7 @@ type SiktAction = {
   details: Record<string, unknown> | null
   page_url: string | null
   created_at: string
+  status?: string | null
 }
 
 type Client = {
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     // Hent ukens handlinger for denne brukeren
     const { data: actions } = await supabase
       .from('sikt_actions')
-      .select('action_type, category, title, details, page_url, created_at')
+      .select('action_type, category, title, details, page_url, created_at, status')
       .eq('user_id', client.user_id)
       .gte('created_at', oneWeekAgo)
       .order('created_at', { ascending: false })
@@ -110,8 +111,13 @@ Deno.serve(async (req) => {
     // Hent totaltall siden start
     const { data: allActions } = await supabase
       .from('sikt_actions')
-      .select('category, created_at')
+      .select('category, created_at, status')
       .eq('user_id', client.user_id)
+
+    // Lim-inn-fremgang: forslag tatt unna denne uka + forslag som fortsatt venter
+    const doneThisWeek = weekActions.filter(a => a.category === 'suggestion' && a.status === 'done').length
+    const openSuggestions = ((allActions ?? []) as { category: string; status?: string | null }[])
+      .filter(a => a.category === 'suggestion' && a.status === 'open').length
 
     const totalFixes = (allActions ?? []).filter(a => a.category === 'fix').length
     const totalFindings = (allActions ?? []).filter(a => a.category === 'finding').length
@@ -149,6 +155,8 @@ Deno.serve(async (req) => {
       geoScore,
       geoPrevScore,
       topOpportunity,
+      doneThisWeek,
+      openSuggestions,
     })
 
     const subject = buildSubject({ fixes, findings, plan, topOpportunity })
@@ -280,8 +288,10 @@ function buildEmailHtml(opts: {
   geoScore: number
   geoPrevScore: number | null
   topOpportunity: Opportunity | null
+  doneThisWeek: number
+  openSuggestions: number
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -357,6 +367,14 @@ function buildEmailHtml(opts: {
   ${fixes.length > 0 ? section('Fikset av Sikt', row(fixes, '#7c3aed')) : ''}
   ${findings.length > 0 ? section('Vi fant også', row(findings, '#e2e0ea')) : ''}
   ${suggestions.length > 0 ? section('AI-forslag', row(suggestions, '#e2e0ea')) : ''}
+
+  ${(doneThisWeek > 0 || openSuggestions > 0) ? `
+  <tr><td style="padding-top:24px">
+    <div style="font-size:13px;color:#6b6880;line-height:1.7;background:#ffffff;border:1px solid #e2e0ea;border-radius:12px;padding:14px 16px">
+      ${doneThisWeek > 0 ? `<strong style="color:#137a47">Du tok unna ${doneThisWeek} forslag denne uken — sterkt!</strong> ` : ''}${openSuggestions > 0 ? `${openSuggestions} forslag venter på deg i <a href="https://siktseo.com/portal" style="color:#7c3aed;font-weight:700;text-decoration:none">Sikt-loggen</a> — hvert av dem er ferdig skrevet, klart til å limes inn.` : 'Alt er tatt unna. Ny påfyll kommer.'}
+    </div>
+  </td></tr>
+  ` : ''}
 
   ${isStandardOrAbove ? `
   <tr><td style="padding-top:32px">

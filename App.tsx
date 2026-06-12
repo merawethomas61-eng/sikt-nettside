@@ -8387,6 +8387,29 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     fetchActions();
   }, [activeTab, user?.id]);
 
+  // «Merk som gjort» på forslag/varsler — oppdaterer status i sikt_actions
+  // (RLS tillater update på egne rader) og speiler i UI umiddelbart.
+  const markActionDone = async (actionId: string, done: boolean) => {
+    const newStatus = done ? 'done' : 'open';
+    setSiktActions((prev: any[]) => prev.map((a: any) =>
+      a.id === actionId ? { ...a, status: newStatus, done_at: done ? new Date().toISOString() : null } : a
+    ));
+    try {
+      const { error } = await supabase
+        .from('sikt_actions')
+        .update({ status: newStatus, done_at: done ? new Date().toISOString() : null })
+        .eq('id', actionId);
+      if (error) throw error;
+      if (done) toastSuccess('Markert som gjort.');
+    } catch (e: any) {
+      // Rull tilbake hvis databasen avviste (f.eks. migrasjon ikke kjørt ennå)
+      setSiktActions((prev: any[]) => prev.map((a: any) =>
+        a.id === actionId ? { ...a, status: done ? 'open' : 'done' } : a
+      ));
+      toastError('Kunne ikke lagre: ' + (e?.message || 'ukjent feil'));
+    }
+  };
+
   // --- LENKE-SKANNER (kalles ikke fra UI ennå, men beholdt for fremtidig bruk) ---
   const runLinkScan = async () => {
     if (!formData.websiteUrl) { toastWarning("Legg inn URL i innstillinger først."); return; }
@@ -13942,7 +13965,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         borderRadius: 14,
                                         padding: '16px 18px',
                                         boxShadow: '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)',
-                                        transition: `transform 160ms ${EASE}, box-shadow 160ms ${EASE}`,
+                                        transition: `transform 160ms ${EASE}, box-shadow 160ms ${EASE}, opacity 160ms ${EASE}`,
+                                        opacity: a.status === 'done' ? 0.55 : 1,
                                       }}
                                       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.03), 0 18px 40px -20px rgba(26,26,26,0.13)'; }}
                                       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 2px rgba(26,26,26,0.02), 0 14px 34px -24px rgba(26,26,26,0.10)'; }}
@@ -13977,7 +14001,28 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       </div>
 
                                       {/* Title */}
-                                      <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: L.ink, lineHeight: 1.35 }}>{a.title}</p>
+                                      <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: L.ink, lineHeight: 1.35, textDecoration: a.status === 'done' ? 'line-through' : 'none' }}>{a.title}</p>
+
+                                      {/* Forklaring (fra motoren) */}
+                                      {a.details?.explanation && (
+                                        <p style={{ margin: '8px 0 0', fontSize: 13, color: L.muted, lineHeight: 1.55 }}>{a.details.explanation}</p>
+                                      )}
+
+                                      {/* Oppskrift: konkret «slik gjør du det» */}
+                                      {a.details?.recipe && (
+                                        <div style={{ background: L.bg, border: `1px solid ${L.border}`, borderRadius: 12, marginTop: 12, padding: '10px 12px' }}>
+                                          <p style={{ margin: '0 0 4px', fontFamily: MONO, fontSize: 9, fontWeight: 700, color: L.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Slik gjør du det</p>
+                                          <p style={{ margin: 0, fontSize: 13, color: L.ink, lineHeight: 1.55 }}>{a.details.recipe}</p>
+                                        </div>
+                                      )}
+
+                                      {/* Svarutkast (GBP-anmeldelser): klart til å lime inn */}
+                                      {a.details?.reply && (
+                                        <div style={{ background: L.bg, border: `1px solid ${L.border}`, borderRadius: 12, marginTop: 12, padding: '10px 12px' }}>
+                                          <p style={{ margin: '0 0 4px', fontFamily: MONO, fontSize: 9, fontWeight: 700, color: L.green, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Klart til å lime inn</p>
+                                          <p style={{ margin: 0, fontSize: 13, color: L.ink, lineHeight: 1.55, fontStyle: 'italic' }}>«{a.details.reply}»</p>
+                                        </div>
+                                      )}
 
                                       {/* Before / After */}
                                       {(a.before_value || a.after_value) && (
@@ -14011,19 +14056,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         </div>
                                       )}
 
-                                      {/* Copy button */}
-                                      {a.category === 'suggestion' && a.after_value && (
-                                        <button
-                                          type="button"
-                                          onClick={() => { navigator.clipboard?.writeText(a.after_value); toastSuccess('Kopiert til utklipp.'); }}
-                                          onMouseDown={pressD}
-                                          onMouseUp={pressU}
-                                          onMouseLeave={pressU}
-                                          style={{ marginTop: 12, background: 'none', border: 'none', color: L.ink, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
-                                        >
-                                          <Copy size={12} /> Kopier til utklipp
-                                        </button>
-                                      )}
+                                      {/* Handlingsrad: kopier + merk som gjort */}
+                                      {(() => {
+                                        const copyText = a.details?.reply || (a.category === 'suggestion' ? a.after_value : null);
+                                        const canMarkDone = a.category === 'suggestion' || a.category === 'alert';
+                                        if (!copyText && !canMarkDone) return null;
+                                        return (
+                                          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                                            {copyText && (
+                                              <button
+                                                type="button"
+                                                onClick={() => { navigator.clipboard?.writeText(copyText); toastSuccess('Kopiert til utklipp.'); }}
+                                                onMouseDown={pressD}
+                                                onMouseUp={pressU}
+                                                onMouseLeave={pressU}
+                                                style={{ background: 'none', border: 'none', color: L.ink, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
+                                              >
+                                                <Copy size={12} /> Kopier til utklipp
+                                              </button>
+                                            )}
+                                            {canMarkDone && (
+                                              <button
+                                                type="button"
+                                                onClick={() => markActionDone(a.id, a.status !== 'done')}
+                                                onMouseDown={pressD}
+                                                onMouseUp={pressU}
+                                                onMouseLeave={pressU}
+                                                style={{ background: 'none', border: 'none', color: a.status === 'done' ? L.muted : L.green, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5, transition: `transform 160ms ${EASE}` }}
+                                              >
+                                                <CheckCircle2 size={12} /> {a.status === 'done' ? 'Angre «gjort»' : 'Merk som gjort'}
+                                              </button>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
                                 );

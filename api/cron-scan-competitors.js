@@ -654,6 +654,446 @@ async function runGeo(req, res) {
     return res.status(200).json(summary);
 }
 
+// =====================================================================
+// MULIGHETS-MOTOR (job=opportunities): «Nesten på side 1» + innholds-forfall.
+// Leser GSC-data (keywords-tabellen via sites), tar ukentlig snapshot i
+// keyword_snapshots, og skriver forslag/varsler til sikt_actions +
+// keyword_opportunities (som mater «Ukens mulighet» i kvitteringen).
+// Kjører for ALLE betalende kunder — dette er Basic sin kjerneverdi.
+// =====================================================================
+const OPP_MAX_CUSTOMERS = 6;        // Hobby 60s-timeout
+const OPP_NEAR_MISS_PER_RUN = 3;    // maks nye nesten-på-side-1 per kunde
+const OPP_DECAY_PER_RUN = 2;        // maks forfall-varsler per kunde
+const OPP_DEDUP_DAYS = 30;          // ikke gjenta samme nesten-på-side-1
+const OPP_DECAY_DEDUP_DAYS = 14;    // ikke gjenta samme forfall-varsel
+const OPP_MIN_DROP = 3;             // posisjonsfall som regnes som forfall
+const OPP_SNAPSHOT_CAP = 100;       // maks søkeord i ukens snapshot
+
+function oppEstimatedClicks(impressions) {
+    // Grovt estimat: ~7 % CTR på posisjon 4–5 mot ~1–2 % på side 2.
+    return Math.max(5, Math.round((impressions || 0) * 0.07));
+}
+
+async function oppGenerateRecipe({ keyword, position, companyName }) {
+    const fallback =
+        `Du er nr. ${Math.round(position)} på «${keyword}». Utvid siden som rangerer med et avsnitt ` +
+        `som svarer direkte på søket, og få «${keyword}» inn i sidetittelen. Det er ofte nok til side 1.`;
+    const text = await afOpenAiText({
+        system:
+            'Du er SEO-rådgiver for norske småbedrifter. Gi ÉN konkret, gjennomførbar oppskrift ' +
+            '(2–3 setninger, plain norsk, ingen jargon) for å løfte et søkeord fra side 2 til side 1. ' +
+            'Vær spesifikk: hva slags avsnitt/tittel/innhold de skal legge til. Svar med KUN oppskriften.',
+        user: `Bedrift: ${companyName || 'ukjent'}\nSøkeord: ${keyword}\nNåværende posisjon: ${Math.round(position)}`,
+        maxTokens: 160,
+    });
+    return text && text.length > 30 ? text : fallback;
+}
+
+async function oppGenerateRefresh({ keyword, prevPosition, position, companyName }) {
+    const fallback =
+        `«${keyword}» falt fra ${Math.round(prevPosition)} til ${Math.round(position)}. Oppdater siden med ` +
+        `ferskt innhold (dato, priser, et nytt avsnitt) — Google belønner nylig oppdaterte sider.`;
+    const text = await afOpenAiText({
+        system:
+            'Du er SEO-rådgiver for norske småbedrifter. En side har falt på Google. Gi ÉN konkret ' +
+            'oppfriskings-oppskrift (2–3 setninger, plain norsk): hva de bør oppdatere/legge til for å ' +
+            'ta tilbake posisjonen. Svar med KUN oppskriften.',
+        user: `Bedrift: ${companyName || 'ukjent'}\nSøkeord: ${keyword}\nFalt fra posisjon ${Math.round(prevPosition)} til ${Math.round(position)}.`,
+        maxTokens: 160,
+    });
+    return text && text.length > 30 ? text : fallback;
+}
+
+async function runOpportunities(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, company_name, package_name')
+        .not('package_name', 'is', null);
+    if (error) {
+        Sentry.captureException(error);
+        return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
+    }
+
+    const summary = { customers: 0, nearMiss: 0, decay: 0, snapshots: 0, skipped: 0, errors: 0, dryRun };
+    const dedupSince = new Date(Date.now() - OPP_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const decayDedupSince = new Date(Date.now() - OPP_DECAY_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    // Forrige snapshot: 4–10 dager gammelt (ukentlig kjøring med slack)
+    const snapFrom = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    const snapTo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+
+    let processed = 0;
+    for (const client of clients || []) {
+        if (processed >= OPP_MAX_CUSTOMERS) break;
+
+        // GSC-data ligger i keywords-tabellen, nøklet på site_id
+        const { data: site } = await supabase
+            .from('sites')
+            .select('id')
+            .eq('user_id', client.user_id)
+            .maybeSingle();
+        if (!site?.id) { summary.skipped += 1; continue; }
+
+        const { data: kws } = await supabase
+            .from('keywords')
+            .select('keyword, position, clicks, impressions')
+            .eq('site_id', site.id)
+            .order('impressions', { ascending: false })
+            .limit(OPP_SNAPSHOT_CAP);
+        if (!kws || kws.length === 0) { summary.skipped += 1; continue; }
+
+        processed += 1;
+        summary.customers += 1;
+
+        // --- Forrige ukes snapshot (for forfall-sammenligning) — hentes FØR vi skriver nytt ---
+        const { data: prevSnap } = await supabase
+            .from('keyword_snapshots')
+            .select('keyword, position, captured_at')
+            .eq('user_id', client.user_id)
+            .gte('captured_at', snapFrom)
+            .lte('captured_at', snapTo)
+            .order('captured_at', { ascending: false });
+        const prevByKeyword = new Map();
+        for (const row of prevSnap || []) {
+            if (!prevByKeyword.has(row.keyword)) prevByKeyword.set(row.keyword, row.position);
+        }
+
+        // --- Ukentlig snapshot ---
+        if (!dryRun) {
+            const snapRows = kws.map(k => ({
+                user_id: client.user_id,
+                keyword: k.keyword,
+                position: k.position,
+                clicks: k.clicks,
+                impressions: k.impressions,
+            }));
+            const { error: snapErr } = await supabase.from('keyword_snapshots').insert(snapRows);
+            if (snapErr) { summary.errors += 1; console.warn('[opp] snapshot feilet:', snapErr.message); }
+            else summary.snapshots += snapRows.length;
+        }
+
+        // --- Dedupe: hvilke søkeord har fått forslag nylig? ---
+        const { data: recentActions } = await supabase
+            .from('sikt_actions')
+            .select('action_type, details, created_at')
+            .eq('user_id', client.user_id)
+            .in('action_type', ['near_miss', 'decay'])
+            .gte('created_at', dedupSince);
+        const recentNearMiss = new Set();
+        const recentDecay = new Set();
+        for (const a of recentActions || []) {
+            const kw = a?.details?.keyword;
+            if (!kw) continue;
+            if (a.action_type === 'near_miss') recentNearMiss.add(kw);
+            if (a.action_type === 'decay' && a.created_at >= decayDedupSince) recentDecay.add(kw);
+        }
+
+        // --- 1) Nesten på side 1: posisjon 11–20, høyest visninger først ---
+        const nearMisses = kws
+            .filter(k => typeof k.position === 'number' && k.position > 10.4 && k.position <= 20 && !recentNearMiss.has(k.keyword))
+            .slice(0, OPP_NEAR_MISS_PER_RUN);
+
+        for (const k of nearMisses) {
+            const estClicks = oppEstimatedClicks(k.impressions);
+            const recipe = await oppGenerateRecipe({ keyword: k.keyword, position: k.position, companyName: client.company_name });
+            if (dryRun) { summary.nearMiss += 1; continue; }
+
+            // Mat «Ukens mulighet» i kvitteringen (samme tabell som konkurrent-gap)
+            await supabase.from('keyword_opportunities').upsert({
+                user_id: client.user_id,
+                keyword: k.keyword,
+                search_volume: k.impressions || 0,
+                difficulty: 30,
+                recommendation_type: 'gsc_near_miss',
+                recommendation_text: recipe,
+                estimated_traffic: estClicks,
+                competitor_ids: [],
+                discovered_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,keyword' });
+
+            const { error: actErr } = await supabase.from('sikt_actions').insert({
+                user_id: client.user_id,
+                action_type: 'near_miss',
+                category: 'suggestion',
+                title: `Nesten på side 1: «${k.keyword}» (nr. ${Math.round(k.position)})`,
+                details: {
+                    keyword: k.keyword,
+                    position: k.position,
+                    impressions: k.impressions,
+                    estimated_clicks: estClicks,
+                    explanation: `Du er nr. ${Math.round(k.position)} — ${estClicks}+ ekstra besøk/mnd venter på side 1.`,
+                    recipe,
+                },
+                page_url: null,
+                status: 'open',
+            });
+            if (actErr) { summary.errors += 1; console.warn('[opp] near_miss insert feilet:', actErr.message); }
+            else summary.nearMiss += 1;
+        }
+
+        // --- 2) Innholds-forfall: falt ≥3 plasser siden forrige snapshot ---
+        const decays = kws
+            .map(k => ({ ...k, prevPosition: prevByKeyword.get(k.keyword) }))
+            .filter(k =>
+                typeof k.position === 'number' &&
+                typeof k.prevPosition === 'number' &&
+                k.prevPosition <= 20 &&
+                k.position - k.prevPosition >= OPP_MIN_DROP &&
+                !recentDecay.has(k.keyword)
+            )
+            .sort((a, b) => (b.position - b.prevPosition) - (a.position - a.prevPosition))
+            .slice(0, OPP_DECAY_PER_RUN);
+
+        for (const k of decays) {
+            const recipe = await oppGenerateRefresh({ keyword: k.keyword, prevPosition: k.prevPosition, position: k.position, companyName: client.company_name });
+            if (dryRun) { summary.decay += 1; continue; }
+            const { error: actErr } = await supabase.from('sikt_actions').insert({
+                user_id: client.user_id,
+                action_type: 'decay',
+                category: 'alert',
+                title: `«${k.keyword}» falt fra ${Math.round(k.prevPosition)} til ${Math.round(k.position)}`,
+                details: {
+                    keyword: k.keyword,
+                    prev_position: k.prevPosition,
+                    position: k.position,
+                    explanation: 'Siden taper synlighet — oppfrisking nå tar den som regel tilbake.',
+                    recipe,
+                },
+                page_url: null,
+                status: 'open',
+            });
+            if (actErr) { summary.errors += 1; console.warn('[opp] decay insert feilet:', actErr.message); }
+            else summary.decay += 1;
+        }
+    }
+
+    console.log('[opp] ferdig:', JSON.stringify(summary));
+    return res.status(200).json(summary);
+}
+
+// =====================================================================
+// GBP-MOTOR (job=gbp): månedlig sjekk av Google Business-profilen via
+// SerpAPI (Google Maps). Funn + AI-svarutkast på anmeldelser skrives til
+// sikt_actions. For lokale bedrifter er Maps-profilen ofte viktigere enn
+// nettsiden — dette er differensierende Basic-verdi.
+// =====================================================================
+const GBP_MAX_CUSTOMERS = 5;     // SerpAPI-budsjett + Hobby-timeout
+const GBP_DEDUP_DAYS = 25;       // ~månedlig per kunde
+const GBP_MAX_REVIEW_DRAFTS = 2; // maks svarutkast per kjøring
+
+function gbpDomainOf(url) {
+    if (!url) return '';
+    try {
+        const u = String(url).startsWith('http') ? String(url) : `https://${url}`;
+        return new URL(u).hostname.replace(/^www\./i, '').toLowerCase();
+    } catch { return ''; }
+}
+
+function gbpFindPlace(serpJson, companyName, websiteDomain) {
+    if (serpJson?.place_results?.title) return serpJson.place_results;
+    const locals = Array.isArray(serpJson?.local_results) ? serpJson.local_results : [];
+    const nameLc = (companyName || '').toLowerCase();
+    return locals.find(p => {
+        const t = (p.title || '').toLowerCase();
+        const w = gbpDomainOf(p.website);
+        return (websiteDomain && w === websiteDomain) || (nameLc && (t.includes(nameLc) || nameLc.includes(t)));
+    }) || null;
+}
+
+async function gbpDraftReply({ reviewText, rating, reviewer, companyName }) {
+    return afOpenAiText({
+        system:
+            'Du skriver svar på Google-anmeldelser for norske småbedrifter. Krav: 2–4 setninger, ' +
+            'varmt og profesjonelt, takk alltid, ved kritikk: beklag konkret og inviter til dialog — ' +
+            'aldri defensivt. Ikke lov rabatter. Svar med KUN svarteksten.',
+        user: `Bedrift: ${companyName}\nAnmelder: ${reviewer || 'kunde'}\nVurdering: ${rating || '?'} av 5\nAnmeldelse: ${String(reviewText || '').slice(0, 500)}`,
+        maxTokens: 180,
+        temperature: 0.6,
+    });
+}
+
+async function runGbp(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    if (!SERP_API_KEY) {
+        return res.status(500).json({ error: 'SERP_API_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, company_name, website_url, package_name')
+        .not('package_name', 'is', null)
+        .not('company_name', 'is', null);
+    if (error) {
+        Sentry.captureException(error);
+        return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
+    }
+
+    const summary = { customers: 0, findings: 0, replyDrafts: 0, notFound: 0, skipped: 0, errors: 0, dryRun };
+    const dedupSince = new Date(Date.now() - GBP_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+    let processed = 0;
+    for (const client of clients || []) {
+        if (processed >= GBP_MAX_CUSTOMERS) break;
+        const company = (client.company_name || '').trim();
+        if (!company) { summary.skipped += 1; continue; }
+
+        // Månedlig dedupe
+        const { data: recent } = await supabase
+            .from('sikt_actions')
+            .select('id')
+            .eq('user_id', client.user_id)
+            .eq('action_type', 'gbp_check')
+            .gte('created_at', dedupSince)
+            .limit(1);
+        if (Array.isArray(recent) && recent.length) { summary.skipped += 1; continue; }
+
+        processed += 1;
+        summary.customers += 1;
+
+        // --- Slå opp bedriften på Google Maps ---
+        let serpJson = null;
+        try {
+            const url = `https://serpapi.com/search.json?engine=google_maps&type=search&q=${encodeURIComponent(company)}&google_domain=google.no&hl=no&gl=no&api_key=${SERP_API_KEY}`;
+            const r = await fetchExternalWithOptionalRetry429(url);
+            if (isSerpApiRateLimitedResponse(r)) { summary.errors += 1; break; }
+            if (r.ok) serpJson = await r.json();
+        } catch (e) {
+            summary.errors += 1;
+            console.warn('[gbp] SerpAPI feilet for', company, e?.message || e);
+            continue;
+        }
+
+        const websiteDomain = gbpDomainOf(client.website_url);
+        const place = serpJson ? gbpFindPlace(serpJson, company, websiteDomain) : null;
+        const actions = [];
+
+        if (!place) {
+            summary.notFound += 1;
+            actions.push({
+                category: 'finding',
+                title: 'Fant ikke bedriften din på Google Maps',
+                details: {
+                    explanation:
+                        `Vi søkte etter «${company}» på Google Maps uten klart treff. Uten en Google ` +
+                        'Business-profil er du usynlig i kart-søk — der mange lokale kunder leter først.',
+                    recipe: 'Opprett (eller gjør krav på) profilen gratis på business.google.com. Det tar ca. 15 minutter og er noe av det mest verdifulle du kan gjøre for lokal synlighet.',
+                },
+            });
+        } else {
+            const rating = place.rating ?? null;
+            const reviews = place.reviews ?? 0;
+            const hasHours = !!(place.hours || place.operating_hours || place.open_state);
+            const hasWebsite = !!place.website;
+
+            if (!hasHours) {
+                actions.push({
+                    category: 'finding',
+                    title: 'Google-profilen mangler åpningstider',
+                    details: {
+                        explanation: 'Kunder som ikke finner åpningstider, velger ofte konkurrenten som viser dem. Dette er 2 minutters jobb med stor effekt.',
+                        recipe: 'Logg inn på business.google.com → Rediger profil → Åpningstider, og fyll inn alle dager.',
+                    },
+                });
+            }
+            if (!hasWebsite && client.website_url) {
+                actions.push({
+                    category: 'finding',
+                    title: 'Google-profilen mangler lenke til nettsiden din',
+                    details: {
+                        explanation: 'Profilen din sender ingen besøkende til nettsiden — du går glipp av gratis trafikk fra kartsøk.',
+                        recipe: `Logg inn på business.google.com → Rediger profil → Nettsted, og legg inn ${client.website_url}.`,
+                    },
+                });
+            }
+            if (reviews > 0 && reviews < 10) {
+                actions.push({
+                    category: 'suggestion',
+                    title: `Kun ${reviews} Google-anmeldelser — be de beste kundene dine om flere`,
+                    details: {
+                        explanation: `Du har ${rating ? rating + '★ på ' : ''}${reviews} anmeldelser. Bedrifter med 10+ vinner ofte kartsøket. Send lenken til 5 fornøyde kunder denne uken.`,
+                        recipe: 'Finn delingslenken på business.google.com → «Be om anmeldelser», og send den på SMS/e-post til de siste fornøyde kundene dine.',
+                    },
+                });
+            }
+
+            // --- Svarutkast på ubesvarte anmeldelser ---
+            if (place.data_id && reviews > 0 && summary.replyDrafts < GBP_MAX_REVIEW_DRAFTS * GBP_MAX_CUSTOMERS) {
+                try {
+                    const rUrl = `https://serpapi.com/search.json?engine=google_maps_reviews&data_id=${encodeURIComponent(place.data_id)}&hl=no&sort_by=newestFirst&api_key=${SERP_API_KEY}`;
+                    const rr = await fetchExternalWithOptionalRetry429(rUrl);
+                    if (rr.ok) {
+                        const rJson = await rr.json();
+                        const unanswered = (rJson?.reviews || [])
+                            .filter(rev => !rev?.response?.snippet && (rev?.snippet || '').length > 0)
+                            .slice(0, GBP_MAX_REVIEW_DRAFTS);
+                        for (const rev of unanswered) {
+                            const reply = await gbpDraftReply({
+                                reviewText: rev.snippet,
+                                rating: rev.rating,
+                                reviewer: rev?.user?.name,
+                                companyName: company,
+                            });
+                            if (!reply) continue;
+                            actions.push({
+                                category: 'suggestion',
+                                title: `Svarutkast klart: anmeldelse fra ${rev?.user?.name || 'en kunde'} (${rev.rating || '?'}★)`,
+                                details: {
+                                    explanation: `Ubesvart anmeldelse: «${String(rev.snippet).slice(0, 140)}…» Bedrifter som svarer på anmeldelser, oppfattes som mer til å stole på — av både kunder og Google.`,
+                                    recipe: 'Kopier svaret under, logg inn på business.google.com → Anmeldelser, og lim inn.',
+                                    reply,
+                                },
+                            });
+                            summary.replyDrafts += 1;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[gbp] reviews feilet for', company, e?.message || e);
+                }
+            }
+
+            // Alltid én månedlig status-rad (dedupe-anker + synlig i kvitteringen)
+            actions.push({
+                category: 'finding',
+                title: rating
+                    ? `Google-profil sjekket: ${rating}★ (${reviews} anmeldelser)`
+                    : 'Google-profilen din er sjekket',
+                details: {
+                    explanation: 'Månedlig kontroll av Google Business-profilen: synlighet, åpningstider, nettside-lenke og anmeldelser.',
+                    rating,
+                    reviews,
+                },
+            });
+        }
+
+        if (dryRun) { summary.findings += actions.length; continue; }
+        for (const a of actions) {
+            const { error: actErr } = await supabase.from('sikt_actions').insert({
+                user_id: client.user_id,
+                action_type: 'gbp_check',
+                category: a.category,
+                title: a.title,
+                details: a.details,
+                page_url: null,
+                status: 'open',
+            });
+            if (actErr) { summary.errors += 1; console.warn('[gbp] insert feilet:', actErr.message); }
+            else summary.findings += 1;
+        }
+    }
+
+    console.log('[gbp] ferdig:', JSON.stringify(summary));
+    return res.status(200).json(summary);
+}
+
 export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: aksepter både Bearer-secret og x-cron-secret ---
     const authHeader = req.headers.authorization;
@@ -671,6 +1111,16 @@ export default withSentry(async function handler(req, res) {
     // Dispatch: ukentlig GEO-sjekk (AI-synlighet)
     if (req.query?.job === 'geo') {
         return await runGeo(req, res);
+    }
+
+    // Dispatch: ukentlig mulighets-motor (nesten-på-side-1 + innholds-forfall)
+    if (req.query?.job === 'opportunities') {
+        return await runOpportunities(req, res);
+    }
+
+    // Dispatch: månedlig Google Business-profil-sjekk
+    if (req.query?.job === 'gbp') {
+        return await runGbp(req, res);
     }
 
     if (!SUPABASE_SERVICE_KEY || !SERP_API_KEY) {
