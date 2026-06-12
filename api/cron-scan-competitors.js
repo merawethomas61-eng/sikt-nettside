@@ -552,7 +552,10 @@ async function geoAskGemini(question) {
                 signal: AbortSignal.timeout(GEO_TIMEOUT_MS),
             },
         );
-        if (!r.ok) return null;
+        if (!r.ok) {
+            console.warn('[geo] Gemini HTTP', r.status);
+            return null;
+        }
         const d = await r.json();
         const parts = d?.candidates?.[0]?.content?.parts;
         return Array.isArray(parts) ? (parts.map((p) => p?.text || '').join(' ').trim() || null) : null;
