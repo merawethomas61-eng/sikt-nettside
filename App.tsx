@@ -1,5 +1,6 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
-import { DashboardHome } from './DashboardHome';
+// DashboardHome bruker recharts → lazy-last den så charts-chunken holdes ute av markedssidene.
+const DashboardHome = React.lazy(() => import('./DashboardHome').then(m => ({ default: m.DashboardHome })));
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -129,8 +130,19 @@ interface KeywordData {
   // NYTT: Vi lagrer konkurrentene direkte fra API-et
   competitors: { position: number; title: string; url: string; snippet: string }[];
 }
-// Legg til disse i import-listen din fra 'recharts' (hvis den ikke finnes, lag en ny linje):
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, BarChart, Bar, RadialBarChart, RadialBar, Cell } from 'recharts';
+// recharts (+ d3, ~110 KB gzip) er flyttet til src/PortalCharts.tsx og lazy-lastes
+// kun i portalen, slik at markedssidene slipper hele charts-chunken.
+const LazySparkline = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.Sparkline })));
+const Sparkline = (props: { data: number[]; color?: string; height?: number; fill?: boolean }) => (
+  <React.Suspense fallback={<div style={{ height: props.height ?? 32 }} />}><LazySparkline {...props} /></React.Suspense>
+);
+const LazyRadialScore = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.RadialScore })));
+const RadialScore = (props: { value: number | null; size?: number; theme: PortalTheme }) => (
+  <React.Suspense fallback={<div style={{ width: props.size ?? 96, height: props.size ?? 96 }} />}><LazyRadialScore {...props} /></React.Suspense>
+);
+const LazyScoreHistoryChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.ScoreHistoryChart })));
+const LazyKeywordRankChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.KeywordRankChart })));
+const LazyPositionBucketsChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.PositionBucketsChart })));
 
 // --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
 const InfoHint = ({ text }: { text: string }) => (
@@ -4463,13 +4475,6 @@ const EmptyState: React.FC<{
   </div>
 );
 
-const scoreStatus = (score: number | null) => {
-  if (score == null) return { label: 'Ikke målt', shortLabel: 'Mangler data', color: '#64748b', textClass: 'text-slate-500' };
-  if (score >= 80) return { label: 'Sterk score', shortLabel: 'Bra', color: '#10b981', textClass: 'text-emerald-600' };
-  if (score >= 60) return { label: 'God, men kan løftes', shortLabel: 'OK', color: '#f59e0b', textClass: 'text-amber-600' };
-  return { label: 'Trenger forbedring', shortLabel: 'Svak', color: '#f43f5e', textClass: 'text-rose-600' };
-};
-
 const dedupeSiktActions = (rows: any[]) => {
   const seen = new Set<string>();
   return rows.filter((row: any) => {
@@ -4486,85 +4491,6 @@ const dedupeSiktActions = (rows: any[]) => {
     seen.add(key);
     return true;
   });
-};
-
-// Sparkline — bittesmå linjer for trend-data (score-historikk, klikk-trend osv.).
-// Bruker Recharts med ingen aksene/grid for et minimalistisk uttrykk.
-const Sparkline: React.FC<{
-  data: number[];
-  color?: string; // tailwind text-* eller hex
-  height?: number;
-  fill?: boolean;
-}> = ({ data, color = '#7c3aed', height = 32, fill = true }) => {
-  if (!data || data.length < 2) {
-    return <div className="text-[10px] leading-snug text-slate-400">For få målinger til trend</div>;
-  }
-  const points = data.map((v, i) => ({ i, v }));
-  return (
-    <div style={{ height }} className="w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={points} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area
-            type="monotone"
-            dataKey="v"
-            stroke={color}
-            strokeWidth={1.75}
-            fill={fill ? `url(#spark-${color.replace('#', '')})` : 'none'}
-            isAnimationActive={false}
-            dot={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-// RadialScore — donut-stil maaler 0-100 med farge basert paa score.
-// Brukes til total-score paa Hjem og PageSpeed.
-const RadialScore: React.FC<{
-  value: number | null;
-  size?: number;
-  theme: PortalTheme;
-}> = ({ value, size = 96, theme }) => {
-  const hasValue = value != null;
-  const v = hasValue ? Math.max(0, Math.min(100, value)) : 0;
-  const meta = scoreStatus(hasValue ? v : null);
-  const color = meta.color;
-  const trackColor = theme === 'light' ? '#f1f5f9' : '#1e293b';
-  const data = [{ name: 'score', value: v, fill: color }];
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <RadialBarChart
-          innerRadius="72%"
-          outerRadius="100%"
-          data={data}
-          startAngle={90}
-          endAngle={-270}
-        >
-          <RadialBar
-            background={{ fill: trackColor }}
-            dataKey="value"
-            cornerRadius={6}
-            isAnimationActive={false}
-          />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-sm font-semibold text-center px-1 leading-tight ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-          {hasValue ? Math.round(v) : 'Ikke målt'}
-        </span>
-        <span className={`text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>/ 100</span>
-        <span className={`text-[10px] font-medium mt-0.5 ${meta.textClass}`}>{meta.shortLabel}</span>
-      </div>
-    </div>
-  );
 };
 
 // KpiTile — liten KPI-rute med subtil fargeaksent. Brukes paa Hjem.
@@ -10306,21 +10232,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             )}
             <div className={`${tabFadeInClass} space-y-6`}>
-              <DashboardHome
-                user={user}
-                clientData={clientData}
-                formData={formData}
-                analysisResults={analysisResults}
-                scoreHistory={scoreHistory}
-                siktActions={siktActions}
-                realRankings={realRankings}
-                gscConnected={gscConnected}
-                gscKeywords={gscKeywords}
-                isAnalyzing={isAnalyzing}
-                geo={geoSummary}
-                onRunAnalysis={runRealAnalysis}
-                onNavigate={setActiveTab}
-              />
+              <React.Suspense fallback={<div className="h-64" />}>
+                <DashboardHome
+                  user={user}
+                  clientData={clientData}
+                  formData={formData}
+                  analysisResults={analysisResults}
+                  scoreHistory={scoreHistory}
+                  siktActions={siktActions}
+                  realRankings={realRankings}
+                  gscConnected={gscConnected}
+                  gscKeywords={gscKeywords}
+                  isAnalyzing={isAnalyzing}
+                  geo={geoSummary}
+                  onRunAnalysis={runRealAnalysis}
+                  onNavigate={setActiveTab}
+                />
+              </React.Suspense>
               <div className="mt-12 pb-20">
                 <DashboardCompetitorWidget
                   userId={user.id}
@@ -11121,22 +11049,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <p className="text-sm" style={{ color: palette.muted }}>Grafen vises når du har minst to målepunkter.</p>
                           ) : (
                             <div className="h-52">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <LineChart
-                                  data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))}
-                                  margin={{ top: 6, right: 6, bottom: 0, left: -20 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={palette.border} />
-                                  <XAxis dataKey="idx" tick={false} axisLine={false} tickLine={false} />
-                                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} />
-                                  <RechartsTooltip
-                                    contentStyle={{ background: '#fff', border: `1px solid ${palette.border}`, borderRadius: 10, fontSize: 12 }}
-                                    labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
-                                  />
-                                  <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} />
-                                  <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} />
-                                </LineChart>
-                              </ResponsiveContainer>
+                              <React.Suspense fallback={<div className="w-full h-full" />}>
+                                <LazyScoreHistoryChart scoreHistory={scoreHistory} palette={palette} />
+                              </React.Suspense>
                             </div>
                           )}
                         </div>
@@ -11616,33 +11531,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               </div>
                             </div>
                             <div style={{ height: 176 }}>
-                              <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-                                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
-                                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
-                                  <YAxis
-                                    reversed
-                                    allowDecimals={false}
-                                    tick={{ fontSize: 10, fill: '#808080' }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    domain={['dataMin - 1', 'dataMax + 1']}
-                                  />
-                                  <RechartsTooltip
-                                    contentStyle={{ background: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
-                                    formatter={(val: any) => [`#${val}`, 'Posisjon']}
-                                  />
-                                  <Line
-                                    type="monotone"
-                                    dataKey="rank"
-                                    stroke="#1A1A1A"
-                                    strokeWidth={2}
-                                    dot={{ fill: '#52A447', r: 3, strokeWidth: 0 }}
-                                    activeDot={{ fill: '#52A447', r: 5, strokeWidth: 0 }}
-                                    isAnimationActive={false}
-                                  />
-                                </LineChart>
-                              </ResponsiveContainer>
+                              <React.Suspense fallback={<div className="w-full h-full" />}>
+                                <LazyKeywordRankChart data={chartData} />
+                              </React.Suspense>
                             </div>
                           </div>
                         ) : selected.source === 'tracked' ? (
@@ -11759,20 +11650,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   ))}
                 </div>
                 <div style={{ height: 112 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={positionBuckets} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#808080' }} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
-                      <RechartsTooltip
-                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
-                        cursor={{ fill: '#F5F5F0' }}
-                      />
-                      <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
-                        {positionBuckets.map((b, i) => <Cell key={i} fill={b.fill} />)}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <React.Suspense fallback={<div className="w-full h-full" />}>
+                    <LazyPositionBucketsChart data={positionBuckets} />
+                  </React.Suspense>
                 </div>
               </div>
             )}

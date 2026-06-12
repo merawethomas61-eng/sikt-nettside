@@ -110,5 +110,24 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), viteApiPlugin()],
+    build: {
+      // Del opp den store bundlen i parallell-lastbare, cachebare vendor-chunks
+      // i stedet for én blokkerende fil. recharts (kun portal) + gsap er tunge.
+      chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+            // recharts/d3 manuelt-chunkes IKKE — da følger de de lazy-lastede
+            // portal-chunkene (DashboardHome/PortalCharts) og holdes ute av entry-preload.
+            if (id.includes('gsap')) return 'gsap'
+            if (id.includes('@supabase')) return 'supabase'
+            if (id.includes('@stripe')) return 'stripe'
+            if (id.includes('lucide-react')) return 'icons'
+            if (id.includes('react-dom') || id.includes('/scheduler/') || id.match(/\/react\//)) return 'react-vendor'
+          },
+        },
+      },
+    },
   }
 })
