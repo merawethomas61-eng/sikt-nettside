@@ -1,6 +1,4 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
-// DashboardHome bruker recharts → lazy-last den så charts-chunken holdes ute av markedssidene.
-const DashboardHome = React.lazy(() => import('./DashboardHome').then(m => ({ default: m.DashboardHome })));
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -143,6 +141,9 @@ const RadialScore = (props: { value: number | null; size?: number; theme: Portal
 const LazyScoreHistoryChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.ScoreHistoryChart })));
 const LazyKeywordRankChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.KeywordRankChart })));
 const LazyPositionBucketsChart = React.lazy(() => import('./src/PortalCharts').then(m => ({ default: m.PositionBucketsChart })));
+
+// DashboardHome bruker recharts → lazy-last den så charts-chunken holdes ute av markedssidene.
+const DashboardHome = React.lazy(() => import('./DashboardHome').then(m => ({ default: m.DashboardHome })));
 
 // --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
 const InfoHint = ({ text }: { text: string }) => (
