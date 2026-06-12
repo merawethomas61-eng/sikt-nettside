@@ -24,6 +24,14 @@ type Client = {
   website_url: string | null
 }
 
+type Opportunity = {
+  keyword: string
+  recommendation_text: string | null
+  estimated_traffic: number | null
+  difficulty: string | number | null
+  search_volume: number | null
+}
+
 Deno.serve(async (req) => {
   // Krev secret token i custom header så kun pg_cron kan kalle denne
   const cronSecret = req.headers.get('x-cron-secret')
@@ -102,6 +110,16 @@ Deno.serve(async (req) => {
       ? Math.max(1, Math.round((Date.now() - new Date(firstAction.created_at).getTime()) / (7 * 24 * 60 * 60 * 1000)))
       : 1
 
+    // Ukens mulighet: høyest-verdi vekstmulighet (gap-søkeord fra konkurrentanalysen).
+    // Gjør kvitteringen offensiv — og sørger for at den aldri er tom.
+    const { data: oppRows } = await supabase
+      .from('keyword_opportunities')
+      .select('keyword, recommendation_text, estimated_traffic, difficulty, search_volume')
+      .eq('user_id', client.user_id)
+      .order('estimated_traffic', { ascending: false, nullsFirst: false })
+      .limit(1)
+    const topOpportunity = ((oppRows ?? []) as Opportunity[])[0] ?? null
+
     const html = buildEmailHtml({
       companyName,
       firstName,
@@ -118,9 +136,10 @@ Deno.serve(async (req) => {
       weeksActive,
       geoMentioned,
       geoTotal,
+      topOpportunity,
     })
 
-    const subject = buildSubject({ fixes, findings, plan })
+    const subject = buildSubject({ fixes, findings, plan, topOpportunity })
 
     const result = await sendEmail({
       to: client.email,
@@ -159,9 +178,11 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
   })
 }
 
-function buildSubject({ fixes, findings, plan }: { fixes: SiktAction[]; findings: SiktAction[]; plan: string }): string {
+function buildSubject({ fixes, findings, plan, topOpportunity }: { fixes: SiktAction[]; findings: SiktAction[]; plan: string; topOpportunity: Opportunity | null }): string {
   if (fixes.length > 0) return `Sikt fikset ${fixes.length} ting for deg denne uken`
   if (findings.length > 0) return `Sikt fant ${findings.length} ting du bør se på denne uken`
+  // Stille uke på arbeid → led med vekst, aldri en tom «rapport»
+  if (topOpportunity) return `Ukens mulighet: ${topOpportunity.keyword}`
   if (plan === 'Premium Pakke') return `Din ukentlige SEO og AI-rapport fra Sikt`
   return `Din ukentlige rapport fra Sikt`
 }
@@ -181,6 +202,41 @@ function row(items: SiktAction[], borderColor: string): string {
       </td>
     </tr>
   `).join('')
+}
+
+function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean): string {
+  if (!opp) return ''
+
+  const traffic = typeof opp.estimated_traffic === 'number' && opp.estimated_traffic > 0
+    ? `~${opp.estimated_traffic} flere besøk/mnd hvis du tar den`
+    : null
+
+  const recommendation = opp.recommendation_text
+    ? escapeHtml(opp.recommendation_text)
+    : `En konkurrent rangerer på «${escapeHtml(opp.keyword)}» — det gjør ikke du ennå. Tar du dette søkeordet, henter du trafikken deres.`
+
+  const action = isStandardOrAbove
+    ? 'Sikt tar tak i denne for deg — du ser den i neste kvittering.'
+    : 'Med Standard fikser Sikt slike muligheter automatisk. På Basic får du oppskriften — gjør det selv, eller oppgrader.'
+
+  // Fremhevet kort (lys lilla) når det er ukens hovedsak; ellers samme stil som øvrige seksjoner.
+  const bg = lightWeek ? '#faf7ff' : '#ffffff'
+  const border = lightWeek ? '#e4d8fb' : '#e2e0ea'
+
+  return `
+  <tr><td style="padding-top:32px">
+    <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Ukens mulighet</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:${bg};border:1px solid ${border};border-radius:14px;padding:20px">
+        <div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:6px;letter-spacing:-0.3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(opp.keyword)}</div>
+        ${traffic ? `<div style="display:inline-block;background:#f0e9fe;color:#6b21a8;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${traffic}</div>` : ''}
+        <div style="font-size:14px;color:#6b6880;line-height:1.65;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${recommendation}</div>
+        <div style="font-size:13px;color:#7c3aed;font-weight:700;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${action}</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
+  `
 }
 
 function section(label: string, content: string): string {
@@ -209,18 +265,35 @@ function buildEmailHtml(opts: {
   weeksActive: number
   geoMentioned: number
   geoTotal: number
+  topOpportunity: Opportunity | null
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, topOpportunity } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
   const monthName = now.toLocaleDateString('nb-NO', { month: 'long' })
   const dateStr = now.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  const headlineCount = fixes.length > 0 ? fixes.length : findings.length + suggestions.length
-  const headlineWord = fixes.length > 0 ? 'fikset' : 'fant'
+  const findFindCount = findings.length + suggestions.length
+  const lightWeek = fixes.length === 0 && findings.length === 0 && suggestions.length === 0 && alerts.length === 0
 
-  const allEmpty = fixes.length === 0 && findings.length === 0 && suggestions.length === 0 && alerts.length === 0
+  // Aldri «0 ting». Tom arbeidsuke → led med vekst (Ukens mulighet) eller vedlikehold.
+  const italic = (t: string) => `<span style="font-family:Georgia,serif;font-style:italic;font-weight:400">${t}</span>`
+  let headlineHtml: string
+  let sublineHtml: string
+  if (fixes.length > 0) {
+    headlineHtml = `${italic('Denne uken')} fikset vi<br>${fixes.length} ting for deg.`
+    sublineHtml = `Alt skjedde automatisk${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''} og du trengte ikke å gjøre noe.`
+  } else if (findFindCount > 0) {
+    headlineHtml = `${italic('Denne uken')} fant vi<br>${findFindCount} ting du bør se på.`
+    sublineHtml = `Vi gikk gjennom${websiteUrl ? ` <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ' nettstedet ditt'} og fant nye forbedringer du kan ta tak i.`
+  } else if (topOpportunity) {
+    headlineHtml = `${italic('Denne uken')} jaktet vi<br>vekst for deg.`
+    sublineHtml = `Ingen nye feil dukket opp — grunnmuren er i god form. Så vi brukte uken på å finne neste mulighet til å klatre.`
+  } else {
+    headlineHtml = `${italic('Denne uken')} holdt vi<br>vakt for deg.`
+    sublineHtml = `Ingen nye feil, ingen drop${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''}. Vi overvåket siden og konkurrentene dine døgnet rundt så du slapp.`
+  }
 
   return `<!DOCTYPE html>
 <html lang="no">
@@ -245,16 +318,12 @@ function buildEmailHtml(opts: {
     <div style="font-size:12px;color:#9591a8;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:1.5px">Uke ${weekNum} — ${dateStr}</div>
     ${firstName ? `<div style="font-size:15px;color:#6b6880;margin-bottom:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Hei, <span style="color:#1a1a2e;font-weight:700">${escapeHtml(firstName)}</span></div>` : ''}
     <div style="font-size:28px;font-weight:800;color:#1a1a2e;line-height:1.25;margin-bottom:14px;letter-spacing:-0.5px">
-      <span style="font-family:Georgia,serif;font-style:italic;font-weight:400">Denne uken</span> ${headlineWord} vi<br>${headlineCount} ting for deg.
+      ${headlineHtml}
     </div>
-    <div style="font-size:15px;color:#6b6880;line-height:1.7;margin-bottom:28px">Alt skjedde automatisk${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''} og du trengte ikke å gjøre noe.</div>
+    <div style="font-size:15px;color:#6b6880;line-height:1.7;margin-bottom:28px">${sublineHtml}</div>
   </td></tr>
 
-  ${allEmpty ? `
-  <tr><td style="padding:32px 0">
-    <div style="font-size:15px;color:#6b6880;line-height:1.7">Vi overvåker nettstedet ditt kontinuerlig. Neste uke har vi mer å rapportere.</div>
-  </td></tr>
-  ` : ''}
+  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek)}
 
   ${fixes.length > 0 ? section('Fikset av Sikt', row(fixes, '#7c3aed')) : ''}
   ${findings.length > 0 ? section('Vi fant også', row(findings, '#e2e0ea')) : ''}
