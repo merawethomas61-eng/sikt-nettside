@@ -540,6 +540,7 @@ async function geoAskChatGPT(question) {
     }
 }
 
+let geoGeminiStatus = null; // siste Gemini-status (diagnose, vises i summary)
 async function geoAskGemini(question) {
     if (!GEMINI_API_KEY) return null;
     try {
@@ -553,9 +554,10 @@ async function geoAskGemini(question) {
             },
         );
         if (!r.ok) {
-            console.warn('[geo] Gemini HTTP', r.status);
+            geoGeminiStatus = `HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`;
             return null;
         }
+        geoGeminiStatus = 'ok';
         const d = await r.json();
         const parts = d?.candidates?.[0]?.content?.parts;
         return Array.isArray(parts) ? (parts.map((p) => p?.text || '').join(' ').trim() || null) : null;
@@ -602,6 +604,7 @@ async function runGeo(req, res) {
         gemini: !!GEMINI_API_KEY,
         perplexity: !!PERPLEXITY_API_KEY,
     };
+    geoGeminiStatus = null;
     const summary = { providers, customers: 0, checks: 0, mentions: 0, skipped: 0, errors: 0, dryRun };
     const since = new Date(Date.now() - GEO_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -646,6 +649,7 @@ async function runGeo(req, res) {
         }
     }
 
+    summary.geminiStatus = geoGeminiStatus;
     console.log('[geo] ferdig:', JSON.stringify(summary));
     return res.status(200).json(summary);
 }
