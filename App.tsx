@@ -9269,15 +9269,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // Rådgiver-plattformer (ingen åpen skrive-API → forslag kunden limer inn selv).
   // WordPress (og senere Shopify) er «full» auto-fiks og håndteres separat.
   const ADVISORY_PLATFORMS: { id: string; label: string; hint: string }[] = [
+    { id: 'ai_built', label: 'AI-bygd side (Claude, v0, Cursor …)', hint: 'Forslag du limer inn i AI-verktøyet' },
     { id: 'webflow', label: 'Webflow', hint: 'Forslag du limer inn' },
     { id: 'wix', label: 'Wix', hint: 'Forslag du limer inn' },
     { id: 'squarespace', label: 'Squarespace', hint: 'Forslag du limer inn' },
     { id: 'ghost', label: 'Ghost', hint: 'Forslag du limer inn' },
     { id: 'other', label: 'Annet / egen side', hint: 'Forslag du limer inn' },
   ];
+  const platformLabelMap: Record<string, string> = {
+    ai_built: 'AI-bygd side', webflow: 'Webflow', wix: 'Wix',
+    squarespace: 'Squarespace', ghost: 'Ghost', other: 'egen side',
+  };
   const FULL_PLATFORMS: Record<string, string> = { wordpress: 'WordPress', shopify: 'Shopify' };
   const platformLabel = (p?: string | null) =>
-    FULL_PLATFORMS[p || ''] || ADVISORY_PLATFORMS.find((x) => x.id === p)?.label || p || 'Plattform';
+    FULL_PLATFORMS[p || ''] || platformLabelMap[p || ''] || p || 'Plattform';
   // Rådgiver = alt som ikke er en full auto-fiks-plattform (WordPress/Shopify).
   const advisoryPlatform = connectWizardPlatform && !FULL_PLATFORMS[connectWizardPlatform] ? connectWizardPlatform : null;
 
