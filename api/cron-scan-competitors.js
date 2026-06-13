@@ -47,6 +47,7 @@ const GEO_MAX_CUSTOMERS = 4;   // tak per kjøring (Hobby 60s-timeout)
 const GEO_QUESTIONS = 4;       // antall bransjespørsmål per kunde
 const GEO_DEDUP_DAYS = 6;      // én GEO-sjekk per kunde per uke
 const GEO_TIMEOUT_MS = 12_000;
+const GEO_FAQ_PER_RUN = 2;     // maks nye FAQ-utkast per kunde per kjøring (tapte spørsmål)
 
 const MAX_KEYWORDS_PER_SCAN = 20;
 // Begrens hvor mange konkurrenter vi skanner per cron-kjøring
@@ -523,6 +524,22 @@ async function geoGenerateQuestions(company, domainCore) {
     }
 }
 
+// GEO-action: skriv det ideelle svaret som ville fått bedriften sitert av en AI
+// på et spørsmål den IKKE ble nevnt på. Mates (etter godkjenning) inn i llms.txt + FAQPage-schema.
+async function geoGenerateFaqAnswer(question, company, domainCore) {
+    const answer = await afOpenAiText({
+        system:
+            'Du skriver et kort, faktabasert FAQ-svar på norsk som posisjonerer bedriften som et godt ' +
+            'svar på spørsmålet — slik en AI-assistent ville sitert. Krav: 2–4 setninger, konkret, ' +
+            'nevn bedriften naturlig, ingen tomme superlativer, ingen påstander som krever bevis ' +
+            '(priser/garantier). Svar med KUN svarteksten.',
+        user: `Bedrift: ${company || domainCore}\nSpørsmål fra en potensiell kunde: ${question}\nSkriv ett FAQ-svar.`,
+        maxTokens: 200,
+        temperature: 0.5,
+    });
+    return answer && answer.length >= 40 ? answer : null;
+}
+
 async function geoAskChatGPT(question) {
     if (!OPENAI_API_KEY) return null;
     try {
@@ -629,23 +646,44 @@ async function runGeo(req, res) {
         summary.customers += 1;
 
         const rows = [];
+        const lostQuestions = []; // spørsmål bedriften IKKE ble nevnt på (av noen)
         for (const q of questions) {
             const [cg, gm, px] = await Promise.all([
                 providers.chatgpt ? geoAskChatGPT(q) : Promise.resolve(null),
                 providers.gemini ? geoAskGemini(q) : Promise.resolve(null),
                 providers.perplexity ? geoAskPerplexity(q) : Promise.resolve(null),
             ]);
+            let anyMention = false;
+            let anyAnswer = false;
             for (const [provider, ans] of [['chatgpt', cg], ['gemini', gm], ['perplexity', px]]) {
                 if (ans == null) continue;
+                anyAnswer = true;
                 const mentioned = geoMentioned(ans, company, domainCore);
                 summary.checks += 1;
-                if (mentioned) summary.mentions += 1;
+                if (mentioned) { summary.mentions += 1; anyMention = true; }
                 rows.push({ user_id: client.user_id, provider, question: q, mentioned, answer_excerpt: String(ans).slice(0, 300) });
             }
+            if (anyAnswer && !anyMention) lostQuestions.push(q);
         }
         if (!dryRun && rows.length) {
             const { error: insErr } = await supabase.from('geo_checks').insert(rows);
             if (insErr) { summary.errors += 1; console.warn('[geo] insert feilet:', insErr.message); }
+        }
+
+        // GEO-action: lag FAQ-utkast for tapte spørsmål → kø for kundens godkjenning.
+        summary.faqsDrafted = summary.faqsDrafted || 0;
+        for (const q of lostQuestions.slice(0, GEO_FAQ_PER_RUN)) {
+            const answer = await geoGenerateFaqAnswer(q, company, domainCore);
+            if (!answer) continue;
+            if (dryRun) { summary.faqsDrafted += 1; continue; }
+            const { error: faqErr } = await supabase
+                .from('geo_faqs')
+                .upsert(
+                    { user_id: client.user_id, question: q, answer, source_provider: null, status: 'pending' },
+                    { onConflict: 'user_id,question', ignoreDuplicates: true },
+                );
+            if (faqErr) { summary.errors += 1; console.warn('[geo] faq insert feilet:', faqErr.message); }
+            else summary.faqsDrafted += 1;
         }
     }
 
@@ -1178,6 +1216,52 @@ function optBuildSiteSchema(client) {
     return JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, website] });
 }
 
+// Bygger llms.txt — den fremvoksende standarden som forteller AI-søkemotorer
+// hva siden handler om og hva de bør sitere. Selskap + nøkkelsider + godkjente FAQ.
+function geoBuildLlmsTxt(client, pages, faqs) {
+    const name = (client.company_name || '').trim();
+    const url = optNormalizeUrl(client.website_url);
+    if (!name || !url) return '';
+    const lines = [`# ${name}`, '', `> ${name} — se ${url} for tjenester og kontaktinfo.`, ''];
+    if (Array.isArray(pages) && pages.length) {
+        lines.push('## Viktige sider');
+        for (const p of pages.slice(0, 10)) {
+            const t = (p.title || '').replace(/\s+/g, ' ').trim() || p.link;
+            lines.push(`- [${t}](${p.link})`);
+        }
+        lines.push('');
+    }
+    if (Array.isArray(faqs) && faqs.length) {
+        lines.push('## Ofte stilte spørsmål');
+        for (const f of faqs.slice(0, 20)) {
+            lines.push(`### ${f.question}`);
+            lines.push(String(f.answer || '').replace(/\s+/g, ' ').trim());
+            lines.push('');
+        }
+    }
+    return lines.join('\n').slice(0, 19000);
+}
+
+// Full JSON-LD: Organization/LocalBusiness + WebSite + FAQPage (godkjente FAQ).
+function geoBuildFullSchema(client, faqs) {
+    const base = optBuildSiteSchema(client);
+    if (!base) return null;
+    let graph;
+    try { graph = JSON.parse(base)['@graph'] || []; } catch { graph = []; }
+    if (Array.isArray(faqs) && faqs.length) {
+        graph.push({
+            '@type': 'FAQPage',
+            '@id': `${optNormalizeUrl(client.website_url)}/#faq`,
+            mainEntity: faqs.slice(0, 20).map(f => ({
+                '@type': 'Question',
+                name: f.question,
+                acceptedAnswer: { '@type': 'Answer', text: String(f.answer || '').slice(0, 1200) },
+            })),
+        });
+    }
+    return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+}
+
 // Generisk POST til Sikt Connector-pluginen (schema/alt). Gammel plugin (uten
 // ruten) gir 404/rest_no_route → vi behandler det som «hopp over», ikke feil.
 async function afConnectorPost(adminUrl, authorization, route, body) {
@@ -1219,7 +1303,7 @@ async function runOptimize(req, res) {
         return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkoblinger.' });
     }
 
-    const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, skipped: 0, errors: 0, dryRun };
+    const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, geoPublished: 0, skipped: 0, errors: 0, dryRun };
     const dedupSince = new Date(Date.now() - OPT_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const schemaDedupSince = new Date(Date.now() - OPT_SCHEMA_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -1332,11 +1416,14 @@ async function runOptimize(req, res) {
             }
         }
 
-        // --- 3) SCHEMA: forsidens strukturert data (én gang per ~120 dager) ---
-        const { data: recentSchema } = await supabase
-            .from('sikt_actions').select('id')
-            .eq('user_id', host.user_id).eq('action_type', 'schema_push')
-            .gte('created_at', schemaDedupSince).limit(1);
+        // --- 3) SCHEMA: forsidens strukturert data (Standard; Premium får full
+        //     schema m/FAQPage i GEO-fasen under, så hopp over her for Premium) ---
+        const { data: recentSchema } = client.package_name === 'Premium Pakke'
+            ? { data: [{ id: 'skip' }] }
+            : await supabase
+                .from('sikt_actions').select('id')
+                .eq('user_id', host.user_id).eq('action_type', 'schema_push')
+                .gte('created_at', schemaDedupSince).limit(1);
         if (!(Array.isArray(recentSchema) && recentSchema.length)) {
             const jsonld = optBuildSiteSchema(client);
             if (jsonld) {
@@ -1382,6 +1469,66 @@ async function runOptimize(req, res) {
                     });
                 } else if (r.unsupported) { summary.skipped += 1; }
                 else { summary.errors += 1; }
+            }
+        }
+
+        // --- 5) GEO-ACTION (Premium): publiser llms.txt + FAQ-schema fra godkjente FAQ ---
+        if (client.package_name === 'Premium Pakke') {
+            const { data: approvedFaqs } = await supabase
+                .from('geo_faqs').select('question, answer')
+                .eq('user_id', host.user_id).eq('status', 'approved')
+                .order('resolved_at', { ascending: false }).limit(20);
+            const faqs = approvedFaqs || [];
+
+            let pages = [];
+            try { pages = await afListPages(adminUrl, authorization); } catch { /* best effort */ }
+            const llms = geoBuildLlmsTxt(client, pages, faqs);
+
+            const { data: stateRow } = await supabase
+                .from('geo_state').select('llms_txt, llms_published_at').eq('user_id', host.user_id).maybeSingle();
+            const changed = !!llms && llms !== (stateRow?.llms_txt || '');
+
+            if (llms && changed) {
+                if (dryRun) { summary.geoPublished += 1; }
+                else {
+                    const r1 = await afConnectorPost(adminUrl, authorization, 'set-llms-txt', { content: llms });
+                    const fullSchema = geoBuildFullSchema(client, faqs);
+                    const r2 = fullSchema
+                        ? await afConnectorPost(adminUrl, authorization, 'set-site-schema', { jsonld: fullSchema })
+                        : { ok: false, unsupported: true };
+                    if (r1.ok || r2.ok) {
+                        summary.geoPublished += 1;
+                        // GEO-score: nevne-rate (60%) + llms.txt (20) + godkjente FAQ (20)
+                        const since = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+                        const { data: gc } = await supabase
+                            .from('geo_checks').select('mentioned')
+                            .eq('user_id', host.user_id).gte('checked_at', since);
+                        const tot = (gc || []).length;
+                        const men = (gc || []).filter(x => x.mentioned).length;
+                        const mentionRate = tot > 0 ? (men / tot) * 100 : 0;
+                        const score = Math.min(100, Math.round(mentionRate * 0.6 + (r1.ok ? 20 : 0) + (faqs.length > 0 ? 20 : 0)));
+                        await supabase.from('geo_state').upsert({
+                            user_id: host.user_id,
+                            llms_txt: llms,
+                            llms_published_at: r1.ok ? new Date().toISOString() : (stateRow?.llms_published_at ?? null),
+                            schema_published_at: r2.ok ? new Date().toISOString() : null,
+                            geo_score: score,
+                            updated_at: new Date().toISOString(),
+                        }, { onConflict: 'user_id' });
+                        await supabase.from('sikt_actions').insert({
+                            user_id: host.user_id,
+                            action_type: 'geo_publish',
+                            category: 'fix',
+                            title: faqs.length
+                                ? `AI-synlighet oppdatert: llms.txt + ${faqs.length} godkjente FAQ-svar publisert`
+                                : 'AI-synlighet oppdatert: llms.txt og schema publisert',
+                            details: { explanation: 'Sikt publiserte llms.txt og strukturert data (FAQPage) så ChatGPT, Gemini og Perplexity lettere finner og siterer bedriften din.' },
+                            page_url: optNormalizeUrl(client.website_url),
+                            status: 'open',
+                        });
+                    } else if (r1.unsupported) { summary.skipped += 1; }
+                    else { summary.errors += 1; }
+                }
             }
         }
     }

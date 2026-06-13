@@ -7212,6 +7212,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [queueBusyId, setQueueBusyId] = useState<string | null>(null);
   // --- GEO (AI-synlighet: ukentlig sjekk om ChatGPT/Gemini/Perplexity nevner deg) ---
   const [geoSummary, setGeoSummary] = useState<any>(null);
+  const [geoState, setGeoState] = useState<any>(null);      // geo_state: llms.txt + score
+  const [geoFaqs, setGeoFaqs] = useState<any[]>([]);        // ventende FAQ til godkjenning
+  const [geoFaqBusyId, setGeoFaqBusyId] = useState<string | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = denne uken, -1 = forrige, osv.
   const [receiptCategoryFilter, setReceiptCategoryFilter] = useState<'all' | 'finding' | 'suggestion' | 'fix' | 'alert'>('all');
@@ -7549,9 +7552,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
       setGeoSummary({ total, mentioned, byProvider, lastCheckedAt: rows[0].checked_at });
     } catch { setGeoSummary(null); }
+
+    // GEO-state (llms.txt + score) og ventende FAQ-utkast til godkjenning
+    try {
+      const st = await supabaseRest<any[]>(
+        `geo_state?user_id=eq.${user.id}&select=geo_score,llms_published_at,schema_published_at,llms_txt&limit=1`,
+      );
+      setGeoState(Array.isArray(st) && st.length ? st[0] : null);
+    } catch { setGeoState(null); }
+    try {
+      const faqs = await supabaseRest<any[]>(
+        `geo_faqs?user_id=eq.${user.id}&status=eq.pending&select=id,question,answer,created_at&order=created_at.desc&limit=20`,
+      );
+      setGeoFaqs(Array.isArray(faqs) ? faqs : []);
+    } catch { setGeoFaqs([]); }
   }, [user?.id]);
 
   useEffect(() => { fetchGeo(); }, [fetchGeo]);
+
+  // Godkjenn/avvis et FAQ-utkast. Godkjente mates inn i llms.txt + FAQPage-schema
+  // ved neste optimaliserings-kjøring.
+  const resolveGeoFaq = useCallback(async (id: string, approve: boolean) => {
+    setGeoFaqBusyId(id);
+    try {
+      await supabaseRest(`geo_faqs?id=eq.${id}`, {
+        method: 'PATCH',
+        body: { status: approve ? 'approved' : 'rejected', resolved_at: new Date().toISOString() },
+        headers: { Prefer: 'return=minimal' },
+      });
+      setGeoFaqs((prev) => prev.filter((f) => f.id !== id));
+      if (approve) toastSuccess('Godkjent — publiseres i llms.txt og FAQ-schema ved neste kjøring.');
+    } catch (err: any) {
+      toastError(err?.message || 'Kunne ikke lagre.');
+    } finally {
+      setGeoFaqBusyId(null);
+    }
+  }, []);
 
   const approveQueuedFix = useCallback(async (item: any) => {
     const token = getStoredAccessToken();
@@ -9131,8 +9167,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   })();
 
   // 3) GEO SCORE — AI-sitering, llms.txt, schema markup for LLM (kun premium).
-  // Ikke implementert ennå — null betyr at den ikke regnes med i kombinert score.
-  const geoScore: number | null = null;
+  // Datakilde: geo_state.geo_score (nevne-rate 60% + llms.txt 20 + godkjente FAQ 20),
+  // skrevet av optimaliserings-motoren. Null for ikke-Premium → utelatt fra snittet.
+  const geoScore: number | null =
+    hasPremium && geoState?.geo_score != null ? Number(geoState.geo_score) : null;
 
   // 4) KOMBINERT SIKT-SCORE — snitt av tilgjengelige komponenter.
   // Hvis brukeren ikke har Premium, regnes scoren ut fra to komponenter (teknisk + synlighet).
@@ -11744,7 +11782,61 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <p className={`text-base mt-3 ${textDim}`}>Hvordan nettsiden din omtales i AI-søk.</p>
               </div>
             </header>
-            <div className={tabFadeInClass}>
+            <div className={`${tabFadeInClass} space-y-6`}>
+              {hasPremium && (geoState?.geo_score != null || geoFaqs.length > 0) && (
+                <PortalCard theme={themed} className="p-5 sm:p-6">
+                  {geoState?.geo_score != null && (
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <p className={`text-[11px] font-semibold uppercase tracking-wider ${textLabel}`}>GEO-score</p>
+                        <div className="flex items-baseline gap-1.5 mt-1.5">
+                          <span className={`text-4xl font-bold tracking-tight ${textMain}`}>{Number(geoState.geo_score)}</span>
+                          <span className={`text-base ${textDim}`}>/100</span>
+                        </div>
+                      </div>
+                      <div className={`text-[12px] ${textDim} space-y-1 text-right`}>
+                        <p>{geoState.llms_published_at ? '✓ llms.txt publisert' : '— llms.txt ikke publisert ennå'}</p>
+                        <p>{geoState.schema_published_at ? '✓ FAQ-schema publisert' : '— FAQ-schema ikke publisert ennå'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {geoFaqs.length > 0 && (
+                    <div className={geoState?.geo_score != null ? 'mt-5 pt-5 border-t ' + divider : ''}>
+                      <p className={`text-[13px] font-semibold ${textMain}`}>Godkjenn FAQ-svar Sikt foreslår</p>
+                      <p className={`text-[12px] ${textDim} mt-1 mb-4`}>
+                        For spørsmål der AI-assistentene ikke nevnte deg. Godkjente svar publiseres i <code>llms.txt</code> og FAQ-schema, så ChatGPT, Gemini og Perplexity lettere siterer deg.
+                      </p>
+                      <div className="space-y-3">
+                        {geoFaqs.map((f) => (
+                          <div key={f.id} className={`rounded-xl border ${divider} ${subtleBg} p-4`}>
+                            <p className={`text-[13px] font-semibold ${textMain}`}>{f.question}</p>
+                            <p className={`text-[13px] ${textDim} mt-1.5 leading-relaxed`}>{f.answer}</p>
+                            <div className="flex items-center gap-3 mt-3">
+                              <button
+                                type="button"
+                                disabled={geoFaqBusyId === f.id}
+                                onClick={() => resolveGeoFaq(f.id, true)}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 text-white px-3.5 py-2 text-[12px] font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                              >
+                                <CheckCircle2 size={13} /> Godkjenn og publiser
+                              </button>
+                              <button
+                                type="button"
+                                disabled={geoFaqBusyId === f.id}
+                                onClick={() => resolveGeoFaq(f.id, false)}
+                                className={`text-[12px] font-semibold ${textDim} hover:${textMain} disabled:opacity-50`}
+                              >
+                                Avvis
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </PortalCard>
+              )}
               <GeoPage onNotify={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')} />
             </div>
           </div>

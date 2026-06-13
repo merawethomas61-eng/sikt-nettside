@@ -3,7 +3,7 @@
  * Plugin Name: Sikt Connector
  * Description: Lar Sikt (siktseo.com) oppdatere SEO-felter på siden
  *              din via et sikret REST-endepunkt.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Sikt
  * License: Proprietary
  */
@@ -71,7 +71,55 @@ add_action('rest_api_init', function () {
             'alt' => array('required' => true, 'type' => 'string'),
         ),
     ));
+
+    // v1.2.0: lagre llms.txt-innhold (serveres på /llms.txt).
+    register_rest_route('sikt/v1', '/set-llms-txt', array(
+        'methods' => 'POST',
+        'callback' => 'sikt_set_llms_txt_handler',
+        'permission_callback' => function () {
+            return current_user_can('manage_options');
+        },
+        'args' => array(
+            'content' => array('required' => true, 'type' => 'string'),
+        ),
+    ));
 });
+
+/**
+ * Server /llms.txt (og /llms.txt/) fra lagret option. Den nye standardfilen
+ * som forteller AI-søkemotorer hva siden handler om og hva de bør sitere.
+ */
+add_action('template_redirect', function () {
+    $req = isset($_SERVER['REQUEST_URI']) ? strtok($_SERVER['REQUEST_URI'], '?') : '';
+    $path = trim((string) parse_url($req, PHP_URL_PATH), '/');
+    if ($path !== 'llms.txt') {
+        return;
+    }
+    $content = get_option('sikt_llms_txt', '');
+    if (!is_string($content) || trim($content) === '') {
+        return; // ingen fil lagret → la WordPress håndtere 404
+    }
+    status_header(200);
+    header('Content-Type: text/plain; charset=utf-8');
+    header('X-Robots-Tag: noindex');
+    echo $content;
+    exit;
+}, 0);
+
+function sikt_set_llms_txt_handler($request) {
+    $content = (string) $request->get_param('content');
+    if (strlen($content) > 20000) {
+        return new WP_Error('too_long', 'llms.txt er for lang (maks 20000 tegn).', array('status' => 400));
+    }
+    $old_value = get_option('sikt_llms_txt', '');
+    update_option('sikt_llms_txt', $content, false);
+    return rest_ensure_response(array(
+        'ok' => true,
+        'field' => 'llms-txt',
+        'old_value' => is_string($old_value) ? $old_value : '',
+        'new_value' => $content,
+    ));
+}
 
 /**
  * Injiser Sikt-lagret JSON-LD på forsiden. Lagres som option, så det er
