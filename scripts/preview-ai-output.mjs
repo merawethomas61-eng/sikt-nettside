@@ -20,6 +20,11 @@ if (!OPENAI_API_KEY) {
 const company = process.argv[2] || 'Bergen Bad & Flis';
 const keyword = process.argv[3] || 'bad oppussing pris';
 
+const NO_CLAIMS =
+  'IKKE finn på fakta du ikke kan vite: ingen priser eller tall, ikke «gratis», ' +
+  'ingen «befaring», «butikk», «showroom», åpningstider, antall år erfaring, ' +
+  'sertifiseringer eller garantier. Hold deg generell og sannferdig om tjenesten.';
+
 async function ai({ system, user, maxTokens = 120, temperature = 0.4 }) {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -44,15 +49,15 @@ function line(label, text) {
 console.log(`\n=== Sikt AI-kvalitetstest ===\nBedrift: ${company}\nSøkeord: ${keyword}\nModell: gpt-4o-mini (samme som motoren)\n`);
 
 const title = await ai({
-  system: 'Du skriver SEO-titler (<title>) på norsk. Krav: 50–60 tegn, det oppgitte søkeordet MÅ stå først, deretter «| Merkenavn». Naturlig, unik, ingen klisjeer. Svar med KUN tittelen.',
-  user: `Søkeord (skal stå først): ${keyword}\nMerkenavn: ${company}`,
+  system: 'Du skriver SEO-titler (<title>) på korrekt, naturlig norsk. Krav: MÅL 50–60 tegn (fyll ut med en kort verdibeskrivelse hvis tittelen blir for kort). Få temaet fra søkeordet inn tidlig, men BØY og skriv det naturlig med stor forbokstav — ikke lim inn søkeordet rått i småbokstaver. Avslutt med «| Merkenavn». Ingen klisjeer. ' + NO_CLAIMS + ' Svar med KUN tittelen.',
+  user: `Tema (fra søkeord): ${keyword}\nMerkenavn: ${company}`,
   maxTokens: 40,
 });
 line('SEO-tittel (near-miss/forfall)', title);
 
 const meta = await ai({
-  system: 'Du skriver SEO-meta-beskrivelser på norsk. Krav: 120–158 tegn, aktiv stemme, det oppgitte søkeordet naturlig tidlig, konkret verdiløfte, ingen klisjeer, ingen keyword-stuffing. Svar med KUN beskrivelsen.',
-  user: `Søkeord: ${keyword}\nBedrift: ${company}`,
+  system: 'Du skriver SEO-meta-beskrivelser på korrekt, naturlig norsk. Krav: 120–158 tegn, aktiv stemme, konkret verdiløfte. Få temaet fra søkeordet naturlig inn tidlig, men BØY det grammatisk riktig — ikke lim inn søkeordet rått. Ingen klisjeer, ingen keyword-stuffing. ' + NO_CLAIMS + ' Svar med KUN beskrivelsen.',
+  user: `Tema (fra søkeord): ${keyword}\nBedrift: ${company}`,
 });
 line('Meta-beskrivelse (near-miss/forfall)', meta);
 
@@ -74,7 +79,7 @@ let firstQuestion = keyword;
 try { const arr = JSON.parse((questions.match(/\[[\s\S]*\]/) || [])[0] || '[]'); if (arr[0]) firstQuestion = arr[0]; } catch { /* ignore */ }
 
 const faq = await ai({
-  system: 'Du skriver et kort, faktabasert FAQ-svar på norsk som posisjonerer bedriften som et godt svar på spørsmålet — slik en AI-assistent ville sitert. Krav: 2–4 setninger, konkret, nevn bedriften naturlig, ingen tomme superlativer, ingen påstander som krever bevis (priser/garantier). Svar med KUN svarteksten.',
+  system: 'Du skriver et kort, faktabasert FAQ-svar på norsk som posisjonerer bedriften som et godt svar på spørsmålet — slik en AI-assistent ville sitert. Krav: 2–4 setninger, konkret, nevn bedriften naturlig, ingen tomme superlativer. ' + NO_CLAIMS + ' Svar med KUN svarteksten.',
   user: `Bedrift: ${company}\nSpørsmål fra en potensiell kunde: ${firstQuestion}\nSkriv ett FAQ-svar.`,
   maxTokens: 200,
   temperature: 0.5,

@@ -40,6 +40,12 @@ const AF_WP_TIMEOUT_MS = 10_000;
 const AF_DEDUP_WINDOW_DAYS = 30;
 const AF_PAID_PLANS = new Set(['Standard Pakke', 'Premium Pakke']);
 
+// Delt regel mot oppdiktede påstander — AI-en vet ikke disse fakta om kunden.
+const AF_NO_CLAIMS =
+    'IKKE finn på fakta du ikke kan vite: ingen priser eller tall, ikke «gratis», ' +
+    'ingen «befaring», «butikk», «showroom», åpningstider, antall år erfaring, ' +
+    'sertifiseringer eller garantier. Hold deg generell og sannferdig om tjenesten.';
+
 // --- GEO-motor (job=geo): nevner ChatGPT/Gemini/Perplexity Premium-kunden? ---
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
@@ -308,9 +314,10 @@ async function afOpenAiText({ system, user, maxTokens = 120, temperature = 0.4 }
 async function afGenerateMeta({ pageTitle, pageUrl, companyName }) {
     const text = await afOpenAiText({
         system:
-            'Du skriver SEO-meta-beskrivelser på norsk. Krav: 120–158 tegn, aktiv stemme, ' +
-            'konkret verdiløfte, viktigste søkeord naturlig tidlig, ingen klisjeer, ingen ' +
-            'keyword-stuffing, ikke kopier sidetittelen ordrett. Svar med KUN beskrivelsen.',
+            'Du skriver SEO-meta-beskrivelser på korrekt, naturlig norsk. Krav: 120–158 tegn, ' +
+            'aktiv stemme, konkret verdiløfte, viktigste tema naturlig tidlig, ingen klisjeer, ' +
+            'ingen keyword-stuffing, ikke kopier sidetittelen ordrett. ' + AF_NO_CLAIMS +
+            ' Svar med KUN beskrivelsen.',
         user: `Bedrift: ${companyName || 'ukjent'}\nSidetittel: ${pageTitle || 'ukjent'}\nURL: ${pageUrl}\n\nSkriv én meta-beskrivelse.`,
     });
     if (!text || text.length < 80 || text.length > AF_META_TARGET_MAX + 12) return null;
@@ -320,8 +327,9 @@ async function afGenerateMeta({ pageTitle, pageUrl, companyName }) {
 async function afGenerateTitle({ pageTitle, pageUrl, companyName }) {
     const text = await afOpenAiText({
         system:
-            'Du skriver SEO-titler (<title>) på norsk. Krav: 50–60 tegn, viktigste søkeord ' +
-            'først, deretter «| Merkenavn», unik per side, ingen klisjeer. Svar med KUN tittelen.',
+            'Du skriver SEO-titler (<title>) på korrekt, naturlig norsk. Krav: MÅL 50–60 tegn, ' +
+            'viktigste tema tidlig (naturlig formulert, ikke rått innlimt), deretter «| Merkenavn», ' +
+            'unik per side, ingen klisjeer. ' + AF_NO_CLAIMS + ' Svar med KUN tittelen.',
         user: `Bedrift: ${companyName || 'ukjent'}\nEmne: ${pageTitle || 'ukjent'}\nURL: ${pageUrl}\n\nSkriv én SEO-tittel.`,
         maxTokens: 40,
     });
@@ -531,8 +539,8 @@ async function geoGenerateFaqAnswer(question, company, domainCore) {
         system:
             'Du skriver et kort, faktabasert FAQ-svar på norsk som posisjonerer bedriften som et godt ' +
             'svar på spørsmålet — slik en AI-assistent ville sitert. Krav: 2–4 setninger, konkret, ' +
-            'nevn bedriften naturlig, ingen tomme superlativer, ingen påstander som krever bevis ' +
-            '(priser/garantier). Svar med KUN svarteksten.',
+            'nevn bedriften naturlig, ingen tomme superlativer. ' + AF_NO_CLAIMS +
+            ' Svar med KUN svarteksten.',
         user: `Bedrift: ${company || domainCore}\nSpørsmål fra en potensiell kunde: ${question}\nSkriv ett FAQ-svar.`,
         maxTokens: 200,
         temperature: 0.5,
@@ -1152,22 +1160,25 @@ const OPT_SCHEMA_DEDUP_DAYS = 120; // schema er stabilt — push sjelden
 async function afGenerateTargetedTitle({ keyword, companyName }) {
     const t = await afOpenAiText({
         system:
-            'Du skriver SEO-titler (<title>) på norsk. Krav: 50–60 tegn, det oppgitte ' +
-            'søkeordet MÅ stå først, deretter «| Merkenavn». Naturlig, unik, ingen klisjeer. ' +
-            'Svar med KUN tittelen.',
-        user: `Søkeord (skal stå først): ${keyword}\nMerkenavn: ${companyName || 'ukjent'}`,
+            'Du skriver SEO-titler (<title>) på korrekt, naturlig norsk. Krav: ' +
+            'MÅL 50–60 tegn (fyll ut med en kort verdibeskrivelse hvis tittelen blir for kort). ' +
+            'Få temaet fra søkeordet inn tidlig, men BØY og skriv det naturlig med stor forbokstav ' +
+            '— ikke lim inn søkeordet rått i småbokstaver. Avslutt med «| Merkenavn». ' +
+            'Ingen klisjeer. ' + AF_NO_CLAIMS + ' Svar med KUN tittelen.',
+        user: `Tema (fra søkeord): ${keyword}\nMerkenavn: ${companyName || 'ukjent'}`,
         maxTokens: 40,
     });
-    return t && t.length >= 15 && t.length <= 70 ? t : null;
+    return t && t.length >= 25 && t.length <= 70 ? t : null;
 }
 
 async function afGenerateTargetedMeta({ keyword, companyName }) {
     const t = await afOpenAiText({
         system:
-            'Du skriver SEO-meta-beskrivelser på norsk. Krav: 120–158 tegn, aktiv stemme, ' +
-            'det oppgitte søkeordet naturlig tidlig, konkret verdiløfte, ingen klisjeer, ingen ' +
-            'keyword-stuffing. Svar med KUN beskrivelsen.',
-        user: `Søkeord: ${keyword}\nBedrift: ${companyName || 'ukjent'}`,
+            'Du skriver SEO-meta-beskrivelser på korrekt, naturlig norsk. Krav: 120–158 tegn, ' +
+            'aktiv stemme, konkret verdiløfte. Få temaet fra søkeordet naturlig inn tidlig, ' +
+            'men BØY det grammatisk riktig — ikke lim inn søkeordet rått. Ingen klisjeer, ingen ' +
+            'keyword-stuffing. ' + AF_NO_CLAIMS + ' Svar med KUN beskrivelsen.',
+        user: `Tema (fra søkeord): ${keyword}\nBedrift: ${companyName || 'ukjent'}`,
     });
     return t && t.length >= 80 && t.length <= AF_META_TARGET_MAX + 12 ? t : null;
 }
