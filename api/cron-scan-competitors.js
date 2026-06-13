@@ -1094,6 +1094,302 @@ async function runGbp(req, res) {
     return res.status(200).json(summary);
 }
 
+// =====================================================================
+// OPTIMALISERINGS-MOTOR (job=optimize): gjør Standard+ til en motor som
+// ALDRI går tom for arbeid. Skifter fra reparasjon (endelig) til
+// optimalisering (uendelig): near-miss-løft, forfall-oppfrisking,
+// strukturert data (schema) og alt-tekster. Kun betalende kunder med
+// WordPress-full — Basic får forslagene, Standard+ får dem UTFØRT.
+// =====================================================================
+const OPT_MAX_CUSTOMERS = 4;       // Hobby 60s-timeout
+const OPT_NEAR_MISS_PER_RUN = 2;
+const OPT_DECAY_PER_RUN = 1;
+const OPT_ALT_PER_RUN = 3;
+const OPT_DEDUP_DAYS = 30;         // ikke rør samme side+felt for ofte
+const OPT_SCHEMA_DEDUP_DAYS = 120; // schema er stabilt — push sjelden
+
+async function afGenerateTargetedTitle({ keyword, companyName }) {
+    const t = await afOpenAiText({
+        system:
+            'Du skriver SEO-titler (<title>) på norsk. Krav: 50–60 tegn, det oppgitte ' +
+            'søkeordet MÅ stå først, deretter «| Merkenavn». Naturlig, unik, ingen klisjeer. ' +
+            'Svar med KUN tittelen.',
+        user: `Søkeord (skal stå først): ${keyword}\nMerkenavn: ${companyName || 'ukjent'}`,
+        maxTokens: 40,
+    });
+    return t && t.length >= 15 && t.length <= 70 ? t : null;
+}
+
+async function afGenerateTargetedMeta({ keyword, companyName }) {
+    const t = await afOpenAiText({
+        system:
+            'Du skriver SEO-meta-beskrivelser på norsk. Krav: 120–158 tegn, aktiv stemme, ' +
+            'det oppgitte søkeordet naturlig tidlig, konkret verdiløfte, ingen klisjeer, ingen ' +
+            'keyword-stuffing. Svar med KUN beskrivelsen.',
+        user: `Søkeord: ${keyword}\nBedrift: ${companyName || 'ukjent'}`,
+    });
+    return t && t.length >= 80 && t.length <= AF_META_TARGET_MAX + 12 ? t : null;
+}
+
+async function afGenerateAltText({ filename, title, companyName }) {
+    const t = await afOpenAiText({
+        system:
+            'Du skriver alt-tekst for bilder på norsk (tilgjengelighet + SEO). Krav: kort ' +
+            '(maks ~120 tegn), beskriv hva bildet sannsynligvis viser ut fra filnavn og tittel, ' +
+            'naturlig norsk, IKKE start med «bilde av». Svar med KUN alt-teksten.',
+        user: `Filnavn: ${filename || 'ukjent'}\nTittel: ${title || 'ukjent'}\nBedrift: ${companyName || 'ukjent'}`,
+        maxTokens: 60,
+    });
+    return t && t.length >= 3 && t.length <= 300 ? t : null;
+}
+
+function optNormalizeUrl(url) {
+    if (!url) return '';
+    let u = String(url).trim();
+    if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+    try {
+        const parsed = new URL(u);
+        return `https://${parsed.hostname}`;
+    } catch {
+        return '';
+    }
+}
+
+// Bygger gyldig JSON-LD programmatisk fra kundedata (ingen LLM = ingen ugyldig JSON).
+function optBuildSiteSchema(client) {
+    const name = (client.company_name || '').trim();
+    const url = optNormalizeUrl(client.website_url);
+    if (!name || !url) return null;
+    const phone = client.phone ? String(client.phone).trim() : '';
+    const org = {
+        '@type': phone ? 'LocalBusiness' : 'Organization',
+        '@id': `${url}/#org`,
+        name,
+        url,
+    };
+    if (phone) org.telephone = phone;
+    const website = {
+        '@type': 'WebSite',
+        '@id': `${url}/#website`,
+        url,
+        name,
+        publisher: { '@id': `${url}/#org` },
+    };
+    return JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, website] });
+}
+
+// Generisk POST til Sikt Connector-pluginen (schema/alt). Gammel plugin (uten
+// ruten) gir 404/rest_no_route → vi behandler det som «hopp over», ikke feil.
+async function afConnectorPost(adminUrl, authorization, route, body) {
+    try {
+        const r = await fetch(`${adminUrl}/wp-json/sikt/v1/${route}`, {
+            method: 'POST',
+            headers: { Authorization: authorization, 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify(body),
+            redirect: 'follow',
+            signal: AbortSignal.timeout(AF_WP_TIMEOUT_MS),
+        });
+        if (!r.url.startsWith('https://')) return { ok: false, unsupported: false };
+        const data = await r.json().catch(() => null);
+        const unsupported = r.status === 404 && (data?.code === 'rest_no_route' || data?.code === 'rest_not_found');
+        return { ok: r.ok && data?.ok === true, status: r.status, data, unsupported };
+    } catch {
+        return { ok: false, unsupported: false };
+    }
+}
+
+async function runOptimize(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    if (!APP_BASE_URL) {
+        return res.status(500).json({ error: 'APP_BASE_URL/VERCEL_URL mangler — vet ikke hvor /api/wordpress-push er.' });
+    }
+
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const { data: hosts, error: hostsErr } = await supabase
+        .from('client_hosts')
+        .select('user_id, admin_url, notes, access_token_encrypted, connection_mode, platform')
+        .eq('platform', 'wordpress')
+        .eq('connection_mode', 'full');
+    if (hostsErr) {
+        Sentry.captureException(hostsErr);
+        return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkoblinger.' });
+    }
+
+    const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, skipped: 0, errors: 0, dryRun };
+    const dedupSince = new Date(Date.now() - OPT_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const schemaDedupSince = new Date(Date.now() - OPT_SCHEMA_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+    let processed = 0;
+    for (const host of hosts || []) {
+        if (processed >= OPT_MAX_CUSTOMERS) break;
+        if (!host?.admin_url || !host?.notes || !host?.access_token_encrypted) continue;
+
+        const { data: client } = await supabase
+            .from('clients')
+            .select('package_name, company_name, website_url, phone')
+            .eq('user_id', host.user_id)
+            .maybeSingle();
+        if (!client || !AF_PAID_PLANS.has(client.package_name)) continue;
+
+        let appPassword;
+        try {
+            appPassword = decrypt(host.access_token_encrypted);
+        } catch (e) {
+            summary.errors += 1;
+            console.warn('[optimize] dekryptering feilet for', host.user_id, e?.message || e);
+            continue;
+        }
+        const adminUrl = host.admin_url.trim();
+        const authorization = afBasicAuth(host.notes.trim(), appPassword);
+        const companyName = client.company_name;
+
+        processed += 1;
+        summary.customers += 1;
+
+        const recentlyChanged = async (pageUrl, field) => {
+            const { data } = await supabase
+                .from('sikt_changes')
+                .select('id')
+                .eq('user_id', host.user_id)
+                .eq('page_url', pageUrl)
+                .eq('field', field)
+                .gte('created_at', dedupSince)
+                .limit(1);
+            return Array.isArray(data) && data.length > 0;
+        };
+
+        // --- GSC-søkeord med URL (kilden til near-miss + forfall) ---
+        let keywords = [];
+        const { data: site } = await supabase
+            .from('sites').select('id').eq('user_id', host.user_id).maybeSingle();
+        if (site?.id) {
+            const { data: kw } = await supabase
+                .from('keywords')
+                .select('keyword, url, position, previous_position, impressions')
+                .eq('site_id', site.id)
+                .order('impressions', { ascending: false })
+                .limit(100);
+            keywords = (kw || []).filter(k => typeof k.url === 'string' && k.url.startsWith('https://'));
+        }
+
+        // --- 1) NEAR-MISS: posisjon 11–20 → skriv om tittel + meta for søkeordet ---
+        const nearMisses = keywords
+            .filter(k => typeof k.position === 'number' && k.position >= 11 && k.position <= 20)
+            .slice(0, OPT_NEAR_MISS_PER_RUN);
+        for (const k of nearMisses) {
+            if (await recentlyChanged(k.url, 'seo-title')) { summary.skipped += 1; continue; }
+            const title = await afGenerateTargetedTitle({ keyword: k.keyword, companyName });
+            const meta = await afGenerateTargetedMeta({ keyword: k.keyword, companyName });
+            if (!title && !meta) { summary.skipped += 1; continue; }
+            if (dryRun) { summary.nearMiss += 1; continue; }
+            let okAny = false;
+            if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (okAny) {
+                summary.nearMiss += 1;
+                await supabase.from('sikt_actions').insert({
+                    user_id: host.user_id,
+                    action_type: 'near_miss_autofix',
+                    category: 'fix',
+                    title: `Optimaliserte «${k.keyword}» for side 1 (var nr. ${Math.round(k.position)})`,
+                    details: { keyword: k.keyword, position: k.position, explanation: 'Sikt skrev om tittel og meta for å målrette dette søkeordet — du var nær side 1.' },
+                    page_url: k.url,
+                    status: 'open',
+                });
+            }
+        }
+
+        // --- 2) FORFALL: falt ≥3 plasser → frisk opp tittel + meta ---
+        const decays = keywords
+            .filter(k => typeof k.position === 'number' && typeof k.previous_position === 'number' &&
+                k.previous_position > 0 && k.previous_position <= 20 && (k.position - k.previous_position) >= OPP_MIN_DROP)
+            .sort((a, b) => (b.position - b.previous_position) - (a.position - a.previous_position))
+            .slice(0, OPT_DECAY_PER_RUN);
+        for (const k of decays) {
+            if (await recentlyChanged(k.url, 'meta-description')) { summary.skipped += 1; continue; }
+            const title = await afGenerateTargetedTitle({ keyword: k.keyword, companyName });
+            const meta = await afGenerateTargetedMeta({ keyword: k.keyword, companyName });
+            if (!title && !meta) { summary.skipped += 1; continue; }
+            if (dryRun) { summary.decay += 1; continue; }
+            let okAny = false;
+            if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (okAny) {
+                summary.decay += 1;
+                await supabase.from('sikt_actions').insert({
+                    user_id: host.user_id,
+                    action_type: 'decay_autofix',
+                    category: 'fix',
+                    title: `Frisket opp «${k.keyword}» (falt fra ${Math.round(k.previous_position)} til ${Math.round(k.position)})`,
+                    details: { keyword: k.keyword, position: k.position, prev_position: k.previous_position, explanation: 'Sikt oppdaterte tittel og meta for å ta tilbake posisjonen.' },
+                    page_url: k.url,
+                    status: 'open',
+                });
+            }
+        }
+
+        // --- 3) SCHEMA: forsidens strukturert data (én gang per ~120 dager) ---
+        const { data: recentSchema } = await supabase
+            .from('sikt_actions').select('id')
+            .eq('user_id', host.user_id).eq('action_type', 'schema_push')
+            .gte('created_at', schemaDedupSince).limit(1);
+        if (!(Array.isArray(recentSchema) && recentSchema.length)) {
+            const jsonld = optBuildSiteSchema(client);
+            if (jsonld) {
+                if (dryRun) { summary.schema += 1; }
+                else {
+                    const r = await afConnectorPost(adminUrl, authorization, 'set-site-schema', { jsonld });
+                    if (r.ok) {
+                        summary.schema += 1;
+                        await supabase.from('sikt_actions').insert({
+                            user_id: host.user_id,
+                            action_type: 'schema_push',
+                            category: 'fix',
+                            title: 'La til strukturert data (schema) på forsiden',
+                            details: { explanation: 'Sikt la til Organization/LocalBusiness- og WebSite-schema så Google forstår bedriften din bedre (rikere søkeresultater).' },
+                            page_url: optNormalizeUrl(client.website_url),
+                            status: 'open',
+                        });
+                    } else if (r.unsupported) { summary.skipped += 1; }
+                    else { summary.errors += 1; }
+                }
+            }
+        }
+
+        // --- 4) ALT-TEKST: bilder uten alt → generer og sett ---
+        const listed = await afWpGet(`${adminUrl}/wp-json/sikt/v1/images-without-alt?limit=10`, authorization);
+        if (listed.ok && Array.isArray(listed.data?.images)) {
+            const imgs = listed.data.images.slice(0, OPT_ALT_PER_RUN);
+            for (const img of imgs) {
+                const alt = await afGenerateAltText({ filename: img.filename, title: img.title, companyName });
+                if (!alt) { summary.skipped += 1; continue; }
+                if (dryRun) { summary.altText += 1; continue; }
+                const r = await afConnectorPost(adminUrl, authorization, 'set-alt', { attachment_id: img.id, alt });
+                if (r.ok) {
+                    summary.altText += 1;
+                    await supabase.from('sikt_actions').insert({
+                        user_id: host.user_id,
+                        action_type: 'alt_text',
+                        category: 'fix',
+                        title: `Alt-tekst lagt til på et bilde (${img.filename || 'bilde'})`,
+                        details: { explanation: `Sikt skrev alt-tekst: «${alt}». Det hjelper både skjermlesere og Google bildesøk.` },
+                        page_url: null,
+                        status: 'open',
+                    });
+                } else if (r.unsupported) { summary.skipped += 1; }
+                else { summary.errors += 1; }
+            }
+        }
+    }
+
+    console.log('[optimize] ferdig:', JSON.stringify(summary));
+    return res.status(200).json(summary);
+}
+
 export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: aksepter både Bearer-secret og x-cron-secret ---
     const authHeader = req.headers.authorization;
@@ -1121,6 +1417,11 @@ export default withSentry(async function handler(req, res) {
     // Dispatch: månedlig Google Business-profil-sjekk
     if (req.query?.job === 'gbp') {
         return await runGbp(req, res);
+    }
+
+    // Dispatch: optimaliserings-motor (Standard+: near-miss, forfall, schema, alt)
+    if (req.query?.job === 'optimize') {
+        return await runOptimize(req, res);
     }
 
     if (!SUPABASE_SERVICE_KEY || !SERP_API_KEY) {

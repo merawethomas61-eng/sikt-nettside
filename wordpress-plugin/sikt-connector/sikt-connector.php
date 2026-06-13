@@ -3,7 +3,7 @@
  * Plugin Name: Sikt Connector
  * Description: Lar Sikt (siktseo.com) oppdatere SEO-felter på siden
  *              din via et sikret REST-endepunkt.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Sikt
  * License: Proprietary
  */
@@ -37,7 +37,135 @@ add_action('rest_api_init', function () {
             ),
         ),
     ));
+
+    // v1.1.0: strukturert data (JSON-LD) injisert på forsiden.
+    register_rest_route('sikt/v1', '/set-site-schema', array(
+        'methods' => 'POST',
+        'callback' => 'sikt_set_site_schema_handler',
+        'permission_callback' => function () {
+            return current_user_can('manage_options');
+        },
+        'args' => array(
+            'jsonld' => array('required' => true, 'type' => 'string'),
+        ),
+    ));
+
+    // v1.1.0: list bilder som mangler alt-tekst.
+    register_rest_route('sikt/v1', '/images-without-alt', array(
+        'methods' => 'GET',
+        'callback' => 'sikt_images_without_alt_handler',
+        'permission_callback' => function () {
+            return current_user_can('edit_posts');
+        },
+    ));
+
+    // v1.1.0: sett alt-tekst på et bilde (vedlegg).
+    register_rest_route('sikt/v1', '/set-alt', array(
+        'methods' => 'POST',
+        'callback' => 'sikt_set_alt_handler',
+        'permission_callback' => function () {
+            return current_user_can('edit_posts');
+        },
+        'args' => array(
+            'attachment_id' => array('required' => true, 'type' => 'integer'),
+            'alt' => array('required' => true, 'type' => 'string'),
+        ),
+    ));
 });
+
+/**
+ * Injiser Sikt-lagret JSON-LD på forsiden. Lagres som option, så det er
+ * fullstendig reversibelt (tøm option = borte). Skrives kun av Sikt.
+ */
+add_action('wp_head', function () {
+    if (!is_front_page() && !is_home()) {
+        return;
+    }
+    $jsonld = get_option('sikt_site_jsonld', '');
+    if (!is_string($jsonld) || trim($jsonld) === '') {
+        return;
+    }
+    // Allerede validert som JSON ved lagring; skriv ut rått i en script-tag.
+    echo "\n<script type=\"application/ld+json\" data-sikt=\"1\">" . $jsonld . "</script>\n";
+}, 99);
+
+function sikt_set_site_schema_handler($request) {
+    $jsonld = (string) $request->get_param('jsonld');
+    if (strlen($jsonld) > 12000) {
+        return new WP_Error('too_long', 'JSON-LD er for langt (maks 12000 tegn).', array('status' => 400));
+    }
+    // Tom streng = fjern (rollback). Ellers krev gyldig JSON.
+    if (trim($jsonld) !== '') {
+        $decoded = json_decode($jsonld, true);
+        if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+            return new WP_Error('invalid_json', 'Ugyldig JSON-LD.', array('status' => 400));
+        }
+    }
+    $old_value = get_option('sikt_site_jsonld', '');
+    update_option('sikt_site_jsonld', $jsonld, false);
+    return rest_ensure_response(array(
+        'ok' => true,
+        'field' => 'site-schema',
+        'old_value' => is_string($old_value) ? $old_value : '',
+        'new_value' => $jsonld,
+    ));
+}
+
+function sikt_images_without_alt_handler($request) {
+    $limit = (int) $request->get_param('limit');
+    if ($limit <= 0 || $limit > 50) {
+        $limit = 20;
+    }
+    $attachments = get_posts(array(
+        'post_type' => 'attachment',
+        'post_mime_type' => 'image',
+        'post_status' => 'inherit',
+        'posts_per_page' => $limit,
+        'meta_query' => array(
+            'relation' => 'OR',
+            array('key' => '_wp_attachment_image_alt', 'compare' => 'NOT EXISTS'),
+            array('key' => '_wp_attachment_image_alt', 'value' => '', 'compare' => '='),
+        ),
+    ));
+    $out = array();
+    foreach ($attachments as $att) {
+        $file = get_post_meta($att->ID, '_wp_attached_file', true);
+        $out[] = array(
+            'id' => $att->ID,
+            'title' => $att->post_title,
+            'filename' => is_string($file) ? basename($file) : '',
+        );
+    }
+    return rest_ensure_response(array('ok' => true, 'images' => $out));
+}
+
+function sikt_set_alt_handler($request) {
+    $attachment_id = (int) $request->get_param('attachment_id');
+    $alt = (string) $request->get_param('alt');
+    if (strlen($alt) > 300) {
+        return new WP_Error('too_long', 'Alt-tekst er for lang (maks 300 tegn).', array('status' => 400));
+    }
+    $post = get_post($attachment_id);
+    if (!$post || $post->post_type !== 'attachment') {
+        return new WP_Error('post_not_found', 'Fant ikke bildet.', array('status' => 404));
+    }
+    if (!current_user_can('edit_post', $attachment_id)) {
+        return new WP_Error('forbidden', 'Ingen tilgang til å redigere bildet.', array('status' => 403));
+    }
+    $old_value = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+    update_post_meta($attachment_id, '_wp_attachment_image_alt', sanitize_text_field($alt));
+    $written = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+    if ($written !== sanitize_text_field($alt)) {
+        return new WP_Error('write_failed', 'Lagret ikke alt-teksten korrekt.', array('status' => 500));
+    }
+    return rest_ensure_response(array(
+        'ok' => true,
+        'field' => 'alt',
+        'attachment_id' => $attachment_id,
+        'old_value' => is_string($old_value) ? $old_value : '',
+        'new_value' => $written,
+    ));
+}
 
 function sikt_build_gutenberg_paragraphs($raw_text) {
     $normalized = str_replace(array("\r\n", "\r"), "\n", (string) $raw_text);
