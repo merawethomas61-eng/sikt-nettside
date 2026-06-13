@@ -1,4 +1,5 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
+import { ActivationChecklist } from './ActivationChecklist';
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -7823,6 +7824,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [gscLoading, setGscLoading] = useState(false);
   const [gscKeywords, setGscKeywords] = useState<any[]>([]);
   const [showGscPreCheck, setShowGscPreCheck] = useState(false);
+  const [activationDismissed, setActivationDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem(`sikt_activation_dismissed_${user?.id || ''}`) === '1'; } catch { return false; }
+  });
+  const dismissActivation = () => {
+    setActivationDismissed(true);
+    try { localStorage.setItem(`sikt_activation_dismissed_${user?.id || ''}`, '1'); } catch { /* ignore */ }
+  };
   const [selectedKwId, setSelectedKwId] = useState<string | null>(null);
   const [kwFilter, setKwFilter] = useState<'all' | 'mine' | 'gsc'>('all');
   const [kwSearch, setKwSearch] = useState('');
@@ -10256,107 +10265,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             )}
             <div className={`${tabFadeInClass} space-y-6`}>
-              {/* AKTIVER SIKT — tilkoblings-trakt. Det første en kunde ser til alt
-                  som planen betaler for faktisk er skrudd på. Skjules når fullført. */}
-              {(() => {
-                const steps: {
-                  done: boolean; title: string; desc: string; cta: string;
-                  onClick: () => void; icon: any; disabled?: boolean; accent?: boolean;
-                }[] = [];
-                steps.push({
-                  done: !!websiteUrl,
-                  title: 'Legg inn nettsiden din',
-                  desc: 'Så Sikt vet hvilken side den skal jobbe med.',
-                  cta: 'Legg inn', icon: Globe,
-                  onClick: () => { setActiveTab('settings'); setEditingSection('profile'); },
-                });
-                steps.push({
-                  done: !!analysisResults,
-                  title: 'Kjør første analyse',
-                  desc: 'Teknisk score og dine første funn på ~60 sekunder.',
-                  cta: isAnalyzing ? 'Kjører…' : 'Kjør analyse', icon: Activity,
-                  disabled: !websiteUrl || isAnalyzing,
-                  onClick: () => runRealAnalysis(),
-                });
-                steps.push({
-                  done: gscConnected,
-                  title: 'Koble til Google Search Console',
-                  desc: 'Låser opp rangering, søkeorddata og «Nesten på side 1»-muligheter.',
-                  cta: 'Koble til', icon: Search,
-                  onClick: () => { setActiveTab('keywords'); setShowGscPreCheck(true); },
-                });
-                if (hasStandardOrHigher) {
-                  steps.push({
-                    done: hostIsFullyConnected,
-                    title: 'Koble til nettsiden for auto-fiks',
-                    desc: 'Du betaler for at Sikt gjør jobben — dette skrur den på. Da fikser og optimaliserer Sikt siden din automatisk hver uke.',
-                    cta: hostWasLightOnly ? 'Koble til på nytt' : 'Koble til', icon: Wrench, accent: true,
-                    onClick: () => { openWpWizard(); },
-                  });
-                }
-                const doneCount = steps.filter(s => s.done).length;
-                if (doneCount === steps.length) return null;
-                const pct = Math.round((doneCount / steps.length) * 100);
-                return (
-                  <div className="rounded-2xl border border-violet-200 bg-white p-5 sm:p-6 shadow-sm font-['DM_Sans',sans-serif]">
-                    <div className="flex items-start justify-between gap-3 mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-violet-600 text-white">
-                          <Zap size={15} />
-                        </span>
-                        <h2 className="text-[15px] font-bold tracking-[-0.01em] text-slate-900">Aktiver Sikt</h2>
-                      </div>
-                      <span className="text-[12px] font-semibold text-slate-400 whitespace-nowrap">{doneCount} av {steps.length} fullført</span>
-                    </div>
-                    <p className="text-[13px] text-slate-500 leading-relaxed mb-4">
-                      {hasStandardOrHigher && !hostIsFullyConnected
-                        ? 'Sikt er ikke koblet til siden din ennå — så auto-fiksen du betaler for er ikke i gang. Fullfør stegene under (ca. 2 min) så begynner Sikt å jobbe.'
-                        : 'Noen få steg gjenstår før Sikt jobber for fullt for deg.'}
-                    </p>
-                    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden mb-5">
-                      <div className="h-full rounded-full bg-violet-600 transition-[width] duration-500" style={{ width: `${pct}%` }} />
-                    </div>
-                    <div className="flex flex-col gap-2.5">
-                      {steps.map((s, i) => (
-                        <div
-                          key={i}
-                          className={`flex items-center gap-3 rounded-xl border p-3.5 ${
-                            s.done ? 'border-slate-100 bg-slate-50/60' : s.accent ? 'border-violet-200 bg-violet-50/40' : 'border-slate-200 bg-white'
-                          }`}
-                        >
-                          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
-                            s.done ? 'bg-emerald-100 text-emerald-600' : s.accent ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {s.done ? <CheckCircle2 size={16} /> : <s.icon size={15} />}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-[13px] font-semibold leading-snug ${s.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{s.title}</p>
-                            {!s.done && <p className="mt-0.5 text-[12px] leading-snug text-slate-500">{s.desc}</p>}
-                          </div>
-                          {s.done ? (
-                            <span className="shrink-0 text-[12px] font-semibold text-emerald-600">Ferdig</span>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={s.disabled}
-                              onClick={s.onClick}
-                              className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12px] font-semibold transition-colors ${
-                                s.disabled
-                                  ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                                  : s.accent
-                                    ? 'bg-violet-600 text-white hover:bg-violet-700'
-                                    : 'bg-slate-900 text-white hover:bg-slate-700'
-                              }`}
-                            >
-                              {s.cta} {!s.disabled && <ArrowRight size={13} />}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+              {!activationDismissed && (
+                <ActivationChecklist
+                  theme={themed}
+                  websiteUrl={websiteUrl}
+                  hasAnalysis={!!analysisResults}
+                  isAnalyzing={isAnalyzing}
+                  gscConnected={gscConnected}
+                  hasStandardOrHigher={hasStandardOrHigher}
+                  hostIsFullyConnected={hostIsFullyConnected}
+                  hostWasLightOnly={hostWasLightOnly}
+                  onAddUrl={() => { setActiveTab('settings'); setEditingSection('profile'); }}
+                  onRunAnalysis={() => runRealAnalysis()}
+                  onConnectGsc={() => { setActiveTab('keywords'); setShowGscPreCheck(true); }}
+                  onConnectWp={() => { openWpWizard(); }}
+                  onDismiss={dismissActivation}
+                />
+              )}
               <React.Suspense fallback={<div className="h-64" />}>
                 <DashboardHome
                   user={user}
