@@ -14907,13 +14907,37 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {connectWizardPlatform === 'wordpress' && wpWizardStep === 1 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Lag et Application Password i WordPress</h3>
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Installer Sikt-tillegget</h3>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  Sikt fikser siden din via et lite, trygt WordPress-tillegg. Last det ned og installer det først — det tar ett minutt.
+                </p>
+                <a
+                  href="/sikt-connector.zip"
+                  download
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                  style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  onMouseDown={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(0.97)'; }}
+                  onMouseUp={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)'; }}
+                >
+                  <Download size={15} /> Last ned Sikt Connector
+                </a>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                  <li>I WordPress-admin: gå til Tillegg → Legg til nytt → Last opp tillegg.</li>
+                  <li>Velg filen <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>sikt-connector.zip</code> du nettopp lastet ned.</li>
+                  <li>Klikk &quot;Installer nå&quot;, deretter &quot;Aktiver&quot;.</li>
+                </ol>
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#808080' }}>
+                  Allerede installert tidligere? Last ned på nytt og velg «Erstatt» for å få siste versjon — nye funksjoner som schema, alt-tekst og llms.txt krever det.
+                </div>
+
+                <div className="pt-1 border-t" style={{ borderColor: '#EBEBE6' }} />
+                <h3 className="text-lg font-semibold pt-1" style={{ color: '#1A1A1A' }}>Lag et Application Password</h3>
                 <p className="text-sm" style={{ color: '#808080' }}>
                   Sikt trenger et eget passord for å gjøre endringer på siden din. Det er trygt, du kan trekke det tilbake når som helst, og det erstatter ikke vanlig innlogging.
                 </p>
                 <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
-                  <li>Logg inn på WordPress-admin på siden din.</li>
-                  <li>Gå til Brukere → Profil.</li>
+                  <li>Gå til Brukere → Profil i WordPress-admin.</li>
                   <li>Bla ned til &quot;Application Passwords&quot;.</li>
                   <li>Skriv &quot;Sikt&quot; som navn, klikk &quot;Add New&quot;.</li>
                   <li>Kopier den 24-tegns koden som vises — den vises kun én gang.</li>
