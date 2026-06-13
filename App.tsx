@@ -8056,14 +8056,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     return 1;
   };
 
-  const currentPkgName = clientData?.package_name || 'Basic';
-
-  const plans = [
-    { name: 'Basic', level: 1, price: '2 990', color: 'slate', features: ['Dashboard', 'Enkel Analyse', 'Månedlig Rapport'] },
-    { name: 'Standard', level: 2, price: '5 990', color: 'amber', features: ['Alt i Basic', 'Tiltaksliste', 'Søkeordsporing', 'Konkurrentanalyse'] },
-    { name: 'Premium', level: 3, price: '9 990', color: 'violet', features: ['Alt i Standard', 'Teknisk Helse', 'SEO-Garanti', 'Prioritert Support'] }
-  ];
-
   const planBundle = `${clientData?.package_name || ''} ${selectedPlan || ''} ${typeof window !== 'undefined' ? (localStorage.getItem('sikt_dev_plan') || '') : ''}`;
   const hasPremium = /premium/i.test(planBundle) || /⭐\s*⭐\s*⭐/.test(planBundle);
   const hasStandardOrHigher = hasPremium || /standard/i.test(planBundle);
