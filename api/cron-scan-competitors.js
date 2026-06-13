@@ -425,7 +425,7 @@ async function runAutoFix(req, res) {
                 .eq('user_id', host.user_id)
                 .eq('page_url', pageUrl)
                 .eq('field', field)
-                .gte('created_at', dedupSince)
+                .gte('pushed_at', dedupSince)
                 .limit(1);
             return Array.isArray(data) && data.length > 0;
         };
@@ -1296,6 +1296,65 @@ async function afConnectorPost(adminUrl, authorization, route, body) {
     }
 }
 
+// =====================================================================
+// SHOPIFY auto-fiks: push SEO-tittel/-beskrivelse via Admin API.
+// Token (custom app) er lagret kryptert i client_hosts (som WP app-passord).
+// Støtter produkter og sider (de vanligste SEO-målene); andre URL-er hoppes over.
+// =====================================================================
+const SHOPIFY_API_VERSION = '2024-01';
+
+async function shopifyReq(shopHost, token, method, path, body) {
+    try {
+        const r = await fetch(`https://${shopHost}/admin/api/${SHOPIFY_API_VERSION}${path}`, {
+            method,
+            headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: body ? JSON.stringify(body) : undefined,
+            signal: AbortSignal.timeout(AF_WP_TIMEOUT_MS),
+        });
+        const data = await r.json().catch(() => null);
+        return { ok: r.ok, status: r.status, data };
+    } catch {
+        return { ok: false, status: 0, data: null };
+    }
+}
+
+function shopifyResourceFromUrl(url) {
+    try {
+        const parts = new URL(url).pathname.split('/').filter(Boolean);
+        const i = parts.findIndex((s) => s === 'products' || s === 'pages');
+        if (i >= 0 && parts[i + 1]) {
+            return { type: parts[i] === 'products' ? 'product' : 'page', handle: decodeURIComponent(parts[i + 1]) };
+        }
+    } catch { /* ignore */ }
+    return null;
+}
+
+// Resolve handle → id, og push SEO-tittel/-beskrivelse (global title_tag/description_tag).
+async function shopifyPushSeoForUrl(shopHost, token, url, title, meta) {
+    const resrc = shopifyResourceFromUrl(url);
+    if (!resrc) return { ok: false, attempted: false };
+    const coll = resrc.type === 'product' ? 'products' : 'pages';
+    const lookup = await shopifyReq(shopHost, token, 'GET', `/${coll}.json?handle=${encodeURIComponent(resrc.handle)}&fields=id`);
+    const id = lookup.ok && lookup.data ? (lookup.data[coll] || [])[0]?.id : null;
+    if (!id) return { ok: false, attempted: false };
+    const key = resrc.type;
+    const payload = { [key]: { id } };
+    if (title) payload[key].metafields_global_title_tag = title;
+    if (meta) payload[key].metafields_global_description_tag = meta;
+    const r = await shopifyReq(shopHost, token, 'PUT', `/${coll}/${id}.json`, payload);
+    return { ok: r.ok, attempted: true };
+}
+
+// Logg en endring i sikt_changes (best-effort) — brukes til dedup (recentlyChanged)
+// for plattformer som ikke går via /api/wordpress-push (Shopify).
+async function optLogChange(supabase, userId, pageUrl, field, newValue) {
+    try {
+        await supabase.from('sikt_changes').insert({
+            user_id: userId, page_url: pageUrl, field, new_value: newValue || '', status: 'active',
+        });
+    } catch { /* best-effort */ }
+}
+
 async function runOptimize(req, res) {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
         return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
@@ -1310,11 +1369,11 @@ async function runOptimize(req, res) {
     const { data: hosts, error: hostsErr } = await supabase
         .from('client_hosts')
         .select('user_id, admin_url, notes, access_token_encrypted, connection_mode, platform')
-        .eq('platform', 'wordpress')
+        .in('platform', ['wordpress', 'shopify'])
         .eq('connection_mode', 'full');
     if (hostsErr) {
         Sentry.captureException(hostsErr);
-        return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkoblinger.' });
+        return res.status(500).json({ error: 'Kunne ikke hente tilkoblinger.' });
     }
 
     const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, geoPublished: 0, skipped: 0, errors: 0, dryRun, samples: [] };
@@ -1344,8 +1403,12 @@ async function runOptimize(req, res) {
             console.warn('[optimize] dekryptering feilet for', host.user_id, e?.message || e);
             continue;
         }
+        const isShopify = host.platform === 'shopify';
         const adminUrl = host.admin_url.trim();
-        const authorization = afBasicAuth(host.notes.trim(), appPassword);
+        let shopHost = null;
+        try { shopHost = isShopify ? new URL(adminUrl).host : null; } catch { /* ignore */ }
+        const shopToken = isShopify ? appPassword : null;
+        const authorization = isShopify ? null : afBasicAuth(host.notes.trim(), appPassword);
         const companyName = client.company_name;
 
         processed += 1;
@@ -1358,7 +1421,7 @@ async function runOptimize(req, res) {
                 .eq('user_id', host.user_id)
                 .eq('page_url', pageUrl)
                 .eq('field', field)
-                .gte('created_at', dedupSince)
+                .gte('pushed_at', dedupSince)
                 .limit(1);
             return Array.isArray(data) && data.length > 0;
         };
@@ -1392,8 +1455,16 @@ async function runOptimize(req, res) {
                 summary.nearMiss += 1; continue;
             }
             let okAny = false;
-            if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
-            if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (isShopify) {
+                const sr = await shopifyPushSeoForUrl(shopHost, shopToken, k.url, title, meta);
+                okAny = sr.ok;
+                if (!sr.attempted) { summary.skipped += 1; }
+                else if (!sr.ok) { summary.errors += 1; }
+                else { await optLogChange(supabase, host.user_id, k.url, 'seo-title', title); }
+            } else {
+                if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+                if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            }
             if (okAny) {
                 summary.nearMiss += 1;
                 await supabase.from('sikt_actions').insert({
@@ -1425,8 +1496,16 @@ async function runOptimize(req, res) {
                 summary.decay += 1; continue;
             }
             let okAny = false;
-            if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
-            if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            if (isShopify) {
+                const sr = await shopifyPushSeoForUrl(shopHost, shopToken, k.url, title, meta);
+                okAny = sr.ok;
+                if (!sr.attempted) { summary.skipped += 1; }
+                else if (!sr.ok) { summary.errors += 1; }
+                else { await optLogChange(supabase, host.user_id, k.url, 'meta-description', meta); }
+            } else {
+                if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+                if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
+            }
             if (okAny) {
                 summary.decay += 1;
                 await supabase.from('sikt_actions').insert({
@@ -1441,9 +1520,9 @@ async function runOptimize(req, res) {
             }
         }
 
-        // --- 3) SCHEMA: forsidens strukturert data (Standard; Premium får full
+        // --- 3) SCHEMA: forsidens strukturert data (kun WordPress; Premium får full
         //     schema m/FAQPage i GEO-fasen under, så hopp over her for Premium) ---
-        const { data: recentSchema } = client.package_name === 'Premium Pakke'
+        const { data: recentSchema } = (isShopify || client.package_name === 'Premium Pakke')
             ? { data: [{ id: 'skip' }] }
             : await supabase
                 .from('sikt_actions').select('id')
@@ -1472,8 +1551,10 @@ async function runOptimize(req, res) {
             }
         }
 
-        // --- 4) ALT-TEKST: bilder uten alt → generer og sett ---
-        const listed = await afWpGet(`${adminUrl}/wp-json/sikt/v1/images-without-alt?limit=10`, authorization);
+        // --- 4) ALT-TEKST: bilder uten alt → generer og sett (kun WordPress) ---
+        const listed = isShopify
+            ? { ok: false, data: null }
+            : await afWpGet(`${adminUrl}/wp-json/sikt/v1/images-without-alt?limit=10`, authorization);
         if (listed.ok && Array.isArray(listed.data?.images)) {
             const imgs = listed.data.images.slice(0, OPT_ALT_PER_RUN);
             for (const img of imgs) {
@@ -1497,8 +1578,8 @@ async function runOptimize(req, res) {
             }
         }
 
-        // --- 5) GEO-ACTION (Premium): publiser llms.txt + FAQ-schema fra godkjente FAQ ---
-        if (client.package_name === 'Premium Pakke') {
+        // --- 5) GEO-ACTION (Premium, kun WordPress): publiser llms.txt + FAQ-schema ---
+        if (!isShopify && client.package_name === 'Premium Pakke') {
             const { data: approvedFaqs } = await supabase
                 .from('geo_faqs').select('question, answer')
                 .eq('user_id', host.user_id).eq('status', 'approved')

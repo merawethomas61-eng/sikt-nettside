@@ -219,6 +219,68 @@ async function verifyWordPressCredentials(siteUrl, wpUsername, appPassword) {
   return { displayName };
 }
 
+const SHOPIFY_API_VERSION = '2024-01';
+
+/**
+ * Normaliser til «{shop}.myshopify.com». Admin API krever myshopify-domenet,
+ * ikke kundens egendefinerte domene.
+ * @param {unknown} raw
+ */
+function normalizeShopDomain(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw badRequest('Shopify-domene må være en ikke-tom streng.');
+  }
+  let host = raw.trim().toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+    .replace(/\/+$/, '');
+  if (!host.includes('.')) host = `${host}.myshopify.com`;
+  if (!/^[a-z0-9-]+\.myshopify\.com$/.test(host)) {
+    throw badRequest('Bruk din .myshopify.com-adresse (f.eks. minbutikk.myshopify.com). Den finner du i Shopify under Innstillinger → Domener.');
+  }
+  return host;
+}
+
+/**
+ * @param {string} shopHost
+ * @param {string} accessToken
+ */
+async function verifyShopifyCredentials(shopHost, accessToken) {
+  const url = `https://${shopHost}/admin/api/${SHOPIFY_API_VERSION}/shop.json`;
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers: { 'X-Shopify-Access-Token': accessToken, Accept: 'application/json' },
+      signal: AbortSignal.timeout(WP_VERIFY_TIMEOUT_MS),
+    });
+  } catch (err) {
+    const e = new Error('Shopify-butikken svarte ikke i tide. Sjekk adressen og prøv igjen.');
+    e.statusCode = 502;
+    throw e;
+  }
+  if (response.status === 401 || response.status === 403) {
+    const e = new Error('Shopify avviste tokenet. Sjekk at Admin API-tokenet er riktig og har tilgangene write_products og write_content.');
+    e.statusCode = 401;
+    throw e;
+  }
+  if (!response.ok) {
+    const e = new Error('Fant ikke Shopify-butikken på denne adressen. Bruk din .myshopify.com-adresse.');
+    e.statusCode = 502;
+    throw e;
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    const e = new Error('Kunne ikke lese svar fra Shopify.');
+    e.statusCode = 502;
+    throw e;
+  }
+  const name = data?.shop?.name && typeof data.shop.name === 'string' ? data.shop.name : shopHost;
+  return { displayName: name };
+}
+
 export default withSentry(async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Kun POST er tillatt' });
@@ -239,6 +301,56 @@ export default withSentry(async function handler(req, res) {
   }
 
   const body = parseJsonBody(req);
+
+  // --- Shopify-gren: token-basert tilkobling (custom app Admin API) ---
+  if (body.platform === 'shopify') {
+    try {
+      assertNonEmptyField(body.accessToken, 'accessToken');
+      const shopHost = normalizeShopDomain(body.shopDomain);
+      const { displayName } = await verifyShopifyCredentials(shopHost, body.accessToken.trim());
+
+      let encryptedToken;
+      try {
+        encryptedToken = encrypt(body.accessToken.trim());
+      } catch (encErr) {
+        Sentry.captureException(encErr);
+        return res.status(500).json({ error: 'Serveren kan ikke kryptere tokenet (sjekk ENCRYPTION_KEY).' });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const now = new Date().toISOString();
+      const row = {
+        user_id: user.id,
+        platform: 'shopify',
+        connection_mode: 'full',
+        access_token_encrypted: encryptedToken,
+        admin_url: `https://${shopHost}`,
+        notes: displayName,
+        last_changed_at: now,
+        updated_at: now,
+      };
+      const { data: existing, error: fetchErr } = await supabase
+        .from('client_hosts').select('id').eq('user_id', user.id).maybeSingle();
+      if (fetchErr) {
+        Sentry.captureException(fetchErr);
+        return res.status(500).json({ error: 'Kunne ikke lagre tilkoblingen.' });
+      }
+      const write = existing
+        ? supabase.from('client_hosts').update(row).eq('user_id', user.id)
+        : supabase.from('client_hosts').insert({ ...row, created_at: now });
+      const { error: writeErr } = await write;
+      if (writeErr) {
+        Sentry.captureException(writeErr);
+        return res.status(500).json({ error: 'Kunne ikke lagre tilkoblingen.' });
+      }
+      return res.status(200).json({ ok: true, connected: true, site: `https://${shopHost}`, wpUser: displayName });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) { console.error('[shopify-connect] Feil:', err?.message || err); Sentry.captureException(err); }
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt' });
+    }
+  }
+
   const { siteUrl: rawSiteUrl, wpUsername, appPassword } = body;
 
   try {

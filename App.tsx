@@ -7122,6 +7122,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [wpConnecting, setWpConnecting] = useState(false);
   const [wpConnectError, setWpConnectError] = useState<string | null>(null);
   const [wpConnectResult, setWpConnectResult] = useState<{ site: string; wpUser: string } | null>(null);
+  // Shopify (full auto-fiks via Admin API-token)
+  const [shopDomain, setShopDomain] = useState('');
+  const [shopToken, setShopToken] = useState('');
+  const [shopConnecting, setShopConnecting] = useState(false);
+  const [shopConnectError, setShopConnectError] = useState<string | null>(null);
+  const [shopConnectResult, setShopConnectResult] = useState<{ site: string; name: string } | null>(null);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
@@ -9246,6 +9252,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setWixSiteUrlError(null);
     setWixConnecting(false);
     setWixConnectError(null);
+    setShopDomain('');
+    setShopToken('');
+    setShopConnecting(false);
+    setShopConnectError(null);
+    setShopConnectResult(null);
   };
 
   const openHostConnectWizard = (platform?: string) => {
@@ -9257,23 +9268,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // Rådgiver-plattformer (ingen åpen skrive-API → forslag kunden limer inn selv).
   // WordPress (og senere Shopify) er «full» auto-fiks og håndteres separat.
   const ADVISORY_PLATFORMS: { id: string; label: string; hint: string }[] = [
-    { id: 'shopify', label: 'Shopify', hint: 'Forslag nå — auto-fiks kommer' },
     { id: 'webflow', label: 'Webflow', hint: 'Forslag du limer inn' },
     { id: 'wix', label: 'Wix', hint: 'Forslag du limer inn' },
     { id: 'squarespace', label: 'Squarespace', hint: 'Forslag du limer inn' },
     { id: 'ghost', label: 'Ghost', hint: 'Forslag du limer inn' },
     { id: 'other', label: 'Annet / egen side', hint: 'Forslag du limer inn' },
   ];
+  const FULL_PLATFORMS: Record<string, string> = { wordpress: 'WordPress', shopify: 'Shopify' };
   const platformLabel = (p?: string | null) =>
-    p === 'wordpress' ? 'WordPress' : (ADVISORY_PLATFORMS.find((x) => x.id === p)?.label || p || 'Plattform');
-  const advisoryPlatform = connectWizardPlatform && connectWizardPlatform !== 'wordpress' ? connectWizardPlatform : null;
+    FULL_PLATFORMS[p || ''] || ADVISORY_PLATFORMS.find((x) => x.id === p)?.label || p || 'Plattform';
+  // Rådgiver = alt som ikke er en full auto-fiks-plattform (WordPress/Shopify).
+  const advisoryPlatform = connectWizardPlatform && !FULL_PLATFORMS[connectWizardPlatform] ? connectWizardPlatform : null;
 
   const openWpWizard = () => {
     openHostConnectWizard();
   };
 
   const closeWpWizard = () => {
-    if (wpConnecting || wixConnecting) return;
+    if (wpConnecting || wixConnecting || shopConnecting) return;
     setShowWpWizard(false);
     resetWpWizardForm();
   };
@@ -9450,6 +9462,48 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       setWpConnectError('Kunne ikke nå Sikt-serveren. Sjekk internett og prøv igjen.');
     } finally {
       setWpConnecting(false);
+    }
+  };
+
+  const shopStepValid = !!shopDomain.trim() && !!shopToken.trim();
+
+  const connectShopify = async () => {
+    if (!shopStepValid) return;
+    const accessToken = getStoredAccessToken();
+    setShopConnectError(null);
+    setShopConnectResult(null);
+    if (!accessToken) {
+      setShopConnectError('Du må være innlogget for å koble til.');
+      return;
+    }
+    setShopConnecting(true);
+    try {
+      const res = await fetch('/api/wordpress-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ platform: 'shopify', shopDomain: shopDomain.trim(), accessToken: shopToken.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setShopConnectError(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
+        return;
+      }
+      setShopConnectResult({ site: data.site || shopDomain.trim(), name: data.wpUser || shopDomain.trim() });
+      setHostConnection({
+        platform: 'shopify',
+        connectionMode: 'full',
+        repoUrl: '',
+        adminUrl: data.site || shopDomain.trim(),
+        notes: data.wpUser || '',
+        lastChangedAt: new Date().toISOString(),
+      });
+      toastSuccess('Shopify er koblet til. Sikt fikser SEO automatisk.');
+      setShowWpWizard(false);
+      resetWpWizardForm();
+    } catch {
+      setShopConnectError('Kunne ikke nå Sikt-serveren. Sjekk internett og prøv igjen.');
+    } finally {
+      setShopConnecting(false);
     }
   };
 
@@ -14778,11 +14832,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <p className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
                 {connectWizardPlatform === null
                   ? 'Velg plattform'
-                  : advisoryPlatform
-                    ? platformLabel(advisoryPlatform)
-                    : wpWizardStep === 3
-                      ? 'Resultat'
-                      : `Trinn ${wpWizardStep} av 3`}
+                  : connectWizardPlatform === 'shopify'
+                    ? 'Shopify'
+                    : advisoryPlatform
+                      ? platformLabel(advisoryPlatform)
+                      : wpWizardStep === 3
+                        ? 'Resultat'
+                        : `Trinn ${wpWizardStep} av 3`}
               </p>
               <button
                 type="button"
@@ -14816,6 +14872,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   >
                     <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress <span className="text-violet-600">· auto-fiks</span></p>
                     <p className="text-xs mt-2" style={{ color: '#808080' }}>Sikt pusher endringer direkte til siden</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConnectWizardPlatform('shopify')}
+                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    className="text-left p-4 rounded-xl border border-violet-300 bg-violet-50/40 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-500"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
+                  >
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Shopify <span className="text-violet-600">· auto-fiks</span></p>
+                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Sikt oppdaterer SEO via Admin API</p>
                   </button>
                   {ADVISORY_PLATFORMS.map((p) => (
                     <button
@@ -14906,6 +14974,71 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     {wixConnecting ? <Loader2 size={14} className="animate-spin" /> : null}
+                    Koble til
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connectWizardPlatform === 'shopify' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til Shopify</h3>
+                <p className="text-sm" style={{ color: '#808080' }}>
+                  Sikt oppdaterer SEO-titler og beskrivelser automatisk via Shopify Admin API. Lag en «custom app» i Shopify og lim inn tokenet — det tar ett minutt.
+                </p>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                  <li>I Shopify-admin: Innstillinger → Apper og salgskanaler → <em>Utvikle apper</em>.</li>
+                  <li>Klikk «Opprett app», gi den navnet «Sikt».</li>
+                  <li>Under «Konfigurasjon» → Admin API: gi tilgangene <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>write_products</code> og <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>write_content</code>.</li>
+                  <li>Installer appen, og under «API-legitimasjon» kopier <em>Admin API-tilgangstoken</em> (starter med <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>shpat_</code>) — vises kun én gang.</li>
+                </ol>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Shopify-adresse (.myshopify.com)</label>
+                  <input
+                    type="text"
+                    value={shopDomain}
+                    onChange={(e) => setShopDomain(e.target.value)}
+                    placeholder="minbutikk.myshopify.com"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Finner du i Shopify under Innstillinger → Domener</p>
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Admin API-tilgangstoken</label>
+                  <input
+                    type="password"
+                    value={shopToken}
+                    onChange={(e) => setShopToken(e.target.value)}
+                    placeholder="shpat_..."
+                    autoComplete="new-password"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
+                    style={{ color: '#1A1A1A' }}
+                  />
+                </div>
+                {shopConnectError && (
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                    {shopConnectError}
+                  </div>
+                )}
+                <div className="flex justify-between gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setConnectWizardPlatform(null)}
+                    disabled={shopConnecting}
+                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
+                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    Tilbake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={connectShopify}
+                    disabled={!shopStepValid || shopConnecting}
+                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    {shopConnecting ? <Loader2 size={14} className="animate-spin" /> : null}
                     Koble til
                   </button>
                 </div>
