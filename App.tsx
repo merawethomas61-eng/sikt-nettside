@@ -7109,7 +7109,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // Settings-tab: hvilken seksjon som redigeres akkurat nå (kun én om gangen).
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showWpWizard, setShowWpWizard] = useState(false);
-  const [connectWizardPlatform, setConnectWizardPlatform] = useState<'wordpress' | 'wix' | null>(null);
+  const [connectWizardPlatform, setConnectWizardPlatform] = useState<string | null>(null);
   const [wpWizardStep, setWpWizardStep] = useState<1 | 2 | 3>(1);
   const [wixSiteUrl, setWixSiteUrl] = useState('');
   const [wixSiteUrlError, setWixSiteUrlError] = useState<string | null>(null);
@@ -9192,7 +9192,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const hostMode: string = hostConnection?.connectionMode || 'none';
   const hostIsFullyConnected = hostMode === 'full';
   const hostWasLightOnly = hostMode === 'light';
-  const hostIsWix = hostConnection?.platform === 'wix';
+  const hostIsAdvisory = hostMode === 'advisory';
 
   // URL-lås (én endring per uke)
   const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -9248,11 +9248,25 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setWixConnectError(null);
   };
 
-  const openHostConnectWizard = (platform?: 'wordpress' | 'wix') => {
+  const openHostConnectWizard = (platform?: string) => {
     resetWpWizardForm();
     setConnectWizardPlatform(platform ?? null);
     setShowWpWizard(true);
   };
+
+  // Rådgiver-plattformer (ingen åpen skrive-API → forslag kunden limer inn selv).
+  // WordPress (og senere Shopify) er «full» auto-fiks og håndteres separat.
+  const ADVISORY_PLATFORMS: { id: string; label: string; hint: string }[] = [
+    { id: 'shopify', label: 'Shopify', hint: 'Forslag nå — auto-fiks kommer' },
+    { id: 'webflow', label: 'Webflow', hint: 'Forslag du limer inn' },
+    { id: 'wix', label: 'Wix', hint: 'Forslag du limer inn' },
+    { id: 'squarespace', label: 'Squarespace', hint: 'Forslag du limer inn' },
+    { id: 'ghost', label: 'Ghost', hint: 'Forslag du limer inn' },
+    { id: 'other', label: 'Annet / egen side', hint: 'Forslag du limer inn' },
+  ];
+  const platformLabel = (p?: string | null) =>
+    p === 'wordpress' ? 'WordPress' : (ADVISORY_PLATFORMS.find((x) => x.id === p)?.label || p || 'Plattform');
+  const advisoryPlatform = connectWizardPlatform && connectWizardPlatform !== 'wordpress' ? connectWizardPlatform : null;
 
   const openWpWizard = () => {
     openHostConnectWizard();
@@ -9271,8 +9285,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   const wixStepValid = wixSiteUrl.trim().startsWith('https://');
 
-  const connectWixAdvisory = async () => {
-    if (!wixStepValid) return;
+  const connectAdvisory = async () => {
+    const platform = advisoryPlatform;
+    if (!platform || !wixStepValid) return;
     if (!user?.id || !supabase) {
       setWixConnectError('Du må være innlogget for å koble til.');
       return;
@@ -9283,7 +9298,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       const { error } = await supabase.from('client_hosts').upsert(
         {
           user_id: user.id,
-          platform: 'wix',
+          platform,
           connection_mode: 'advisory',
           admin_url: wixSiteUrl.trim(),
           access_token_encrypted: null,
@@ -9298,14 +9313,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         return;
       }
       setHostConnection({
-        platform: 'wix',
+        platform,
         connectionMode: 'advisory',
         repoUrl: '',
         adminUrl: wixSiteUrl.trim(),
         notes: '',
         lastChangedAt: new Date().toISOString(),
       });
-      toastSuccess('Wix er koblet til. Sikt viser forslag du limer inn selv i editoren.');
+      toastSuccess(`${platformLabel(platform)} er koblet til. Sikt lager forslag du limer inn selv.`);
       setShowWpWizard(false);
       resetWpWizardForm();
     } catch {
@@ -9357,7 +9372,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
   };
 
-  const disconnectWixAdvisory = async () => {
+  const disconnectAdvisory = async () => {
     if (!user?.id || !supabase) {
       setDisconnectError('Du må være innlogget for å koble fra.');
       return;
@@ -9382,7 +9397,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       }
       setHostConnection(null);
       setShowDisconnectConfirm(false);
-      toastSuccess('Wix-tilkoblingen er fjernet.');
+      toastSuccess('Tilkoblingen er fjernet.');
     } catch {
       setDisconnectError('Kunne ikke frakoble. Prøv igjen.');
     } finally {
@@ -11926,8 +11941,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             contentFixEntry?.pageData &&
             contentFixEntry.pageData.yoast?.installed === false &&
             (contentFixEntry.fieldType === 'meta-description' || contentFixEntry.fieldType === 'seo-title');
+          // Push (auto-fiks) kun for WordPress-full. Alle andre (rådgiver-plattformer
+          // OG ikke-tilkoblede) får kopier-og-lim-inn-handlinger i stedet.
           const showPushPlaceholder =
-            !hostIsWix &&
+            hostIsFullyConnected &&
             contentFixReady &&
             contentFixEntry?.pageData &&
             (contentFixEntry.fieldType === 'content' ||
@@ -11936,7 +11953,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 (contentFixEntry.fieldType === 'meta-description' ||
                   contentFixEntry.fieldType === 'seo-title')));
           const showWixAdvisoryActions =
-            hostIsWix &&
+            !hostIsFullyConnected &&
             contentFixReady &&
             contentFixEntry?.pageData &&
             contentFixEntry.fieldType;
@@ -12338,7 +12355,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       )}
                     </div>
 
-                  ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData && !hostIsWix ? (
+                  ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData && hostIsFullyConnected ? (
                     /* ═══════════════════════════════════
                        SCREEN B — INNHOLD (løst via push)
                        ═══════════════════════════════════ */
@@ -14275,8 +14292,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
                 <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
                   <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>CMS</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsWix ? '#52A447' : '#1A1A1A' }}>
-                    {hostIsWix ? 'Wix' : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
+                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsAdvisory ? '#52A447' : '#1A1A1A' }}>
+                    {hostIsAdvisory ? platformLabel(hostConnection?.platform) : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
                   </p>
                 </div>
               </div>
@@ -14449,17 +14466,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </div>
                       <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Wix</p>
-                          {hostIsWix && (
+                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Andre plattformer</p>
+                          {hostIsAdvisory && (
                             <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#52A447', background: '#F5F5F0', fontFamily: settingsMono }}>
                               tilkoblet
                             </span>
                           )}
                         </div>
-                        {hostIsWix ? (
+                        {hostIsAdvisory ? (
                           <>
                             <p className="text-sm mt-3 flex-1 break-words" style={{ color: '#808080' }}>
-                              Rådgiver-modus: {hostConnection?.adminUrl || '—'}. Du kopierer Sikt-forslag inn i Wix selv.
+                              Rådgiver-modus ({platformLabel(hostConnection?.platform)}): {hostConnection?.adminUrl || '—'}. Du kopierer Sikt-forslag inn selv.
                             </p>
                             <button
                               type="button"
@@ -14476,41 +14493,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         ) : (
                           <>
                             <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
-                              Koble til med nettside-URL. Sikt lager forslag du limer inn i Wix-editoren.
+                              Shopify, Wix, Squarespace, Webflow, Ghost m.fl. Sikt lager ferdige forslag du limer inn selv.
                             </p>
                             <button
                               type="button"
-                              onClick={() => openHostConnectWizard('wix')}
+                              onClick={() => openHostConnectWizard()}
                               onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               className="mt-4 rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
                               style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
-                              Koble til
+                              Velg plattform
                             </button>
                           </>
                         )}
                       </div>
-                      <div
-                        className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]"
-                        style={{ pointerEvents: 'none', opacity: 0.5 }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Shopify</p>
-                          <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#808080', background: '#F5F5F0', fontFamily: settingsMono }}>
-                            Kommer snart
-                          </span>
-                        </div>
-                        <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
-                          Vi bygger denne integrasjonen etter hva kundene bruker mest.
-                        </p>
-                      </div>
                     </div>
                     <p className="text-sm" style={{ color: '#808080' }}>
-                      Bruker du en annen plattform? Ta kontakt — vi prioriterer hvilke vi bygger neste etter hva kundene faktisk bruker.
+                      WordPress får ekte auto-fiks. Shopify er på vei. Andre plattformer får ferdige forslag du limer inn — uansett hva du bruker.
                     </p>
-                    {!hostIsFullyConnected && !hostIsWix && (
+                    {!hostIsFullyConnected && !hostIsAdvisory && (
                       <p className="text-sm" style={{ color: '#808080' }}>
                         Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
                       </p>
@@ -14775,8 +14778,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <p className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
                 {connectWizardPlatform === null
                   ? 'Velg plattform'
-                  : connectWizardPlatform === 'wix'
-                    ? 'Wix'
+                  : advisoryPlatform
+                    ? platformLabel(advisoryPlatform)
                     : wpWizardStep === 3
                       ? 'Resultat'
                       : `Trinn ${wpWizardStep} av 3`}
@@ -14796,7 +14799,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Hvilken plattform bruker du?</h3>
                 <p className="text-sm" style={{ color: '#808080' }}>
-                  WordPress kan kobles med skrivetilgang. Wix bruker rådgiver-modus — du kopierer forslag inn selv.
+                  WordPress kobles med skrivetilgang så Sikt fikser automatisk. På andre plattformer lager Sikt ferdige forslag du limer inn selv.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
@@ -14808,24 +14811,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
+                    className="text-left p-4 rounded-xl border border-violet-300 bg-violet-50/40 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-500"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
                   >
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress</p>
-                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Push endringer direkte fra Sikt</p>
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress <span className="text-violet-600">· auto-fiks</span></p>
+                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Sikt pusher endringer direkte til siden</p>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConnectWizardPlatform('wix')}
-                    onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
-                    onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
-                    style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
-                  >
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Wix</p>
-                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Kun URL — kopier forslag selv</p>
-                  </button>
+                  {ADVISORY_PLATFORMS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setConnectWizardPlatform(p.id)}
+                      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
+                      style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
+                    >
+                      <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{p.label}</p>
+                      <p className="text-xs mt-2" style={{ color: '#808080' }}>{p.hint}</p>
+                    </button>
+                  ))}
                 </div>
                 <div className="flex justify-end pt-2">
                   <button
@@ -14843,11 +14849,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
             )}
 
-            {connectWizardPlatform === 'wix' && (
+            {advisoryPlatform && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til Wix</h3>
+                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til {platformLabel(advisoryPlatform)}</h3>
                 <p className="text-sm" style={{ color: '#808080' }}>
-                  Lim inn adressen til Wix-siden din (https). Sikt lager forslag du kopierer inn i editoren.
+                  Lim inn nettadressen din (https). Sikt lager ferdige forslag — meta-titler, beskrivelser, FAQ og mer — som du kopierer inn i {platformLabel(advisoryPlatform)}.
                 </p>
                 <div>
                   <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Nettside-URL</label>
@@ -14861,7 +14867,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       else if (!v.trim().startsWith('https://')) setWixSiteUrlError('Må starte med https://');
                       else setWixSiteUrlError(null);
                     }}
-                    placeholder="https://dinside.wixsite.com/hjem"
+                    placeholder="https://dinside.no"
                     className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
                     style={{ color: '#1A1A1A' }}
                   />
@@ -14891,7 +14897,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </button>
                   <button
                     type="button"
-                    onClick={connectWixAdvisory}
+                    onClick={connectAdvisory}
                     disabled={!wixStepValid || wixConnecting}
                     onMouseDown={(e) => { if (!wixStepValid || wixConnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
@@ -15196,19 +15202,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           />
           <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6">
             <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>
-              {hostIsWix ? 'Koble fra Wix?' : 'Koble fra WordPress?'}
+              {hostIsAdvisory ? `Koble fra ${platformLabel(hostConnection?.platform)}?` : 'Koble fra WordPress?'}
             </h3>
             <p className="text-sm" style={{ color: '#808080' }}>
-              {hostIsWix
-                ? 'Sikt husker ikke lenger at du bruker Wix. Du kan koble til på nytt når som helst.'
+              {hostIsAdvisory
+                ? 'Sikt husker ikke lenger plattformen din. Du kan koble til på nytt når som helst.'
                 : 'Sikt kan ikke lenger gjøre endringer på siden din. Du kan koble til på nytt når som helst.'}
             </p>
-            {!hostIsWix && (
+            {!hostIsAdvisory && (
               <p className="text-sm mt-3 mb-4" style={{ color: '#808080' }}>
                 Tips: Application Password-et i WordPress er fortsatt aktivt etter at du kobler fra her. Hvis du vil fjerne det helt, gå til Brukere → Profil → Application Passwords i WordPress og klikk Revoke.
               </p>
             )}
-            {hostIsWix && <div className="mb-4" />}
+            {hostIsAdvisory && <div className="mb-4" />}
             {disconnectError && (
               <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
                 {disconnectError}
@@ -15229,7 +15235,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </button>
               <button
                 type="button"
-                onClick={hostIsWix ? disconnectWixAdvisory : disconnectWordPress}
+                onClick={hostIsAdvisory ? disconnectAdvisory : disconnectWordPress}
                 disabled={isDisconnecting}
                 onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
