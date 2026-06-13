@@ -622,7 +622,7 @@ async function runGeo(req, res) {
         perplexity: !!PERPLEXITY_API_KEY,
     };
     geoGeminiStatus = null;
-    const summary = { providers, customers: 0, checks: 0, mentions: 0, skipped: 0, errors: 0, dryRun };
+    const summary = { providers, customers: 0, checks: 0, mentions: 0, skipped: 0, errors: 0, dryRun, faqSamples: [] };
     const since = new Date(Date.now() - GEO_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
     let processed = 0;
@@ -675,7 +675,10 @@ async function runGeo(req, res) {
         for (const q of lostQuestions.slice(0, GEO_FAQ_PER_RUN)) {
             const answer = await geoGenerateFaqAnswer(q, company, domainCore);
             if (!answer) continue;
-            if (dryRun) { summary.faqsDrafted += 1; continue; }
+            if (dryRun) {
+                if (summary.faqSamples.length < 8) summary.faqSamples.push({ question: q, answer });
+                summary.faqsDrafted += 1; continue;
+            }
             const { error: faqErr } = await supabase
                 .from('geo_faqs')
                 .upsert(
@@ -1303,7 +1306,10 @@ async function runOptimize(req, res) {
         return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkoblinger.' });
     }
 
-    const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, geoPublished: 0, skipped: 0, errors: 0, dryRun };
+    const summary = { customers: 0, nearMiss: 0, decay: 0, schema: 0, altText: 0, geoPublished: 0, skipped: 0, errors: 0, dryRun, samples: [] };
+    // #5 kvalitetsverifisering: i dryRun samler vi den faktiske AI-teksten motoren
+    // ville publisert, så den kan inspiseres FØR noe skrives til en live side.
+    const addSample = (type, page, content) => { if (summary.samples.length < 16) summary.samples.push({ type, page, content }); };
     const dedupSince = new Date(Date.now() - OPT_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const schemaDedupSince = new Date(Date.now() - OPT_SCHEMA_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -1369,7 +1375,11 @@ async function runOptimize(req, res) {
             const title = await afGenerateTargetedTitle({ keyword: k.keyword, companyName });
             const meta = await afGenerateTargetedMeta({ keyword: k.keyword, companyName });
             if (!title && !meta) { summary.skipped += 1; continue; }
-            if (dryRun) { summary.nearMiss += 1; continue; }
+            if (dryRun) {
+                addSample('near-miss seo-title', k.url, title);
+                addSample('near-miss meta', k.url, meta);
+                summary.nearMiss += 1; continue;
+            }
             let okAny = false;
             if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
             if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
@@ -1398,7 +1408,11 @@ async function runOptimize(req, res) {
             const title = await afGenerateTargetedTitle({ keyword: k.keyword, companyName });
             const meta = await afGenerateTargetedMeta({ keyword: k.keyword, companyName });
             if (!title && !meta) { summary.skipped += 1; continue; }
-            if (dryRun) { summary.decay += 1; continue; }
+            if (dryRun) {
+                addSample('forfall seo-title', k.url, title);
+                addSample('forfall meta', k.url, meta);
+                summary.decay += 1; continue;
+            }
             let okAny = false;
             if (title) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'seo-title', newValue: title }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
             if (meta) { const r = await afPushFix({ userId: host.user_id, pageUrl: k.url, field: 'meta-description', newValue: meta }); okAny = okAny || r.ok; if (!r.ok) summary.errors += 1; }
@@ -1427,7 +1441,7 @@ async function runOptimize(req, res) {
         if (!(Array.isArray(recentSchema) && recentSchema.length)) {
             const jsonld = optBuildSiteSchema(client);
             if (jsonld) {
-                if (dryRun) { summary.schema += 1; }
+                if (dryRun) { addSample('schema (JSON-LD)', optNormalizeUrl(client.website_url), jsonld); summary.schema += 1; }
                 else {
                     const r = await afConnectorPost(adminUrl, authorization, 'set-site-schema', { jsonld });
                     if (r.ok) {
@@ -1454,7 +1468,7 @@ async function runOptimize(req, res) {
             for (const img of imgs) {
                 const alt = await afGenerateAltText({ filename: img.filename, title: img.title, companyName });
                 if (!alt) { summary.skipped += 1; continue; }
-                if (dryRun) { summary.altText += 1; continue; }
+                if (dryRun) { addSample('alt-tekst', img.filename || 'bilde', alt); summary.altText += 1; continue; }
                 const r = await afConnectorPost(adminUrl, authorization, 'set-alt', { attachment_id: img.id, alt });
                 if (r.ok) {
                     summary.altText += 1;
@@ -1489,7 +1503,12 @@ async function runOptimize(req, res) {
             const changed = !!llms && llms !== (stateRow?.llms_txt || '');
 
             if (llms && changed) {
-                if (dryRun) { summary.geoPublished += 1; }
+                if (dryRun) {
+                    addSample('llms.txt', optNormalizeUrl(client.website_url), llms);
+                    const fs = geoBuildFullSchema(client, faqs);
+                    if (fs) addSample('GEO schema (m/FAQPage)', optNormalizeUrl(client.website_url), fs);
+                    summary.geoPublished += 1;
+                }
                 else {
                     const r1 = await afConnectorPost(adminUrl, authorization, 'set-llms-txt', { content: llms });
                     const fullSchema = geoBuildFullSchema(client, faqs);

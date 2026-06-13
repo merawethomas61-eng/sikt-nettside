@@ -2594,10 +2594,11 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "PREMIUM",
       price: "4 999",
-      tagline: "Dominér både Google og AI.",
-      desc: "Alt i Standard, pluss full synlighet i ChatGPT, Gemini og Perplexity. Vær først ute i AI-søk.",
+      tagline: "Når én ny kunde er verdt titusener.",
+      desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
       features: [
         { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, 50-søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
+        { text: "For høyverdi-bransjer der ett oppdrag betaler året", detail: "Tjenesten er priset for bedrifter med høy kundeverdi — advokat, tannlege, eiendomsmegler, entreprenør, B2B. Er marginen din lav per kunde, er Standard sannsynligvis riktigere for deg." },
         { text: "Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes." },
         { text: "Ubegrenset søkeord-sporing", detail: "Ingen grense. Spor alle søkeord som er relevante for bedriften din." },
         { text: "Spør Sikt AI hva som helst — 24/7", detail: "AI-chat som kjenner dine egne SEO-data og svarer på alt du lurer på, når som helst." },

@@ -6,6 +6,10 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com'
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
 
+// Estimert verdi per organisk klikk (NOK) — konservativt anslag for hva et
+// tilsvarende Google Ads-klikk ville kostet. Brukes til ROI-linjen i kvitteringen.
+const CLICK_VALUE_NOK = 8
+
 type SiktAction = {
   action_type: string
   category: string
@@ -136,6 +140,42 @@ Deno.serve(async (req) => {
       .limit(1)
     const topOpportunity = ((oppRows ?? []) as Opportunity[])[0] ?? null
 
+    // ROI: ekte Google-klikk nå vs. for ~4 uker siden + estimert kroneverdi.
+    // Reframer kvitteringen fra «aktivitet» til «penger». Kilde: GSC (keywords)
+    // + keyword_snapshots (ukentlig historikk). Vises kun når data finnes.
+    let gscClicks = 0
+    let gscImpressions = 0
+    let priorClicks: number | null = null
+    {
+      const { data: site } = await supabase
+        .from('sites').select('id').eq('user_id', client.user_id).maybeSingle()
+      if (site?.id) {
+        const { data: kw } = await supabase
+          .from('keywords').select('clicks, impressions').eq('site_id', site.id)
+        for (const r of (kw ?? []) as { clicks: number | null; impressions: number | null }[]) {
+          gscClicks += r.clicks ?? 0
+          gscImpressions += r.impressions ?? 0
+        }
+      }
+      // Forrige måned: eldste snapshot mellom 25 og 40 dager tilbake
+      const from = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString()
+      const to = new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: snaps } = await supabase
+        .from('keyword_snapshots').select('clicks, captured_at')
+        .eq('user_id', client.user_id).gte('captured_at', from).lte('captured_at', to)
+        .order('captured_at', { ascending: true })
+      if (snaps && snaps.length) {
+        const firstDay = (snaps[0] as { captured_at: string }).captured_at.slice(0, 10)
+        priorClicks = (snaps as { clicks: number | null; captured_at: string }[])
+          .filter(s => s.captured_at.slice(0, 10) === firstDay)
+          .reduce((sum, s) => sum + (s.clicks ?? 0), 0)
+      }
+    }
+    const estValue = Math.round(gscClicks * CLICK_VALUE_NOK)
+    const clicksDeltaPct = (priorClicks && priorClicks > 0)
+      ? Math.round(((gscClicks - priorClicks) / priorClicks) * 100)
+      : null
+
     const html = buildEmailHtml({
       companyName,
       firstName,
@@ -157,6 +197,10 @@ Deno.serve(async (req) => {
       topOpportunity,
       doneThisWeek,
       openSuggestions,
+      gscClicks,
+      gscImpressions,
+      clicksDeltaPct,
+      estValue,
     })
 
     const subject = buildSubject({ fixes, findings, plan, topOpportunity })
@@ -290,8 +334,12 @@ function buildEmailHtml(opts: {
   topOpportunity: Opportunity | null
   doneThisWeek: number
   openSuggestions: number
+  gscClicks: number
+  gscImpressions: number
+  clicksDeltaPct: number | null
+  estValue: number
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -423,6 +471,28 @@ function buildEmailHtml(opts: {
     </table>
     `}
     <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
+  </td></tr>
+  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
+  ` : ''}
+
+  ${gscClicks > 0 ? `
+  <!-- ROI: hva arbeidet er verdt -->
+  <tr><td style="padding-top:32px">
+    <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">Hva dette er verdt</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:#f3fbf6;border:1px solid #cdeed9;border-radius:14px;padding:22px">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td valign="top">
+            <div style="font-size:34px;font-weight:800;color:#137a47;line-height:1;letter-spacing:-0.5px">~${estValue.toLocaleString('nb-NO')} kr<span style="font-size:16px;color:#6b9e82;font-weight:700">/mnd</span></div>
+            <div style="font-size:13px;color:#5a7e6a;font-weight:600;margin-top:6px">Estimert verdi av Google-trafikken din</div>
+          </td>
+          ${clicksDeltaPct !== null ? `<td valign="top" align="right"><span style="display:inline-block;background:${clicksDeltaPct >= 0 ? '#e7f7ee' : '#fdeeee'};color:${clicksDeltaPct >= 0 ? '#137a47' : '#b42318'};font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">${clicksDeltaPct >= 0 ? '&#9650; +' : '&#9660; '}${clicksDeltaPct}% klikk vs forrige mnd</span></td>` : ''}
+        </tr></table>
+        <div style="font-size:13px;color:#5a7e6a;line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid #d8efe0">
+          <strong style="color:#137a47">${gscClicks.toLocaleString('nb-NO')}</strong> klikk fra <strong style="color:#137a47">${gscImpressions.toLocaleString('nb-NO')}</strong> visninger i Google siste 28 dager. Verdien er hva tilsvarende annonseklikk ville kostet (~${CLICK_VALUE_NOK} kr/klikk).
+        </div>
+      </td></tr>
+    </table>
   </td></tr>
   <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
   ` : ''}

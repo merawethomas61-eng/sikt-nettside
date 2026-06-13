@@ -800,6 +800,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               <p className="mt-2 text-xs text-slate-400">
                 {formatNumber(impressions)} visninger
               </p>
+              {clicks > 0 && (
+                <p className="mt-3 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  ~{formatNumber(clicks * 8)} kr/mnd verdi
+                </p>
+              )}
             </>
           ) : (
             <button
