@@ -2561,9 +2561,10 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "BASIC",
       price: "499",
-      tagline: "Fiks grunnmuren — selv.",
-      desc: "Se alt som holder deg nede på Google. Du får klare instruksjoner og AI-genererte tekster du kan bruke selv.",
+      tagline: "Hjernen bak rangeringen din.",
+      desc: "Sikt forteller deg nøyaktig hva du skal fikse og sporer hva som virker — uansett hvordan siden din er bygd. Anvend forslagene selv, eller lim dem rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …).",
       features: [
+        { text: "Funker uansett plattform — også AI-bygde sider", detail: "WordPress, Wix, Squarespace, Webflow, eller en side du bygde med Claude/Cursor/v0/Lovable. Sikt gir deg ferdige forslag du limer inn der du redigerer — eller rett inn i AI-verktøyet ditt." },
         { text: "Se hvor du står på Google — ubegrenset antall søkeord", detail: "Posisjon, klikk og visninger for alle søkeord du allerede rangerer på, hentet direkte fra Google Search Console." },
         { text: "Månedlig sjekk av hastighet og tekniske feil", detail: "Vi sjekker Core Web Vitals, mobilvennlighet, ødelagte lenker, SSL og redirect-kjeder hver måned." },
         { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Ferdige tekster for manglende meta-titler, beskrivelser og bilde-alt som du kan kopiere rett inn i ditt eget system." },
