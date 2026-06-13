@@ -140,6 +140,14 @@ Deno.serve(async (req) => {
       .limit(1)
     const topOpportunity = ((oppRows ?? []) as Opportunity[])[0] ?? null
 
+    // Plattform-status: kan Sikt faktisk skrive til siden? (full = WordPress/Shopify-token)
+    const { data: hostRow } = await supabase
+      .from('client_hosts')
+      .select('connection_mode')
+      .eq('user_id', client.user_id)
+      .maybeSingle()
+    const canAutoFix = (hostRow as { connection_mode?: string } | null)?.connection_mode === 'full'
+
     // ROI: ekte Google-klikk nå vs. for ~4 uker siden + estimert kroneverdi.
     // Reframer kvitteringen fra «aktivitet» til «penger». Kilde: GSC (keywords)
     // + keyword_snapshots (ukentlig historikk). Vises kun når data finnes.
@@ -201,6 +209,7 @@ Deno.serve(async (req) => {
       gscImpressions,
       clicksDeltaPct,
       estValue,
+      canAutoFix,
     })
 
     const subject = buildSubject({ fixes, findings, plan, topOpportunity })
@@ -268,7 +277,7 @@ function row(items: SiktAction[], borderColor: string): string {
   `).join('')
 }
 
-function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean): string {
+function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean, canAutoFix: boolean): string {
   if (!opp) return ''
 
   const traffic = typeof opp.estimated_traffic === 'number' && opp.estimated_traffic > 0
@@ -279,9 +288,13 @@ function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean,
     ? escapeHtml(opp.recommendation_text)
     : `En konkurrent rangerer på «${escapeHtml(opp.keyword)}» — det gjør ikke du ennå. Tar du dette søkeordet, henter du trafikken deres.`
 
-  const action = isStandardOrAbove
+  // Plattform-bevisst: lov bare auto-fiks når siden faktisk er koblet til for skriving.
+  // Standard+ på en rådgiver-plattform (Wix/Squarespace m.fl.) får ferdig forslag å lime inn.
+  const action = canAutoFix
     ? 'Sikt tar tak i denne for deg — du ser den i neste kvittering.'
-    : 'Med Standard fikser Sikt slike muligheter automatisk. På Basic får du oppskriften — gjør det selv, eller oppgrader.'
+    : isStandardOrAbove
+      ? 'Forslaget er klart til å limes inn. Koble til siden din for skrivetilgang, så fikser Sikt slikt automatisk.'
+      : 'Med Standard fikser Sikt slike muligheter automatisk. På Basic får du oppskriften — gjør det selv, eller oppgrader.'
 
   // Fremhevet kort (lys lilla) når det er ukens hovedsak; ellers samme stil som øvrige seksjoner.
   const bg = lightWeek ? '#faf7ff' : '#ffffff'
@@ -338,8 +351,9 @@ function buildEmailHtml(opts: {
   gscImpressions: number
   clicksDeltaPct: number | null
   estValue: number
+  canAutoFix: boolean
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -410,7 +424,7 @@ function buildEmailHtml(opts: {
     <div style="font-size:15px;color:#6b6880;line-height:1.7;margin-bottom:28px">${sublineHtml}</div>
   </td></tr>
 
-  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek)}
+  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek, canAutoFix)}
 
   ${fixes.length > 0 ? section('Fikset av Sikt', row(fixes, '#7c3aed')) : ''}
   ${findings.length > 0 ? section('Vi fant også', row(findings, '#e2e0ea')) : ''}
