@@ -154,16 +154,29 @@ Deno.serve(async (req) => {
     let gscClicks = 0
     let gscImpressions = 0
     let priorClicks: number | null = null
+    let wins: { keyword: string; position: number; prev: number }[] = []
     {
       const { data: site } = await supabase
         .from('sites').select('id').eq('user_id', client.user_id).maybeSingle()
       if (site?.id) {
         const { data: kw } = await supabase
-          .from('keywords').select('clicks, impressions').eq('site_id', site.id)
-        for (const r of (kw ?? []) as { clicks: number | null; impressions: number | null }[]) {
+          .from('keywords').select('keyword, clicks, impressions, position, previous_position').eq('site_id', site.id)
+        type KwRow = { keyword: string; clicks: number | null; impressions: number | null; position: number | null; previous_position: number | null }
+        for (const r of (kw ?? []) as KwRow[]) {
           gscClicks += r.clicks ?? 0
           gscImpressions += r.impressions ?? 0
         }
+        // Seire: søkeord som klatret merkbart siden forrige GSC-synk.
+        wins = ((kw ?? []) as KwRow[])
+          .filter(r => typeof r.position === 'number' && typeof r.previous_position === 'number' &&
+            (r.position as number) < (r.previous_position as number) && (
+              (r.position as number) <= 3 && (r.previous_position as number) > 3 ||
+              (r.position as number) <= 10 && (r.previous_position as number) > 10 ||
+              (r.previous_position as number) - (r.position as number) >= 5
+            ))
+          .map(r => ({ keyword: r.keyword, position: r.position as number, prev: r.previous_position as number }))
+          .sort((a, b) => (b.prev - b.position) - (a.prev - a.position))
+          .slice(0, 5)
       }
       // Forrige måned: eldste snapshot mellom 25 og 40 dager tilbake
       const from = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString()
@@ -210,6 +223,7 @@ Deno.serve(async (req) => {
       clicksDeltaPct,
       estValue,
       canAutoFix,
+      wins,
     })
 
     const subject = buildSubject({ fixes, findings, plan, topOpportunity })
@@ -352,8 +366,9 @@ function buildEmailHtml(opts: {
   clicksDeltaPct: number | null
   estValue: number
   canAutoFix: boolean
+  wins: { keyword: string; position: number; prev: number }[]
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins } = opts
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -423,6 +438,24 @@ function buildEmailHtml(opts: {
     </div>
     <div style="font-size:15px;color:#6b6880;line-height:1.7;margin-bottom:28px">${sublineHtml}</div>
   </td></tr>
+
+  ${wins.length > 0 ? `
+  <!-- SEIRE: søkeord som klatret -->
+  <tr><td style="padding-top:32px">
+    <div style="font-size:11px;font-weight:700;color:#137a47;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">&#127881; Seire denne uken</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:#f3fbf6;border:1px solid #cdeed9;border-radius:14px;padding:18px 20px">
+        ${wins.map(w => `
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px"><tr>
+          <td style="font-size:14px;font-weight:700;color:#1a1a2e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(w.keyword)}</td>
+          <td align="right" style="white-space:nowrap;font-size:13px;font-weight:700;color:#137a47;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">nr. ${w.prev} &#8594; ${w.position}${w.position <= 3 ? ' &#11088;' : w.position <= 10 ? ' (side 1)' : ''}</td>
+        </tr></table>`).join('')}
+        <div style="font-size:13px;color:#5a7e6a;line-height:1.6;margin-top:6px;padding-top:12px;border-top:1px solid #d8efe0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Arbeidet gir resultater — du klatret på ${wins.length === 1 ? 'ett søkeord' : `${wins.length} søkeord`} siden sist. Slik ser fremgang ut.</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
+  ` : ''}
 
   ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek, canAutoFix)}
 
