@@ -1,5 +1,6 @@
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import { ActivationChecklist } from './ActivationChecklist';
+import { JourneyTimeline } from './JourneyTimeline';
 // (Endre './CodeIntegrationStep' til './components/CodeIntegrationStep' hvis du la filen i en components-mappe)
 import { DetailedHealthCheck } from './src/components/DetailedHealthCheck';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -2627,7 +2628,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
               <div className={`relative bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 md:p-10 shadow-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-2 border ${plan.highlighted ? 'border-violet-400 shadow-violet-200/50 md:scale-105 z-10' : 'border-[#EBEBE6]'}`}>
 
                 <div className="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 bg-[#1A1A1A] text-white text-[10px] sm:text-xs font-black px-2.5 py-1 sm:px-3 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform rotate-12 whitespace-nowrap">
-                  70% RABATT 1. MND
+                  RABATTERT 3 MND
                 </div>
 
                 {plan.highlighted && (
@@ -3128,7 +3129,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           </h2>
 
           <p className="text-base sm:text-lg md:text-xl text-violet-100 max-w-2xl mx-auto leading-relaxed font-medium mb-8 sm:mb-12 px-2">
-            Ingen bindingstid. 70% rabatt første måned. Start med Basic for 499 kr — oppgrader når du er klar.
+            Ingen bindingstid. Rabattert de tre første månedene — 50 %, 30 %, 15 % — så du rekker å se resultater før fullpris. Start med Basic for 499 kr.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -3293,7 +3294,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
                   {/* --- HER ER RABATT-BADGEN --- */}
                   {step.number === "1" && (
                     <div className="absolute -top-4 -left-6 bg-[#1A1A1A] text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-lg shadow-violet-200 z-50 border-2 border-white transform -rotate-12 whitespace-nowrap">
-                      70% RABATT
+                      MYK START
                     </div>
                   )}
                   {/* --------------------------- */}
@@ -3456,17 +3457,17 @@ const TrustSection = () => {
         {/* GARANTI-GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-left">
 
-          {/* Punkt 1: Økonomi (OPPDATERT MED 70% RABATT) */}
+          {/* Punkt 1: Økonomi (myk oppstartsrampe over 3 mnd) */}
           <div className="bg-gradient-to-br from-violet-900/50 to-indigo-950/40 border border-violet-500/25 p-6 sm:p-8 rounded-3xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 bg-violet-700 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-bl-xl">
               ØKONOMISK TRYGGHET
             </div>
             <div className={`${iconTileClass} bg-violet-500/20 border-violet-400/20 text-white shadow-lg shadow-violet-900/30 mt-2`}>
-              <span className="text-xl font-black">70%</span>
+              <span className="text-base font-black">3 mnd</span>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">70% rabatt start</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Myk oppstart over 3 måneder</h3>
             <p className="text-white/60 text-sm leading-relaxed">
-              Er du usikker på effekten? Vi gir deg 70% rabatt den første måneden. Vi tar den økonomiske risikoen for å bevise at vi leverer verdi før du betaler fullpris. Ingen bindingstid.
+              SEO tar 60–90 dager å virke. Derfor trapper vi rabatten ned gradvis — 50 % første måned, 30 % andre, 15 % tredje — så du rekker å se resultater før du betaler fullpris. Ingen bindingstid, ingen brå prishopp.
             </p>
           </div>
 
@@ -3724,7 +3725,7 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
     <ul>
       <li>Alle priser er oppgitt i norske kroner (NOK) og eksklusive MVA.</li>
       <li>Betaling skjer månedlig via Stripe. Kort belastes automatisk den samme datoen hver måned.</li>
-      <li>Første måned gis med 70% rabatt som introduksjonstilbud.</li>
+      <li>De tre første månedene gis med nedtrappende introrabatt: 50 % første måned, 30 % andre måned, 15 % tredje måned. Fra fjerde måned betales full pris.</li>
       <li>Vi kan justere priser med 30 dagers varsel. Du kan alltid si opp før en prisjustering trer i kraft.</li>
     </ul>
 
@@ -7876,6 +7877,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setActivationDismissed(true);
     try { localStorage.setItem(`sikt_activation_dismissed_${user?.id || ''}`, '1'); } catch { /* ignore */ }
   };
+  const [journeyDismissed, setJourneyDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem(`sikt_journey_dismissed_${user?.id || ''}`) === '1'; } catch { return false; }
+  });
+  const dismissJourney = () => {
+    setJourneyDismissed(true);
+    try { localStorage.setItem(`sikt_journey_dismissed_${user?.id || ''}`, '1'); } catch { /* ignore */ }
+  };
   const [selectedKwId, setSelectedKwId] = useState<string | null>(null);
   const [kwFilter, setKwFilter] = useState<'all' | 'mine' | 'gsc'>('all');
   const [kwSearch, setKwSearch] = useState('');
@@ -10387,6 +10396,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onConnectWp={() => { openWpWizard(); }}
                   onDismiss={dismissActivation}
                 />
+              )}
+              {!journeyDismissed && (
+                <JourneyTimeline theme={themed} onDismiss={dismissJourney} />
               )}
               <React.Suspense fallback={<div className="h-64" />}>
                 <DashboardHome
