@@ -10397,9 +10397,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onDismiss={dismissActivation}
                 />
               )}
-              {!journeyDismissed && (
-                <JourneyTimeline theme={themed} onDismiss={dismissJourney} />
-              )}
               <React.Suspense fallback={<div className="h-64" />}>
                 <DashboardHome
                   user={user}
@@ -10417,6 +10414,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onNavigate={setActiveTab}
                 />
               </React.Suspense>
+              {!journeyDismissed && (
+                <div className="mt-12">
+                  <JourneyTimeline theme={themed} onDismiss={dismissJourney} />
+                </div>
+              )}
               <div className="mt-12 pb-20">
                 <DashboardCompetitorWidget
                   userId={user.id}
