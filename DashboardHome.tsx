@@ -77,21 +77,6 @@ const mediumPriorityAudits = new Set([
   'document-title',
 ]);
 
-const getDomain = (value: string) => {
-  if (!value) return 'nettsiden din';
-  try {
-    return new URL(value.startsWith('http') ? value : `https://${value}`)
-      .hostname.replace(/^www\./i, '');
-  } catch {
-    return (
-      value
-        .replace(/^https?:\/\//i, '')
-        .replace(/^www\./i, '')
-        .split('/')[0] || 'nettsiden din'
-    );
-  }
-};
-
 const relativeTime = (iso?: string) => {
   if (!iso) return 'ikke analysert ennå';
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -278,10 +263,10 @@ const PeriodSwitch = ({
   <div
     role="group"
     aria-label="Tidsperiode for trend"
-    className={`inline-flex ${
+    className={`inline-flex gap-0.5 rounded-[9px] p-0.5 ${
       dark
-        ? 'gap-0.5 rounded-full border border-white/20 bg-black/25 p-0.5'
-        : 'rounded-md border border-slate-200 bg-slate-100'
+        ? 'border border-white/15 bg-white/[0.06]'
+        : 'border border-[#E9E4DA] bg-[#F2EFE8]'
     }`}
   >
     {periodOptions.map((o) => (
@@ -289,16 +274,14 @@ const PeriodSwitch = ({
         key={o.value}
         type="button"
         onClick={() => onChange(o.value)}
-        className={`period-btn px-2.5 py-1 text-[11px] font-medium ${
+        className={`period-btn rounded-[7px] px-2.5 py-1 text-[11px] font-medium ${
           dark
-            ? `rounded-full ${
-                value === o.value
-                  ? 'border border-white text-white'
-                  : 'border border-transparent text-white/45 hover:text-white/70'
-              }`
+            ? value === o.value
+              ? 'bg-white/15 text-white'
+              : 'text-white/45 hover:text-white/75'
             : value === o.value
-              ? 'rounded-md bg-white text-slate-900 shadow-sm'
-              : 'rounded-md text-slate-400 hover:text-slate-600'
+              ? 'bg-white text-[#1A1A1A] shadow-[0_1px_2px_rgba(26,24,18,0.07)]'
+              : 'text-[#8A8578] hover:text-[#5C574C]'
         }`}
       >
         {o.label}
@@ -333,9 +316,9 @@ const ScoreCard = ({
         : 'Ikke målt ennå';
 
   return (
-  <div className="score-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+  <div className="score-card rounded-[14px] border border-[#E9E4DA] bg-white p-5">
     <div className="flex items-center justify-between gap-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
         {label}
       </p>
       <PeriodSwitch value={period} onChange={setPeriod} />
@@ -344,16 +327,16 @@ const ScoreCard = ({
     <div className="mb-3 mt-5">
       {score != null ? (
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
+          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
             {score}
           </span>
-          <span className="text-base font-normal text-slate-300">/100</span>
+          <span className="text-base font-normal text-[#B3AD9F]">/100</span>
           {delta != null && delta !== 0 && (
             <span
-              className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+              className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
                 delta > 0
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-red-50 text-red-700'
+                  ? 'bg-[#E8F1EB] text-[#15795A]'
+                  : 'bg-[#FBECEB] text-[#B4231F]'
               }`}
             >
               {delta > 0 ? '↑' : '↓'}{Math.abs(delta)}
@@ -361,7 +344,7 @@ const ScoreCard = ({
           )}
         </div>
       ) : (
-        <p className="text-[13px] font-medium leading-snug text-slate-400">
+        <p className="text-[13px] font-medium leading-snug text-[#8A8578]">
           {emptyScoreCopy}
         </p>
       )}
@@ -391,13 +374,13 @@ const ScoreCard = ({
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-slate-100 text-[10px] text-slate-400">
+        <div className="flex h-full items-center justify-center rounded-[10px] bg-[#FAF8F3] text-[10px] text-[#B3AD9F]">
           Kjør en analyse for å se data
         </div>
       )}
     </div>
 
-    <p className="mt-2.5 text-[10px] font-medium text-slate-300">
+    <p className="mt-2.5 text-[10px] font-medium text-[#B3AD9F]">
       {data.length > 0 ? `${data.length} målinger · siste ${data.length > 1 ? `${data.length} analyser` : 'analyse'}` : 'Ingen data ennå'}
     </p>
   </div>
@@ -518,12 +501,6 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
     return [...audit, ...kw].slice(0, 6);
   }, [analysisResults, realRankings]);
 
-  const domain = getDomain(
-    formData?.websiteUrl ||
-      clientData?.websiteUrl ||
-      clientData?.website_url ||
-      '',
-  );
   const latestAt = scoreHistory[scoreHistory.length - 1]?.at;
   const clicks = gscKeywords.reduce(
     (s: number, r: any) => s + Number(r.clicks || 0),
@@ -538,10 +515,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   /* ── Loading state ──────────────────────────────────────────────── */
   if (isAnalyzing && !analysisResults) {
     return (
-      <div className="flex min-h-[420px] w-full items-center justify-center font-['DM_Sans',sans-serif]">
-        <div className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-4">
-          <Loader2 size={18} className="animate-spin text-slate-900" />
-          <span className="text-sm text-slate-500">
+      <div className="flex min-h-[420px] w-full items-center justify-center font-['Geist','DM_Sans',sans-serif]">
+        <div className="inline-flex items-center gap-3 rounded-[12px] border border-[#E9E4DA] bg-white px-6 py-4">
+          <Loader2 size={18} className="animate-spin text-[#1A1A1A]" />
+          <span className="text-sm text-[#5C574C]">
             Henter dashboard-data…
           </span>
         </div>
@@ -551,7 +528,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
-    <div className="flex w-full flex-col gap-5 font-['DM_Sans',sans-serif] text-slate-900">
+    <div className="flex w-full flex-col gap-6 font-['Geist','DM_Sans',sans-serif] text-[#1A1A1A]">
       {/* Emil Kowalski: stagger entry + custom easing CSS */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes dashFadeIn {
@@ -566,10 +543,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         .dash-stagger-5 { animation-delay: 240ms; }
 
         .score-card {
-          transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+          transition: border-color 180ms cubic-bezier(0.23, 1, 0.32, 1),
+                      box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .score-card:hover { transform: translateY(-2px); }
+          .score-card:hover {
+            border-color: #D8D2C5;
+            box-shadow: 0 1px 2px rgba(26,24,18,0.04), 0 10px 24px -16px rgba(26,24,18,0.18);
+          }
         }
 
         .period-btn {
@@ -586,7 +567,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                       color 150ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .nav-btn:hover { color: rgb(15 23 42); }
+          .nav-btn:hover { color: #1A1A1A; }
         }
         .nav-btn:active { transform: scale(0.97); }
 
@@ -595,25 +576,26 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                       background-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .cta-btn:hover { background-color: rgb(30 41 59); }
+          .cta-btn:hover { background-color: #2A2722; }
         }
         .cta-btn:active { transform: scale(0.97); }
 
         .task-card {
           transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+                      border-color 150ms cubic-bezier(0.23, 1, 0.32, 1),
                       background-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .task-card:hover { background-color: rgb(241 245 249); }
+          .task-card:hover { background-color: #FAF8F3; border-color: #D8D2C5; }
         }
-        .task-card:active { transform: scale(0.97); }
+        .task-card:active { transform: scale(0.985); }
 
         .link-btn {
           transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1),
                       transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .link-btn:hover { color: rgb(15 23 42); }
+          .link-btn:hover { color: #1A1A1A; }
         }
         .link-btn:active { transform: scale(0.97); }
 
@@ -622,53 +604,50 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                       transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
         }
         @media (hover: hover) and (pointer: fine) {
-          .gsc-btn:hover { color: rgb(15 23 42); }
+          .gsc-btn:hover { color: #1A1A1A; }
         }
         .gsc-btn:active { transform: scale(0.97); }
       `}} />
-      {/* ── Heading ─────────────────────────────────────────────────── */}
-      <div className="dash-stagger dash-stagger-1 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-slate-900">
-            Slik står det til med {domain}
-          </h1>
-          <p className="mt-1.5 text-[13px] text-slate-400">
-            Siste analyse: {formatLastAnalysis(latestAt)} ·{' '}
-            {scoreHistory.length} målinger i historikk
-          </p>
-        </div>
+      {/* ── Toolbar: meta + primær handling ─────────────────────────── */}
+      <div className="dash-stagger dash-stagger-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13px] text-[#8A8578] tabular-nums">
+          Siste analyse:{' '}
+          <span className="font-medium text-[#5C574C]">{formatLastAnalysis(latestAt)}</span>
+          <span className="mx-1.5 text-[#D8D2C5]">·</span>
+          {scoreHistory.length} målinger i historikk
+        </p>
         <button
           type="button"
           onClick={onRunAnalysis}
-          className="cta-btn inline-flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-[13px] font-medium text-white"
+          className="cta-btn inline-flex shrink-0 items-center gap-2 rounded-[10px] bg-[#1A1A1A] px-4 py-2.5 text-[13px] font-medium text-white"
         >
           <RefreshCw size={13} />
           Kjør ny analyse
         </button>
       </div>
 
-      {/* ── SAMLET SCORE (dark card) ────────────────────────────────── */}
-      <section className="dash-stagger dash-stagger-2 rounded-[14px] border border-white/[0.08] bg-[#121212] px-6 py-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-        <div className="flex min-h-[118px] flex-col gap-5 md:flex-row md:items-center md:gap-0">
+      {/* ── SAMLET SCORE (primært kort) ─────────────────────────────── */}
+      <section className="dash-stagger dash-stagger-2 rounded-[16px] border border-[#E9E4DA] bg-white px-6 py-7 shadow-[0_1px_2px_rgba(26,24,18,0.03),0_18px_40px_-28px_rgba(26,24,18,0.22)]">
+        <div className="flex min-h-[118px] flex-col gap-6 md:flex-row md:items-center md:gap-0">
           {/* Left: score */}
           <div className="shrink-0 md:w-[min(100%,320px)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#888888]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8A8578]">
               Samlet score
             </p>
             {combinedScore != null ? (
-              <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
-                <span className="text-[76px] font-bold leading-[0.82] tracking-[-0.055em] text-white">
+              <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                <span className="text-[76px] font-semibold leading-[0.82] tracking-[-0.055em] text-[#1A1A1A] tabular-nums">
                   {combinedScore}
                 </span>
-                <span className="pb-[10px] text-[20px] font-normal text-[#888888]">
+                <span className="pb-[10px] text-[20px] font-normal text-[#B3AD9F]">
                   /100
                 </span>
                 {weekDelta != null && weekDelta !== 0 && (
                   <span
-                    className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                    className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
                       weekDelta >= 0
-                        ? 'bg-[#064E3B] text-[#A7F3D0]'
-                        : 'bg-[#7F1D1D] text-[#FECACA]'
+                        ? 'bg-[#E8F1EB] text-[#15795A]'
+                        : 'bg-[#FBECEB] text-[#B4231F]'
                     }`}
                   >
                     <span aria-hidden>{weekDelta >= 0 ? '↑' : '↓'}</span>
@@ -679,15 +658,15 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               </div>
             ) : (
               <div className="mt-3 pr-2">
-                <p className="text-[15px] font-medium leading-relaxed text-[#D4D4D4]">
+                <p className="text-[15px] font-medium leading-relaxed text-[#1A1A1A]">
                   Kjør din første analyse — teknisk score er klar på ~60 sekunder.
                 </p>
-                <p className="mt-2 text-[12px] leading-relaxed text-[#888888]">
+                <p className="mt-2 text-[12px] leading-relaxed text-[#8A8578]">
                   Bruk «Kjør ny analyse» over for å komme i gang.
                 </p>
               </div>
             )}
-            <p className="mt-3 text-[11px] font-medium leading-snug text-[#888888]">
+            <p className="mt-3 text-[11px] font-medium leading-snug text-[#8A8578]">
               {combinedScore != null ? (
                 <>
                   Basert på Lighthouse-teknisk · siste kjøring{' '}
@@ -700,14 +679,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
 
           <div
-            className="hidden h-[88px] w-px shrink-0 bg-white/10 md:mx-6 md:block md:self-center"
+            className="hidden h-[88px] w-px shrink-0 bg-[#E9E4DA] md:mx-6 md:block md:self-center"
             aria-hidden
           />
 
           {/* Right: trend + chart + period (én horisontal rad fra md+) */}
           <div className="flex min-w-0 flex-1 flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-5">
             <div className="w-full min-w-0 md:flex-1">
-              <p className="mb-2.5 text-[12px] font-medium text-[#888888]">
+              <p className="mb-2.5 text-[12px] font-medium text-[#8A8578]">
                 Trend siste {allTrendData.length} målinger
               </p>
               <div className="h-[84px] w-full">
@@ -719,16 +698,16 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     >
                       <defs>
                         <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#065F46" stopOpacity={0.55} />
-                          <stop offset="100%" stopColor="#121212" stopOpacity={0} />
+                          <stop offset="0%" stopColor="#6B9E82" stopOpacity={0.28} />
+                          <stop offset="100%" stopColor="#6B9E82" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <YAxis hide domain={[0, 100]} />
                       <Area
                         type="monotone"
                         dataKey="v"
-                        stroke="#A7F3D0"
-                        strokeWidth={1.5}
+                        stroke="#5A8E6E"
+                        strokeWidth={2}
                         fill="url(#heroGrad)"
                         dot={false}
                         isAnimationActive={false}
@@ -736,7 +715,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-[13px] text-white/35">
+                  <div className="flex h-full items-center justify-center text-[13px] text-[#B3AD9F]">
                     Kjør en analyse for å se data
                   </div>
                 )}
@@ -744,7 +723,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             </div>
 
             <div className="flex shrink-0 justify-start md:justify-end md:self-center">
-              <PeriodSwitch value={chartPeriod} onChange={setChartPeriod} dark />
+              <PeriodSwitch value={chartPeriod} onChange={setChartPeriod} />
             </div>
           </div>
         </div>
@@ -772,17 +751,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         />
 
         {/* Search Console */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase leading-tight tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-[#8A8578]">
               Search
               <br />
               Console
             </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#8A8578]">
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
-                  gscConnected ? 'bg-emerald-500' : 'bg-slate-300'
+                  gscConnected ? 'bg-[#2E9E6B]' : 'bg-[#CFC9BB]'
                 }`}
               />
               {gscConnected ? 'tilkoblet' : 'ikke koblet'}
@@ -791,17 +770,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {gscConnected ? (
             <>
-              <p className="mt-4 text-[11px] font-medium text-slate-300">
+              <p className="mt-4 text-[11px] font-medium text-[#B3AD9F]">
                 Klikk · 28d
               </p>
-              <p className="mt-2 text-[40px] font-semibold leading-none tracking-[-0.04em] text-slate-900">
+              <p className="mt-2 text-[40px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
                 {formatNumber(clicks)}
               </p>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-[#8A8578] tabular-nums">
                 {formatNumber(impressions)} visninger
               </p>
               {clicks > 0 && (
-                <p className="mt-3 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                <p className="mt-3 inline-flex items-center rounded-full bg-[#E8F1EB] px-2.5 py-1 text-[11px] font-semibold text-[#15795A] tabular-nums">
                   ~{formatNumber(clicks * 8)} kr/mnd verdi
                 </p>
               )}
@@ -810,7 +789,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('settings')}
-              className="gsc-btn mt-5 text-[13px] font-medium text-slate-500"
+              className="gsc-btn mt-5 text-[13px] font-medium text-[#5C574C]"
             >
               Koble til GSC →
             </button>
@@ -818,17 +797,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* GEO — AI-synlighet */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
               GEO — AI-synlighet
             </p>
             {geo && geo.total > 0 ? (
-              <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-medium text-violet-600">
+              <span className="inline-flex items-center rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#5C574C]">
                 Denne uken
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400">
+              <span className="inline-flex items-center rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#B3AD9F]">
                 Venter
               </span>
             )}
@@ -836,10 +815,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {geo && geo.total > 0 ? (
             <>
-              <p className="mt-5 text-[28px] font-bold leading-none text-slate-900">
-                {geo.mentioned}<span className="text-slate-400">/{geo.total}</span>
+              <p className="mt-5 text-[28px] font-semibold leading-none text-[#1A1A1A] tabular-nums">
+                {geo.mentioned}<span className="text-[#B3AD9F]">/{geo.total}</span>
               </p>
-              <p className="mt-1.5 text-[13px] font-medium text-slate-500">
+              <p className="mt-1.5 text-[13px] font-medium text-[#5C574C]">
                 AI-svar som nevner deg
               </p>
               <div className="mt-4 space-y-1.5">
@@ -851,8 +830,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   const p = geo.byProvider?.[key];
                   return (
                     <div key={key} className="flex items-center justify-between text-[12px]">
-                      <span className="font-medium text-slate-600">{label}</span>
-                      <span className={p && p.mentioned > 0 ? 'font-semibold text-violet-600' : 'text-slate-400'}>
+                      <span className="font-medium text-[#5C574C]">{label}</span>
+                      <span className={`tabular-nums ${p && p.mentioned > 0 ? 'font-semibold text-[#15795A]' : 'text-[#B3AD9F]'}`}>
                         {p ? `${p.mentioned}/${p.total}` : '—'}
                       </span>
                     </div>
@@ -861,7 +840,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               </div>
             </>
           ) : (
-            <p className="mt-8 text-[13px] font-medium leading-relaxed text-slate-500">
+            <p className="mt-8 text-[13px] font-medium leading-relaxed text-[#5C574C]">
               Sjekker hver uke om ChatGPT, Gemini og Perplexity nevner deg. Første resultat kommer mandag.
             </p>
           )}
@@ -871,38 +850,38 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       {/* ── Bottom grid: tasks + events ─────────────────────────────── */}
       <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         {/* Prioriterte oppgaver */}
-        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
                 Prioriterte oppgaver
               </h2>
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
+              <span className="rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-0.5 text-[11px] font-medium text-[#8A8578] tabular-nums">
                 {tasks.length} totalt
               </span>
             </div>
-            <span className="text-[11px] font-medium text-slate-400">
+            <span className="text-[11px] font-medium text-[#B3AD9F]">
               Sortér: prioritet ↓
             </span>
           </div>
 
           {!analysisResults && !realRankings.length ? (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
-              <p className="text-sm font-medium leading-relaxed text-slate-500">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
+              <p className="text-sm font-medium leading-relaxed text-[#5C574C]">
                 Etter første analyse finner og prioriterer Sikt ting du bør fikse — de dukker opp her.
               </p>
               <button
                 type="button"
                 onClick={onRunAnalysis}
-                className="cta-btn mt-4 rounded-lg bg-slate-900 px-4 py-2 text-[13px] font-medium text-white"
+                className="cta-btn mt-4 rounded-[10px] bg-[#1A1A1A] px-4 py-2 text-[13px] font-medium text-white"
               >
                 Kjør analyse
               </button>
             </div>
           ) : tasks.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
-              <p className="text-sm font-medium text-slate-500">
-                Alt ser bra ut!
+            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
+              <p className="text-sm font-medium text-[#5C574C]">
+                Alt ser bra ut.
               </p>
             </div>
           ) : (
@@ -913,34 +892,34 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     key={t.id}
                     type="button"
                     onClick={() => onNavigate('visibility')}
-                    className="task-card rounded-xl border border-slate-200 bg-white p-4 text-left"
+                    className="task-card rounded-[12px] border border-[#E9E4DA] bg-white p-4 text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           t.priority === 'høy'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-emerald-50 text-emerald-700'
+                            ? 'bg-[#F6EEDD] text-[#9A6700]'
+                            : 'bg-[#E8F1EB] text-[#15795A]'
                         }`}
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${
                             t.priority === 'høy'
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500'
+                              ? 'bg-[#C08A2E]'
+                              : 'bg-[#2E9E6B]'
                           }`}
                         />
                         {t.priority}
                       </span>
-                      <span className="text-[10px] font-medium text-slate-300">
+                      <span className="text-[10px] font-medium text-[#B3AD9F]">
                         {t.category}
                       </span>
                     </div>
-                    <p className="mt-3 text-[13px] font-semibold leading-snug text-slate-900">
+                    <p className="mt-3 text-[13px] font-semibold leading-snug text-[#1A1A1A]">
                       {t.title}
                     </p>
                     {t.displayValue && (
-                      <p className="mt-1 text-[11px] text-slate-400">
+                      <p className="mt-1 text-[11px] text-[#8A8578]">
                         {t.displayValue}
                       </p>
                     )}
@@ -951,7 +930,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('visibility')}
-                  className="link-btn mt-4 self-start text-[13px] font-medium text-slate-400"
+                  className="link-btn mt-4 self-start text-[13px] font-medium text-[#8A8578]"
                 >
                   Vis alle {tasks.length} →
                 </button>
@@ -961,14 +940,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* Siste hendelser */}
-        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-5">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
             Siste hendelser
           </h2>
 
           {logs.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
-              <p className="text-sm leading-relaxed text-slate-400">
+            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
+              <p className="text-sm leading-relaxed text-[#8A8578]">
                 Sikt jobber i bakgrunnen — første funn dukker opp her i løpet av kort tid.
               </p>
             </div>
@@ -982,17 +961,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   <li
                     key={log.id || `${log.action}-${i}`}
                     className={`flex gap-3 py-3 ${
-                      i > 0 ? 'border-t border-slate-100' : ''
+                      i > 0 ? 'border-t border-[#EFEBE2]' : ''
                     }`}
                   >
-                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100">
-                      <Icon size={13} className="text-slate-500" />
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F2EFE8]">
+                      <Icon size={13} className="text-[#8A8578]" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold leading-snug text-slate-900">
+                      <p className="text-[13px] font-semibold leading-snug text-[#1A1A1A]">
                         {readableAction(log)}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-[#8A8578] tabular-nums">
                         {[detail, time].filter(Boolean).join(' · ')}
                       </p>
                     </div>
@@ -1005,7 +984,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('log')}
-            className="link-btn mt-4 self-start text-[13px] font-medium text-slate-400"
+            className="link-btn mt-4 self-start text-[13px] font-medium text-[#8A8578]"
           >
             Se alle hendelser →
           </button>

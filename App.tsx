@@ -9115,7 +9115,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // ===================================================================
   const themed: PortalTheme = theme === 'light' ? 'light' : 'dark';
   const isLight = themed === 'light';
-  const rootBg = isLight ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100';
+  const rootBg = isLight ? 'bg-[#F6F5F1] text-[#1A1A1A]' : 'bg-slate-950 text-slate-100';
   const textMain = portalTextMainClass(themed);
   const textDim = portalTextDimClass(themed);
   const textLabel = portalTextLabelClass(themed);
@@ -10116,12 +10116,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // bryter React Rules of Hooks naar `loading` flipper fra true -> false.
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
-        <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/60'} px-6 py-5 shadow-sm flex items-center gap-3`}>
-          <Loader2 size={18} className="text-violet-600 animate-spin" />
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-[#F6F5F1]' : 'bg-slate-950'} font-['Geist','DM_Sans',sans-serif]`}>
+        <div className={`rounded-[16px] border ${isLight ? 'border-[#E9E4DA] bg-white' : `${divider} bg-slate-900/60`} px-6 py-5 flex items-center gap-3`}>
+          <Loader2 size={18} className={`${isLight ? 'text-[#1A1A1A]' : 'text-violet-600'} animate-spin`} />
           <div>
-            <p className={`text-sm font-medium ${textMain}`}>Laster portalen</p>
-            <p className={`text-xs ${textDim}`}>Henter profil, score og siste aktivitet.</p>
+            <p className={`text-sm font-medium ${isLight ? 'text-[#1A1A1A]' : textMain}`}>Laster portalen</p>
+            <p className={`text-xs ${isLight ? 'text-[#8A8578]' : textDim}`}>Henter profil, score og siste aktivitet.</p>
           </div>
         </div>
       </div>
@@ -10326,40 +10326,40 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'home' && (
           <div key={activeTab} className="space-y-6">
-            <header className="flex items-end justify-between flex-wrap gap-3">
+            <header className="flex items-end justify-between flex-wrap gap-3 font-['Geist','DM_Sans',sans-serif]">
               <div>
-                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Dashboard</h1>
-                <p className={`text-base mt-3 ${textDim}`}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] text-[#1A1A1A] font-['Geist',sans-serif]">Dashboard</h1>
+                <p className="text-base mt-3 text-[#8A8578]">Slik står det til med {domainLabel || 'nettsiden din'}.</p>
               </div>
             </header>
 
             {/* Godkjenningskø: synlige fikser Sikt har klargjort, venter på ditt ja */}
             {fixQueue.length > 0 && (
-              <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-white/[0.03]'} p-5 sm:p-6`}>
+              <div className="rounded-[16px] border border-[#E9E4DA] bg-white p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles size={16} className="text-violet-500 shrink-0" />
-                  <h2 className={`text-lg font-bold ${textMain}`}>Venter på din godkjenning</h2>
-                  <span className="ml-auto text-[11px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">{fixQueue.length}</span>
+                  <Sparkles size={16} className="text-[#15795A] shrink-0" />
+                  <h2 className="text-lg font-semibold tracking-[-0.01em] text-[#1A1A1A]">Venter på din godkjenning</h2>
+                  <span className="ml-auto text-[11px] font-semibold text-[#15795A] bg-[#E8F1EB] px-2 py-0.5 rounded-full tabular-nums">{fixQueue.length}</span>
                 </div>
-                <p className={`text-sm ${textDim} mb-4`}>Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
+                <p className="text-sm text-[#8A8578] mb-4">Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
                 <div className="space-y-3">
                   {fixQueue.map((item) => {
                     const label = item.field === 'h1' ? 'Overskrift (H1)' : item.field === 'content' ? 'Sideinnhold' : item.field;
                     const busy = queueBusyId === item.id;
                     return (
-                      <div key={item.id} className={`rounded-xl border ${divider} p-4`}>
+                      <div key={item.id} className="rounded-[12px] border border-[#E9E4DA] p-4">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-0.5 rounded">{label}</span>
-                          <span className={`text-xs ${textDim} truncate max-w-full`}>{item.page_url}</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#5C574C] bg-[#F2EFE8] px-2 py-0.5 rounded">{label}</span>
+                          <span className="text-xs text-[#8A8578] truncate max-w-full">{item.page_url}</span>
                         </div>
-                        <p className={`text-sm font-semibold ${textMain} mb-1`}>{item.suggested_value}</p>
-                        {item.explanation && <p className={`text-xs ${textDim} mb-3 leading-relaxed`}>{item.explanation}</p>}
+                        <p className="text-sm font-semibold text-[#1A1A1A] mb-1">{item.suggested_value}</p>
+                        {item.explanation && <p className="text-xs text-[#8A8578] mb-3 leading-relaxed">{item.explanation}</p>}
                         <div className="flex gap-2">
                           <button
                             type="button"
                             disabled={busy}
                             onClick={() => approveQueuedFix(item)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1A1A1A] text-white text-xs font-bold ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[#1A1A1A] text-white text-xs font-semibold ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#2A2722]"
                           >
                             {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                             Godkjenn og publiser
@@ -10368,7 +10368,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             type="button"
                             disabled={busy}
                             onClick={() => rejectQueuedFix(item)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border ${divider} ${textDim} text-xs font-bold ui-motion disabled:opacity-60`}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] border border-[#E9E4DA] text-[#5C574C] text-xs font-semibold ui-motion disabled:opacity-60"
                           >
                             <X size={13} /> Avvis
                           </button>

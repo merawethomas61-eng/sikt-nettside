@@ -72,14 +72,14 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
   const pct = Math.round((doneCount / steps.length) * 100);
 
   // Tema-tokens (matcher PortalCard / portal*Class i App.tsx)
-  const cardCls = isLight ? 'bg-white border-violet-200' : 'bg-slate-900 border-violet-500/30';
-  const titleCls = isLight ? 'text-slate-900' : 'text-white';
-  const mutedCls = isLight ? 'text-slate-500' : 'text-slate-400';
-  const trackCls = isLight ? 'bg-slate-100' : 'bg-white/10';
-  const closeCls = isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-500 hover:text-slate-200 hover:bg-white/10';
+  const cardCls = isLight ? 'bg-white border-[#E9E4DA]' : 'bg-slate-900 border-violet-500/30';
+  const titleCls = isLight ? 'text-[#1A1A1A]' : 'text-white';
+  const mutedCls = isLight ? 'text-[#5C574C]' : 'text-slate-400';
+  const trackCls = isLight ? 'bg-[#EFEBE2]' : 'bg-white/10';
+  const closeCls = isLight ? 'text-[#B3AD9F] hover:text-[#5C574C] hover:bg-[#F2EFE8]' : 'text-slate-500 hover:text-slate-200 hover:bg-white/10';
 
   return (
-    <div className={`relative rounded-2xl border ${cardCls} p-5 sm:p-6 shadow-sm font-['DM_Sans',sans-serif]`}>
+    <div className={`relative rounded-[16px] border ${cardCls} p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]`}>
       {onDismiss && (
         <button
           type="button"
@@ -93,7 +93,7 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
 
       <div className="flex items-start justify-between gap-3 mb-1 pr-8">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-violet-600 text-white">
+          <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[#1A1A1A] text-white">
             <Zap size={15} />
           </span>
           <h2 className={`text-[15px] font-bold tracking-[-0.01em] ${titleCls}`}>Aktiver Sikt</h2>
@@ -108,28 +108,28 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
       </p>
 
       <div className={`h-1.5 w-full rounded-full ${trackCls} overflow-hidden mb-5`}>
-        <div className="h-full rounded-full bg-violet-600 transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-[#15795A] transition-[width] duration-500" style={{ width: `${pct}%` }} />
       </div>
 
       <div className="flex flex-col gap-2.5">
         {steps.map((s, i) => {
           const rowCls = s.done
-            ? (isLight ? 'border-slate-100 bg-slate-50/60' : 'border-white/5 bg-white/[0.03]')
+            ? (isLight ? 'border-[#EFEBE2] bg-[#FAF8F3]' : 'border-white/5 bg-white/[0.03]')
             : s.accent
-              ? (isLight ? 'border-violet-200 bg-violet-50/40' : 'border-violet-500/30 bg-violet-500/10')
-              : (isLight ? 'border-slate-200 bg-white' : 'border-white/10 bg-transparent');
+              ? (isLight ? 'border-[#CDE4D6] bg-[#F1F7F3]' : 'border-violet-500/30 bg-violet-500/10')
+              : (isLight ? 'border-[#E9E4DA] bg-white' : 'border-white/10 bg-transparent');
           const iconCls = s.done
-            ? (isLight ? 'bg-emerald-100 text-emerald-600' : 'bg-emerald-500/15 text-emerald-300')
+            ? (isLight ? 'bg-[#E8F1EB] text-[#15795A]' : 'bg-emerald-500/15 text-emerald-300')
             : s.accent
-              ? (isLight ? 'bg-violet-100 text-violet-600' : 'bg-violet-500/15 text-violet-300')
-              : (isLight ? 'bg-slate-100 text-slate-500' : 'bg-white/10 text-slate-300');
+              ? (isLight ? 'bg-[#E8F1EB] text-[#15795A]' : 'bg-violet-500/15 text-violet-300')
+              : (isLight ? 'bg-[#F2EFE8] text-[#8A8578]' : 'bg-white/10 text-slate-300');
           const stepTitleCls = s.done
             ? `${mutedCls} line-through`
             : titleCls;
-          const secondaryBtn = isLight ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-white text-slate-900 hover:bg-slate-200';
-          const disabledBtn = isLight ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white/10 text-slate-500 cursor-not-allowed';
+          const secondaryBtn = isLight ? 'bg-[#1A1A1A] text-white hover:bg-[#2A2722]' : 'bg-white text-slate-900 hover:bg-slate-200';
+          const disabledBtn = isLight ? 'bg-[#F2EFE8] text-[#B3AD9F] cursor-not-allowed' : 'bg-white/10 text-slate-500 cursor-not-allowed';
           return (
-            <div key={i} className={`flex items-center gap-3 rounded-xl border p-3.5 ${rowCls}`}>
+            <div key={i} className={`flex items-center gap-3 rounded-[12px] border p-3.5 ${rowCls}`}>
               <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${iconCls}`}>
                 {s.done ? <CheckCircle2 size={16} /> : <s.icon size={15} />}
               </span>
@@ -138,14 +138,14 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
                 {!s.done && <p className={`mt-0.5 text-[12px] leading-snug ${mutedCls}`}>{s.desc}</p>}
               </div>
               {s.done ? (
-                <span className={`shrink-0 text-[12px] font-semibold ${isLight ? 'text-emerald-600' : 'text-emerald-300'}`}>Ferdig</span>
+                <span className={`shrink-0 text-[12px] font-semibold ${isLight ? 'text-[#15795A]' : 'text-emerald-300'}`}>Ferdig</span>
               ) : (
                 <button
                   type="button"
                   disabled={s.disabled}
                   onClick={s.onClick}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12px] font-semibold transition-colors ${
-                    s.disabled ? disabledBtn : s.accent ? 'bg-violet-600 text-white hover:bg-violet-700' : secondaryBtn
+                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12px] font-semibold transition-colors ${
+                    s.disabled ? disabledBtn : secondaryBtn
                   }`}
                 >
                   {s.cta} {!s.disabled && <ArrowRight size={13} />}

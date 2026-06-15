@@ -34,30 +34,32 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({ theme, onDismi
   const P = isLight
     ? {
         surface: 'linear-gradient(180deg,#FFFFFF 0%,#FBFAF6 100%)',
-        border: '#EAE4D8',
-        ink: '#1C1A16',
-        muted: '#6F6858',
-        eyebrow: '#A05A2C',
-        hair: '#EEE8DC',
-        footerBg: '#F5F0E6',
-        footerInk: '#5C5648',
-        close: '#B0A893',
-        closeHover: '#6F6858',
-        ramp: ['#DACDB6', '#C2884F', '#A05A2C'], // faint → full: bygger mot resultat
-        shadow: '0 1px 2px rgba(28,26,22,0.04), 0 8px 24px -12px rgba(28,26,22,0.10)',
+        border: '#E9E4DA',
+        ink: '#1A1A1A',
+        muted: '#5C574C',
+        label: '#8A8578',
+        accent: '#15795A',
+        hair: '#EFEBE2',
+        footerBg: '#F2EFE8',
+        footerInk: '#5C574C',
+        close: '#B3AD9F',
+        closeHover: '#5C574C',
+        ramp: ['#CFC9BB', '#7FB496', '#15795A'], // faint → grønn: bygger mot resultat
+        shadow: '0 1px 2px rgba(26,24,18,0.04), 0 10px 24px -16px rgba(26,24,18,0.14)',
       }
     : {
         surface: 'linear-gradient(180deg,#1A1813 0%,#141209 100%)',
         border: 'rgba(255,255,255,0.08)',
         ink: '#F3EFE6',
         muted: '#9C9485',
-        eyebrow: '#E0A36C',
+        label: '#9C9485',
+        accent: '#6EE7B7',
         hair: 'rgba(255,255,255,0.07)',
-        footerBg: 'rgba(224,163,108,0.07)',
+        footerBg: 'rgba(110,231,183,0.07)',
         footerInk: '#B9B1A1',
         close: '#6F6B61',
         closeHover: '#D2CCBE',
-        ramp: ['rgba(224,163,108,0.32)', 'rgba(224,163,108,0.62)', '#E0A36C'],
+        ramp: ['rgba(110,231,183,0.30)', 'rgba(110,231,183,0.6)', '#6EE7B7'],
         shadow: '0 20px 50px -24px rgba(0,0,0,0.6)',
       };
 
@@ -70,7 +72,7 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({ theme, onDismi
         borderRadius: 20,
         padding: '26px 28px',
         boxShadow: P.shadow,
-        fontFamily: "'DM Sans',system-ui,sans-serif",
+        fontFamily: "'Geist','DM Sans',system-ui,sans-serif",
       }}
     >
       <style>{`
@@ -104,12 +106,12 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({ theme, onDismi
 
       {/* Header */}
       <div className="journey-item" style={{ animationDelay: '0ms', paddingRight: 36 }}>
-        <p style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,monospace', fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.eyebrow }}>
+        <p style={{ margin: 0, fontFamily: "'Geist Mono',ui-monospace,SFMono-Regular,monospace", fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: P.label }}>
           Slik ser veien ut
         </p>
         <h2 style={{ margin: '11px 0 0', fontSize: 23, fontWeight: 700, lineHeight: 1.18, letterSpacing: '-0.02em', color: P.ink }}>
           SEO er en klatring,{' '}
-          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, color: P.eyebrow }}>ikke en bryter.</span>
+          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, color: P.accent }}>ikke en bryter.</span>
         </h2>
         <p style={{ margin: '11px 0 0', fontSize: 13.5, lineHeight: 1.6, color: P.muted, maxWidth: 480 }}>
           Resultater på Google tar vanligvis 60–90 dager. Men du ser arbeidet vårt hver eneste mandag — lenge før rangeringen flytter seg. Slik ser de første månedene ut:
@@ -141,7 +143,7 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({ theme, onDismi
               {p.n}
             </span>
             <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontFamily: 'ui-monospace,SFMono-Regular,monospace', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: P.eyebrow }}>
+              <p style={{ margin: 0, fontFamily: "'Geist Mono',ui-monospace,SFMono-Regular,monospace", fontSize: 10.5, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: P.label }}>
                 {p.week} · {p.title}
               </p>
               <p style={{ margin: '5px 0 0', fontSize: 13.5, lineHeight: 1.55, color: P.muted }}>
@@ -163,7 +165,7 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({ theme, onDismi
       >
         <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: P.footerInk }}>
           Derfor er starten rabattert i tre måneder{' '}
-          <span style={{ color: P.eyebrow, fontWeight: 600 }}>(50 % → 30 % → 15 %)</span>{' '}
+          <span style={{ color: P.accent, fontWeight: 600 }}>(50 % → 30 % → 15 %)</span>{' '}
           — du betaler minst mens du venter, og full pris først når resultatene er der.
         </p>
       </div>

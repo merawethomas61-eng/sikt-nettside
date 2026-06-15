@@ -62,7 +62,7 @@ const injectStyles = (() => {
 const CHANGE_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
   new_page:      { icon: FileText,    color: 'text-emerald-500', bg: 'bg-emerald-500' },
   removed_page:  { icon: Trash2,      color: 'text-rose-500',    bg: 'bg-rose-500' },
-  new_keyword:   { icon: Search,      color: 'text-violet-500',  bg: 'bg-violet-500' },
+  new_keyword:   { icon: Search,      color: 'text-[#8A8578]',   bg: 'bg-[#8A8578]' },
   rank_improved: { icon: TrendingUp,  color: 'text-emerald-500', bg: 'bg-emerald-500' },
   rank_dropped:  { icon: TrendingDown, color: 'text-amber-500',  bg: 'bg-amber-500' },
 };
@@ -175,25 +175,25 @@ export const DashboardCompetitorWidget: React.FC<DashboardWidgetProps> = ({ user
   useEffect(() => { injectStyles(); }, []);
 
   const isDark = theme !== 'light';
-  const textPrimary = isDark ? 'text-slate-200' : 'text-slate-900';
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
-  const textLabel = isDark ? 'text-slate-500' : 'text-slate-400';
-  const border = isDark ? 'border-white/5' : 'border-slate-100';
-  const hoverBg = isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50';
+  const textPrimary = isDark ? 'text-slate-200' : 'text-[#1A1A1A]';
+  const textMuted = isDark ? 'text-slate-400' : 'text-[#5C574C]';
+  const textLabel = isDark ? 'text-slate-500' : 'text-[#8A8578]';
+  const border = isDark ? 'border-white/5' : 'border-[#EFEBE2]';
+  const hoverBg = isDark ? 'hover:bg-white/5' : 'hover:bg-[#FAF8F3]';
 
   if (loading) return null; // Ikke vis noe mens vi laster (Emil: unngå layout shift)
 
   return (
-    <div>
+    <div className="font-['Geist','DM_Sans',sans-serif]">
       <div className={`flex items-center justify-between mb-4 pb-4 border-b ${border}`}>
         <div className="flex items-center gap-2">
-          <p className={`text-[10px] font-bold uppercase tracking-widest ${textLabel}`}>
+          <p className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${textLabel}`}>
             Konkurrentovervåking
           </p>
           {unreadCount > 0 && (
             <span
-              className="inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-violet-500 rounded-full"
-              style={{ 
+              className="inline-flex items-center justify-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-[#1A1A1A] rounded-full tabular-nums"
+              style={{
                 animation: 'sikt-fade-up 300ms cubic-bezier(0.23, 1, 0.32, 1) forwards',
               }}
             >
@@ -203,7 +203,7 @@ export const DashboardCompetitorWidget: React.FC<DashboardWidgetProps> = ({ user
         </div>
         <button
           onClick={onNavigate}
-          className={`text-xs font-medium text-violet-500 hover:text-violet-600 transition-colors duration-150`}
+          className={`text-xs font-medium text-[#5C574C] hover:text-[#1A1A1A] transition-colors duration-150`}
           style={{ transitionTimingFunction: EASE_OUT }}
         >
           Vis alle &rarr;
@@ -248,7 +248,7 @@ export const DashboardCompetitorWidget: React.FC<DashboardWidgetProps> = ({ user
       {unreadCount > 0 && (
         <button
           onClick={(e) => { e.stopPropagation(); markAllRead(); }}
-          className={`mt-4 text-xs ${textLabel} hover:text-violet-500 transition-colors duration-150 flex items-center gap-1.5`}
+          className={`mt-4 text-xs ${textLabel} hover:text-[#1A1A1A] transition-colors duration-150 flex items-center gap-1.5`}
           style={{ transitionTimingFunction: EASE_OUT }}
         >
           <Check size={12} /> Marker alt som lest
