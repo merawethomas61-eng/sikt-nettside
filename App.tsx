@@ -15,7 +15,7 @@ import {
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2, ChevronsUpDown,
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink, Circle,
-  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type
+  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type, Star, MessageSquare, QrCode
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -4745,12 +4745,16 @@ function kpTimeAgo(dateStr: string): string {
 // ─── GEO / AI-SYNLIGHET PAGE ────────────────────────────────────────────────
 const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
   const G = {
-    bg:     '#F5F5F0',
+    bg:     '#F2EFE8',
     card:   '#FFFFFF',
     ink:    '#1A1A1A',
-    green:  '#52A447',
-    muted:  '#808080',
-    border: '#EBEBE6',
+    green:  '#15795A',
+    muted:  '#8A8578',
+    border: '#E9E4DA',
+    sub:    '#5C574C',
+    faint:  '#B3AD9F',
+    hair:   '#EFEBE2',
+    subtle: '#FAF8F3',
   } as const;
   const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
   const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -4768,106 +4772,26 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: "'Geist','DM Sans',sans-serif" }}>
 
-      {/* ── HERO: split ───────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-
-        {/* Left: editorial text */}
-        <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
-              GEO · Generative Engine Optimization
-            </p>
-            <span style={{ fontSize: 10, fontWeight: 700, background: G.green, color: '#fff', borderRadius: 100, padding: '2px 8px', letterSpacing: '0.06em' }}>
-              Beta
-            </span>
-          </div>
-          <h1 style={{ fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 900, lineHeight: 1.08, color: G.ink, margin: '0 0 20px', letterSpacing: '-0.02em' }}>
-            Når kundene spør AI-en,{' '}
-            <em style={{ fontStyle: 'italic', color: G.muted, fontWeight: 800 }}>blir du nevnt?</em>
-          </h1>
-          <p style={{ fontSize: 15, color: G.muted, lineHeight: 1.65, margin: '0 0 28px', maxWidth: 420 }}>
-            Småbedrifter sjekker fortsatt hvordan de rangerer på Google. Men nordmenn
-            flytter spørsmålene sine til ChatGPT, Perplexity og Gemini. Sikt hjelper deg
-            med å se hvordan bedriften din omtales i svarene.
-          </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => { document.getElementById('geo-tester')?.scrollIntoView({ behavior: 'smooth' }); }}
-              style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
-              onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
-            >
-              Start en test <ChevronRight size={15} />
-            </button>
-            <button
-              onClick={() => { document.getElementById('geo-veikartet')?.scrollIntoView({ behavior: 'smooth' }); }}
-              style={{ background: 'none', color: G.muted, border: `1px solid ${G.border}`, borderRadius: 11, padding: '11px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: `all 160ms ${EASE}` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = G.ink; e.currentTarget.style.color = G.ink; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.muted; }}
-            >
-              Slik fungerer GEO
-            </button>
-          </div>
-        </div>
-
-        {/* Right: stat cards 2×2 */}
-        <div style={{ flex: '0 0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: 'min(360px, 100%)' }}>
-          {/* Card 1 – dark */}
-          <div style={{ background: G.ink, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Av nordmenn</p>
-            <p style={{ fontSize: 42, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1 }}>95%</p>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.45 }}>bruker ChatGPT til å finne lokale bedrifter</p>
-          </div>
-          {/* Card 2 – white */}
-          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Brukere</p>
-            <p style={{ fontSize: 42, fontWeight: 900, color: G.ink, margin: 0, lineHeight: 1 }}>200M</p>
-            <p style={{ fontSize: 11, color: G.muted, margin: 0, lineHeight: 1.45 }}>bruker ChatGPT månedlig — og spør om alt</p>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 18, marginTop: 4 }}>
-              {[40, 55, 45, 65, 58, 72, 80, 88, 95].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: G.green, borderRadius: 2, height: `${h}%`, opacity: 0.7 + i * 0.033 }} />
-              ))}
-            </div>
-          </div>
-          {/* Card 3 – white */}
-          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Perplexity</p>
-              <TrendingUp size={13} style={{ color: G.green }} />
-            </div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: G.ink, margin: 0, lineHeight: 1.4 }}>erstatter Google-søket for mange profesjonelle</p>
-            <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 14, marginTop: 4 }}>
-              {[30, 50, 42, 60, 55, 68, 75].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: G.border, borderRadius: 2, height: `${h}%` }} />
-              ))}
-            </div>
-          </div>
-          {/* Card 4 – white */}
-          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Gemini</p>
-              <ExternalLink size={12} style={{ color: G.border }} />
-            </div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: G.ink, margin: 0, lineHeight: 1.4 }}>er integrert direkte i Chrome — alle norske brukere</p>
-            <p style={{ fontSize: 10, color: G.muted, margin: '4px 0 0' }}>Brukes automatisk ved søk</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── PROMPT TESTER ──────────────────────────────────────────── */}
+      {/* ── TEST OM AI NEVNER DEG (verktøy først) ──────────────────── */}
       <div id="geo-tester" style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 16, padding: '24px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Test en prompt</p>
-          <span style={{ fontSize: 10, fontWeight: 600, background: G.bg, border: `1px solid ${G.border}`, borderRadius: 100, padding: '2px 10px', color: G.muted }}>
-            Manuell — ingen automatikk ennå
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>Synlighet i AI-søk</p>
+          <span style={{ fontSize: 10, fontWeight: 600, background: G.green, color: '#fff', borderRadius: 100, padding: '2px 8px', letterSpacing: '0.04em' }}>Beta</span>
+          <span style={{ fontSize: 11, color: G.faint }}>(GEO)</span>
         </div>
+        <h2 style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.12, color: G.ink, margin: '0 0 12px' }}>
+          Test om AI nevner bedriften din
+        </h2>
+        <p style={{ fontSize: 14, color: G.sub, lineHeight: 1.6, margin: '0 0 20px', maxWidth: 560 }}>
+          Stadig flere spør ChatGPT, Perplexity og Gemini i stedet for å google. Skriv inn et spørsmål en kunde kunne stilt, åpne det i AI-en, og se om bedriften din dukker opp i svaret.
+        </p>
 
         {/* Input row */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
           <div
-            style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 10, background: G.bg, border: `1px solid ${G.border}`, borderRadius: 12, padding: '12px 16px', transition: `border-color 150ms ${EASE}` }}
+            style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 10, background: G.subtle, border: `1px solid ${G.border}`, borderRadius: 12, padding: '12px 16px', transition: `border-color 150ms ${EASE}` }}
             onFocusCapture={e => (e.currentTarget.style.borderColor = G.ink)}
             onBlurCapture={e => (e.currentTarget.style.borderColor = G.border)}
           >
@@ -4882,22 +4806,18 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
           </div>
           <button
             onClick={() => openAI('https://chatgpt.com')}
-            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '12px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
+            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
             onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
           >
             <ExternalLink size={13} /> Åpne i ChatGPT
           </button>
-        </div>
-
-        {/* Secondary: Perplexity */}
-        <div style={{ marginBottom: 20 }}>
           <button
             onClick={() => openAI('https://www.perplexity.ai/search')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 0', transition: `color 150ms ${EASE}` }}
+            style={{ background: G.subtle, border: `1px solid ${G.border}`, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: G.sub, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '12px 16px', borderRadius: 10, whiteSpace: 'nowrap', transition: `color 150ms ${EASE}`, flexShrink: 0 }}
             onMouseEnter={e => (e.currentTarget.style.color = G.ink)}
-            onMouseLeave={e => (e.currentTarget.style.color = G.muted)}
+            onMouseLeave={e => (e.currentTarget.style.color = G.sub)}
           >
-            <ExternalLink size={12} /> Åpne i Perplexity
+            <ExternalLink size={12} /> Perplexity
           </button>
         </div>
 
@@ -4907,68 +4827,61 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
             <button
               key={i}
               onClick={() => setGeoPrompt(s)}
-              style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 100, padding: '6px 14px', fontSize: 12, color: G.muted, cursor: 'pointer', transition: `all 150ms ${EASE}` }}
+              style={{ background: G.subtle, border: `1px solid ${G.border}`, borderRadius: 100, padding: '6px 14px', fontSize: 12, color: G.sub, cursor: 'pointer', transition: `all 150ms ${EASE}` }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = G.ink; e.currentTarget.style.color = G.ink; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.muted; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.sub; }}
             >
               {s}
             </button>
           ))}
         </div>
+
+        {/* Ærlig note: manuelt inntil videre */}
+        <p style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 18, fontSize: 12, color: G.muted, lineHeight: 1.5 }}>
+          <AlertTriangle size={14} style={{ color: '#9A6700', flexShrink: 0, marginTop: 1 }} />
+          Du må sjekke manuelt foreløpig. Automatisk sporing er på vei — se under.
+        </p>
       </div>
 
-      {/* ── WARNING BANNER ─────────────────────────────────────────── */}
-      <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <AlertTriangle size={16} style={{ color: '#C07B00', flexShrink: 0, marginTop: 1 }} />
-        <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#C07B00', margin: '0 0 2px' }}>
-            Du må sjekke manuelt om bedriften din nevnes
-          </p>
-          <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>
-            Automatisk sporing kommer snart. Test promptene under for hånd inntil videre.
-          </p>
-        </div>
-      </div>
-
-      {/* ── VEIKARTET / ROADMAP ────────────────────────────────────── */}
+      {/* ── PÅ VEI / VEIKART (mindre, nederst) ──────────────────────── */}
       <div id="geo-veikartet">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
-            På veikartet
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
+            På vei
           </p>
-          <span style={{ fontSize: 11, fontWeight: 600, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <Lock size={11} /> Kommer Q3 2026
+          <span style={{ fontSize: 11, fontWeight: 500, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Lock size={11} /> Kommer senere
           </span>
         </div>
-        <h2 style={{ fontSize: 'clamp(22px, 2.5vw, 34px)', fontWeight: 900, color: G.ink, margin: '0 0 20px', letterSpacing: '-0.01em' }}>
-          Det vi snart automatiserer for deg.
+        <h2 style={{ fontSize: 'clamp(20px, 2.2vw, 26px)', fontWeight: 700, color: G.ink, margin: '0 0 16px', letterSpacing: '-0.01em' }}>
+          Det vi snart automatiserer for deg
         </h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
           {([
             {
               num: '01',
-              title: 'Daglig sporing av 50+ relevante prompts',
+              title: 'Daglig sjekk av 50+ kunde-spørsmål',
               badge: 'Under utvikling',
               green: true,
               desc: 'Vi spør ChatGPT, Perplexity og Gemini hver natt om de samme spørsmålene en kunde ville stilt. Du får varsel hvis du dukker opp — eller blir borte.',
             },
             {
               num: '02',
-              title: 'Automatisk GEO-sporing',
-              badge: 'Lansering Q3 2026',
+              title: 'Automatisk AI-sporing',
+              badge: 'Kommer senere',
               green: false,
-              desc: 'Posisjon, sitater og kontekst — på samme måte som Google Search Console, bare for AI-svar.',
+              desc: 'Plassering, sitater og sammenheng — på samme måte som Google Search Console, bare for AI-svar.',
             },
           ] as const).map(item => (
             <div key={item.num} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 16, padding: '22px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-                <span style={{ fontSize: 28, fontWeight: 900, color: G.border, letterSpacing: '-0.03em', lineHeight: 1 }}>{item.num}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, background: item.green ? 'rgba(82,164,71,0.1)' : G.bg, color: item.green ? G.green : G.muted, border: `1px solid ${item.green ? 'rgba(82,164,71,0.2)' : G.border}`, borderRadius: 100, padding: '3px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 28, fontWeight: 600, color: G.faint, letterSpacing: '-0.03em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{item.num}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, background: item.green ? 'rgba(21,121,90,0.10)' : G.bg, color: item.green ? G.green : G.muted, border: `1px solid ${item.green ? 'rgba(21,121,90,0.22)' : G.border}`, borderRadius: 100, padding: '3px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   {!item.green && <Lock size={9} />}{item.badge}
                 </span>
               </div>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: G.ink, margin: '0 0 10px', lineHeight: 1.35 }}>{item.title}</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: G.ink, margin: '0 0 10px', lineHeight: 1.35 }}>{item.title}</h3>
               <p style={{ fontSize: 13, color: G.muted, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
             </div>
           ))}
@@ -4978,7 +4891,7 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
           <button
             type="button"
             onClick={onNotify}
-            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
             onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
           >
             Bli varslet når det lanseres <ChevronRight size={14} />
@@ -4986,6 +4899,751 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
         </div>
       </div>
 
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANMELDELSER — review-motor (Fase 2: ekte deeplink + e-post-utsending)
+//   · review_settings: Google-profil/place-id → utledet «skriv anmeldelse»-lenke
+//   · review_requests: be om anmeldelse via e-post (edge: send-review-request)
+//   · Lesing av ekte snitt/antall + svar krever Google API → kommer senere
+// ─────────────────────────────────────────────────────────────────────────────
+type ReviewSettings = {
+  user_id: string;
+  business_name: string | null;
+  google_place_id: string | null;
+  write_review_url: string | null;
+  profile_url: string | null;
+  private_feedback_enabled: boolean;
+};
+type ReviewRequest = {
+  id: string;
+  customer_name: string;
+  email: string | null;
+  channel: string;
+  status: 'ready' | 'sent' | 'opened' | 'responded' | 'failed';
+  sent_at: string | null;
+  opened_at: string | null;
+  responded_at: string | null;
+  created_at: string;
+};
+
+/** Lim inn Google «få anmeldelser»-lenke ELLER place-ID → ferdig deeplink. */
+function deriveReviewLink(input: string): { write_review_url: string | null; profile_url: string | null; google_place_id: string | null } {
+  const v = (input || '').trim();
+  if (!v) return { write_review_url: null, profile_url: null, google_place_id: null };
+  if (/^https?:\/\//i.test(v)) {
+    // g.page/r/.../review, …/writereview eller en placeid-lenke peker rett til
+    // anmeldelses-skjemaet. En vanlig profil-lenke lander også på profilen der
+    // kunden kan vurdere — vi lagrer den som-er, men beholder place-ID om den finnes.
+    const placeId = v.match(/[?&]placeid=([^&]+)/i)?.[1] ?? null;
+    return {
+      write_review_url: v,
+      profile_url: v,
+      google_place_id: placeId ? decodeURIComponent(placeId) : null,
+    };
+  }
+  // Ser ut som et place-ID (ChIJ… / alfanumerisk, ingen mellomrom).
+  if (/^[A-Za-z0-9_-]{12,}$/.test(v)) {
+    return {
+      google_place_id: v,
+      write_review_url: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(v)}`,
+      profile_url: null,
+    };
+  }
+  return { write_review_url: null, profile_url: null, google_place_id: null };
+}
+
+function reviewStatusLabel(s: ReviewRequest['status']): string {
+  switch (s) {
+    case 'ready': return 'Klar';
+    case 'sent': return 'Sendt';
+    case 'opened': return 'Åpnet lenken';
+    case 'responded': return 'Svart';
+    case 'failed': return 'Feilet';
+    default: return s;
+  }
+}
+
+function timeAgoNo(iso: string | null): string {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const mins = Math.round((Date.now() - then) / 60000);
+  if (mins < 1) return 'nå';
+  if (mins < 60) return `${mins} min siden`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} t siden`;
+  const days = Math.round(hrs / 24);
+  if (days === 1) return 'i går';
+  if (days < 30) return `${days} dager siden`;
+  const months = Math.round(days / 30);
+  return months === 1 ? '1 mnd siden' : `${months} mnd siden`;
+}
+
+type GooglePlace = { placeId: string; name: string; address: string; rating: number | null; count: number | null };
+type GoogleReview = { author: string; rating: number; text: string; when: string; photo: string | null };
+type GoogleData = { rating: number | null; count: number | null; reviews: GoogleReview[]; updatedAt: string | null; baselineCount: number | null; baselineAt: string | null };
+
+/** Kall en Supabase Edge Function med innlogget brukers token. */
+async function invokeReviewEdge(fn: string, body: unknown): Promise<{ ok: boolean; status: number; data: any }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token ?? getStoredAccessToken() ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok && data?.ok !== false, status: res.status, data };
+}
+
+function escapeHtmlClient(s: string): string {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** Review/AggregateRating JSON-LD fra EKTE Google-tall (matcher widgeten på siden). */
+function buildReviewJsonLd(opts: { businessName: string; rating: number; count: number; url: string | null; reviews: GoogleReview[] }): string {
+  const data: any = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: opts.businessName,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: opts.rating.toFixed(1),
+      reviewCount: opts.count,
+      bestRating: '5',
+      worstRating: '1',
+    },
+  };
+  if (opts.url) data.url = opts.url;
+  const revs = opts.reviews
+    .filter((r) => r.text && r.rating)
+    .slice(0, 3)
+    .map((r) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: r.author },
+      reviewRating: { '@type': 'Rating', ratingValue: String(r.rating), bestRating: '5', worstRating: '1' },
+      reviewBody: r.text,
+    }));
+  if (revs.length) data.review = revs;
+  return JSON.stringify(data, null, 2);
+}
+
+function staticStars(rating: number): string {
+  const r = Math.round(rating);
+  return Array.from({ length: 5 }, (_, i) => `<span style="color:${i < r ? '#15795A' : '#D8D2C6'}">★</span>`).join('');
+}
+
+/** Selv-stendig, inline-stylet anmeldelses-widget (limes inn hvor som helst). */
+function buildWidgetHtml(opts: { businessName: string; rating: number; count: number; url: string; reviews: GoogleReview[] }): string {
+  const quotes = opts.reviews
+    .filter((r) => r.text)
+    .slice(0, 2)
+    .map((r) => `      <li style="margin:0 0 12px;list-style:none">
+        <div style="font-size:15px;line-height:1">${staticStars(r.rating)}</div>
+        <p style="margin:5px 0 2px;font-size:13px;color:#444;line-height:1.5">&ldquo;${escapeHtmlClient(r.text)}&rdquo;</p>
+        <span style="font-size:12px;color:#888">&mdash; ${escapeHtmlClient(r.author)}</span>
+      </li>`)
+    .join('\n');
+  const url = escapeHtmlClient(opts.url);
+  return `<!-- Sikt anmeldelses-widget -->
+<div style="max-width:420px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;border:1px solid #E9E4DA;border-radius:14px;padding:18px 20px;background:#fff">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:32px;font-weight:700;color:#1A1A1A;line-height:1">${opts.rating.toFixed(1)}</span>
+    <div>
+      <div style="font-size:17px;line-height:1.1">${staticStars(opts.rating)}</div>
+      <a href="${url}" target="_blank" rel="noopener" style="font-size:12px;color:#15795A;text-decoration:none">${opts.count} anmeldelser på Google</a>
+    </div>
+  </div>
+  <ul style="margin:14px 0 0;padding:0">
+${quotes}
+  </ul>
+  <a href="${url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;background:#1A1A1A;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 18px;border-radius:9px">Skriv en anmeldelse</a>
+</div>`;
+}
+
+const ReviewsPage: React.FC<{
+  user: any;
+  companyName?: string;
+  hasStandardOrHigher: boolean;
+  onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
+}> = ({ user, companyName, hasStandardOrHigher, onUpgrade }) => {
+  const C = {
+    card: '#FFFFFF', ink: '#1A1A1A', sub: '#5C574C', muted: '#8A8578',
+    faint: '#B3AD9F', border: '#E9E4DA', hair: '#EFEBE2', subtle: '#FAF8F3',
+    green: '#15795A', greenBg: '#E8F1EB', amber: '#9A6700', amberBg: '#F6EEDD',
+    red: '#B4231F',
+  } as const;
+  const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
+  const pressU = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(1)'; };
+  const inputStyle: React.CSSProperties = { width: '100%', borderRadius: 10, padding: '11px 14px', fontSize: 14, border: `1px solid ${C.border}`, color: C.ink, background: C.subtle, outline: 'none', boxSizing: 'border-box' };
+  const StarRow = ({ n }: { n: number }) => (
+    <span style={{ display: 'inline-flex', gap: 1 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} size={14} style={{ color: i <= n ? C.green : C.faint }} fill={i <= n ? C.green : 'none'} />
+      ))}
+    </span>
+  );
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<ReviewSettings | null>(null);
+  const [requests, setRequests] = useState<ReviewRequest[]>([]);
+
+  // Tilkobling
+  const [editConnect, setEditConnect] = useState(false);
+  const [connectInput, setConnectInput] = useState('');
+  const [savingConnect, setSavingConnect] = useState(false);
+  // Søk opp bedrift på Google (Places)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<GooglePlace[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  // Ekte Google-data (snitt/antall/anmeldelser)
+  const [google, setGoogle] = useState<GoogleData | null>(null);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  // Vis på siden (widget + schema)
+  const [wpConnected, setWpConnected] = useState(false);
+  const [pushingSchema, setPushingSchema] = useState(false);
+
+  // Google Business Profile (svar på anmeldelser) — scaffold, mørk til godkjent
+  const [gbpConfigured, setGbpConfigured] = useState(false);
+  const [gbpConnected, setGbpConnected] = useState(false);
+  const [gbpReviews, setGbpReviews] = useState<GbpReview[] | null>(null);
+  const [gbpConnecting, setGbpConnecting] = useState(false);
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+
+  // Be om anmeldelse
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
+  const reviewLink = settings?.write_review_url ?? null;
+  const isConnected = !!reviewLink;
+  const hasPlaceId = !!settings?.google_place_id;
+
+  const loadData = useCallback(async () => {
+    if (!user?.id) { setLoading(false); return; }
+    setLoadError(null);
+    try {
+      const [sRows, rRows, hRows] = await Promise.all([
+        supabaseRest<ReviewSettings[]>(`review_settings?user_id=eq.${user.id}&select=*&limit=1`),
+        supabaseRest<ReviewRequest[]>(`review_requests?user_id=eq.${user.id}&select=*&order=created_at.desc&limit=50`),
+        supabaseRest<{ platform: string; connection_mode: string }[]>(`client_hosts?user_id=eq.${user.id}&select=platform,connection_mode&limit=5`),
+      ]);
+      const s = Array.isArray(sRows) && sRows[0] ? sRows[0] : null;
+      setSettings(s);
+      setRequests(Array.isArray(rRows) ? rRows : []);
+      setWpConnected(Array.isArray(hRows) && hRows.some((h) => h.platform === 'wordpress' && h.connection_mode === 'full'));
+      if (!s?.write_review_url) setEditConnect(true);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Kunne ikke laste anmeldelses-data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => { if (hasStandardOrHigher) loadData(); else setLoading(false); }, [hasStandardOrHigher, loadData]);
+
+  const loadGoogle = useCallback(async (force = false) => {
+    if (!hasStandardOrHigher) return;
+    setLoadingGoogle(true); setGoogleError(null);
+    try {
+      const { ok, data } = await invokeReviewEdge('google-reviews', { action: 'details', force });
+      if (ok) setGoogle({ rating: data.rating ?? null, count: data.count ?? null, reviews: data.reviews ?? [], updatedAt: data.updatedAt ?? null, baselineCount: data.baselineCount ?? null, baselineAt: data.baselineAt ?? null });
+      else setGoogleError(data?.error || 'Kunne ikke hente Google-data.');
+    } catch (e: any) {
+      setGoogleError(e?.message || 'Kunne ikke hente Google-data.');
+    } finally { setLoadingGoogle(false); }
+  }, [hasStandardOrHigher]);
+
+  useEffect(() => { if (hasPlaceId) loadGoogle(false); }, [hasPlaceId, loadGoogle]);
+
+  const runSearch = async () => {
+    const q = searchQuery.trim();
+    if (q.length < 2) { toastWarning('Skriv inn bedriftsnavn (og gjerne sted).'); return; }
+    setSearching(true);
+    try {
+      const { ok, data } = await invokeReviewEdge('google-reviews', { action: 'search', query: q });
+      if (ok) setSearchResults(data.results ?? []);
+      else toastError(data?.error || 'Søket feilet. Er Google-nøkkelen satt opp?');
+    } catch (e: any) { toastError(e?.message || 'Søket feilet.'); }
+    finally { setSearching(false); }
+  };
+
+  const upsertSettings = async (patch: Partial<ReviewSettings>) => {
+    const body = {
+      user_id: user.id,
+      business_name: settings?.business_name ?? companyName ?? null,
+      private_feedback_enabled: settings?.private_feedback_enabled ?? false,
+      ...patch,
+      updated_at: new Date().toISOString(),
+    };
+    const [row] = await supabaseRest<ReviewSettings[]>('review_settings?on_conflict=user_id', {
+      method: 'POST', body, headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    });
+    setSettings(row ?? ({ ...settings, ...body } as any));
+    return row;
+  };
+
+  const pickPlace = async (p: GooglePlace) => {
+    setSavingConnect(true);
+    try {
+      await upsertSettings({
+        business_name: p.name || settings?.business_name || companyName || null,
+        google_place_id: p.placeId,
+        write_review_url: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.placeId)}`,
+        profile_url: null,
+      });
+      setEditConnect(false); setSearchResults(null); setSearchQuery('');
+      toastSuccess(`Koblet til ${p.name}. Henter Google-anmeldelsene dine …`);
+      loadGoogle(true);
+    } catch (e: any) { toastError(e?.message || 'Kunne ikke lagre.'); }
+    finally { setSavingConnect(false); }
+  };
+
+  const saveConnection = async () => {
+    const derived = deriveReviewLink(connectInput);
+    if (!derived.write_review_url) {
+      toastWarning('Lim inn en gyldig Google-lenke (f.eks. g.page/r/…/review) eller et place-ID.');
+      return;
+    }
+    setSavingConnect(true);
+    try {
+      await upsertSettings({
+        google_place_id: derived.google_place_id,
+        write_review_url: derived.write_review_url,
+        profile_url: derived.profile_url,
+      });
+      setEditConnect(false);
+      setConnectInput('');
+      if (derived.google_place_id) {
+        toastSuccess('Lagret. Henter Google-anmeldelsene dine …');
+        loadGoogle(true);
+      } else {
+        toastSuccess('Lenken er lagret. (For ekte snitt/anmeldelser: søk opp bedriften så vi får place-ID.)');
+      }
+    } catch (err: any) {
+      toastError(err?.message || 'Kunne ikke lagre lenken.');
+    } finally {
+      setSavingConnect(false);
+    }
+  };
+
+  const togglePrivateFeedback = async () => {
+    if (!settings) return;
+    const next = !settings.private_feedback_enabled;
+    setSettings({ ...settings, private_feedback_enabled: next });
+    try {
+      await supabaseRest(`review_settings?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        body: { private_feedback_enabled: next, updated_at: new Date().toISOString() },
+        headers: { Prefer: 'return=minimal' },
+      });
+    } catch (err: any) {
+      setSettings({ ...settings, private_feedback_enabled: !next });
+      toastError(err?.message || 'Kunne ikke lagre innstillingen.');
+    }
+  };
+
+  const sendRequest = async () => {
+    if (!isConnected) { toastWarning('Koble til Google-lenken din først.'); return; }
+    if (!name.trim() || !contact.trim()) { toastWarning('Fyll inn navn og e-post.'); return; }
+    if (!contact.includes('@')) { toastWarning('Skriv inn en e-postadresse. (SMS kommer senere.)'); return; }
+
+    setSendingId('new');
+    let created: ReviewRequest | null = null;
+    try {
+      const [row] = await supabaseRest<ReviewRequest[]>('review_requests', {
+        method: 'POST',
+        body: { user_id: user.id, customer_name: name.trim(), email: contact.trim(), channel: 'email', status: 'ready' },
+        headers: { Prefer: 'return=representation' },
+      });
+      created = row;
+      setRequests((p) => [row, ...p]);
+      setName(''); setContact('');
+
+      // Faktisk sending skjer i edge-funksjonen (Resend). Den setter status → 'sent'.
+      const { ok, data: out } = await invokeReviewEdge('send-review-request', { requestId: row.id });
+      if (ok) {
+        setRequests((p) => p.map((r) => (r.id === row.id ? { ...r, status: 'sent', sent_at: new Date().toISOString() } : r)));
+        toastSuccess(`Forespørsel sendt til ${row.customer_name}.`);
+      } else {
+        setRequests((p) => p.map((r) => (r.id === row.id ? { ...r, status: 'ready' } : r)));
+        toastWarning(out?.error || 'Forespørselen er lagret, men e-post-utsending er ikke aktivert ennå.');
+      }
+    } catch (err: any) {
+      if (!created) toastError(err?.message || 'Kunne ikke opprette forespørselen.');
+      else toastWarning('Forespørselen er lagret, men kunne ikke sendes nå.');
+    } finally {
+      setSendingId(null);
+    }
+  };
+
+  const copyLink = () => {
+    if (!reviewLink) { toastWarning('Koble til Google-lenken din først.'); return; }
+    navigator.clipboard?.writeText(reviewLink);
+    toastSuccess('Anmeldelses-lenke kopiert — del den på kvittering, e-post eller i butikk.');
+  };
+
+  // ── Vis på nettsiden (widget + schema) — krever ekte Google-tall ──
+  const businessName = settings?.business_name || companyName || 'Bedriften';
+  const canShowOnSite = google?.rating != null && google?.count != null && !!reviewLink;
+  const widgetHtml = canShowOnSite
+    ? buildWidgetHtml({ businessName, rating: google!.rating!, count: google!.count!, url: reviewLink!, reviews: google!.reviews })
+    : '';
+  const schemaJsonLd = canShowOnSite
+    ? buildReviewJsonLd({ businessName, rating: google!.rating!, count: google!.count!, url: settings?.profile_url || reviewLink, reviews: google!.reviews })
+    : '';
+
+  const copyWidget = () => { navigator.clipboard?.writeText(widgetHtml); toastSuccess('Widget-kode kopiert. Lim den inn der du vil vise stjernene.'); };
+  const copySchema = () => { navigator.clipboard?.writeText(`<script type="application/ld+json">\n${schemaJsonLd}\n</script>`); toastSuccess('Schema-kode kopiert. Lim den inn i <head> på siden.'); };
+
+  const pushSchemaToWp = async () => {
+    if (!schemaJsonLd) return;
+    setPushingSchema(true);
+    try {
+      const token = getStoredAccessToken();
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ field: 'site-schema', jsonld: schemaJsonLd }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out?.ok) toastSuccess('Stjerne-schema publisert på WordPress. Google kan nå vise stjerner i søkeresultatet ditt.');
+      else toastError(out?.error || 'Kunne ikke publisere til WordPress.');
+    } catch (e: any) {
+      toastError(e?.message || 'Kunne ikke publisere til WordPress.');
+    } finally {
+      setPushingSchema(false);
+    }
+  };
+
+  // Snitt + antall er ekte Google-data (Places). Forespørsler sendt er vår funnel.
+  const sentCount = requests.filter((r) => r.status !== 'ready').length;
+  // «Nye siden start»: ærlig aggregert effekt (ikke per-forespørsel — det kan vi ikke vite).
+  const newSinceStart = (google?.count != null && google?.baselineCount != null)
+    ? Math.max(0, google.count - google.baselineCount) : null;
+  const summary: { label: string; value: string; green: boolean; star?: boolean }[] = [
+    { label: 'Snittvurdering', value: google?.rating != null ? google.rating.toFixed(1) : '—', green: false, star: google?.rating != null },
+    { label: 'Anmeldelser på Google', value: google?.count != null ? String(google.count) : '—', green: false },
+    ...(newSinceStart != null ? [{ label: 'Nye siden start', value: `+${newSinceStart}`, green: newSinceStart > 0 }] : []),
+    { label: 'Forespørsler sendt', value: String(sentCount), green: sentCount > 0 },
+  ];
+
+  // ── Basic: låst teaser ──
+  if (!hasStandardOrHigher) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0', fontFamily: "'Geist','DM Sans',sans-serif" }}>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 48, textAlign: 'center', maxWidth: 460 }}>
+          <Lock size={28} style={{ color: C.muted, margin: '0 auto 16px', display: 'block' }} />
+          <h2 style={{ color: C.ink, fontWeight: 700, fontSize: 20, margin: '0 0 8px', letterSpacing: '-0.01em' }}>Anmeldelses-motoren er låst</h2>
+          <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 24px' }}>
+            Be fornøyde kunder om en Google-anmeldelse med ett trykk, og følg opp automatisk. Flere ekte anmeldelser løfter både kartpakken og hvor mange som ringer. Tilgjengelig i Standard og oppover.
+          </p>
+          <button
+            onClick={() => onUpgrade('Standard')}
+            style={{ background: C.ink, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+          >
+            <Sparkles size={14} /> Oppgrader til Standard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+        <Loader2 size={22} className="animate-spin" style={{ color: C.muted }} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: "'Geist','DM Sans',sans-serif" }}>
+
+      {loadError && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 16px', background: '#FBECEB', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 13, color: C.red }}>
+          <span>{loadError}</span>
+          <button onClick={loadData} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
+        </div>
+      )}
+
+      {/* ── Koble til Google ── */}
+      {(!isConnected || editConnect) ? (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink }}>Koble til Google-profilen din</h2>
+          <p style={{ margin: '8px 0 16px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 600 }}>
+            Søk opp bedriften din på Google. Da henter vi <strong style={{ color: C.ink }}>ekte snittvurdering og anmeldelser</strong>, og «be om anmeldelse» peker rett til skjemaet der kunden gir deg stjerner.
+          </p>
+
+          {/* Søk på Google (Places) */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+              placeholder="Bedriftsnavn og sted (f.eks. «Rørlegger Hansen Oslo»)"
+              style={{ ...inputStyle, flex: '1 1 320px' }}
+            />
+            <button
+              type="button" onClick={runSearch} disabled={searching}
+              onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+              style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: searching ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: searching ? 0.7 : 1 }}
+            >
+              {searching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} Søk
+            </button>
+          </div>
+
+          {searchResults && (
+            <div style={{ marginTop: 12, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              {searchResults.length === 0 ? (
+                <p style={{ margin: 0, padding: '14px 16px', fontSize: 13, color: C.muted }}>Fant ingen treff. Prøv å legge til sted eller gateadresse.</p>
+              ) : searchResults.map((p, i) => (
+                <button
+                  key={p.placeId} type="button" onClick={() => pickPlace(p)} disabled={savingConnect}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', textAlign: 'left', background: C.card, border: 'none', borderTop: i > 0 ? `1px solid ${C.hair}` : 'none', padding: '12px 16px', cursor: savingConnect ? 'default' : 'pointer' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = C.subtle)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = C.card)}
+                >
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.address}</span>
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0, fontSize: 12.5, color: C.sub }}>
+                    {p.rating != null && (<><Star size={13} style={{ color: C.green }} fill={C.green} /> {p.rating.toFixed(1)}{p.count != null ? ` · ${p.count}` : ''}</>)}
+                    <ChevronRight size={15} style={{ color: C.faint }} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Manuell fallback: lim inn lenke / place-ID */}
+          <details style={{ marginTop: 14 }}>
+            <summary style={{ fontSize: 12.5, color: C.muted, cursor: 'pointer', fontWeight: 600 }}>Finner du ikke bedriften? Lim inn lenke eller place-ID</summary>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
+              <input
+                type="text" value={connectInput} onChange={(e) => setConnectInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveConnection()}
+                placeholder="g.page/r/…/review  eller  place-ID"
+                style={{ ...inputStyle, flex: '1 1 320px' }}
+              />
+              <button
+                type="button" onClick={saveConnection} disabled={savingConnect}
+                onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+                style={{ background: C.subtle, color: C.ink, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: savingConnect ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', flexShrink: 0, opacity: savingConnect ? 0.7 : 1 }}
+              >
+                {savingConnect ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Lagre
+              </button>
+            </div>
+            <p style={{ margin: '8px 0 0', fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+              En ren lenke uten place-ID lar deg sende forespørsler, men ekte snitt/anmeldelser krever at vi finner place-ID-en (bruk søket over).
+            </p>
+          </details>
+
+          {isConnected && (
+            <button type="button" onClick={() => { setEditConnect(false); setConnectInput(''); setSearchResults(null); }} style={{ marginTop: 14, background: 'none', border: 'none', fontSize: 13, fontWeight: 600, color: C.muted, cursor: 'pointer', padding: 0 }}>Avbryt</button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 18px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <span style={{ width: 8, height: 8, background: C.green, borderRadius: '50%', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>Koblet til Google</span>
+            <a href={reviewLink!} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, color: C.muted, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }}>
+              {reviewLink!.replace(/^https?:\/\//, '')} <ExternalLink size={12} style={{ flexShrink: 0 }} />
+            </a>
+          </div>
+          <button type="button" onClick={() => { setConnectInput(reviewLink || ''); setEditConnect(true); }} style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 13px', fontSize: 12.5, fontWeight: 600, color: C.sub, cursor: 'pointer' }}>Endre</button>
+        </div>
+      )}
+
+      {/* ── Sammendrag (ærlig funnel) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+        {summary.map((s) => (
+          <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px' }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted }}>{s.label}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+              <span style={{ fontSize: 30, fontWeight: 600, lineHeight: 1, color: s.green ? C.green : C.ink, fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
+              {s.star && <Star size={20} style={{ color: C.green }} fill={C.green} />}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Be om anmeldelse ── */}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink }}>Be om en anmeldelse</h2>
+        <p style={{ margin: '8px 0 18px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 560 }}>
+          Etter en jobb: legg inn kunden, så sender Sikt en vennlig e-post med ett trykk til Google. Flere ekte anmeldelser løfter både kartpakken og hvor mange som ringer.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Kundens navn" style={{ ...inputStyle, flex: '1 1 160px' }} />
+          <input type="email" value={contact} onChange={(e) => setContact(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendRequest()} placeholder="Kundens e-post" style={{ ...inputStyle, flex: '1 1 200px' }} />
+          <button
+            type="button" onClick={sendRequest} disabled={sendingId !== null} onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+            style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: sendingId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: sendingId ? 0.7 : 1 }}
+          >
+            {sendingId ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Send forespørsel
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, flexWrap: 'wrap' }}>
+          <button
+            type="button" onClick={copyLink}
+            style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 600, color: C.sub, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, transition: `color 150ms ${EASE}` }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = C.ink)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = C.sub)}
+          >
+            <Copy size={13} /> Kopier delbar lenke
+          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: C.muted }}>
+            <QrCode size={14} /> Eller del som QR-kode på kvittering / i butikk
+          </span>
+        </div>
+      </div>
+
+      {/* ── Sendt og venter ── */}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px' }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: C.ink }}>Sendt og venter</h3>
+        {requests.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Ingen forespørsler ennå. Legg inn en kunde over.</p>
+        ) : (
+          <div>
+            {requests.map((r, i) => (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderTop: i > 0 ? `1px solid ${C.hair}` : 'none' }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: C.ink }}>{r.customer_name}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: C.muted }}>
+                    {r.channel === 'sms' ? 'SMS' : 'E-post'} · {timeAgoNo(r.sent_at ?? r.created_at)}
+                  </p>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: r.status === 'failed' ? C.red : r.status === 'responded' ? C.green : C.sub, background: r.status === 'failed' ? '#FBECEB' : r.status === 'responded' ? C.greenBg : C.subtle, border: `1px solid ${r.status === 'failed' ? 'rgba(180,35,31,0.20)' : r.status === 'responded' ? 'rgba(21,121,90,0.20)' : C.border}`, borderRadius: 99, padding: '3px 10px', whiteSpace: 'nowrap' }}>{reviewStatusLabel(r.status)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Siste anmeldelser (ekte, fra Google Places) ── */}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.ink }}>Siste anmeldelser{companyName ? ` · ${companyName}` : ''}</h3>
+          {hasPlaceId && (
+            <button type="button" onClick={() => loadGoogle(true)} disabled={loadingGoogle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: loadingGoogle ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, color: C.muted, padding: 0 }}>
+              <RefreshCw size={13} className={loadingGoogle ? 'animate-spin' : ''} /> {google?.updatedAt ? `Oppdatert ${timeAgoNo(google.updatedAt)}` : 'Oppdater'}
+            </button>
+          )}
+        </div>
+
+        {!hasPlaceId ? (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, borderRadius: 12, padding: '12px 14px', background: C.subtle, border: `1px solid ${C.hair}` }}>
+            <Info size={15} style={{ color: C.muted, flexShrink: 0, marginTop: 1 }} />
+            <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: C.sub }}>
+              Søk opp bedriften din over for å hente <strong style={{ color: C.ink }}>ekte snittvurdering og de siste anmeldelsene</strong> fra Google.
+            </p>
+          </div>
+        ) : loadingGoogle && !google ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', fontSize: 13, color: C.muted }}>
+            <Loader2 size={15} className="animate-spin" /> Henter anmeldelser fra Google …
+          </div>
+        ) : googleError ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 14px', background: '#FBECEB', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 12.5, color: C.red }}>
+            <span>{googleError}</span>
+            <button onClick={() => loadGoogle(true)} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
+          </div>
+        ) : google && google.reviews.length > 0 ? (
+          <div>
+            {google.reviews.map((r, i) => (
+              <div key={i} style={{ padding: '14px 0', borderTop: i > 0 ? `1px solid ${C.hair}` : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <StarRow n={Math.round(r.rating)} />
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.author}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: C.faint, whiteSpace: 'nowrap', flexShrink: 0 }}>{r.when}</span>
+                </div>
+                {r.text && <p style={{ margin: '7px 0 0', fontSize: 13, lineHeight: 1.55, color: C.sub }}>{r.text}</p>}
+                <button
+                  type="button"
+                  onClick={() => toastInfo('Å svare på Google-anmeldelser herfra krever Google Business Profile-tilgang — det kommer. Inntil da kan du svare i Google-profilen din.')}
+                  style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.green }}
+                >
+                  Svar →
+                </button>
+              </div>
+            ))}
+            <p style={{ margin: '12px 0 0', fontSize: 11.5, color: C.faint }}>Google viser inntil 5 anmeldelser her. Snitt og totalt antall står i toppen.</p>
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: 13, color: C.muted }}>
+            {google?.count ? 'Google har ikke delt tekst-anmeldelser for visning ennå. Snitt og antall står i toppen.' : 'Ingen anmeldelser å vise ennå. Be fornøyde kunder om den første over.'}
+          </p>
+        )}
+      </div>
+
+      {/* ── Vis stjernene på nettsiden din (widget + schema) ── */}
+      {canShowOnSite && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink }}>Vis stjernene på nettsiden din</h2>
+          <p style={{ margin: '8px 0 18px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 600 }}>
+            Bygget fra dine <strong style={{ color: C.ink }}>ekte Google-tall</strong> ({google!.rating!.toFixed(1)} ★ · {google!.count} anmeldelser). Schema-koden lar Google vise gullstjerner under siden din i søk; widgeten viser dem rett på siden.
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {wpConnected && (
+              <button
+                type="button" onClick={pushSchemaToWp} disabled={pushingSchema}
+                onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
+                style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: pushingSchema ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, opacity: pushingSchema ? 0.7 : 1 }}
+              >
+                {pushingSchema ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Publiser på WordPress
+              </button>
+            )}
+            <button type="button" onClick={copyWidget} style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, color: C.sub, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <Copy size={13} /> Kopier widget-kode
+            </button>
+            <button type="button" onClick={copySchema} style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, color: C.sub, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <Code2 size={13} /> Kopier schema-kode
+            </button>
+          </div>
+          <p style={{ margin: '14px 0 0', fontSize: 12, lineHeight: 1.55, color: C.muted }}>
+            {wpConnected
+              ? 'WordPress er koblet til — «Publiser» legger schema rett inn for deg. Widgeten limer du inn der du vil ha den.'
+              : 'Lim schema-koden inn i <head> (eller en «egendefinert HTML»-blokk), og widgeten der du vil vise stjernene. Fungerer på Wix, Squarespace, Shopify m.fl.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── Privat tilbakemelding (valgfritt, uten gating) ── */}
+      {settings && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0, flex: '1 1 360px' }}>
+            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: C.ink }}>Spør «hvordan gikk det?» først (valgfritt)</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12.5, lineHeight: 1.55, color: C.sub }}>
+              Legg til et lite, privat spørsmål i e-posten før Google-lenken. Den <strong style={{ color: C.ink }}>offentlige lenken vises alltid</strong> uansett — Google forbyr å skjule den for misfornøyde kunder.
+            </p>
+          </div>
+          <button
+            type="button" onClick={togglePrivateFeedback}
+            aria-pressed={settings.private_feedback_enabled}
+            style={{ position: 'relative', width: 42, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0, background: settings.private_feedback_enabled ? C.green : C.border, transition: `background 180ms ${EASE}` }}
+          >
+            <span style={{ position: 'absolute', top: 3, left: settings.private_feedback_enabled ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: `left 180ms ${EASE}` }} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -7025,7 +7683,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // VIKTIG: Vi har SLETTET [clientData, setClientData] herfra fordi den kommer fra props!
   const [formData, setFormData] = useState<any>({});
   // Den redesignede portalen har 8 faner i en sidebar. Verksted er egen fane (ikke drawer).
-  type PortalTab = 'home' | 'visibility' | 'keywords' | 'competitors' | 'geo' | 'workshop' | 'log' | 'settings';
+  type PortalTab = 'home' | 'visibility' | 'keywords' | 'competitors' | 'geo' | 'workshop' | 'reviews' | 'log' | 'settings';
   const [activeTab, setActiveTab] = useState<PortalTab>('home');
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
@@ -8057,7 +8715,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'competitors', label: 'Konkurrenter', icon: Radar },
     { id: 'geo', label: 'AI-synlighet', icon: BrainCircuit },
     { id: 'workshop', label: 'Verksted', icon: Wrench },
-    { id: 'log', label: 'Sikt-loggen', icon: ClipboardCheck },
+    { id: 'reviews', label: 'Anmeldelser', icon: Star },
   ];
 
   // 2. DATA FETCHING (Profil)
@@ -10214,6 +10872,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </button>
                   <button
                     role="menuitem"
+                    onClick={() => { setActiveTab('log'); setUserFooterMenuOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  >
+                    <ClipboardCheck size={15} /> Sikt-logg
+                  </button>
+                  <button
+                    role="menuitem"
                     onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
                     style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff0f0'; }}
@@ -10252,6 +10919,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <button role="menuitem" onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   <Settings size={15} /> Innstillinger
+                </button>
+                <button role="menuitem" onClick={() => { setActiveTab('log'); setUserFooterMenuOpen(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  <ClipboardCheck size={15} /> Sikt-logg
                 </button>
                 <button role="menuitem" onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
@@ -11899,49 +12570,50 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* AI-SYNLIGHET (GEO) — alltid synlig */}
         {/* =============================================================== */}
         {activeTab === 'geo' && (
-          <div key={activeTab} className="space-y-6">
+          <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>AI-synlighet</h1>
-                <p className={`text-base mt-3 ${textDim}`}>Hvordan nettsiden din omtales i AI-søk.</p>
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>AI-synlighet</h1>
+                <p className="text-base mt-3" style={{ color: '#8A8578' }}>Om bedriften din nevnes når kunder spør ChatGPT, Gemini og Perplexity.</p>
               </div>
             </header>
             <div className={`${tabFadeInClass} space-y-6`}>
               {hasPremium && (geoState?.geo_score != null || geoFaqs.length > 0) && (
-                <PortalCard theme={themed} className="p-5 sm:p-6">
+                <div className="rounded-[16px] p-5 sm:p-6" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
                   {geoState?.geo_score != null && (
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div>
-                        <p className={`text-[11px] font-semibold uppercase tracking-wider ${textLabel}`}>GEO-score</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>AI-synlighet (GEO-score)</p>
                         <div className="flex items-baseline gap-1.5 mt-1.5">
-                          <span className={`text-4xl font-bold tracking-tight ${textMain}`}>{Number(geoState.geo_score)}</span>
-                          <span className={`text-base ${textDim}`}>/100</span>
+                          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color: '#1A1A1A' }}>{Number(geoState.geo_score)}</span>
+                          <span className="text-base" style={{ color: '#B3AD9F' }}>/100</span>
                         </div>
                       </div>
-                      <div className={`text-[12px] ${textDim} space-y-1 text-right`}>
-                        <p>{geoState.llms_published_at ? '✓ llms.txt publisert' : '— llms.txt ikke publisert ennå'}</p>
-                        <p>{geoState.schema_published_at ? '✓ FAQ-schema publisert' : '— FAQ-schema ikke publisert ennå'}</p>
+                      <div className="text-[12px] space-y-1 text-right" style={{ color: '#5C574C' }}>
+                        <p>{geoState.llms_published_at ? '✓ AI-fil publisert' : '— AI-fil ikke publisert ennå'} <span style={{ color: '#B3AD9F' }}>(llms.txt)</span></p>
+                        <p>{geoState.schema_published_at ? '✓ FAQ for AI publisert' : '— FAQ for AI ikke publisert ennå'} <span style={{ color: '#B3AD9F' }}>(FAQ-schema)</span></p>
                       </div>
                     </div>
                   )}
 
                   {geoFaqs.length > 0 && (
-                    <div className={geoState?.geo_score != null ? 'mt-5 pt-5 border-t ' + divider : ''}>
-                      <p className={`text-[13px] font-semibold ${textMain}`}>Godkjenn FAQ-svar Sikt foreslår</p>
-                      <p className={`text-[12px] ${textDim} mt-1 mb-4`}>
-                        For spørsmål der AI-assistentene ikke nevnte deg. Godkjente svar publiseres i <code>llms.txt</code> og FAQ-schema, så ChatGPT, Gemini og Perplexity lettere siterer deg.
+                    <div className={geoState?.geo_score != null ? 'mt-5 pt-5 border-t' : ''} style={geoState?.geo_score != null ? { borderColor: '#EFEBE2' } : undefined}>
+                      <p className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>Godkjenn svar Sikt foreslår</p>
+                      <p className="text-[12px] mt-1 mb-4 leading-relaxed" style={{ color: '#8A8578' }}>
+                        For spørsmål der AI-ene ikke nevnte deg. Godkjente svar legges i filene som hjelper ChatGPT, Gemini og Perplexity å sitere deg.
                       </p>
                       <div className="space-y-3">
                         {geoFaqs.map((f) => (
-                          <div key={f.id} className={`rounded-xl border ${divider} ${subtleBg} p-4`}>
-                            <p className={`text-[13px] font-semibold ${textMain}`}>{f.question}</p>
-                            <p className={`text-[13px] ${textDim} mt-1.5 leading-relaxed`}>{f.answer}</p>
+                          <div key={f.id} className="rounded-[12px] border p-4" style={{ borderColor: '#E9E4DA', background: '#FAF8F3' }}>
+                            <p className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>{f.question}</p>
+                            <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: '#5C574C' }}>{f.answer}</p>
                             <div className="flex items-center gap-3 mt-3">
                               <button
                                 type="button"
                                 disabled={geoFaqBusyId === f.id}
                                 onClick={() => resolveGeoFaq(f.id, true)}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 text-white px-3.5 py-2 text-[12px] font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-[10px] text-white px-3.5 py-2 text-[12px] font-semibold disabled:opacity-50 transition-colors"
+                                style={{ background: '#1A1A1A' }}
                               >
                                 <CheckCircle2 size={13} /> Godkjenn og publiser
                               </button>
@@ -11949,7 +12621,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 type="button"
                                 disabled={geoFaqBusyId === f.id}
                                 onClick={() => resolveGeoFaq(f.id, false)}
-                                className={`text-[12px] font-semibold ${textDim} hover:${textMain} disabled:opacity-50`}
+                                className="text-[12px] font-semibold disabled:opacity-50"
+                                style={{ color: '#8A8578' }}
                               >
                                 Avvis
                               </button>
@@ -11959,9 +12632,31 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </div>
                     </div>
                   )}
-                </PortalCard>
+                </div>
               )}
               <GeoPage onNotify={() => toastInfo('Vi sier fra når automatisk GEO-sporing åpner for betatest.')} />
+            </div>
+          </div>
+        )}
+
+        {/* =============================================================== */}
+        {/* ANMELDELSER — review-motor (Fase 1)                             */}
+        {/* =============================================================== */}
+        {activeTab === 'reviews' && (
+          <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
+            <header className="flex items-end justify-between flex-wrap gap-3">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Anmeldelser</h1>
+                <p className="text-base mt-3" style={{ color: '#8A8578' }}>Få flere fornøyde kunder til å si det offentlig — det løfter både Google og telefonen.</p>
+              </div>
+            </header>
+            <div className={`${tabFadeInClass}`}>
+              <ReviewsPage
+                user={user}
+                companyName={clientData?.companyName}
+                hasStandardOrHigher={hasStandardOrHigher}
+                onUpgrade={handleUpgrade}
+              />
             </div>
           </div>
         )}
@@ -11986,12 +12681,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               changeData: todo.changeData,
             }));
           const W = {
-            bg: '#F5F5F0',
+            bg: '#F2EFE8',
             card: '#FFFFFF',
             ink: '#1A1A1A',
-            green: '#52A447',
-            muted: '#808080',
-            border: '#EBEBE6',
+            green: '#15795A',
+            muted: '#8A8578',
+            border: '#E9E4DA',
+            sub: '#5C574C',
+            faint: '#B3AD9F',
+            hair: '#EFEBE2',
+            subtle: '#FAF8F3',
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const pressDown = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -12081,11 +12780,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           };
 
           return (
-            <div key={activeTab} className="space-y-6">
+            <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Verksted</h1>
-                  <p className={`text-base mt-3 ${textDim}`}>Prioriterte Lighthouse-funn med AI-forslag.</p>
+                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Verksted</h1>
+                  <p className="text-base mt-3" style={{ color: '#8A8578' }}>Ting du kan fikse på nettsiden — med AI-hjelp.</p>
                 </div>
               </header>
               <div className={`${tabFadeInClass} space-y-6`}>
@@ -12136,223 +12835,47 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   .ws-content-diff-grid { grid-template-columns: 1fr; }
                 }
               `}</style>
-              <div style={{ background: 'transparent', overflow: 'hidden', minHeight: 'min(840px, calc(100dvh - 150px))', display: 'flex', flexDirection: 'column' }}>
+              <div>
 
-                {/* ── TOP BAR ── */}
-                <div style={{ height: 56, display: expandedWorkshopProblem === null ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: `1px solid ${W.border}`, background: isLight ? 'rgba(248,250,252,0.92)' : 'rgba(15,23,42,0.92)', flexShrink: 0, gap: 16 }}>
-                  {/* Left */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 0 }}>
-                    <span style={{ width: 24, height: 24, borderRadius: 7, background: W.ink, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>S</span>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, color: W.ink, fontSize: 13, fontWeight: 700 }}>Verksted</p>
-                      <p style={{ margin: '1px 0 0', color: W.muted, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{siteLabel}</p>
-                    </div>
-                  </div>
-
-                  {/* Center: search (overview) OR nav arrows (detail) */}
-                  {expandedWorkshopProblem === null ? (
-                    <label style={{ height: 34, maxWidth: 360, width: '100%', background: W.card, border: `1px solid ${W.border}`, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '0 12px', transition: `border-color 160ms ${EASE}`, cursor: 'text' }}
-                      onFocusCapture={e => (e.currentTarget.style.borderColor = W.ink)}
-                      onBlurCapture={e => (e.currentTarget.style.borderColor = W.border)}
-                    >
-                      <Search size={14} style={{ color: W.muted, flexShrink: 0 }} />
-                      <input
-                        value={workshopQuery}
-                        onChange={e => setWorkshopQuery(e.target.value)}
-                        placeholder="Søk i funn"
-                        style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', color: W.ink, fontSize: 12 }}
-                      />
-                      <span style={{ color: W.muted, border: `1px solid ${W.border}`, borderRadius: 6, padding: '1px 5px', fontSize: 10, fontWeight: 700, flexShrink: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>⌘K</span>
-                    </label>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        type="button"
-                        disabled={selectedIndex <= 0}
-                        onClick={() => goRelative(-1)}
-                        onMouseDown={pressDown}
-                        onMouseUp={pressReset}
-                        onMouseLeave={pressReset}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: selectedIndex <= 0 ? 'not-allowed' : 'pointer', opacity: selectedIndex <= 0 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
-                      >
-                        <ChevronLeft size={14} /> Forrige funn
-                      </button>
-                      <button
-                        type="button"
-                        disabled={selectedIndex >= problems.length - 1}
-                        onClick={() => goRelative(1)}
-                        onMouseDown={pressDown}
-                        onMouseUp={pressReset}
-                        onMouseLeave={pressReset}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${W.border}`, background: W.card, color: W.ink, borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: selectedIndex >= problems.length - 1 ? 'not-allowed' : 'pointer', opacity: selectedIndex >= problems.length - 1 ? 0.4 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
-                      >
-                        Neste funn <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Right: status */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: analysisResults ? W.green : W.border, flexShrink: 0 }} />
-                    <p style={{ margin: 0, color: W.muted, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{analysisResults ? `Analysert ${analyzedLabel}` : 'Ikke analysert'}</p>
-                  </div>
-                </div>
-
-                {/* ── SCROLLABLE BODY ── */}
-                <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                {/* ── BODY (detalj = innrammet kort, oversikt = vanlig side) ── */}
+                <div style={expandedWorkshopProblem !== null ? { border: `1px solid ${W.border}`, background: W.card, borderRadius: 16, overflow: 'hidden' } : undefined}>
 
                   {expandedWorkshopProblem === null ? (
                     /* ═══════════════════════════════════
                        SCREEN A — OVERSIKT
                        ═══════════════════════════════════ */
-                    <div style={{ padding: '20px 48px 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-                      {/* Headline */}
-                      <div />
 
-                      {/* Bento grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)', gap: 16 }}>
-
-                        {/* LEFT — Hovedfunn */}
-                        <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '28px 28px 24px', display: 'flex', flexDirection: 'column', minHeight: 220 }}>
-                          {problems.length > 0 ? (
-                            <>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.green, flexShrink: 0 }} />
-                                <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Hovedfunn · Høyest gevinst</span>
-                              </div>
-                              <h2 style={{ margin: '0 0 12px', color: W.ink, fontSize: 'clamp(26px,3.2vw,40px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1.1, flex: 1 }}>
-                                {problems[0].title}
-                              </h2>
-                              {problems[0].raw?.description && (
-                                <p style={{ margin: '0 0 20px', color: W.muted, fontSize: 14, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                  {problems[0].raw.description}
-                                </p>
-                              )}
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-                                <span style={{ color: problems[0].raw?.savings ? W.green : W.muted, fontSize: 26, fontWeight: 600, fontFamily: problems[0].raw?.savings ? "ui-monospace,'SF Mono',Menlo,monospace" : 'inherit', fontVariantNumeric: 'tabular-nums' }}>
-                                  {problems[0].raw?.savings ? `Sparer ${problems[0].raw.savings}` : 'Forbedring foreslått av Lighthouse'}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => selectProblem(problems[0])}
-                                  onMouseDown={pressDown}
-                                  onMouseUp={pressReset}
-                                  onMouseLeave={pressReset}
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
-                                >
-                                  <Sparkles size={14} /> Be AI om løsning
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            <div style={{ margin: 'auto', textAlign: 'center' }}>
-                              <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Ingen funn enda</p>
-                              <p style={{ margin: 0, color: W.muted, fontSize: 14, lineHeight: 1.6 }}>Kjør en PageSpeed-analyse under Synlighet for å fylle Verkstedet med ekte Lighthouse-funn.</p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* RIGHT — nested stats */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          {/* 3 stat cards */}
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-                            {[
-                              { label: 'FUNN TOTALT', value: String(problems.length).padStart(2, '0'), foot: 'mobile · siste kjøring', dim: false },
-                              { label: 'ÅPNE',        value: String(openCount).padStart(2, '0'),       foot: 'ikke markert løst',    dim: false },
-                              { label: 'LØSTE',       value: String(doneCount).padStart(2, '0'),       foot: 'bekreftet i ny analyse', dim: doneCount === 0 },
-                            ].map((s) => (
-                              <div key={s.label} style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 18, padding: '18px 16px' }}>
-                                <p style={{ margin: '0 0 6px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{s.label}</p>
-                                <p style={{ margin: '0 0 8px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 44, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1, color: s.dim ? W.muted : W.ink, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
-                                <p style={{ margin: 0, color: W.muted, fontSize: 11 }}>{s.foot}</p>
-                              </div>
-                            ))}
+                      {/* Sammendrag-kort */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                        {[
+                          { label: 'Ting å fikse', value: problems.length, dim: false },
+                          { label: 'Åpne', value: openCount, dim: false },
+                          { label: 'Løst', value: doneCount, dim: doneCount === 0 },
+                        ].map((s) => (
+                          <div key={s.label} style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, padding: '16px 18px' }}>
+                            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>{s.label}</p>
+                            <p style={{ margin: '10px 0 0', fontSize: 30, fontWeight: 600, lineHeight: 1, color: s.dim ? W.faint : W.ink, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
                           </div>
-
-                          {/* Sparkline + Kilde */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            {/* Sparkline */}
-                            {(() => {
-                              const sparkRaw: number[] = scoreHistory
-                                .map((s: any) => s.score ?? s.performance ?? null)
-                                .filter((v: any): v is number => typeof v === 'number' && v >= 0);
-                              const hasEnough = sparkRaw.length >= 2;
-                              const svgW = 160, svgH = 48;
-                              let linePath = '', areaPath = '', sparkDelta: number | null = null;
-                              if (hasEnough) {
-                                const mn = Math.min(...sparkRaw), mx = Math.max(...sparkRaw);
-                                const rng = mx - mn || 1;
-                                const pts = sparkRaw.map((v, i) => ({
-                                  x: (i / (sparkRaw.length - 1)) * svgW,
-                                  y: svgH - ((v - mn) / rng) * (svgH - 8) - 4,
-                                }));
-                                linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-                                areaPath = `${linePath} L${svgW},${svgH} L0,${svgH} Z`;
-                                sparkDelta = Math.round(sparkRaw[sparkRaw.length - 1] - sparkRaw[0]);
-                              }
-                              const dateLabel = (idx: number) => {
-                                const entry = scoreHistory[idx];
-                                if (!entry?.at) return '';
-                                return new Date(entry.at).toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit' }).replace(/\//g, '.');
-                              };
-                              return (
-                                <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '18px 16px', display: 'flex', flexDirection: 'column' }}>
-                                  <p style={{ margin: '0 0 12px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ytelse · Siste analyser</p>
-                                  {hasEnough ? (
-                                    <>
-                                      <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: 'visible', width: '100%', height: svgH }}>
-                                        <defs>
-                                          <linearGradient id="ws-spark-grad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%"   stopColor={W.green} stopOpacity="0.18" />
-                                            <stop offset="100%" stopColor={W.green} stopOpacity="0" />
-                                          </linearGradient>
-                                        </defs>
-                                        <path d={areaPath} fill="url(#ws-spark-grad)" />
-                                        <path d={linePath} fill="none" stroke={W.green} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-                                      </svg>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{dateLabel(0)}</span>
-                                        {sparkDelta !== null && (
-                                          <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: sparkDelta >= 0 ? W.green : '#C0392B', fontWeight: 700 }}>
-                                            {sparkDelta >= 0 ? '+' : ''}{sparkDelta}
-                                          </span>
-                                        )}
-                                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{dateLabel(scoreHistory.length - 1)}</span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <p style={{ margin: 'auto 0', color: W.muted, fontSize: 12, lineHeight: 1.5 }}>Ikke nok historikk enda</p>
-                                  )}
-                                </div>
-                              );
-                            })()}
-
-                            {/* Kilde */}
-                            <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: '18px 16px' }}>
-                              <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Kilde</p>
-                              <p style={{ margin: '0 0 4px', color: W.ink, fontSize: 14, fontWeight: 700 }}>Google Lighthouse</p>
-                              <p style={{ margin: '0 0 12px', color: W.muted, fontSize: 12, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>mobil · {analyzedLabel}</p>
-                              {(analysisResults?.mobile?.lcp?.value || analysisResults?.mobile?.tbt?.value) && (
-                                <div style={{ display: 'flex', gap: 16 }}>
-                                  {analysisResults?.mobile?.lcp?.value && (
-                                    <div>
-                                      <p style={{ margin: '0 0 2px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>LCP</p>
-                                      <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 14, fontWeight: 600, color: W.ink }}>{analysisResults.mobile.lcp.value}</p>
-                                    </div>
-                                  )}
-                                  {analysisResults?.mobile?.tbt?.value && (
-                                    <div>
-                                      <p style={{ margin: '0 0 2px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>TBT</p>
-                                      <p style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 14, fontWeight: 600, color: W.ink }}>{analysisResults.mobile.tbt.value}</p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
+
+                      {/* Søk */}
+                      {problems.length > 0 && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 9, background: W.card, border: `1px solid ${W.border}`, borderRadius: 10, padding: '10px 14px', maxWidth: 420, transition: `border-color 160ms ${EASE}`, cursor: 'text' }}
+                          onFocusCapture={e => (e.currentTarget.style.borderColor = W.ink)}
+                          onBlurCapture={e => (e.currentTarget.style.borderColor = W.border)}
+                        >
+                          <Search size={15} style={{ color: W.muted, flexShrink: 0 }} />
+                          <input
+                            value={workshopQuery}
+                            onChange={e => setWorkshopQuery(e.target.value)}
+                            placeholder="Søk i ting å fikse…"
+                            style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', color: W.ink, fontSize: 14 }}
+                          />
+                        </label>
+                      )}
 
                       {/* Filter tabs + list */}
                       <div>
@@ -12377,7 +12900,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               );
                             })}
                           </div>
-                          <p style={{ margin: 0, color: W.muted, fontSize: 12 }}>Sortert etter besparelse</p>
+                          <p style={{ margin: 0, color: W.muted, fontSize: 12 }}>Sortert etter gevinst</p>
                         </div>
                         <div style={{ height: 1, background: W.border }} />
 
@@ -12447,11 +12970,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       {/* Tier teaser */}
                       {!hasStandardOrHigher && (
                         <div style={{ background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(82,164,71,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Sparkles size={16} style={{ color: W.green }} />
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Sparkles size={16} style={{ color: '#6EE7B7' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 180 }}>
-                            <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>Lås opp AI-løsninger for alle funnene</p>
+                            <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>Lås opp AI-løsninger for alt du kan fikse</p>
                             <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Inkluderer automatisk re-analyse hver natt, søkeordsposisjon og konkurrent-sporing.</p>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -12518,7 +13041,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </div>
 
                         {rollbackState === 'success' ? (
-                          <div style={{ background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                          <div style={{ background: 'rgba(21,121,90,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                             <CheckCircle2 size={22} style={{ color: W.green, flexShrink: 0, marginTop: 2 }} />
                             <div>
                               <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Rullet tilbake ✓</p>
@@ -12529,7 +13052,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </div>
                         ) : (
                           <>
-                            <div style={{ background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                            <div style={{ background: 'rgba(21,121,90,0.08)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '20px 22px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                               <CheckCircle2 size={22} style={{ color: W.green, flexShrink: 0, marginTop: 2 }} />
                               <div>
                                 <p style={{ margin: '0 0 6px', color: W.ink, fontSize: 16, fontWeight: 700 }}>Pushet til WordPress ✓</p>
@@ -12557,7 +13080,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     : '(Tom)'}
                                 </p>
                               </div>
-                              <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                              <div style={{ background: 'rgba(21,121,90,0.06)', border: `1px solid ${W.border}`, borderRadius: 12, padding: '14px 16px' }}>
                                 <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: W.green, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sikt-AI sitt forslag</p>
                                 <p style={{
                                   margin: 0,
@@ -12756,7 +13279,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <div style={{ padding: '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                            <span style={{ background: 'rgba(14,165,233,0.12)', color: '#0369a1', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
+                            <span style={{ background: W.ink, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
                             <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.ink, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                               <span style={{ width: 6, height: 6, borderRadius: '50%', background: W.green, flexShrink: 0 }} /> Åpen
                             </span>
@@ -12906,7 +13429,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   {cur.hint && <p style={{ margin: '0 0 8px', color: W.muted, fontSize: 11, lineHeight: 1.45 }}>{cur.hint}</p>}
                                   <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{cur.value}</p>
                                 </div>
-                                <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '18px 20px', minHeight: 120 }}>
+                                <div style={{ background: 'rgba(21,121,90,0.06)', border: `1px solid ${W.border}`, borderRadius: 14, padding: '18px 20px', minHeight: 120 }}>
                                   <p style={{ margin: '0 0 10px', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.green, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Sikt foreslår</p>
                                   <textarea
                                     value={editedSuggestion}
@@ -13206,7 +13729,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: W.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Nåværende</p>
                                         <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', ...scrollableValueStyle }}>{cur.value}</p>
                                       </div>
-                                      <div style={{ background: 'rgba(82,164,71,0.06)', border: `1px solid ${W.border}`, borderRadius: 10, padding: '12px 14px' }}>
+                                      <div style={{ background: 'rgba(21,121,90,0.06)', border: `1px solid ${W.border}`, borderRadius: 10, padding: '12px 14px' }}>
                                         <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: W.green, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ny</p>
                                         <p style={{ margin: 0, color: W.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', ...scrollableValueStyle }}>{pushEditedSuggestion}</p>
                                       </div>
@@ -13552,7 +14075,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           ) : aiSolution ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                               {aiSolution.usedHtmlContext && (
-                                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 6, background: 'rgba(82,164,71,0.08)', border: `1px solid ${W.green}`, color: W.green, borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 700 }}>
+                                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 6, background: 'rgba(21,121,90,0.08)', border: `1px solid ${W.green}`, color: W.green, borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 700 }}>
                                   <Check size={12} /> Hentet fra din faktiske side
                                 </span>
                               )}
@@ -13666,7 +14189,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: W.green }} />
                                 <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Foreslått patch</span>
                               </div>
-                              <div style={{ background: 'rgba(82,164,71,0.06)', padding: '14px 16px', overflowX: 'auto' }}>
+                              <div style={{ background: 'rgba(21,121,90,0.06)', padding: '14px 16px', overflowX: 'auto' }}>
                                 <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: W.green, whiteSpace: 'pre-wrap' }}><code>{typeof aiSolution.codePatch === 'string' ? aiSolution.codePatch : JSON.stringify(aiSolution.codePatch, null, 2)}</code></pre>
                               </div>
                               <div style={{ padding: '8px 14px' }}>
@@ -13726,7 +14249,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       {/* Tier teaser */}
                       {!hasStandardOrHigher && (
                         <div style={{ margin: '0 48px 32px', background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(82,164,71,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Sparkles size={16} style={{ color: W.green }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 180 }}>
@@ -14355,7 +14878,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* INNSTILLINGER — KONFIGURASJON                                  */}
         {/* =============================================================== */}
         {activeTab === 'settings' && (() => {
-          const settingsMono = "ui-monospace,'SF Mono',Menlo,monospace";
+          const settingsMono = "'Geist','DM Sans',sans-serif";
           const settingsDomain = domainLabel || 'ingen-nettside';
           const profileDisplayFields = [
             { label: 'Bedrift', value: clientData?.companyName || 'Ikke oppgitt' },
@@ -14384,31 +14907,31 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const sectionCountTheme = 2;
           const planCost = planPrices[activePlanKey];
 
-          const sectionShell = "rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] overflow-hidden";
+          const sectionShell = "rounded-[16px] border border-[#E9E4DA] bg-[#FFFFFF] overflow-hidden";
           const sectionSummary = "list-none px-4 sm:px-6 py-4 cursor-pointer";
-          const rowShell = "flex items-start justify-between gap-4 py-3 border-t border-[#EBEBE6]";
+          const rowShell = "flex items-start justify-between gap-4 py-3 border-t border-[#EFEBE2]";
 
           return (
-            <div key={activeTab} className="space-y-6">
+            <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konfigurasjon</h1>
-                  <p className={`text-base mt-3 ${textDim}`}>innstillinger</p>
+                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Innstillinger</h1>
+                  <p className="text-base mt-3" style={{ color: '#8A8578' }}>Bedrift, tilkobling, abonnement og varsler.</p>
                 </div>
               </header>
               <div className={`${tabFadeInClass} space-y-6`}>
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>Plan</p>
+                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Plan</p>
                   <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planNames[activePlanKey]}</p>
                 </div>
-                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>Mnd. kostnad</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planCost}</p>
+                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Pris per måned</p>
+                  <p className="text-xl font-semibold mt-2 tabular-nums" style={{ color: '#1A1A1A' }}>{planCost}</p>
                 </div>
-                <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>CMS</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsAdvisory ? '#52A447' : '#1A1A1A' }}>
+                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Nettside-kobling</p>
+                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsAdvisory ? '#15795A' : '#1A1A1A' }}>
                     {hostIsAdvisory ? platformLabel(hostConnection?.platform) : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
                   </p>
                 </div>
@@ -14418,8 +14941,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <summary className={sectionSummary}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>01</span>
-                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Bedrift og nettside · {sectionCountProfile} felt</p>
+                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Bedrift og nettside</p>
                     </div>
                     <button
                       type="button"
@@ -14427,10 +14949,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                       onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                      className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
-                      style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      className="text-[13px] font-medium px-3 py-1.5 rounded-full"
+                      style={{ color: '#1A1A1A', border: '1px solid #E9E4DA', background: '#FFFFFF', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                     >
-                      {editingSection === 'profile' ? 'edit off' : 'edit'}
+                      {editingSection === 'profile' ? 'Ferdig' : 'Rediger'}
                     </button>
                   </div>
                 </summary>
@@ -14463,8 +14985,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>
                           Nettside
                           {urlLocked && (
-                            <span className="ml-2 text-[11px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full border border-[#EBEBE6]" style={{ color: '#808080', fontFamily: settingsMono }}>
-                              locked · {urlDaysLeft}d
+                            <span className="ml-2 text-[11px] font-medium px-2 py-0.5 rounded-full border border-[#E9E4DA]" style={{ color: '#8A8578' }}>
+                              låst i {urlDaysLeft} dager
                             </span>
                           )}
                         </label>
@@ -14527,8 +15049,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <details className={sectionShell} open>
                   <summary className={sectionSummary}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>02</span>
-                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>CMS-tilkobling · {sectionCountCms} plattformer</p>
+                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Nettside-kobling</p>
                     </div>
                   </summary>
                   <div className="px-4 sm:px-6 pb-5 space-y-4">
@@ -14537,7 +15058,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress</p>
                           {hostIsFullyConnected && (
-                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#52A447', background: '#F5F5F0', fontFamily: settingsMono }}>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#15795A', background: '#E8F1EB' }}>
                               tilkoblet
                             </span>
                           )}
@@ -14584,7 +15105,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Andre plattformer</p>
                           {hostIsAdvisory && (
-                            <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#52A447', background: '#F5F5F0', fontFamily: settingsMono }}>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#15795A', background: '#E8F1EB' }}>
                               tilkoblet
                             </span>
                           )}
@@ -14641,7 +15162,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>03</span>
                     <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Abonnement</p>
                   </div>
                 </summary>
@@ -14653,10 +15173,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       const type: 'upgrade' | 'downgrade' = order[key] > order[activePlanKey] ? 'upgrade' : 'downgrade';
                       return (
                         <div key={key} className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
-                          <p className="text-xs uppercase tracking-[0.14em]" style={{ color: '#808080', fontFamily: settingsMono }}>{planNames[key]}</p>
-                          <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planPrices[key]}<span className="text-xs font-normal ml-1" style={{ color: '#808080' }}>/mnd</span></p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>{planNames[key]}</p>
+                          <p className="text-xl font-semibold mt-2 tabular-nums" style={{ color: '#1A1A1A' }}>{planPrices[key]}<span className="text-xs font-normal ml-1" style={{ color: '#8A8578' }}>/mnd</span></p>
                           {isCurrent ? (
-                            <p className="mt-3 text-xs uppercase tracking-[0.12em]" style={{ color: '#52A447', fontFamily: settingsMono }}>aktiv</p>
+                            <p className="mt-3 text-xs font-semibold" style={{ color: '#15795A' }}>Aktiv</p>
                           ) : (
                             <button
                               type="button"
@@ -14680,8 +15200,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>04</span>
-                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Varsler · {sectionCountNotif} felt</p>
+                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Varsler</p>
                   </div>
                 </summary>
                 <div className="px-4 sm:px-6 pb-5">
@@ -14693,14 +15212,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           <p className="text-xs mt-0.5" style={{ color: '#808080' }}>{item.desc}</p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: settingsMono }}>
-                            {notifPrefs[item.id] ? 'true' : 'false'}
-                          </span>
                           <button
                             type="button"
                             onClick={() => toggleNotif(item.id)}
                             className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
-                            style={{ background: notifPrefs[item.id] ? '#52A447' : '#EBEBE6', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            style={{ background: notifPrefs[item.id] ? '#15795A' : '#E9E4DA', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                           >
                             <span
                               className="inline-block h-4 w-4 rounded-full bg-white"
@@ -14717,35 +15233,35 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs tracking-[0.14em] uppercase" style={{ color: '#808080', fontFamily: settingsMono }}>05</span>
-                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Utseende · {sectionCountTheme} felt</p>
+                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Utseende</p>
                   </div>
                 </summary>
                 <div className="px-4 sm:px-6 pb-5">
                   <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { id: 'light' as const, label: 'Lys' },
-                      { id: 'dark' as const, label: 'Mørk' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setTheme(opt.id)}
-                        onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
-                        onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        className="px-5 py-4 rounded-xl border text-sm font-medium"
-                        style={{
-                          borderColor: '#EBEBE6',
-                          background: theme === opt.id ? '#1A1A1A' : '#FFFFFF',
-                          color: theme === opt.id ? '#FFFFFF' : '#1A1A1A',
-                          transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1)',
-                        }}
-                      >
-                        {opt.id === 'light' ? <Sun size={16} className="inline mr-2" /> : <Moon size={16} className="inline mr-2" />}
-                        {opt.label}
-                      </button>
-                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setTheme('light')}
+                      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                      className="px-5 py-4 rounded-[12px] border text-sm font-medium inline-flex items-center justify-center gap-2"
+                      style={{
+                        borderColor: '#1A1A1A',
+                        background: '#1A1A1A',
+                        color: '#FFFFFF',
+                        transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)',
+                      }}
+                    >
+                      <Sun size={16} /> Lys
+                    </button>
+                    <div
+                      aria-disabled="true"
+                      title="Mørk modus kommer senere"
+                      className="px-5 py-4 rounded-[12px] border text-sm font-medium inline-flex items-center justify-center gap-2"
+                      style={{ borderColor: '#E9E4DA', background: '#FAF8F3', color: '#B3AD9F', cursor: 'not-allowed' }}
+                    >
+                      <Moon size={16} /> Mørk — kommer
+                    </div>
                   </div>
                 </div>
               </details>
@@ -14759,10 +15275,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="text-xs uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
-                    style={{ color: '#1A1A1A', border: '1px solid #EBEBE6', background: '#FFFFFF', fontFamily: settingsMono, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="text-[13px] font-medium px-3 py-1.5 rounded-full"
+                    style={{ color: '#1A1A1A', border: '1px solid #E9E4DA', background: '#FFFFFF', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
-                    åpne
+                    Åpne
                   </button>
                 </div>
                 <p className="text-sm" style={{ color: '#808080' }}>
@@ -14771,11 +15287,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </div>
 
               <div
-                className="rounded-2xl border p-5 sm:p-6"
-                style={{ borderColor: 'rgba(192,57,43,0.35)', background: 'rgba(192,57,43,0.04)' }}
+                className="rounded-[16px] border p-5 sm:p-6"
+                style={{ borderColor: 'rgba(180,35,31,0.30)', background: 'rgba(180,35,31,0.04)' }}
               >
-                <h3 className="text-lg font-semibold" style={{ color: '#8B2E2E' }}>Slett konto</h3>
-                <p className="text-sm mt-2 mb-4" style={{ color: '#808080', lineHeight: 1.55 }}>
+                <h3 className="text-lg font-semibold" style={{ color: '#B4231F' }}>Slett konto</h3>
+                <p className="text-sm mt-2 mb-4" style={{ color: '#8A8578', lineHeight: 1.55 }}>
                   Dette sletter kontoen din og alle data permanent. Handlingen kan ikke angres.
                 </p>
                 <button
@@ -14788,7 +15304,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                   className="rounded-full px-4 py-2 text-sm font-semibold text-white"
-                  style={{ background: '#C0392B', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  style={{ background: '#B4231F', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                 >
                   Slett konto
                 </button>
@@ -14798,11 +15314,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           );
         })()}
 
-        <footer className="mt-12 pt-6 border-t border-[#EBEBE6] text-center text-sm" style={{ color: '#808080' }}>
-          <p className="inline-flex items-center justify-center gap-2 flex-wrap" style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
+        <footer className="mt-12 pt-6 border-t border-[#E9E4DA] text-center text-sm font-['Geist','DM_Sans',sans-serif]" style={{ color: '#8A8578' }}>
+          <p className="inline-flex items-center justify-center gap-2 flex-wrap">
             <span>support@siktseo.com</span>
             <span>·</span>
-            <span>sla 1 working day</span>
+            <span>Svar innen 1 virkedag</span>
           </p>
         </footer>
 

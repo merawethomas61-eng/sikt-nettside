@@ -20,3 +20,29 @@ entrypoint = "./functions/stripe-webhook/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/stripe-webhook/*.html" ]
+
+# Anmeldelser Fase 2 — review-motor.
+# send-review-request: kalt fra dashbordet med brukerens JWT (verifiserer eier).
+[functions.send-review-request]
+enabled = true
+verify_jwt = true
+
+# review-redirect: offentlig lenke kunden klikker i e-posten → MÅ være false.
+[functions.review-redirect]
+enabled = true
+verify_jwt = false
+
+# review-followup: kjøres av pg_cron med x-cron-secret → MÅ være false.
+[functions.review-followup]
+enabled = true
+verify_jwt = false
+
+# google-reviews: kalt fra dashbordet med brukerens JWT (leser ekte Google-data).
+[functions.google-reviews]
+enabled = true
+verify_jwt = true
+
+# gbp-reviews: OAuth-callback (GET, ingen JWT) + POST-handlinger (JWT i koden) → false.
+[functions.gbp-reviews]
+enabled = true
+verify_jwt = false

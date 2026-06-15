@@ -454,6 +454,37 @@ async function pushViaSiktConnector(adminUrl, authorization, postId, field, newV
 }
 
 /**
+ * Push (eller fjern, ved tom streng) site-wide JSON-LD via sikt-connector.
+ * @param {string} adminUrl
+ * @param {string} authorization
+ * @param {string} jsonld
+ */
+async function pushSiteSchemaViaSiktConnector(adminUrl, authorization, jsonld) {
+  const url = `${adminUrl}/wp-json/sikt/v1/set-site-schema`;
+  const { response, data } = await wpRequest(
+    url,
+    authorization,
+    'POST',
+    { jsonld },
+    { throwOnAuthErrors: false },
+  );
+
+  if (response.status === 404) {
+    const code = typeof data?.code === 'string' ? data.code : '';
+    if (code === 'rest_no_route' || code === 'rest_not_found') {
+      return { ok: false, pluginNotInstalled: true };
+    }
+    return { ok: false, status: 404 };
+  }
+  if (response.status === 401) return { ok: false, authFailed: true };
+  if (response.status === 403) return { ok: false, forbidden: true };
+  if (response.status === 200 && data?.ok === true) {
+    return { ok: true, oldValue: typeof data.old_value === 'string' ? data.old_value : null };
+  }
+  return { ok: false, status: response.status, statusText: response.statusText };
+}
+
+/**
  * @param {unknown} yoastHeadJson
  * @param {'meta-description' | 'seo-title'} field
  */
@@ -502,6 +533,58 @@ export default withSentry(async function handler(req, res) {
   }
 
   const body = parseJsonBody(req);
+
+  // --- Site-wide JSON-LD (anmeldelser-schema). Egen gren: ingen pageUrl/post. ---
+  if (body.field === 'site-schema') {
+    const jsonld = typeof body.jsonld === 'string' ? body.jsonld : '';
+    if (jsonld.length > 12000) {
+      return res.status(400).json({ error: 'JSON-LD er for langt (maks 12000 tegn).' });
+    }
+    if (jsonld.trim() !== '') {
+      try { JSON.parse(jsonld); } catch { return res.status(400).json({ error: 'Ugyldig JSON-LD.' }); }
+    }
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const { data: hostRow, error: fetchErr } = await supabase
+        .from('client_hosts')
+        .select('connection_mode, admin_url, notes, access_token_encrypted')
+        .eq('user_id', user.id)
+        .eq('platform', 'wordpress')
+        .maybeSingle();
+      if (fetchErr) {
+        Sentry.captureException(fetchErr);
+        return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkobling.' });
+      }
+      if (!hostRow || hostRow.connection_mode !== 'full' || !hostRow.access_token_encrypted
+          || typeof hostRow.admin_url !== 'string' || !hostRow.admin_url.trim()
+          || typeof hostRow.notes !== 'string' || !hostRow.notes.trim()) {
+        return res.status(404).json({ error: 'WordPress er ikke aktivt tilkoblet.' });
+      }
+      let appPassword;
+      try {
+        appPassword = decrypt(hostRow.access_token_encrypted);
+      } catch (decErr) {
+        Sentry.captureException(decErr);
+        return res.status(500).json({ error: 'Serveren kan ikke lese lagret nøkkel (sjekk ENCRYPTION_KEY).' });
+      }
+      const authorization = buildBasicAuthHeader(hostRow.notes.trim(), appPassword);
+      const result = await pushSiteSchemaViaSiktConnector(hostRow.admin_url.trim(), authorization, jsonld);
+      if (!result.ok) {
+        if (result.pluginNotInstalled) {
+          return res.status(400).json({ error: 'Sikt-koblingen (plugin v1.1.0+) er ikke installert på WordPress.' });
+        }
+        if (result.authFailed) return res.status(401).json({ error: 'WordPress avviste innloggingen.' });
+        if (result.forbidden) return res.status(403).json({ error: 'WordPress-brukeren mangler administrator-rettigheter.' });
+        return res.status(502).json({ error: 'WordPress avviste schema-pushen.' });
+      }
+      return res.status(200).json({ ok: true, pushed: 'site-schema', removed: jsonld.trim() === '' });
+    } catch (err) {
+      console.error('[wordpress-push] site-schema-feil:', err?.message || err);
+      Sentry.captureException(err);
+      return res.status(500).json({ error: 'Noe gikk galt under schema-pushen.' });
+    }
+  }
+
   const pageUrlCheck = validatePageUrl(body.pageUrl);
   if (!pageUrlCheck.ok) {
     return res.status(400).json({ error: pageUrlCheck.error });
