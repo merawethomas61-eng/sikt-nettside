@@ -4999,14 +4999,18 @@ const KonkurrenterPage: React.FC<{
   hasPremium: boolean;
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
-  // Colour tokens — always this palette regardless of theme
+  // Colour tokens — «warm-neutral Linear»-systemet (samme som resten av dashbordet)
   const C = {
-    bg:     '#F5F5F0',
+    bg:     '#F2EFE8',
     card:   '#FFFFFF',
     ink:    '#1A1A1A',
-    green:  '#52A447',
-    muted:  '#808080',
-    border: '#EBEBE6',
+    green:  '#15795A',
+    muted:  '#8A8578',
+    border: '#E9E4DA',
+    sub:    '#5C574C',
+    faint:  '#B3AD9F',
+    hair:   '#EFEBE2',
+    subtle: '#FAF8F3',
   } as const;
 
   // Custom easing (Emil: never use default CSS easings)
@@ -5237,10 +5241,10 @@ const KonkurrenterPage: React.FC<{
   // === BASIC — Locked state ===
   if (!hasStandardOrHigher) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0', fontFamily: "'Geist','DM Sans',sans-serif" }}>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 48, textAlign: 'center', maxWidth: 440 }}>
           <Lock size={28} style={{ color: C.muted, margin: '0 auto 16px', display: 'block' }} />
-          <h2 style={{ color: C.ink, fontWeight: 800, fontSize: 20, margin: '0 0 8px' }}>Konkurrent-analyse er låst</h2>
+          <h2 style={{ color: C.ink, fontWeight: 700, fontSize: 20, margin: '0 0 8px', letterSpacing: '-0.01em' }}>Konkurrent-analyse er låst</h2>
           <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 24px' }}>
             Se hvilke søkeord konkurrentene rangerer på som du mangler. Tilgjengelig i Standard og oppover.
           </p>
@@ -5258,49 +5262,52 @@ const KonkurrenterPage: React.FC<{
 
   // === STANDARD / PREMIUM ===
   return (
-    <div>
+    <div style={{ fontFamily: "'Geist','DM Sans',sans-serif" }}>
       {/* ── ACTION BAR ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, paddingBottom: 20 }}>
-        {scanningId && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.green }}>
-            <span style={{ width: 7, height: 7, background: C.green, borderRadius: '50%', display: 'inline-block' }} />
-            Skanner aktiv
-          </span>
-        )}
-        <button
-          onClick={() => { if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; } setShowAddModal(true); }}
-          style={{ background: C.ink, color: '#fff', padding: '9px 18px', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 6, transition: `transform 160ms ${EASE}` }}
-          onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
-        >
-          <Plus size={14} /> Legg til konkurrent
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 20, flexWrap: 'wrap' }}>
+        <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
+          {hasPremium ? 'Premium' : 'Standard'} · {competitors.length} av {maxCompetitors} konkurrenter
+          {lastScannedGlobal ? ` · sist skannet ${formatScanDate(lastScannedGlobal)}` : ''}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {scanningId && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.green }}>
+              <span style={{ width: 7, height: 7, background: C.green, borderRadius: '50%', display: 'inline-block' }} />
+              Skanner aktiv
+            </span>
+          )}
+          <button
+            onClick={() => { if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; } setShowAddModal(true); }}
+            style={{ background: C.ink, color: '#fff', padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 6, transition: `transform 160ms ${EASE}` }}
+            onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
+          >
+            <Plus size={14} /> Legg til konkurrent
+          </button>
+        </div>
       </div>
 
-      {/* ── 2-COLUMN LAYOUT ── */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      {/* ── SINGLE-COLUMN LAYOUT ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* ── LEFT: MAIN ── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-          {/* HERO */}
-          <div style={{ marginTop: -16 }}>
-            {loading ? (
-              <div style={{ height: 88, display: 'flex', alignItems: 'center' }}>
-                <Loader2 size={20} className="animate-spin" style={{ color: C.muted }} />
-              </div>
-            ) : (
-              <>
-                <h1 style={{ fontSize: 'clamp(24px, 3.2vw, 42px)', fontWeight: 900, lineHeight: 1.1, color: C.ink, margin: 0 }}>
-                  {competitors.length} konkurrenter overvåkes.{' '}
-                  <span style={{ color: C.muted }}>{opportunities.length} åpne muligheter</span>{' '}
-                  ligger på bordet,
-                </h1>
-                <p style={{ fontSize: 'clamp(24px, 3.2vw, 42px)', fontWeight: 900, lineHeight: 1.2, color: C.green, margin: '4px 0 0' }}>
-                  verdt +{formatVolume(totalTraffic)} besøk/mnd.
-                </p>
-              </>
-            )}
-          </div>
+          {/* SAMMENDRAG-KORT */}
+          {loading ? (
+            <div style={{ height: 88, display: 'flex', alignItems: 'center' }}>
+              <Loader2 size={20} className="animate-spin" style={{ color: C.muted }} />
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              {[
+                { label: 'Konkurrenter overvåket', value: String(competitors.length), green: false },
+                { label: 'Åpne muligheter', value: String(opportunities.length), green: false },
+                { label: 'Mulige besøk /mnd', value: `+${formatVolume(totalTraffic)}`, green: true },
+              ].map((s) => (
+                <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px' }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: 0 }}>{s.label}</p>
+                  <p style={{ fontSize: 30, fontWeight: 600, lineHeight: 1, margin: '10px 0 0', color: s.green ? C.green : C.ink, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {error && (
             <div style={{ background: '#fff0f0', border: '1px solid #ffd0d0', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#c0392b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -5357,8 +5364,8 @@ const KonkurrenterPage: React.FC<{
               {/* Top row */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Domene</p>
-                  <h2 style={{ fontSize: 'clamp(20px, 2.2vw, 32px)', fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1.1 }}>{selectedComp.domain}</h2>
+                  <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Konkurrent</p>
+                  <h2 style={{ fontSize: 'clamp(20px, 2.2vw, 30px)', fontWeight: 700, letterSpacing: '-0.02em', color: C.ink, margin: 0, lineHeight: 1.1 }}>{selectedComp.domain}</h2>
                   <p style={{ fontSize: 11, color: C.muted, margin: '6px 0 0' }}>
                     {selectedComp.last_scanned_at
                       ? `Sist skannet ${new Date(selectedComp.last_scanned_at).toLocaleString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
@@ -5367,12 +5374,12 @@ const KonkurrenterPage: React.FC<{
                 </div>
                 <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexShrink: 0 }}>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkeord</p>
-                    <p style={{ fontSize: 16, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3 }}>{selectedComp.keyword_count ? selectedComp.keyword_count : 'Skann for å telle søkeord'}</p>
+                    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkeord</p>
+                    <p style={{ fontSize: 16, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>{selectedComp.keyword_count ? selectedComp.keyword_count : 'Skann for å telle'}</p>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Snitt pos.</p>
-                    <p style={{ fontSize: 38, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Snittplassering</p>
+                    <p style={{ fontSize: 36, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                       {selectedComp.avg_position ? `#${selectedComp.avg_position}` : 'Måles ved skann'}
                     </p>
                   </div>
@@ -5409,7 +5416,7 @@ const KonkurrenterPage: React.FC<{
               {/* Rankings */}
               <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 20, paddingTop: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: C.ink, margin: 0 }}>Rangeringer · Topp 20</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: C.ink, margin: 0 }}>Søkeord de rangerer på · topp 20</p>
                   <button
                     onClick={exportCSV}
                     disabled={!compRankings.length}
@@ -5433,7 +5440,7 @@ const KonkurrenterPage: React.FC<{
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
                     {compRankings.slice(0, 20).map(r => (
                       <div key={r.id} style={{ background: C.card, padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 900, minWidth: 32, flexShrink: 0, color: r.position <= 3 ? C.green : r.position <= 10 ? C.ink : C.muted }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, minWidth: 32, flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: r.position <= 3 ? C.green : r.position <= 10 ? C.ink : C.muted }}>
                           #{r.position}
                         </span>
                         <div style={{ minWidth: 0 }}>
@@ -5459,7 +5466,7 @@ const KonkurrenterPage: React.FC<{
           {/* OPPORTUNITIES */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: C.ink, margin: 0 }}>Topp søkeord-muligheter</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink, margin: 0 }}>Søkeord du kan ta</h2>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, color: C.muted }}>
                   {opportunities.length} totalt · {easyCount} lette · {highValueCount} høy verdi
@@ -5510,29 +5517,29 @@ const KonkurrenterPage: React.FC<{
                       className="sikt-stagger-item"
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 800, color: C.ink, margin: 0, lineHeight: 1.3, flex: 1 }}>{opp.keyword}</h3>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: diffColor, flexShrink: 0, whiteSpace: 'nowrap' }}>{diffDots} {diffLabel}</span>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3, flex: 1 }}>{opp.keyword}</h3>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: diffColor, flexShrink: 0, whiteSpace: 'nowrap' }}>{diffDots} {diffLabel}</span>
                       </div>
                       {opp.recommendation_text && (
                         <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>{opp.recommendation_text}</p>
                       )}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
-                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søkevolum</p>
-                          <p style={{ fontSize: 22, fontWeight: 900, color: C.ink, margin: 0, lineHeight: 1 }}>
+                          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søk per måned</p>
+                          <p style={{ fontSize: 22, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                             {formatVolume(opp.search_volume)}<span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>/mnd</span>
                           </p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Potensial</p>
-                          <p style={{ fontSize: 22, fontWeight: 900, color: C.green, margin: 0, lineHeight: 1 }}>
+                          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Mulige besøk</p>
+                          <p style={{ fontSize: 22, fontWeight: 600, color: C.green, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                             +{opp.estimated_traffic}<span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}> besøk</span>
                           </p>
                         </div>
                       </div>
                       {rankedBy.length > 0 && (
                         <div>
-                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, margin: '0 0 6px' }}>Rangeres av</p>
+                          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: '0 0 6px' }}>Hvem ligger der i dag</p>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                             {rankedBy.map((domain: string) => (
                               <span key={domain} style={{ fontSize: 10, fontWeight: 700, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 5, padding: '2px 8px', color: C.ink }}>
@@ -5568,94 +5575,53 @@ const KonkurrenterPage: React.FC<{
               </div>
             )}
           </div>
-        </div>{/* end LEFT */}
-
-        {/* ── RIGHT: SIDEBAR ── */}
-        <div style={{ width: 232, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-          {/* Info card */}
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Plan</p>
-                <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0 }}>
-                  {hasPremium ? 'Premium' : 'Standard'} · {competitors.length} av {maxCompetitors}
-                </p>
-              </div>
-              {lastScannedGlobal && (
-                <div>
-                  <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Sist skannet</p>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0 }}>{formatScanDate(lastScannedGlobal)}</p>
-                </div>
-              )}
-              <div>
-                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Nye varsler</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: unreadCount > 0 ? C.green : C.muted, margin: 0 }}>
-                    {unreadCount > 0 ? `${unreadCount} uleste` : 'Ingen uleste'}
-                  </p>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} style={{ fontSize: 10, fontWeight: 600, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: `color 120ms ${EASE}` }}
-                      onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
-                      onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-                    >
-                      Merk lest
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Changes feed */}
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <h3 style={{ fontSize: 13, fontWeight: 800, color: C.ink, margin: 0 }}>Endringer</h3>
+        {/* ── ENDRINGER (full bredde, nederst) ── */}
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: C.ink, margin: 0 }}>Endringer hos konkurrentene</h3>
               {unreadCount > 0 && (
-                <span style={{ background: C.ink, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px' }}>
-                  {unreadCount}
-                </span>
+                <span style={{ background: C.ink, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px', fontVariantNumeric: 'tabular-nums' }}>{unreadCount}</span>
               )}
             </div>
-            {changes.length === 0 ? (
-              <p style={{ fontSize: 12, color: C.muted, textAlign: 'center', padding: '16px 0', margin: 0 }}>Ingen endringer enda</p>
-            ) : (
-              <div>
-                {changes.slice(0, 8).map((change, i) => {
-                  const cfg = changeConfig[change.change_type] || { symbol: '●', positive: true };
-                  return (
-                    <div
-                      key={change.id}
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: i < Math.min(changes.length - 1, 7) ? `1px solid ${C.border}` : 'none', opacity: change.is_read ? 0.45 : 1, transition: `opacity 150ms ${EASE}` }}
-                    >
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: cfg.positive ? 'rgba(82,164,71,0.1)' : 'rgba(26,26,26,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: cfg.positive ? C.green : C.muted }}>{cfg.symbol}</span>
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.4 }}>{change.title}</p>
-                        {change.detail && (
-                          <p style={{ fontSize: 10, color: C.muted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{change.detail}</p>
-                        )}
-                        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.05em', color: C.muted, margin: '4px 0 0' }}>{kpTimeAgo(change.created_at)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {changes.length > 8 && (
-              <button
-                style={{ width: '100%', marginTop: 10, padding: '8px 0', fontSize: 11, fontWeight: 600, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', transition: `color 150ms ${EASE}` }}
+            {unreadCount > 0 && (
+              <button onClick={markAllRead} style={{ fontSize: 12, fontWeight: 500, color: C.sub, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: `color 120ms ${EASE}` }}
                 onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
-                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.sub)}
               >
-                Vis hele historikken →
+                Merk alt lest
               </button>
             )}
           </div>
-        </div>{/* end RIGHT */}
+          {changes.length === 0 ? (
+            <p style={{ fontSize: 13, color: C.muted, padding: '8px 0', margin: 0 }}>Ingen endringer enda. Varsler dukker opp her etter neste skann.</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0 24px' }}>
+              {changes.slice(0, 8).map((change) => {
+                const cfg = changeConfig[change.change_type] || { symbol: '●', positive: true };
+                return (
+                  <div
+                    key={change.id}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: `1px solid ${C.hair}`, opacity: change.is_read ? 0.5 : 1, transition: `opacity 150ms ${EASE}` }}
+                  >
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: cfg.positive ? 'rgba(21,121,90,0.10)' : 'rgba(26,26,26,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: cfg.positive ? C.green : C.muted }}>{cfg.symbol}</span>
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1.4 }}>{change.title}</p>
+                      {change.detail && (
+                        <p style={{ fontSize: 11, color: C.muted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{change.detail}</p>
+                      )}
+                      <p style={{ fontSize: 10, fontWeight: 500, color: C.faint, margin: '4px 0 0' }}>{kpTimeAgo(change.created_at)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-      </div>{/* end 2-col */}
+      </div>{/* end single column */}
 
       {/* ── MODALS ── */}
 
@@ -5664,7 +5630,7 @@ const KonkurrenterPage: React.FC<{
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.45)', backdropFilter: 'blur(6px)' }} onClick={() => { setShowAddModal(false); setAddError(null); setAddDomain(''); }} />
           <div style={{ position: 'relative', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }} className="sikt-stagger-item">
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 6px' }}>Legg til konkurrent</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink, margin: '0 0 6px' }}>Legg til konkurrent</h3>
             <p style={{ fontSize: 13, color: C.muted, margin: '0 0 18px', lineHeight: 1.5 }}>Skriv inn domenenavnet uten «https://» eller «www.»</p>
             <input
               type="text" value={addDomain} onChange={e => setAddDomain(e.target.value)}
@@ -5697,7 +5663,7 @@ const KonkurrenterPage: React.FC<{
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.45)', backdropFilter: 'blur(6px)' }} onClick={() => { if (!generateLoading) setGenerateTarget(null); }} />
           <div style={{ position: 'relative', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }} className="sikt-stagger-item">
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 8px' }}>Generer side for «{generateTarget.keyword}»?</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink, margin: '0 0 8px' }}>Generer side for «{generateTarget.keyword}»?</h3>
             <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
               <ul style={{ fontSize: 12, color: C.muted, margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <li>✦ AI skriver SEO-optimalisert innhold på 800–1200 ord</li>
@@ -5730,7 +5696,7 @@ const KonkurrenterPage: React.FC<{
             <div style={{ width: 48, height: 48, background: C.bg, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <Sparkles size={20} style={{ color: C.ink }} />
             </div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: '0 0 8px' }}>Grense nådd</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink, margin: '0 0 8px' }}>Grense nådd</h3>
             <p style={{ fontSize: 13, color: C.muted, margin: '0 0 22px', lineHeight: 1.6 }}>
               Du har nådd grensen på 3 konkurrenter med Standard. Oppgrader til Premium for ubegrenset overvåkning.
             </p>
@@ -7078,8 +7044,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   useEffect(() => {
     if (sidebarCollapsed) setUserFooterMenuOpen(false);
   }, [sidebarCollapsed]);
-  // Synlighet-fane har tre sub-faner (PageSpeed, Innhold, Lenker).
+  // Synlighet-fane: «sammendrag først» — tekniske detaljer skjult bak en bryter.
   const [visibilitySubTab, setVisibilitySubTab] = useState<'pagespeed' | 'content' | 'links'>('pagespeed');
+  const [showVisibilityDetails, setShowVisibilityDetails] = useState(false);
   // Verksted-fane: hvilket problem som er ekspandert inline.
   const [expandedWorkshopProblem, setExpandedWorkshopProblem] = useState<string | null>(null);
   const [contentFixCache, setContentFixCache] = useState<Record<string, ContentFixCacheEntry>>({});
@@ -10978,23 +10945,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'visibility' && (() => {
           const palette = {
-            bg: '#F5F5F0',
+            bg: '#F2EFE8',
             card: '#FFFFFF',
             ink: '#1A1A1A',
-            muted: '#808080',
-            border: '#EBEBE6',
-            success: '#52A447',
-            successBg: '#EAF4E8',
-            warn: '#B57A1A',
-            warnBg: '#F8F0DE',
-            danger: '#C75353',
-            dangerBg: '#FBECEC',
+            sub: '#5C574C',
+            muted: '#8A8578',
+            faint: '#B3AD9F',
+            border: '#E9E4DA',
+            hair: '#EFEBE2',
+            subtle: '#FAF8F3',
+            success: '#15795A',
+            successBg: '#E8F1EB',
+            warn: '#9A6700',
+            warnBg: '#F6EEDD',
+            danger: '#B4231F',
+            dangerBg: '#FBECEB',
           };
-          const tabItems = [
-            { id: 'pagespeed', label: 'PageSpeed' },
-            { id: 'content', label: 'Innhold' },
-            { id: 'links', label: 'Lenker' },
-          ] as const;
           const latestRun = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1] : null;
           const latestLabel = latestRun
             ? new Date(latestRun.at).toLocaleString('nb-NO', {
@@ -11005,339 +10971,399 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               minute: '2-digit'
             })
             : 'Ingen analyse ennå';
-          const totalTone = totalScore == null ? 'n/a' : totalScore >= 80 ? 'God' : totalScore >= 60 ? 'Advarsel' : 'Svak';
           const contentCriticalCount = contentPages.filter((p: any) => p?.status === 'Kritisk').length;
           const linksIsolatedCount = linkPages.filter((p: any) => p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated).length;
+          const pagesWithIssues = contentPages.filter((p: any) => (p.issues || []).length > 0).length;
 
           const metricTone = (score: number): 'good' | 'warn' | 'bad' => (score >= 0.9 ? 'good' : score >= 0.5 ? 'warn' : 'bad');
           const scoreTone = (value: number): 'good' | 'warn' | 'bad' => (value >= 80 ? 'good' : value >= 60 ? 'warn' : 'bad');
           const tonePill = (tone: 'good' | 'warn' | 'bad') => {
-            if (tone === 'good') return { bg: palette.successBg, fg: palette.success, label: 'God' };
-            if (tone === 'warn') return { bg: palette.warnBg, fg: palette.warn, label: 'Advarsel' };
-            return { bg: palette.dangerBg, fg: palette.danger, label: 'Dårlig' };
+            if (tone === 'good') return { bg: palette.successBg, fg: palette.success, label: 'Bra' };
+            if (tone === 'warn') return { bg: palette.warnBg, fg: palette.warn, label: 'Middels' };
+            return { bg: palette.dangerBg, fg: palette.danger, label: 'Svak' };
+          };
+          const toneColor = (tone: 'good' | 'warn' | 'bad' | null) =>
+            tone === 'good' ? palette.success : tone === 'warn' ? palette.warn : tone === 'bad' ? palette.danger : palette.muted;
+
+          // --- Tre pilarer → én samlet synlighetsscore ---
+          const fartScore = analysisResults ? totalScore : null;
+          const innholdScore = contentPages.length ? Math.round(((contentPages.length - pagesWithIssues) / contentPages.length) * 100) : null;
+          const lenkerScore = linkPages.length ? Math.round((1 - linksIsolatedCount / linkPages.length) * 100) : null;
+          const pillarScores = [fartScore, innholdScore, lenkerScore].filter((v): v is number => v != null);
+          const overall = pillarScores.length ? Math.round(pillarScores.reduce((a, b) => a + b, 0) / pillarScores.length) : null;
+          const overallTone: 'good' | 'warn' | 'bad' | null = overall == null ? null : overall >= 80 ? 'good' : overall >= 60 ? 'warn' : 'bad';
+          const overallLabel = overall == null ? '' : overallTone === 'good' ? 'God' : overallTone === 'warn' ? 'Trenger arbeid' : 'Svak';
+          const hasAnyData = !!analysisResults || contentPages.length > 0 || linkPages.length > 0;
+
+          const pillars: { name: string; tone: 'good' | 'warn' | 'bad' | null; status: string }[] = [
+            {
+              name: 'Fart',
+              tone: fartScore == null ? null : scoreTone(fartScore),
+              status: fartScore == null ? 'ikke målt ennå' : fartScore >= 80 ? 'siden er rask' : fartScore >= 60 ? 'litt treg' : 'for treg',
+            },
+            {
+              name: 'Innhold',
+              tone: contentPages.length === 0 ? null : contentCriticalCount > 0 ? 'bad' : pagesWithIssues > 0 ? 'warn' : 'good',
+              status: contentPages.length === 0 ? 'ikke skannet ennå' : pagesWithIssues > 0 ? `${pagesWithIssues} ${pagesWithIssues === 1 ? 'side' : 'sider'} å forbedre` : 'alt ser bra ut',
+            },
+            {
+              name: 'Lenker',
+              tone: linkPages.length === 0 ? null : linksIsolatedCount > 0 ? 'warn' : 'good',
+              status: linkPages.length === 0 ? 'ikke skannet ennå' : linksIsolatedCount > 0 ? `${linksIsolatedCount} ${linksIsolatedCount === 1 ? 'side' : 'sider'} er isolert` : 'alt henger sammen',
+            },
+          ];
+
+          const anyRunning = isAnalyzing || isScanning || isScanningLinks;
+          const runAll = () => {
+            if (anyRunning) return;
+            runRealAnalysis();
+            runContentScan(contentPages.length > 0);
+            runLinkScan();
           };
 
           return (
-            <div key={activeTab} className="space-y-6" style={{ color: palette.ink }}>
+            <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]" style={{ color: palette.ink }}>
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: palette.ink }}>Synlighet</h1>
-                  <p className="text-base mt-3" style={{ color: palette.muted }}>Hvordan ser Google nettsiden din — fart, innhold og lenker.</p>
+                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: palette.ink }}>Synlighet</h1>
+                  <p className="text-base mt-3" style={{ color: palette.muted }}>Hvor godt nettsiden din virker for Google og besøkende — på ett blikk.</p>
                 </div>
+                {hasAnyData && (
+                  <button
+                    type="button"
+                    onClick={runAll}
+                    disabled={anyRunning}
+                    className="inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97] disabled:opacity-60"
+                    style={{ background: palette.ink, color: '#fff' }}
+                  >
+                    <RefreshCw size={14} className={anyRunning ? 'animate-spin' : ''} />
+                    {anyRunning ? 'Oppdaterer…' : 'Oppdater'}
+                  </button>
+                )}
               </header>
+
               <div className={`${tabFadeInClass} space-y-6`}>
-              <div className="border-b pb-3 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: palette.border }}>
-                <div className="inline-flex items-center gap-2">
-                  {tabItems.map((sub) => {
-                    const active = visibilitySubTab === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        type="button"
-                        onClick={() => setVisibilitySubTab(sub.id)}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                        style={{
-                          border: active ? `2px solid ${palette.ink}` : '2px solid transparent',
-                          background: active ? palette.card : 'transparent',
-                          color: active ? palette.ink : palette.muted,
-                        }}
-                      >
-                        {sub.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {visibilitySubTab === 'pagespeed' && (
-                  <button
-                    type="button"
-                    onClick={runRealAnalysis}
-                    disabled={isAnalyzing}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isAnalyzing ? 'animate-spin' : ''} />
-                    {isAnalyzing ? 'Kjører test…' : analysisResults ? 'Kjør ny test' : 'Kjør første test'}
-                  </button>
-                )}
-
-                {visibilitySubTab === 'content' && (
-                  <button
-                    type="button"
-                    onClick={() => runContentScan(contentPages.length > 0)}
-                    disabled={isScanning}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
-                    {isScanning ? 'Skanner…' : contentPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                  </button>
-                )}
-
-                {visibilitySubTab === 'links' && (
-                  <button
-                    type="button"
-                    onClick={runLinkScan}
-                    disabled={isScanningLinks}
-                    className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: palette.ink, color: '#fff' }}
-                  >
-                    <RefreshCw size={14} className={isScanningLinks ? 'animate-spin' : ''} />
-                    {isScanningLinks ? 'Skanner…' : linkPages.length > 0 ? 'Skann på nytt' : 'Start skann'}
-                  </button>
-                )}
-              </div>
-
-              {visibilitySubTab === 'pagespeed' && (
-                <section className="space-y-4">
-                  <div className="flex items-center gap-4 text-sm flex-wrap" style={{ color: palette.muted }}>
-                    <span>Siste analyse: <strong style={{ color: palette.ink }}>{latestLabel}</strong></span>
-                    <span>Mobil Lighthouse</span>
-                  </div>
-
-                  {!analysisResults ? (
-                    <div className="rounded-xl p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
-                      Trykk «Kjør første test», så henter vi resultatene på ca. 30 sekunder.
+                {!hasAnyData ? (
+                  <section className="rounded-[16px] p-8 sm:p-12 text-center" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                    <div className="grid h-12 w-12 mx-auto place-items-center rounded-full" style={{ background: palette.subtle }}>
+                      <Activity size={20} style={{ color: palette.ink }} />
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <article className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: palette.muted }}>Total score</p>
-                          <p className="text-5xl font-semibold mt-2 leading-none" style={{ color: palette.ink }}>{totalScore ?? 'Venter på score'}</p>
-                          <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold" style={{ background: totalScore != null && totalScore >= 60 ? palette.successBg : palette.warnBg, color: totalScore != null && totalScore >= 60 ? palette.success : palette.warn }}>
-                            {totalTone}
+                    <p className="mt-4 text-[17px] font-semibold tracking-[-0.01em]" style={{ color: palette.ink }}>Kjør din første synlighets-sjekk</p>
+                    <p className="mt-2 text-sm leading-relaxed max-w-md mx-auto" style={{ color: palette.muted }}>
+                      Sikt måler hvor raskt siden laster, om innholdet er i orden, og om sidene henger sammen. Det tar rundt 30 sekunder.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={runAll}
+                      disabled={anyRunning}
+                      className="mt-6 inline-flex items-center gap-2 text-[13px] font-medium px-5 py-2.5 rounded-[10px] transition-transform active:scale-[0.97] disabled:opacity-60"
+                      style={{ background: palette.ink, color: '#fff' }}
+                    >
+                      <RefreshCw size={14} className={anyRunning ? 'animate-spin' : ''} />
+                      {anyRunning ? 'Sjekker…' : 'Kjør sjekk'}
+                    </button>
+                  </section>
+                ) : (
+                  <>
+                    {/* ── SAMMENDRAG: én score + tre pilarer ───────────────── */}
+                    <section className="rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(26,24,18,0.03),0_18px_40px_-28px_rgba(26,24,18,0.22)]" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                      <div className="grid gap-7 md:grid-cols-[auto_1fr] md:gap-10 md:items-center">
+                        <div className="shrink-0 md:w-[260px]">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: palette.muted }}>Synlighetsscore</p>
+                          <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                            <span className="text-[76px] font-semibold leading-[0.82] tracking-[-0.055em] tabular-nums" style={{ color: palette.ink }}>{overall ?? '—'}</span>
+                            <span className="pb-[10px] text-[20px] font-normal" style={{ color: palette.faint }}>/100</span>
+                            {overall != null && (
+                              <span className="mb-[14px] inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: tonePill(overallTone as any).bg, color: tonePill(overallTone as any).fg }}>
+                                {overallLabel}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs mt-2" style={{ color: palette.muted }}>av 4 Lighthouse-kategorier</p>
-                        </article>
-
-                        {[
-                          { label: 'Fart', metric: 'LCP', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
-                          { label: 'Respons', metric: 'TBT', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
-                          { label: 'Stabilitet', metric: 'CLS', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
-                        ].map((m, i) => {
-                          const tone = tonePill(metricTone(m.score));
-                          return (
-                            <article key={i} className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                              <div className="flex items-center justify-between gap-2 mb-2">
-                                <p className="text-sm font-semibold" style={{ color: palette.ink }}>{m.label}</p>
-                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                  {tone.label}
-                                </span>
-                              </div>
-                              <p className="text-xs mb-2" style={{ color: palette.muted }}>{m.metric}</p>
-                              <p className="text-4xl font-semibold leading-none" style={{ color: palette.ink }}>{m.value}</p>
-                            </article>
-                          );
-                        })}
-                      </div>
-
-                      <div className="rounded-xl p-4 space-y-3" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: palette.ink }}>Lighthouse-kategorier</p>
-                          <span className="text-xs" style={{ color: palette.muted }}>Mobilversjon /100</span>
+                          <p className="mt-3 text-[11px] font-medium leading-snug" style={{ color: palette.muted }}>
+                            Sist oppdatert {latestLabel}
+                          </p>
                         </div>
-                        {[
-                          { label: 'Ytelse', value: Math.round(perfMobile ?? 0) },
-                          { label: 'SEO', value: Math.round(seoMobile ?? 0) },
-                          { label: 'Beste praksis', value: Math.round(bpMobile ?? 0) },
-                          { label: 'Tilgjengelighet', value: Math.round(a11yMobile ?? 0) },
-                        ].map((row, i) => {
-                          const tone = tonePill(scoreTone(row.value));
-                          return (
-                            <div key={i} className="space-y-1">
-                              <div className="flex items-center justify-between gap-2 text-sm">
-                                <span style={{ color: palette.ink }}>{row.label}</span>
-                                <div className="inline-flex items-center gap-2">
-                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                    {tone.label}
-                                  </span>
-                                  <span className="font-semibold" style={{ color: palette.ink }}>{row.value}</span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {pillars.map((p) => (
+                            <button
+                              key={p.name}
+                              type="button"
+                              onClick={() => setShowVisibilityDetails(true)}
+                              className="rounded-[14px] p-4 text-left transition-colors"
+                              style={{ background: palette.subtle, border: `1px solid ${palette.border}` }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="grid h-6 w-6 place-items-center rounded-full shrink-0" style={{ background: p.tone === 'good' ? palette.successBg : p.tone == null ? palette.bg : p.tone === 'warn' ? palette.warnBg : palette.dangerBg }}>
+                                  {p.tone === 'good'
+                                    ? <Check size={13} style={{ color: palette.success }} />
+                                    : p.tone == null
+                                      ? <span className="h-1.5 w-1.5 rounded-full" style={{ background: palette.faint }} />
+                                      : <AlertTriangle size={12} style={{ color: toneColor(p.tone) }} />}
+                                </span>
+                                <span className="text-sm font-semibold" style={{ color: palette.ink }}>{p.name}</span>
+                              </div>
+                              <p className="mt-2 text-[13px] leading-snug" style={{ color: palette.sub }}>{p.status}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* ── Bryter for tekniske detaljer ─────────────────────── */}
+                    <button
+                      type="button"
+                      onClick={() => setShowVisibilityDetails((v) => !v)}
+                      className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors"
+                      style={{ color: palette.sub }}
+                    >
+                      <ChevronRight size={15} style={{ color: palette.muted, transform: showVisibilityDetails ? 'rotate(90deg)' : 'none', transition: 'transform 180ms cubic-bezier(0.23,1,0.32,1)' }} />
+                      {showVisibilityDetails ? 'Skjul tekniske detaljer' : 'Vis tekniske detaljer'}
+                    </button>
+
+                    {showVisibilityDetails && (
+                      <div className="space-y-8">
+                        {/* ── FART ──────────────────────────────────────── */}
+                        <section>
+                          <div className="flex items-baseline justify-between gap-3 mb-3">
+                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Fart</h2>
+                            <span className="text-xs" style={{ color: palette.muted }}>Siste måling: {latestLabel} · målt på mobil</span>
+                          </div>
+
+                          {!analysisResults ? (
+                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                              Trykk «Oppdater» øverst, så måler vi farten på ca. 30 sekunder.
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {[
+                                  { plain: 'Hvor raskt siden laster', term: 'LCP', value: analysisResults.mobile.lcp.value, score: analysisResults.mobile.lcp.score },
+                                  { plain: 'Hvor raskt siden reagerer', term: 'TBT', value: analysisResults.mobile.tbt.value, score: analysisResults.mobile.tbt.score },
+                                  { plain: 'Hvor stabilt innholdet ligger', term: 'CLS', value: analysisResults.mobile.cls.value, score: analysisResults.mobile.cls.score },
+                                ].map((m, i) => {
+                                  const tone = tonePill(metricTone(m.score));
+                                  return (
+                                    <article key={i} className="rounded-[14px] p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                                      <div className="flex items-start justify-between gap-2 mb-3">
+                                        <p className="text-[13px] font-semibold leading-snug" style={{ color: palette.ink }}>{m.plain}</p>
+                                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold shrink-0" style={{ background: tone.bg, color: tone.fg }}>
+                                          {tone.label}
+                                        </span>
+                                      </div>
+                                      <p className="text-[34px] font-semibold leading-none tabular-nums" style={{ color: palette.ink }}>{m.value}</p>
+                                      <p className="text-[11px] mt-2" style={{ color: palette.faint }}>{m.term}</p>
+                                    </article>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="rounded-[14px] p-4 space-y-3" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-semibold" style={{ color: palette.ink }}>Delkarakterer</p>
+                                  <span className="text-xs" style={{ color: palette.muted }}>0–100 · målt på mobil</span>
+                                </div>
+                                {[
+                                  { label: 'Fart', value: Math.round(perfMobile ?? 0) },
+                                  { label: 'Synlig for Google (SEO)', value: Math.round(seoMobile ?? 0) },
+                                  { label: 'Teknisk kvalitet', value: Math.round(bpMobile ?? 0) },
+                                  { label: 'Tilgjengelighet', value: Math.round(a11yMobile ?? 0) },
+                                ].map((row, i) => {
+                                  const tone = tonePill(scoreTone(row.value));
+                                  return (
+                                    <div key={i} className="space-y-1">
+                                      <div className="flex items-center justify-between gap-2 text-sm">
+                                        <span style={{ color: palette.ink }}>{row.label}</span>
+                                        <div className="inline-flex items-center gap-2">
+                                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
+                                            {tone.label}
+                                          </span>
+                                          <span className="font-semibold tabular-nums" style={{ color: palette.ink }}>{row.value}</span>
+                                        </div>
+                                      </div>
+                                      <div className="h-2 rounded-full overflow-hidden" style={{ background: palette.hair }}>
+                                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${row.value}%`, background: scoreTone(row.value) === 'good' ? palette.success : scoreTone(row.value) === 'warn' ? palette.warn : palette.danger }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="rounded-[14px] p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                                  <div className="flex items-center justify-between gap-2 mb-3">
+                                    <p className="text-sm font-semibold" style={{ color: palette.ink }}>Ting du kan forbedre</p>
+                                    <span className="text-xs" style={{ color: palette.muted }}>Trykk for å løse i Verkstedet</span>
+                                  </div>
+
+                                  {(analysisResults.mobile.opportunities || []).length === 0 ? (
+                                    <p className="text-sm" style={{ color: palette.muted }}>Ingen konkrete forslag funnet i siste kjøring.</p>
+                                  ) : (
+                                    <div className="space-y-1.5">
+                                      {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
+                                        <button
+                                          key={i}
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveSolveProblem({ raw: o, title: o.title });
+                                            setActiveTab('workshop');
+                                            setExpandedWorkshopProblem(`ps-${o.title}`);
+                                          }}
+                                          className="w-full rounded-[10px] px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
+                                          style={{ border: `1px solid ${palette.border}` }}
+                                        >
+                                          <span className="inline-flex items-start gap-2 min-w-0">
+                                            <AlertTriangle size={13} style={{ color: palette.warn }} className="shrink-0 mt-0.5" />
+                                            <span className="min-w-0">
+                                              <span className="block text-sm font-medium truncate" style={{ color: palette.ink }}>{o.title}</span>
+                                              {o.savings ? <span className="block text-xs" style={{ color: palette.muted }}>{o.savings}</span> : null}
+                                            </span>
+                                          </span>
+                                          <ArrowRight size={14} style={{ color: palette.muted }} className="shrink-0" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="rounded-[14px] p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                                  <div className="flex items-center justify-between gap-2 mb-3">
+                                    <p className="text-sm font-semibold" style={{ color: palette.ink }}>Utvikling over tid</p>
+                                    <div className="text-xs flex items-center gap-3" style={{ color: palette.muted }}>
+                                      <span className="inline-flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full" style={{ background: palette.success }} />
+                                        Fart
+                                      </span>
+                                      <span className="inline-flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full" style={{ background: palette.ink }} />
+                                        SEO
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {scoreHistory.length < 2 ? (
+                                    <p className="text-sm" style={{ color: palette.muted }}>Grafen vises når du har minst to målepunkter.</p>
+                                  ) : (
+                                    <div className="h-52">
+                                      <React.Suspense fallback={<div className="w-full h-full" />}>
+                                        <LazyScoreHistoryChart scoreHistory={scoreHistory} palette={palette} />
+                                      </React.Suspense>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              <div className="h-2 rounded-full overflow-hidden" style={{ background: palette.border }}>
-                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${row.value}%`, background: scoreTone(row.value) === 'good' ? palette.success : scoreTone(row.value) === 'warn' ? palette.warn : palette.danger }} />
+                            </div>
+                          )}
+                        </section>
+
+                        {/* ── INNHOLD ───────────────────────────────────── */}
+                        <section>
+                          <div className="flex items-baseline justify-between gap-3 mb-3">
+                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Innhold</h2>
+                            <span className="text-xs" style={{ color: contentCriticalCount > 0 ? palette.danger : palette.muted }}>
+                              {contentPages.length} sider · {contentCriticalCount} kritiske
+                            </span>
+                          </div>
+
+                          {contentPages.length === 0 ? (
+                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                              Trykk «Oppdater» øverst, så går vi gjennom sidene for tittel, beskrivelse, overskrifter og alt-tekster.
+                            </div>
+                          ) : (
+                            <div className="rounded-[14px] overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                              <div className="overflow-x-auto">
+                                <table className="w-full min-w-[680px]">
+                                  <thead>
+                                    <tr style={{ background: palette.bg, color: palette.muted }}>
+                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Side</th>
+                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Adresse</th>
+                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Funn</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {contentPages.slice(0, 30).map((p: any, i: number) => {
+                                      const issues = (p.issues || []).length;
+                                      const critical = p?.status === 'Kritisk' || issues >= 3;
+                                      return (
+                                        <tr key={i} style={{ borderTop: `1px solid ${palette.hair}` }}>
+                                          <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                          <td className="px-4 py-3 text-sm font-mono" style={{ color: palette.muted }}>{p.url}</td>
+                                          <td className="px-4 py-3 text-right">
+                                            <span
+                                              className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
+                                              style={{
+                                                background: issues === 0 ? palette.successBg : critical ? palette.dangerBg : palette.warnBg,
+                                                color: issues === 0 ? palette.success : critical ? palette.danger : palette.warn,
+                                              }}
+                                            >
+                                              {issues === 0 ? 'Alt bra' : `${issues} funn`}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
+                          )}
+                        </section>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Forbedringsmuligheter</p>
-                            <span className="text-xs" style={{ color: palette.muted }}>Klikk for å åpne Verksted</span>
+                        {/* ── LENKER ────────────────────────────────────── */}
+                        <section>
+                          <div className="flex items-baseline justify-between gap-3 mb-3">
+                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Lenker</h2>
+                            <span className="text-xs" style={{ color: linksIsolatedCount > 0 ? palette.warn : palette.muted }}>
+                              {linkPages.length} sider · {linksIsolatedCount} isolert
+                            </span>
                           </div>
 
-                          {(analysisResults.mobile.opportunities || []).length === 0 ? (
-                            <p className="text-sm" style={{ color: palette.muted }}>Ingen konkrete forslag funnet i siste kjøring.</p>
+                          {linkPages.length === 0 ? (
+                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                              Trykk «Oppdater» øverst, så kartlegger vi hvordan sidene lenker til hverandre.
+                            </div>
                           ) : (
-                            <div className="space-y-1.5">
-                              {analysisResults.mobile.opportunities.slice(0, 6).map((o: any, i: number) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveSolveProblem({ raw: o, title: o.title });
-                                    setActiveTab('workshop');
-                                    setExpandedWorkshopProblem(`ps-${o.title}`);
-                                  }}
-                                  className="w-full rounded-lg px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
-                                  style={{ border: `1px solid ${palette.border}` }}
-                                >
-                                  <span className="inline-flex items-start gap-2 min-w-0">
-                                    <AlertTriangle size={13} style={{ color: palette.warn }} className="shrink-0 mt-0.5" />
-                                    <span className="min-w-0">
-                                      <span className="block text-sm font-medium truncate" style={{ color: palette.ink }}>{o.title}</span>
-                                      {o.savings ? <span className="block text-xs" style={{ color: palette.muted }}>{o.savings}</span> : null}
-                                    </span>
-                                  </span>
-                                  <ArrowRight size={14} style={{ color: palette.muted }} className="shrink-0" />
-                                </button>
-                              ))}
+                            <div className="rounded-[14px] overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
+                              <div className="overflow-x-auto">
+                                <table className="w-full min-w-[680px]">
+                                  <thead>
+                                    <tr style={{ background: palette.bg, color: palette.muted }}>
+                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Side</th>
+                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Lenker inn</th>
+                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Lenker ut</th>
+                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {linkPages.slice(0, 30).map((p: any, i: number) => {
+                                      const brokenCount = Array.isArray(p.brokenLinks) ? p.brokenLinks.length : Number(p.brokenLinks || 0);
+                                      const isolated = p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated;
+                                      const statusText = isolated ? 'Isolert' : brokenCount > 0 ? `${brokenCount} brutte` : 'Bra';
+                                      const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
+                                      const tone = tonePill(statusTone);
+                                      return (
+                                        <tr key={i} style={{ borderTop: `1px solid ${palette.hair}` }}>
+                                          <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                          <td className="px-4 py-3 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
+                                          <td className="px-4 py-3 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
+                                          <td className="px-4 py-3 text-right">
+                                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
+                                              {statusText}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                           )}
-                        </div>
-
-                        <div className="rounded-xl p-4" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <p className="text-sm font-semibold" style={{ color: palette.ink }}>Utvikling over tid</p>
-                            <div className="text-xs flex items-center gap-3" style={{ color: palette.muted }}>
-                              <span className="inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full" style={{ background: palette.success }} />
-                                Ytelse
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full" style={{ background: palette.ink }} />
-                                SEO
-                              </span>
-                            </div>
-                          </div>
-
-                          {scoreHistory.length < 2 ? (
-                            <p className="text-sm" style={{ color: palette.muted }}>Grafen vises når du har minst to målepunkter.</p>
-                          ) : (
-                            <div className="h-52">
-                              <React.Suspense fallback={<div className="w-full h-full" />}>
-                                <LazyScoreHistoryChart scoreHistory={scoreHistory} palette={palette} />
-                              </React.Suspense>
-                            </div>
-                          )}
-                        </div>
+                        </section>
                       </div>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {visibilitySubTab === 'content' && (
-                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span style={{ color: palette.ink }}><strong>{contentPages.length}</strong> sider skannet</span>
-                      <span style={{ color: contentCriticalCount > 0 ? palette.danger : palette.muted }}>
-                        {contentCriticalCount} kritiske
-                      </span>
-                    </div>
-                  </div>
-
-                  {contentPages.length === 0 ? (
-                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
-                      Trykk «Start skann», så går vi gjennom sider for meta, overskrifter og alt-tekster.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[760px]">
-                        <thead>
-                          <tr style={{ background: palette.bg, color: palette.muted }}>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">URL</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">FUNN</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {contentPages.slice(0, 30).map((p: any, i: number) => {
-                            const issues = (p.issues || []).length;
-                            const critical = p?.status === 'Kritisk' || issues >= 3;
-                            const warn = issues > 0 && !critical;
-                            return (
-                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
-                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                <td className="px-4 py-3 text-sm font-mono" style={{ color: palette.muted }}>{p.url}</td>
-                                <td className="px-4 py-3 text-right">
-                                  <span
-                                    className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
-                                    style={{
-                                      background: issues === 0 ? palette.successBg : critical ? palette.dangerBg : palette.warnBg,
-                                      color: issues === 0 ? palette.success : critical ? palette.danger : palette.warn,
-                                    }}
-                                  >
-                                    {issues === 0 ? 'OK' : warn ? `${issues} funn` : `${issues} funn`}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {visibilitySubTab === 'links' && (
-                <section className="rounded-xl overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                  <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b" style={{ borderColor: palette.border }}>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span style={{ color: palette.ink }}><strong>{linkPages.length}</strong> sider</span>
-                      <span style={{ color: linksIsolatedCount > 0 ? palette.warn : palette.muted }}>
-                        {linksIsolatedCount} isolert
-                      </span>
-                    </div>
-                  </div>
-
-                  {linkPages.length === 0 ? (
-                    <div className="p-7 text-sm" style={{ color: palette.muted }}>
-                      Trykk «Start skann», så kartlegger vi interne/eksterne lenker per side.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[760px]">
-                        <thead>
-                          <tr style={{ background: palette.bg, color: palette.muted }}>
-                            <th className="text-left text-xs font-semibold px-4 py-2.5">SIDE</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">INN</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">UT</th>
-                            <th className="text-right text-xs font-semibold px-4 py-2.5">STATUS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {linkPages.slice(0, 30).map((p: any, i: number) => {
-                            const brokenCount = Array.isArray(p.brokenLinks) ? p.brokenLinks.length : Number(p.brokenLinks || 0);
-                            const isolated = p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated;
-                            const statusText = isolated ? 'Isolert' : brokenCount > 0 ? `${brokenCount} brutte` : 'Bra';
-                            const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
-                            const tone = tonePill(statusTone);
-                            return (
-                              <tr key={i} style={{ borderTop: `1px solid ${palette.border}` }}>
-                                <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
-                                <td className="px-4 py-3 text-sm text-right" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
-                                <td className="px-4 py-3 text-right">
-                                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
-                                    {statusText}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
-              )}
+                    )}
+                  </>
+                )}
               </div>
             </div>
           );
@@ -11347,23 +11373,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* SOKEORD — egen fane.                                            */}
         {/* =============================================================== */}
         {activeTab === 'keywords' && (
-          <div key={activeTab} className="space-y-6">
+          <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: '#1A1A1A' }}>Søkeord</h1>
-                <p className="text-base mt-3" style={{ color: '#808080' }}>
-                  Velg et søkeord til venstre for å se detaljer
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Søkeord</h1>
+                <p className="text-base mt-3" style={{ color: '#8A8578' }}>
+                  Ordene folk finner deg på i Google — og hvordan du ligger an.
                 </p>
               </div>
               {keywordsToTrack.length > 0 && (
                 <button
                   onClick={handleCheckRankings}
                   disabled={rankingLoading}
-                  className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition-transform active:scale-[0.97] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97] disabled:opacity-60"
                   style={{ background: '#1A1A1A', color: '#fff' }}
                 >
-                  <Search size={14} />
-                  {rankingLoading ? 'Sjekker…' : 'Sjekk rangering nå'}
+                  <Search size={14} className={rankingLoading ? 'animate-pulse' : ''} />
+                  {rankingLoading ? 'Sjekker…' : 'Sjekk plassering nå'}
                 </button>
               )}
             </header>
@@ -11371,9 +11397,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {/* GSC connection banner */}
             {!gscConnected && (
-              <div className="rounded-xl p-4 flex items-center gap-4 justify-between flex-wrap" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+              <div className="rounded-[14px] p-4 flex items-center gap-4 justify-between flex-wrap" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#EBEBE6' }}>
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#F2EFE8' }}>
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -11382,14 +11408,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Koble til Google Search Console</p>
-                    <p className="text-xs" style={{ color: '#808080' }}>Google sender søkeorddata vanligvis 1–2 uker etter tilkobling. Vi varsler deg når tallene er klare.</p>
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Koble til Google for å se hva folk søker på</p>
+                    <p className="text-xs" style={{ color: '#8A8578' }}>Google sender tallene vanligvis 1–2 uker etter tilkobling. Vi sier fra når de er klare.</p>
                   </div>
                 </div>
                 {!showGscPreCheck ? (
                   <button
                     onClick={() => setShowGscPreCheck(true)}
-                    className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-transform active:scale-[0.97]"
+                    className="shrink-0 inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97]"
                     style={{ background: '#1A1A1A', color: '#fff' }}
                   >
                     Koble til Google
@@ -11399,6 +11425,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 )}
               </div>
             )}
+
+            {/* Sammendrag-stripe: svaret før detaljene */}
+            {(() => {
+              const positions = [
+                ...gscKeywords.map((k: any) => k.position).filter((p: any) => p != null),
+                ...realRankings.map((r: any) => r.position).filter((p: any) => p != null),
+              ] as number[];
+              const totalTracked = gscKeywords.length + keywordsToTrack.length;
+              if (totalTracked === 0) return null;
+              const onPage1 = positions.filter((p) => p <= 10).length;
+              const avg = positions.length ? positions.reduce((a, b) => a + b, 0) / positions.length : null;
+              const changes = realRankings.map((r: any) => r.change).filter((c: any) => c != null) as number[];
+              const avgTrend = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+              const items: { label: string; value: string; trend?: number | null }[] = [
+                { label: 'Søkeord du følger', value: String(totalTracked) },
+                { label: 'På side 1 av Google', value: positions.length ? String(onPage1) : '—' },
+                { label: 'Snittplassering', value: avg != null ? avg.toFixed(1) : '—', trend: avgTrend },
+              ];
+              return (
+                <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {items.map((it) => (
+                    <div key={it.label} className="rounded-[14px] p-4" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>{it.label}</p>
+                      <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color: '#1A1A1A' }}>{it.value}</span>
+                        {it.trend != null && it.trend !== 0 && (
+                          <span className="text-xs font-semibold tabular-nums" style={{ color: it.trend > 0 ? '#15795A' : '#B4231F' }}>
+                            {it.trend > 0 ? '▲' : '▼'}{Math.abs(it.trend).toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              );
+            })()}
 
             {/* Two-panel keyword layout */}
             {(() => {
@@ -11451,19 +11513,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               })();
 
               return (
-                <div className="flex gap-4" style={{ minHeight: 600 }}>
+                <div className="flex flex-col lg:flex-row gap-4">
                   {/* LEFT: keyword list */}
-                  <div className="flex flex-col gap-3 shrink-0" style={{ width: 260 }}>
+                  <div className="flex flex-col gap-3 shrink-0 w-full lg:w-[280px]">
                     {/* Search */}
                     <div className="relative">
-                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#808080' }} />
+                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8A8578' }} />
                       <input
                         type="text"
                         value={kwSearch}
                         onChange={e => setKwSearch(e.target.value)}
                         placeholder={`Søk i ${combinedList.length} søkeord…`}
-                        className="w-full rounded-lg pl-8 pr-3 py-2 text-sm outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                        className="w-full rounded-[10px] pl-8 pr-3 py-2 text-sm outline-none focus:border-[#1A1A1A] transition-colors"
+                        style={{ background: '#FFFFFF', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
                       />
                     </div>
 
@@ -11473,26 +11535,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <button
                           key={f}
                           onClick={() => setKwFilter(f)}
-                          className="flex-1 py-1 rounded-full text-xs font-semibold transition-colors"
+                          className="flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors"
                           style={{
-                            background: kwFilter === f ? '#1A1A1A' : '#EBEBE6',
-                            color: kwFilter === f ? '#fff' : '#808080',
+                            background: kwFilter === f ? '#1A1A1A' : '#F2EFE8',
+                            color: kwFilter === f ? '#fff' : '#8A8578',
                           }}
                         >
-                          {f === 'all' ? 'Alle' : f === 'mine' ? 'Mine' : 'GSC'}
+                          {f === 'all' ? 'Alle' : f === 'mine' ? 'Egne' : 'Google'}
                         </button>
                       ))}
                     </div>
 
                     {/* Keyword list */}
-                    <div className="flex-1 overflow-y-auto rounded-xl" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6', maxHeight: 420 }}>
+                    <div className="flex-1 overflow-y-auto rounded-[14px]" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA', maxHeight: 420 }}>
                       {filtered.length === 0 ? (
-                        <div className="p-6 text-center text-sm" style={{ color: '#808080' }}>
+                        <div className="p-6 text-center text-sm" style={{ color: '#8A8578' }}>
                           {kwSearch
                             ? 'Ingen treff på søket — prøv et annet ord'
                             : gscConnected
-                              ? 'Google sender flere søkeord fortløpende — typisk 1–2 uker etter tilkobling. Vi varsler deg når listen fylles.'
-                              : 'Koble til Google Search Console, eller legg til egne søkeord nedenfor. Rangering måles ved første sjekk.'}
+                              ? 'Google sender flere søkeord fortløpende — typisk 1–2 uker etter tilkobling. Vi sier fra når listen fylles.'
+                              : 'Koble til Google, eller legg til egne søkeord nedenfor. Plasseringen måles ved første sjekk.'}
                         </div>
                       ) : (
                         <ul>
@@ -11506,8 +11568,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 onClick={() => setSelectedKwId(isSelected ? null : kw.id)}
                                 className="px-3 py-2.5 cursor-pointer"
                                 style={{
-                                  background: isSelected ? '#F5F5F0' : 'transparent',
-                                  borderBottom: i < filtered.length - 1 ? '1px solid #EBEBE6' : 'none',
+                                  background: isSelected ? '#FAF8F3' : 'transparent',
+                                  borderBottom: i < filtered.length - 1 ? '1px solid #EFEBE2' : 'none',
                                   borderLeft: isSelected ? '3px solid #1A1A1A' : '3px solid transparent',
                                   transition: 'background 150ms ease-out',
                                 }}
@@ -11520,20 +11582,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         {typeof kw.position === 'number' ? kw.position.toFixed(1) : kw.position}
                                       </span>
                                     )}
-                                    {posUp && <span className="text-[11px] font-semibold ml-1" style={{ color: '#52A447' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {posDown && <span className="text-[11px] font-semibold ml-1" style={{ color: '#ef4444' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#808080' }}>0,0</span>}
+                                    {posUp && <span className="text-[11px] font-semibold ml-1" style={{ color: '#15795A' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {posDown && <span className="text-[11px] font-semibold ml-1" style={{ color: '#B4231F' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#8A8578' }}>0,0</span>}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span
-                                    className="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide"
-                                    style={{ background: '#EBEBE6', color: '#808080' }}
+                                    className="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                                    style={{ background: '#F2EFE8', color: '#8A8578' }}
                                   >
-                                    {kw.source === 'gsc' ? 'GSC' : 'EGEN'}
+                                    {kw.source === 'gsc' ? 'Google' : 'Egen'}
                                   </span>
                                   {kw.location && (
-                                    <span className="text-[10px] truncate" style={{ color: '#808080' }}>{kw.location}</span>
+                                    <span className="text-[10px] truncate" style={{ color: '#8A8578' }}>{kw.location}</span>
                                   )}
                                 </div>
                               </li>
@@ -11544,7 +11606,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </div>
 
                     {/* Add keyword */}
-                    <div className="rounded-xl p-3" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                    <div className="rounded-[14px] p-3" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
                       <p className="text-xs font-semibold mb-2" style={{ color: '#1A1A1A' }}>Legg til søkeord</p>
                       {canAddMoreKeywords ? (
                         <div className="flex flex-col gap-2">
@@ -11554,8 +11616,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             onChange={e => setNewKeywordInput(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleAddKeyword()}
                             placeholder="f.eks. rørlegger oslo"
-                            className="w-full rounded-lg px-3 py-2 text-xs outline-none"
-                            style={{ background: '#F5F5F0', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                            className="w-full rounded-[10px] px-3 py-2 text-xs outline-none"
+                            style={{ background: '#FAF8F3', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
                           />
                           <div className="flex gap-2">
                             <input
@@ -11563,23 +11625,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               value={locationInput}
                               onChange={e => setLocationInput(e.target.value)}
                               placeholder="Sted"
-                              className="flex-1 rounded-lg px-3 py-2 text-xs outline-none min-w-0"
-                              style={{ background: '#F5F5F0', border: '1px solid #EBEBE6', color: '#1A1A1A' }}
+                              className="flex-1 rounded-[10px] px-3 py-2 text-xs outline-none min-w-0"
+                              style={{ background: '#FAF8F3', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
                             />
                             <button
                               onClick={handleAddKeyword}
-                              className="px-3 py-2 rounded-lg text-xs font-semibold transition-transform active:scale-[0.97] shrink-0 flex items-center justify-center"
+                              className="px-3 py-2 rounded-[10px] text-xs font-semibold transition-transform active:scale-[0.97] shrink-0 flex items-center justify-center"
                               style={{ background: '#1A1A1A', color: '#fff' }}
                             >
                               <Plus size={13} />
                             </button>
                           </div>
-                          <p className="text-[10px]" style={{ color: '#808080' }}>
+                          <p className="text-[10px]" style={{ color: '#8A8578' }}>
                             {keywordsToTrack.length}/{keywordLimit} søkeord brukt
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs" style={{ color: '#808080' }}>
+                        <p className="text-xs" style={{ color: '#8A8578' }}>
                           Grensen på {keywordLimit} søkeord er nådd.{' '}
                           <button onClick={() => handleUpgrade()} className="underline font-medium" style={{ color: '#1A1A1A' }}>
                             Oppgrader
@@ -11590,13 +11652,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
 
                   {/* RIGHT: detail panel */}
-                  <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
+                  <div className="flex-1 min-w-0 rounded-[14px] overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
                     {!selected ? (
                       <div className="h-full flex flex-col items-center justify-center p-12 text-center" style={{ minHeight: 400 }}>
-                        <BarChart3 size={36} style={{ color: '#EBEBE6', marginBottom: 12 }} />
+                        <BarChart3 size={36} style={{ color: '#D8D2C5', marginBottom: 12 }} />
                         <p className="text-sm font-semibold mb-1" style={{ color: '#1A1A1A' }}>Velg et søkeord</p>
-                        <p className="text-xs max-w-xs" style={{ color: '#808080' }}>
-                          Klikk på et søkeord til venstre for å se graf, landingssider og historikk på samme skjerm
+                        <p className="text-xs max-w-xs" style={{ color: '#8A8578' }}>
+                          Klikk på et søkeord i listen for å se plassering, graf og hva som har skjedd.
                         </p>
                       </div>
                     ) : (
@@ -11605,17 +11667,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <h2 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>{selected.keyword}</h2>
-                            <p className="text-xs mt-0.5" style={{ color: '#808080' }}>
+                            <p className="text-xs mt-0.5" style={{ color: '#8A8578' }}>
                               {selected.source === 'gsc'
-                                ? `Google Search Console · ${gscKeywords.length} søkeord hentet`
-                                : `${selected.location} · Manuelt sporet${selected.history.length > 0 ? ` · ${selected.history.length} målinger` : ''}`}
+                                ? `Fra Google · ${gscKeywords.length} søkeord hentet`
+                                : `${selected.location} · Egen sporing${selected.history.length > 0 ? ` · ${selected.history.length} målinger` : ''}`}
                             </p>
                           </div>
                           {selected.source === 'tracked' && (
                             <button
                               onClick={() => { handleRemoveKeyword(selected.keyword, selected.location!); setSelectedKwId(null); }}
-                              className="text-xs transition-colors shrink-0"
-                              style={{ color: '#808080' }}
+                              className="text-xs transition-colors shrink-0 hover:underline"
+                              style={{ color: '#8A8578' }}
                             >
                               Fjern
                             </button>
@@ -11623,67 +11685,48 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </div>
 
                         {/* Stat cards */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          {[
+                        {(() => {
+                          const stats: { label: string; value: string; delta?: number | null }[] = [
                             {
-                              label: 'Posisjon',
+                              label: 'Plassering på Google',
                               value: selected.position != null
                                 ? (selected.source === 'gsc' ? (selected.position as number).toFixed(1) : `#${selected.position}`)
-                                : selected.source === 'gsc'
-                                  ? 'Oppdateres med nye GSC-data'
-                                  : 'Måles ved «Sjekk rangering nå»',
+                                : '—',
                               delta: selected.change,
-                              positive: (selected.change ?? 0) > 0,
                             },
-                            {
-                              label: 'Klikk',
-                              value: selected.clicks != null
-                                ? (selected.clicks as number).toLocaleString('no-NO')
-                                : selected.source === 'gsc'
-                                  ? 'Kommer med GSC-data (1–2 uker)'
-                                  : 'Kun via Search Console',
-                              delta: null,
-                              positive: false,
-                            },
-                            {
-                              label: 'Visninger',
-                              value: selected.impressions != null
-                                ? (selected.impressions as number).toLocaleString('no-NO')
-                                : selected.source === 'gsc'
-                                  ? 'Kommer med GSC-data (1–2 uker)'
-                                  : 'Kun via Search Console',
-                              delta: null,
-                              positive: false,
-                            },
-                            {
-                              label: 'CTR',
-                              value: selected.ctr != null
-                                ? `${((selected.ctr as number) * 100).toFixed(1)} %`
-                                : selected.source === 'gsc'
-                                  ? 'Beregnes når klikk er inne'
-                                  : 'Kun via Search Console',
-                              delta: null,
-                              positive: false,
-                            },
-                          ].map(stat => (
-                            <div key={stat.label} className="rounded-lg p-3" style={{ background: '#F5F5F0' }}>
-                              <p className="text-[11px] font-medium mb-1.5" style={{ color: '#808080' }}>{stat.label}</p>
-                              <p className="text-2xl font-semibold leading-none" style={{ color: '#1A1A1A' }}>{stat.value}</p>
-                              {stat.delta !== null && (
-                                <p className="text-xs font-semibold mt-1" style={{ color: stat.positive ? '#52A447' : '#ef4444' }}>
-                                  {stat.positive ? '▲' : stat.delta === 0 ? '' : '▼'}
-                                  {stat.delta !== 0 ? `${Math.abs(stat.delta as number).toFixed(1)}` : '0,0'}
-                                </p>
-                              )}
+                            { label: 'Klikk', value: selected.clicks != null ? (selected.clicks as number).toLocaleString('no-NO') : '—' },
+                            { label: 'Vist i søk', value: selected.impressions != null ? (selected.impressions as number).toLocaleString('no-NO') : '—' },
+                            { label: 'Andel som klikker', value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—' },
+                          ];
+                          return (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {stats.map(stat => {
+                                const positive = (stat.delta ?? 0) > 0;
+                                return (
+                                  <div key={stat.label} className="rounded-[12px] p-3" style={{ background: '#FAF8F3' }}>
+                                    <p className="text-[11px] font-medium mb-1.5 leading-snug" style={{ color: '#8A8578' }}>{stat.label}</p>
+                                    <p className="text-[26px] font-semibold leading-none tabular-nums" style={{ color: '#1A1A1A' }}>{stat.value}</p>
+                                    {stat.delta != null && stat.delta !== 0 && (
+                                      <p className="text-xs font-semibold mt-1.5 tabular-nums" style={{ color: positive ? '#15795A' : '#B4231F' }}>
+                                        {positive ? '▲' : '▼'}{Math.abs(stat.delta as number).toFixed(1)}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })()}
+
+                        {selected.source === 'gsc' && selected.clicks == null && (
+                          <p className="-mt-2 text-xs" style={{ color: '#8A8578' }}>Klikk, visninger og andel kommer 1–2 uker etter at Google er koblet til.</p>
+                        )}
 
                         {/* Position chart */}
                         {chartData.length > 0 ? (
                           <div>
                             <div className="flex items-center justify-between mb-3">
-                              <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Posisjon over tid</p>
+                              <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Plassering over tid</p>
                               <div className="flex gap-1">
                                 {(['28d', '90d', '12mnd'] as const).map(r => (
                                   <button
@@ -11691,8 +11734,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     onClick={() => setKwChartRange(r)}
                                     className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
                                     style={{
-                                      background: kwChartRange === r ? '#1A1A1A' : '#EBEBE6',
-                                      color: kwChartRange === r ? '#fff' : '#808080',
+                                      background: kwChartRange === r ? '#1A1A1A' : '#F2EFE8',
+                                      color: kwChartRange === r ? '#fff' : '#8A8578',
                                     }}
                                   >
                                     {r}
@@ -11707,51 +11750,49 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             </div>
                           </div>
                         ) : selected.source === 'tracked' ? (
-                          <div className="rounded-lg p-5 text-center" style={{ background: '#F5F5F0' }}>
-                            <p className="text-xs" style={{ color: '#808080' }}>Kjør «Sjekk rangering nå» for å se historikk her</p>
+                          <div className="rounded-[12px] p-5 text-center" style={{ background: '#FAF8F3' }}>
+                            <p className="text-xs" style={{ color: '#8A8578' }}>Kjør «Sjekk plassering nå» for å se historikk her.</p>
                           </div>
                         ) : null}
 
                         {/* Bottom: landing pages + event log */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Landing pages */}
-                          <div className="rounded-lg p-4" style={{ border: '1px solid #EBEBE6' }}>
-                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Landingssider for dette ordet</p>
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hvilken side vises i Google</p>
                             {selected.source === 'tracked' && selected.url ? (
                               <div>
-                                <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 pb-1.5 mb-1.5" style={{ borderBottom: '1px solid #EBEBE6' }}>
-                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>URL</p>
-                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>KLIKK</p>
-                                  <p className="text-[11px] font-semibold" style={{ color: '#808080' }}>POS</p>
+                                <div className="grid grid-cols-[1fr_auto] gap-x-3 pb-1.5 mb-1.5" style={{ borderBottom: '1px solid #EFEBE2' }}>
+                                  <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Side</p>
+                                  <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Plass</p>
                                 </div>
-                                <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center py-1.5">
+                                <div className="grid grid-cols-[1fr_auto] gap-x-3 items-center py-1.5">
                                   <a
                                     href={selected.url}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-xs truncate hover:underline"
-                                    style={{ color: '#52A447' }}
+                                    style={{ color: '#15795A' }}
                                   >
                                     {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
                                   </a>
-                                  <span className="text-xs tabular-nums text-right" style={{ color: '#808080' }}>Ikke fra GSC</span>
                                   <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
-                                    {selected.position != null ? `#${selected.position}` : 'Måles ved rangeringssjekk'}
+                                    {selected.position != null ? `#${selected.position}` : '—'}
                                   </span>
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-xs" style={{ color: '#808080' }}>
+                              <p className="text-xs" style={{ color: '#8A8578' }}>
                                 {selected.source === 'gsc'
-                                  ? 'Landingssidedata er ikke tilgjengelig via GSC-integrasjonen.'
-                                  : 'Kjør rangering for å finne landingssider.'}
+                                  ? 'Vises ikke via Google-koblingen ennå.'
+                                  : 'Kjør «Sjekk plassering nå» for å finne siden.'}
                               </p>
                             )}
                           </div>
 
                           {/* Event log */}
-                          <div className="rounded-lg p-4" style={{ border: '1px solid #EBEBE6' }}>
-                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hendelseslogg</p>
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hva har skjedd</p>
                             {(() => {
                               const events: Array<{ text: string; sub?: string }> = [];
                               if (selected.source === 'tracked') {
@@ -11760,35 +11801,35 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   const last = selected.history[selected.history.length - 1];
                                   if (first.rank !== last.rank) {
                                     events.push({
-                                      text: `Posisjon ${first.rank > last.rank ? 'forbedret' : 'svekket'} fra ${first.rank} → ${last.rank}`,
+                                      text: `Plassering ${first.rank > last.rank ? 'forbedret' : 'svekket'} fra ${first.rank} → ${last.rank}`,
                                       sub: last.date,
                                     });
                                   }
                                 }
                                 if (selected.history.length > 0) {
-                                  events.push({ text: 'Første rangering sjekket', sub: selected.history[0].date });
+                                  events.push({ text: 'Første plassering sjekket', sub: selected.history[0].date });
                                 }
                                 events.push({ text: 'Ord lagt til manuelt', sub: selected.location });
                               } else {
                                 if (selected.position != null) {
-                                  events.push({ text: `Gjennomsnittlig posisjon ${(selected.position as number).toFixed(1)}`, sub: 'Siste 28 dager' });
+                                  events.push({ text: `Snittplassering ${(selected.position as number).toFixed(1)}`, sub: 'Siste 28 dager' });
                                 }
                                 if (selected.clicks) {
-                                  events.push({ text: `${(selected.clicks as number).toLocaleString('no-NO')} klikk fra organisk søk`, sub: 'Siste 28 dager' });
+                                  events.push({ text: `${(selected.clicks as number).toLocaleString('no-NO')} klikk fra Google-søk`, sub: 'Siste 28 dager' });
                                 }
-                                events.push({ text: 'Koblet via Google Search Console', sub: '' });
+                                events.push({ text: 'Hentet fra Google', sub: '' });
                               }
                               if (!events.length) {
-                                return <p className="text-xs" style={{ color: '#808080' }}>Sikt jobber i bakgrunnen — første hendelser dukker opp her etter analyse eller søkeordsjekk.</p>;
+                                return <p className="text-xs" style={{ color: '#8A8578' }}>Sikt jobber i bakgrunnen — det første dukker opp her etter neste sjekk.</p>;
                               }
                               return (
                                 <ul className="space-y-2.5">
                                   {events.map((ev, i) => (
                                     <li key={i} className="flex items-start gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#52A447' }} />
+                                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#15795A' }} />
                                       <div>
                                         <p className="text-xs" style={{ color: '#1A1A1A' }}>{ev.text}</p>
-                                        {ev.sub && <p className="text-[10px] mt-0.5" style={{ color: '#808080' }}>{ev.sub}</p>}
+                                        {ev.sub && <p className="text-[10px] mt-0.5" style={{ color: '#8A8578' }}>{ev.sub}</p>}
                                       </div>
                                     </li>
                                   ))}
@@ -11806,16 +11847,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {/* Position distribution */}
             {realRankings.length > 0 && (
-              <div className="rounded-xl p-5" style={{ background: '#FFFFFF', border: '1px solid #EBEBE6' }}>
-                <p className="text-sm font-semibold mb-4" style={{ color: '#1A1A1A' }}>Posisjonsfordeling</p>
+              <div className="rounded-[14px] p-5" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
+                <p className="text-sm font-semibold mb-1" style={{ color: '#1A1A1A' }}>Hvor du ligger på Google</p>
+                <p className="text-xs mb-4" style={{ color: '#8A8578' }}>Antall søkeord i hvert plasserings-sjikt.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                   {positionBuckets.map((b) => (
-                    <div key={b.name} className="rounded-lg p-3" style={{ background: '#F5F5F0' }}>
+                    <div key={b.name} className="rounded-[12px] p-3" style={{ background: '#FAF8F3' }}>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: b.fill }} />
-                        <p className="text-xs" style={{ color: '#808080' }}>{b.name}</p>
+                        <p className="text-xs" style={{ color: '#8A8578' }}>{b.name}</p>
                       </div>
-                      <p className="text-2xl font-semibold" style={{ color: '#1A1A1A' }}>{b.value}</p>
+                      <p className="text-2xl font-semibold tabular-nums" style={{ color: '#1A1A1A' }}>{b.value}</p>
                     </div>
                   ))}
                 </div>
