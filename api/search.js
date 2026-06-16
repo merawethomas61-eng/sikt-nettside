@@ -67,7 +67,7 @@ export default withSentry(async function handler(request, response) {
     }
 
     try {
-        const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ", Norway")}&num=20&device=desktop&api_key=${apiKey}`;
+        const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ", Norway")}&num=100&device=desktop&api_key=${apiKey}`;
 
         const res = await fetchExternalWithOptionalRetry429(targetUrl);
         if (res.status === 429) {

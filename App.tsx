@@ -6204,7 +6204,9 @@ const KonkurrenterPage: React.FC<{
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
                     {compRankings.slice(0, 20).map(r => (
                       <div key={r.id} style={{ background: C.card, padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, minWidth: 32, flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: r.position <= 3 ? C.green : r.position <= 10 ? C.ink : C.muted }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, flexShrink: 0, fontVariantNumeric: 'tabular-nums', borderRadius: 6, padding: '2px 7px', alignSelf: 'flex-start',
+                          color: r.position <= 3 ? '#15795A' : r.position <= 10 ? '#3F7D33' : r.position <= 20 ? '#9A6700' : C.muted,
+                          background: r.position <= 3 ? '#E8F1EB' : r.position <= 10 ? '#EEF4E9' : r.position <= 20 ? '#F6EEDD' : C.bg }}>
                           #{r.position}
                         </span>
                         <div style={{ minWidth: 0 }}>
@@ -9319,6 +9321,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       setNewKeywordInput('');
       localStorage.setItem(`keywords_${user.id}`, JSON.stringify(updated));
 
+      // Sørg for at det nyopprettede ordet faktisk er synlig. «Google»-filteret
+      // viser kun GSC-ord, så egne ord ville ellers «forsvinne» fra lista til man
+      // selv byttet tilbake til «Alle»/«Egne». Marker det også i listen.
+      if (kwFilter === 'gsc') setKwFilter('all');
+      setSelectedKwId(`tracked-${newEntry.keyword}-${newEntry.location}`);
+
       // Logg til Ukens kvittering
       if (user?.id) {
         supabase.from('sikt_actions').insert({
@@ -9379,6 +9387,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
       // Vi sletter localStorage her, siden vi lagrer alt i Supabase lenger ned
       setNewKeywordInput(''); // Tømmer feltet
+      if (kwFilter === 'gsc') setKwFilter('all'); // hold det nye ordet synlig
     }
 
     if (activeList.length === 0) { toastWarning("Legg til et søkeord."); return; }
@@ -9386,7 +9395,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     setRankingLoading(true);
     setHasSearched(true);
 
-    const cleanDomain = formData.websiteUrl.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
+    const cleanDomain = formData.websiteUrl
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .toLowerCase()
+      .trim();
+
+    // Robust treff: sammenlign på hostname (ikke substring) så vi unngår
+    // falske treff (f.eks. «mittsikt.no» mot «sikt.no») og bom på www/sti.
+    const linkMatchesDomain = (link: string) => {
+      try {
+        const host = new URL(link).hostname.replace(/^www\./, '').toLowerCase();
+        return host === cleanDomain || host.endsWith('.' + cleanDomain);
+      } catch {
+        return link.toLowerCase().includes(cleanDomain);
+      }
+    };
 
     const rankToken = getStoredAccessToken();
     if (!rankToken) {
@@ -9432,11 +9457,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           let resultType = 'Tekst';
 
           if (data.organic_results) {
-            const found = data.organic_results.find((r: any) => r.link && r.link.includes(cleanDomain));
+            const found = data.organic_results.find((r: any) => r.link && linkMatchesDomain(r.link));
             if (found) {
               position = found.position;
-              url = found.link.replace(formData.websiteUrl, '').replace('https://', '').replace(cleanDomain, '');
-              if (url === '') url = '/';
+              url = found.link; // Hele URL-en — detaljpanelet kutter origin for visning og bruker lenken som href.
             }
             extractedCompetitors = data.organic_results.slice(0, 5).map((r: any) => ({
               position: r.position, title: r.title, url: r.link, snippet: r.snippet
@@ -10824,10 +10848,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
   // Posisjon-fordeling for Sokeord-fanen (Topp 3 / 4-10 / 11-20 / 21+)
   const positionBuckets = [
-    { name: 'Topp 3', value: realRankings.filter((r: any) => r.position && r.position <= 3).length, fill: '#10b981' },
-    { name: '4–10', value: realRankings.filter((r: any) => r.position && r.position > 3 && r.position <= 10).length, fill: '#7c3aed' },
-    { name: '11–20', value: realRankings.filter((r: any) => r.position && r.position > 10 && r.position <= 20).length, fill: '#f59e0b' },
-    { name: '21+', value: realRankings.filter((r: any) => !r.position || r.position > 20).length, fill: '#f43f5e' },
+    { name: 'Topp 3', value: realRankings.filter((r: any) => r.position && r.position <= 3).length, fill: '#15795A' },
+    { name: '4–10', value: realRankings.filter((r: any) => r.position && r.position > 3 && r.position <= 10).length, fill: '#52A447' },
+    { name: '11–20', value: realRankings.filter((r: any) => r.position && r.position > 10 && r.position <= 20).length, fill: '#9A6700' },
+    { name: '21+', value: realRankings.filter((r: any) => !r.position || r.position > 20).length, fill: '#B3AD9F' },
   ];
 
   // Aktivitets-mini-graf for KPI-tilene (siste 7 dager, telle pr dag)
@@ -12245,6 +12269,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 id: string; keyword: string; source: 'gsc' | 'tracked';
                 location?: string; position: number | null; change: number | null;
                 clicks?: number; impressions?: number; ctr?: number;
+                kd?: number | null; intent?: string | null; competition?: number | null; volume?: string | null;
                 history: any[]; url?: string | null; competitors?: any[];
               }> = [
                 ...gscKeywords.map((kw: any) => ({
@@ -12267,6 +12292,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     source: 'tracked' as const,
                     position: r?.position ?? null,
                     change: r?.change ?? null,
+                    kd: r?.kd ?? null,
+                    intent: r?.intent ?? null,
+                    competition: r?.competition ?? null,
+                    volume: r?.volume ?? null,
                     history: r?.history ?? [],
                     url: r?.url ?? null,
                     competitors: r?.competitors ?? [],
@@ -12353,15 +12382,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <p className="text-sm font-medium truncate" style={{ color: '#1A1A1A' }}>{kw.keyword}</p>
-                                  <div className="flex items-center gap-0.5 shrink-0 tabular-nums">
-                                    {kw.position !== null && (
-                                      <span className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>
-                                        {typeof kw.position === 'number' ? kw.position.toFixed(1) : kw.position}
-                                      </span>
-                                    )}
-                                    {posUp && <span className="text-[11px] font-semibold ml-1" style={{ color: '#15795A' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {posDown && <span className="text-[11px] font-semibold ml-1" style={{ color: '#B4231F' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {kw.change === 0 && <span className="text-[11px] ml-1" style={{ color: '#8A8578' }}>0,0</span>}
+                                  <div className="flex items-center gap-1 shrink-0 tabular-nums">
+                                    {kw.position !== null && (() => {
+                                      const p = kw.position as number;
+                                      const label = kw.source === 'gsc' ? p.toFixed(1) : p >= 101 ? '100+' : `#${p}`;
+                                      const c = p <= 3 ? '#15795A' : p <= 10 ? '#3F7D33' : p <= 20 ? '#9A6700' : '#8A8578';
+                                      const bg = p <= 3 ? '#E8F1EB' : p <= 10 ? '#EEF4E9' : p <= 20 ? '#F6EEDD' : '#F2EFE8';
+                                      return (
+                                        <span className="rounded-md px-1.5 py-0.5 text-xs font-semibold" style={{ color: c, background: bg }}>{label}</span>
+                                      );
+                                    })()}
+                                    {posUp && <span className="text-[11px] font-semibold" style={{ color: '#15795A' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {posDown && <span className="text-[11px] font-semibold" style={{ color: '#B4231F' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -12463,30 +12495,46 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* Stat cards */}
                         {(() => {
-                          const stats: { label: string; value: string; delta?: number | null }[] = [
-                            {
-                              label: 'Plassering på Google',
-                              value: selected.position != null
-                                ? (selected.source === 'gsc' ? (selected.position as number).toFixed(1) : `#${selected.position}`)
-                                : '—',
-                              delta: selected.change,
-                            },
-                            { label: 'Klikk', value: selected.clicks != null ? (selected.clicks as number).toLocaleString('no-NO') : '—' },
-                            { label: 'Vist i søk', value: selected.impressions != null ? (selected.impressions as number).toLocaleString('no-NO') : '—' },
-                            { label: 'Andel som klikker', value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—' },
-                          ];
+                          const overHundred = selected.source === 'tracked' && selected.position != null && (selected.position as number) >= 101;
+                          const posLabel = selected.position == null
+                            ? '—'
+                            : selected.source === 'gsc'
+                              ? (selected.position as number).toFixed(1)
+                              : overHundred ? '100+' : `#${selected.position}`;
+                          const fmtCompact = (n: number) =>
+                            n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1).replace('.', ',')} mill`
+                              : n >= 10_000 ? `${Math.round(n / 1000)} k`
+                                : n.toLocaleString('no-NO');
+
+                          const stats: { label: string; value: string; delta?: number | null; hint?: string }[] =
+                            selected.source === 'gsc'
+                              ? [
+                                { label: 'Snittplassering', value: posLabel, delta: selected.change },
+                                { label: 'Klikk', value: selected.clicks != null ? (selected.clicks as number).toLocaleString('no-NO') : '—' },
+                                { label: 'Vist i søk', value: selected.impressions != null ? (selected.impressions as number).toLocaleString('no-NO') : '—' },
+                                { label: 'Andel som klikker', value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—' },
+                              ]
+                              : [
+                                { label: 'Plassering på Google', value: posLabel, delta: selected.change, hint: overHundred ? 'Ikke i topp 100' : undefined },
+                                { label: 'Konkurranse', value: selected.competition != null ? fmtCompact(selected.competition as number) : '—', hint: selected.competition != null ? 'treff i Google' : undefined },
+                                { label: 'Vanskelighetsgrad', value: selected.kd != null ? `${selected.kd}` : '—', hint: selected.kd != null ? 'av 100' : undefined },
+                                { label: 'Søkeintensjon', value: (selected.intent as string) || '—' },
+                              ];
                           return (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                               {stats.map(stat => {
                                 const positive = (stat.delta ?? 0) > 0;
                                 return (
-                                  <div key={stat.label} className="rounded-[12px] p-3" style={{ background: '#FAF8F3' }}>
+                                  <div key={stat.label} className="rounded-[12px] p-3.5" style={{ background: '#FAF8F3', border: '1px solid #EFEBE2' }}>
                                     <p className="text-[11px] font-medium mb-1.5 leading-snug" style={{ color: '#8A8578' }}>{stat.label}</p>
-                                    <p className="text-[26px] font-semibold leading-none tabular-nums" style={{ color: '#1A1A1A' }}>{stat.value}</p>
+                                    <p className="text-[26px] font-semibold leading-none tabular-nums truncate" style={{ color: '#1A1A1A' }}>{stat.value}</p>
                                     {stat.delta != null && stat.delta !== 0 && (
                                       <p className="text-xs font-semibold mt-1.5 tabular-nums" style={{ color: positive ? '#15795A' : '#B4231F' }}>
                                         {positive ? '▲' : '▼'}{Math.abs(stat.delta as number).toFixed(1)}
                                       </p>
+                                    )}
+                                    {stat.hint && (stat.delta == null || stat.delta === 0) && (
+                                      <p className="text-[10px] mt-1.5" style={{ color: '#B3AD9F' }}>{stat.hint}</p>
                                     )}
                                   </div>
                                 );
@@ -12554,7 +12602,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
                                   </a>
                                   <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
-                                    {selected.position != null ? `#${selected.position}` : '—'}
+                                    {selected.position == null ? '—' : (selected.position as number) >= 101 ? '100+' : `#${selected.position}`}
                                   </span>
                                 </div>
                               </div>
@@ -12615,6 +12663,32 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             })()}
                           </div>
                         </div>
+
+                        {/* Topp-resultater i Google (SERP-konkurrenter) */}
+                        {selected.source === 'tracked' && selected.competitors && selected.competitors.length > 0 && (
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hvem ligger øverst i Google</p>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-3 pb-1.5 mb-1" style={{ borderBottom: '1px solid #EFEBE2' }}>
+                              <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Plass</p>
+                              <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Resultat</p>
+                            </div>
+                            <ul>
+                              {selected.competitors.slice(0, 5).map((c: any, i: number) => {
+                                const host = (() => { try { return new URL(c.url).hostname.replace(/^www\./, ''); } catch { return c.url; } })();
+                                const count = Math.min(5, selected.competitors!.length);
+                                return (
+                                  <li key={i} className="grid grid-cols-[auto_1fr] gap-x-3 items-start py-2" style={{ borderBottom: i < count - 1 ? '1px solid #EFEBE2' : 'none' }}>
+                                    <span className="text-xs font-semibold tabular-nums mt-0.5" style={{ color: '#1A1A1A' }}>#{c.position}</span>
+                                    <div className="min-w-0">
+                                      <a href={c.url} target="_blank" rel="noreferrer" className="text-xs font-medium truncate block hover:underline" style={{ color: '#1A1A1A' }}>{c.title || host}</a>
+                                      <span className="text-[10px] truncate block" style={{ color: '#8A8578' }}>{host}</span>
+                                    </div>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

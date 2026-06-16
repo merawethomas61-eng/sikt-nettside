@@ -1,21 +1,25 @@
 // PortalCharts — all recharts-bruk samlet i én modul som lazy-lastes fra App.tsx.
 // Slik havner ikke recharts + d3 (~110 KB gzip) i hovedbundlen og lastes kun
 // når brukeren faktisk åpner portalen. Markedssidene slipper hele charts-chunken.
+//
+// Alle farger kommer fra src/portalTheme.ts slik at grafene matcher resten av
+// portalen («warm-neutral Linear») i stedet for recharts/Tailwind-standardene.
 import React from 'react';
 import {
   AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar,
   RadialBarChart, RadialBar, Cell,
 } from 'recharts';
+import { PORTAL, chartPalette, chartTooltipStyle, scoreColor } from './portalTheme';
 
 export type PortalTheme = 'light' | 'dark';
 
-export const scoreStatus = (score: number | null) => {
-  if (score == null) return { label: 'Ikke målt', shortLabel: 'Mangler data', color: '#64748b', textClass: 'text-slate-500' };
-  if (score >= 80) return { label: 'Sterk score', shortLabel: 'Bra', color: '#10b981', textClass: 'text-emerald-600' };
-  if (score >= 60) return { label: 'God, men kan løftes', shortLabel: 'OK', color: '#f59e0b', textClass: 'text-amber-600' };
-  return { label: 'Trenger forbedring', shortLabel: 'Svak', color: '#f43f5e', textClass: 'text-rose-600' };
-};
+// Bakoverkompatibel: returnerer fortsatt {label, shortLabel, color}, nå i paletten.
+export const scoreStatus = scoreColor;
+
+// Felles akse-stil — rolig, brand-muted, ingen aksiale linjer/ticks.
+const axisTick = { fontSize: 11, fill: chartPalette.axis } as const;
+const axisProps = { axisLine: false, tickLine: false, tick: axisTick } as const;
 
 // Sparkline — bittesmå linjer for trend-data (score-historikk, klikk-trend osv.).
 export const Sparkline: React.FC<{
@@ -23,18 +27,19 @@ export const Sparkline: React.FC<{
   color?: string;
   height?: number;
   fill?: boolean;
-}> = ({ data, color = '#7c3aed', height = 32, fill = true }) => {
+}> = ({ data, color = PORTAL.success, height = 32, fill = true }) => {
   if (!data || data.length < 2) {
-    return <div className="text-[10px] leading-snug text-slate-400">For få målinger til trend</div>;
+    return <div className="text-[10px] leading-snug" style={{ color: PORTAL.faint }}>For få målinger til trend</div>;
   }
+  const gid = `spark-${color.replace('#', '')}`;
   const points = data.map((v, i) => ({ i, v }));
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
           <defs>
-            <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.22} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
@@ -42,8 +47,8 @@ export const Sparkline: React.FC<{
             type="monotone"
             dataKey="v"
             stroke={color}
-            strokeWidth={1.75}
-            fill={fill ? `url(#spark-${color.replace('#', '')})` : 'none'}
+            strokeWidth={2}
+            fill={fill ? `url(#${gid})` : 'none'}
             isAnimationActive={false}
             dot={false}
           />
@@ -61,15 +66,15 @@ export const RadialScore: React.FC<{
 }> = ({ value, size = 96, theme }) => {
   const hasValue = value != null;
   const v = hasValue ? Math.max(0, Math.min(100, value)) : 0;
-  const meta = scoreStatus(hasValue ? v : null);
+  const meta = scoreColor(hasValue ? v : null);
   const color = meta.color;
-  const trackColor = theme === 'light' ? '#f1f5f9' : '#1e293b';
+  const trackColor = theme === 'light' ? chartPalette.track : '#2A2A28';
   const data = [{ name: 'score', value: v, fill: color }];
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart
-          innerRadius="72%"
+          innerRadius="74%"
           outerRadius="100%"
           data={data}
           startAngle={90}
@@ -78,17 +83,17 @@ export const RadialScore: React.FC<{
           <RadialBar
             background={{ fill: trackColor }}
             dataKey="value"
-            cornerRadius={6}
+            cornerRadius={8}
             isAnimationActive={false}
           />
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-sm font-semibold text-center px-1 leading-tight ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
-          {hasValue ? Math.round(v) : 'Ikke målt'}
+        <span className="text-base font-semibold leading-none tabular-nums" style={{ color: hasValue ? PORTAL.ink : PORTAL.muted }}>
+          {hasValue ? Math.round(v) : '–'}
         </span>
-        <span className={`text-[10px] ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>/ 100</span>
-        <span className={`text-[10px] font-medium mt-0.5 ${meta.textClass}`}>{meta.shortLabel}</span>
+        <span className="text-[10px] mt-0.5" style={{ color: PORTAL.muted }}>/ 100</span>
+        <span className="text-[10px] font-medium mt-0.5" style={{ color: meta.color }}>{meta.shortLabel}</span>
       </div>
     </div>
   );
@@ -104,47 +109,57 @@ export const ScoreHistoryChart: React.FC<{
       data={scoreHistory.map((h, i) => ({ idx: i, perf: h.mobilePerf, seo: h.mobileSeo }))}
       margin={{ top: 6, right: 6, bottom: 0, left: -20 }}
     >
-      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={palette.border} />
+      <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={palette.border} />
       <XAxis dataKey="idx" tick={false} axisLine={false} tickLine={false} />
-      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} />
+      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} width={28} />
       <RechartsTooltip
-        contentStyle={{ background: '#fff', border: `1px solid ${palette.border}`, borderRadius: 10, fontSize: 12 }}
+        contentStyle={chartTooltipStyle}
+        cursor={{ stroke: palette.border, strokeWidth: 1 }}
         labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
       />
-      <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} />
-      <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} />
+      <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+      <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
     </LineChart>
   </ResponsiveContainer>
 );
 
-// KeywordRankChart — posisjonshistorikk for ett søkeord (reversert akse).
+// KeywordRankChart — posisjonshistorikk for ett søkeord (reversert akse:
+// lavere = bedre). Myk gradient under linja for en mer «designet» følelse.
 export const KeywordRankChart: React.FC<{ data: any[] }> = ({ data }) => (
   <ResponsiveContainer width="100%" height="100%">
-    <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
-      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
+    <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: -20 }}>
+      <defs>
+        <linearGradient id="kw-rank-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={chartPalette.accent} stopOpacity={0.18} />
+          <stop offset="100%" stopColor={chartPalette.accent} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={chartPalette.grid} />
+      <XAxis dataKey="date" {...axisProps} tick={{ fontSize: 10, fill: chartPalette.axis }} />
       <YAxis
         reversed
         allowDecimals={false}
-        tick={{ fontSize: 10, fill: '#808080' }}
-        axisLine={false}
-        tickLine={false}
+        {...axisProps}
+        tick={{ fontSize: 10, fill: chartPalette.axis }}
+        width={28}
         domain={['dataMin - 1', 'dataMax + 1']}
       />
       <RechartsTooltip
-        contentStyle={{ background: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
+        contentStyle={chartTooltipStyle}
+        cursor={{ stroke: chartPalette.grid, strokeWidth: 1 }}
         formatter={(val: any) => [`#${val}`, 'Posisjon']}
       />
-      <Line
+      <Area
         type="monotone"
         dataKey="rank"
-        stroke="#1A1A1A"
-        strokeWidth={2}
-        dot={{ fill: '#52A447', r: 3, strokeWidth: 0 }}
-        activeDot={{ fill: '#52A447', r: 5, strokeWidth: 0 }}
+        stroke={chartPalette.ink}
+        strokeWidth={2.25}
+        fill="url(#kw-rank-fill)"
+        dot={{ fill: chartPalette.accent, r: 3, strokeWidth: 2, stroke: PORTAL.card }}
+        activeDot={{ fill: chartPalette.accent, r: 5, strokeWidth: 2, stroke: PORTAL.card }}
         isAnimationActive={false}
       />
-    </LineChart>
+    </AreaChart>
   </ResponsiveContainer>
 );
 
@@ -152,14 +167,14 @@ export const KeywordRankChart: React.FC<{ data: any[] }> = ({ data }) => (
 export const PositionBucketsChart: React.FC<{ data: { name: string; value: number; fill: string }[] }> = ({ data }) => (
   <ResponsiveContainer width="100%" height="100%">
     <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EBEBE6" />
-      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#808080' }} axisLine={false} tickLine={false} />
-      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#808080' }} axisLine={false} tickLine={false} />
+      <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={chartPalette.grid} />
+      <XAxis dataKey="name" {...axisProps} />
+      <YAxis allowDecimals={false} {...axisProps} tick={{ fontSize: 10, fill: chartPalette.axis }} width={28} />
       <RechartsTooltip
-        contentStyle={{ backgroundColor: '#fff', border: '1px solid #EBEBE6', borderRadius: 8, fontSize: 12 }}
-        cursor={{ fill: '#F5F5F0' }}
+        contentStyle={chartTooltipStyle}
+        cursor={{ fill: PORTAL.subtle }}
       />
-      <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
+      <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={56} isAnimationActive={false}>
         {data.map((b, i) => <Cell key={i} fill={b.fill} />)}
       </Bar>
     </BarChart>
