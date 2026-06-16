@@ -64,17 +64,26 @@ async function decryptToken(blob: string): Promise<string> {
 async function hmacKey(): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', b64d(GBP_TOKEN_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
+// TODO (før go-live): bytt tidsstempel-state til en ENGANGS-nonce lagret server-
+// side (per auth-url-kall, slettes i callback). Tidsstempelet under demper replay
+// til et 10-min-vindu, men en nonce er det fullstendige CSRF-forsvaret.
+const STATE_TTL_MS = 10 * 60 * 1000; // samtykke-flyten må fullføres innen 10 min
 async function signState(userId: string): Promise<string> {
-  const sig = await crypto.subtle.sign('HMAC', await hmacKey(), te.encode(userId));
-  return `${userId}.${b64e(sig)}`;
+  const payload = `${userId}.${Date.now()}`; // userId er en UUID (ingen '.')
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey(), te.encode(payload));
+  return `${payload}.${b64e(sig)}`;
 }
 async function verifyState(state: string): Promise<string | null> {
   const idx = state.lastIndexOf('.');
   if (idx < 0) return null;
-  const userId = state.slice(0, idx);
+  const payload = state.slice(0, idx);
   try {
-    const ok = await crypto.subtle.verify('HMAC', await hmacKey(), b64d(state.slice(idx + 1)), te.encode(userId));
-    return ok ? userId : null;
+    const ok = await crypto.subtle.verify('HMAC', await hmacKey(), b64d(state.slice(idx + 1)), te.encode(payload));
+    if (!ok) return null;
+    const [userId, tsRaw] = payload.split('.');
+    const ts = Number(tsRaw);
+    if (!Number.isFinite(ts) || Date.now() - ts > STATE_TTL_MS) return null; // utløpt/forfalsket tid
+    return userId || null;
   } catch { return null; }
 }
 
@@ -128,7 +137,12 @@ async function getValidToken(admin: any, conn: any): Promise<string> {
   return access;
 }
 
-/** Finn (og cache) account + location. */
+/**
+ * Finn (og cache) account + location.
+ * TODO (før go-live): velger nå locations[0]. Bedrifter med flere avdelinger
+ * trenger et lokasjonsvalg i UI (list alle locations, la kunden velge, lagre
+ * location_name). Holder for single-location-kunder i scaffold-fasen.
+ */
 async function ensureLocation(admin: any, conn: any, accessToken: string): Promise<{ account: string; location: string }> {
   if (conn.account_name && conn.location_name) {
     return { account: conn.account_name, location: conn.location_name };
@@ -253,7 +267,7 @@ Deno.serve(async (req) => {
       const reviewId = typeof body?.reviewId === 'string' ? body.reviewId : '';
       const comment = typeof body?.comment === 'string' ? body.comment.trim() : '';
       if (!reviewId || !comment) return json({ ok: false, error: 'Mangler anmeldelse eller svartekst.' }, 400);
-      const res = await fetch(`${base}/reviews/${reviewId}/reply`, {
+      const res = await fetch(`${base}/reviews/${encodeURIComponent(reviewId)}/reply`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment }),

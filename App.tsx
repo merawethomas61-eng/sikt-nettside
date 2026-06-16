@@ -4985,6 +4985,7 @@ function timeAgoNo(iso: string | null): string {
 type GooglePlace = { placeId: string; name: string; address: string; rating: number | null; count: number | null };
 type GoogleReview = { author: string; rating: number; text: string; when: string; photo: string | null };
 type GoogleData = { rating: number | null; count: number | null; reviews: GoogleReview[]; updatedAt: string | null; baselineCount: number | null; baselineAt: string | null };
+type GbpReview = { reviewId: string; author: string; rating: number; text: string; when: string; reply: string | null };
 
 /** Kall en Supabase Edge Function med innlogget brukers token. */
 async function invokeReviewEdge(fn: string, body: unknown): Promise<{ ok: boolean; status: number; data: any }> {
@@ -5169,6 +5170,65 @@ const ReviewsPage: React.FC<{
   }, [hasStandardOrHigher]);
 
   useEffect(() => { if (hasPlaceId) loadGoogle(false); }, [hasPlaceId, loadGoogle]);
+
+  // ── Google Business Profile (svar på anmeldelser) ──
+  const loadGbpReviews = useCallback(async () => {
+    try {
+      const { ok, data } = await invokeReviewEdge('gbp-reviews', { action: 'reviews' });
+      if (ok && Array.isArray(data.reviews)) setGbpReviews(data.reviews);
+    } catch { /* mørk til godkjent */ }
+  }, []);
+
+  const loadGbpStatus = useCallback(async () => {
+    if (!hasStandardOrHigher) return;
+    try {
+      const { data } = await invokeReviewEdge('gbp-reviews', { action: 'status' });
+      setGbpConfigured(!!data?.configured);
+      setGbpConnected(!!data?.connected);
+      if (data?.connected) loadGbpReviews();
+    } catch { /* stille — funksjonen kan være udeployet ennå */ }
+  }, [hasStandardOrHigher, loadGbpReviews]);
+
+  useEffect(() => { loadGbpStatus(); }, [loadGbpStatus]);
+
+  // Fang opp ?gbp=… etter OAuth-redirect.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const g = params.get('gbp');
+    if (!g) return;
+    if (g === 'connected') { toastSuccess('Google-bedriftsprofil koblet til. Du kan nå svare på anmeldelser herfra.'); loadGbpStatus(); }
+    else if (g === 'denied') toastWarning('Du avbrøt tilkoblingen til Google-bedriftsprofil.');
+    else if (g === 'error') toastError('Tilkoblingen til Google-bedriftsprofil feilet. Prøv igjen.');
+    params.delete('gbp');
+    const qs = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+  }, [loadGbpStatus]);
+
+  const connectGbp = async () => {
+    if (!gbpConfigured) { toastInfo('Svar-på-anmeldelser via Google kommer så snart Google godkjenner API-tilgangen vår.'); return; }
+    setGbpConnecting(true);
+    try {
+      const { ok, data } = await invokeReviewEdge('gbp-reviews', { action: 'auth-url' });
+      if (ok && data?.url) window.location.href = data.url;
+      else toastError(data?.error || 'Kunne ikke starte tilkoblingen.');
+    } catch (e: any) { toastError(e?.message || 'Kunne ikke starte tilkoblingen.'); }
+    finally { setGbpConnecting(false); }
+  };
+
+  const submitReply = async (reviewId: string) => {
+    const comment = replyText.trim();
+    if (!comment) { toastWarning('Skriv et svar først.'); return; }
+    setReplyingId(reviewId);
+    try {
+      const { ok, data } = await invokeReviewEdge('gbp-reviews', { action: 'reply', reviewId, comment });
+      if (ok) {
+        setGbpReviews((prev) => prev?.map((r) => (r.reviewId === reviewId ? { ...r, reply: comment } : r)) ?? prev);
+        setReplyOpenId(null); setReplyText('');
+        toastSuccess('Svaret er publisert på Google.');
+      } else toastError(data?.error || 'Kunne ikke publisere svaret.');
+    } catch (e: any) { toastError(e?.message || 'Kunne ikke publisere svaret.'); }
+    finally { setReplyingId(null); }
+  };
 
   const runSearch = async () => {
     const q = searchQuery.trim();
@@ -5541,14 +5601,60 @@ const ReviewsPage: React.FC<{
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.ink }}>Siste anmeldelser{companyName ? ` · ${companyName}` : ''}</h3>
-          {hasPlaceId && (
-            <button type="button" onClick={() => loadGoogle(true)} disabled={loadingGoogle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: loadingGoogle ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, color: C.muted, padding: 0 }}>
-              <RefreshCw size={13} className={loadingGoogle ? 'animate-spin' : ''} /> {google?.updatedAt ? `Oppdatert ${timeAgoNo(google.updatedAt)}` : 'Oppdater'}
-            </button>
-          )}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            {!gbpConnected && (
+              <button type="button" onClick={connectGbp} disabled={gbpConnecting} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: gbpConnecting ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, color: C.green, padding: 0 }}>
+                {gbpConnecting ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />} Svar på anmeldelser
+              </button>
+            )}
+            {hasPlaceId && (
+              <button type="button" onClick={() => loadGoogle(true)} disabled={loadingGoogle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: loadingGoogle ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, color: C.muted, padding: 0 }}>
+                <RefreshCw size={13} className={loadingGoogle ? 'animate-spin' : ''} /> {google?.updatedAt ? `Oppdatert ${timeAgoNo(google.updatedAt)}` : 'Oppdater'}
+              </button>
+            )}
+          </div>
         </div>
 
-        {!hasPlaceId ? (
+        {gbpConnected && gbpReviews && gbpReviews.length > 0 ? (
+          <div>
+            {gbpReviews.map((r, i) => (
+              <div key={r.reviewId || i} style={{ padding: '14px 0', borderTop: i > 0 ? `1px solid ${C.hair}` : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <StarRow n={Math.round(r.rating)} />
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.author}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: C.faint, whiteSpace: 'nowrap', flexShrink: 0 }}>{timeAgoNo(r.when)}</span>
+                </div>
+                {r.text && <p style={{ margin: '7px 0 0', fontSize: 13, lineHeight: 1.55, color: C.sub }}>{r.text}</p>}
+                {r.reply != null ? (
+                  <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: `2px solid ${C.greenBg}` }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: C.green }}>Ditt svar</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12.5, lineHeight: 1.5, color: C.sub }}>{r.reply}</p>
+                  </div>
+                ) : replyOpenId === r.reviewId ? (
+                  <div style={{ marginTop: 10 }}>
+                    <textarea
+                      value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={3}
+                      placeholder="Skriv et vennlig, kort svar …"
+                      style={{ ...inputStyle, resize: 'vertical', fontFamily: "'Geist','DM Sans',sans-serif" }}
+                    />
+                    <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                      <button type="button" onClick={() => submitReply(r.reviewId)} disabled={replyingId === r.reviewId} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor: replyingId === r.reviewId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: replyingId === r.reviewId ? 0.7 : 1 }}>
+                        {replyingId === r.reviewId ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Publiser svar
+                      </button>
+                      <button type="button" onClick={() => { setReplyOpenId(null); setReplyText(''); }} style={{ background: 'none', border: 'none', fontSize: 12.5, fontWeight: 600, color: C.muted, cursor: 'pointer' }}>Avbryt</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => { setReplyOpenId(r.reviewId); setReplyText(''); }} style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.green }}>
+                    Svar →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : !hasPlaceId ? (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, borderRadius: 12, padding: '12px 14px', background: C.subtle, border: `1px solid ${C.hair}` }}>
             <Info size={15} style={{ color: C.muted, flexShrink: 0, marginTop: 1 }} />
             <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: C.sub }}>
@@ -5578,7 +5684,7 @@ const ReviewsPage: React.FC<{
                 {r.text && <p style={{ margin: '7px 0 0', fontSize: 13, lineHeight: 1.55, color: C.sub }}>{r.text}</p>}
                 <button
                   type="button"
-                  onClick={() => toastInfo('Å svare på Google-anmeldelser herfra krever Google Business Profile-tilgang — det kommer. Inntil da kan du svare i Google-profilen din.')}
+                  onClick={connectGbp}
                   style={{ marginTop: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.green }}
                 >
                   Svar →
