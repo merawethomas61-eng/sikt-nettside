@@ -331,6 +331,23 @@ function useTechReducedMotion() {
   return reduced;
 }
 
+// Telefon-breakpoint (≤ 640px = Tailwind `sm`). Brukes til å gjøre inline-style-
+// seksjoner responsive der Tailwind-breakpoints ikke kan brukes (grids/padding).
+function useIsMobile() {
+  const query = '(max-width: 640px)';
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setIsMobile(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
 const TechDarkBackground = ({ glowStrength = 'default' }: { glowStrength?: 'default' | 'strong' }) => {
   const uid = React.useId().replace(/:/g, '');
   const opacity = glowStrength === 'strong' ? 0.18 : 0.12;
@@ -5784,6 +5801,8 @@ const KonkurrenterPage: React.FC<{
   const pressDown  = (e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; };
   const pressReset = (e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; };
 
+  const isMobile = useIsMobile(); // stabler 2-kolonners grids + krymper modaler på telefon
+
   void theme; // palette is always hardcoded — theme prop kept for API compatibility
 
   const { competitors, opportunities, loading, error, refetch } = useCompetitorData(user?.id ?? null);
@@ -6201,7 +6220,7 @@ const KonkurrenterPage: React.FC<{
                     Ingen rangeringer ennå — trykk «Skann». Første tall kommer vanligvis innen noen minutter.
                   </p>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
                     {compRankings.slice(0, 20).map(r => (
                       <div key={r.id} style={{ background: C.card, padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <span style={{ fontSize: 12, fontWeight: 700, flexShrink: 0, fontVariantNumeric: 'tabular-nums', borderRadius: 6, padding: '2px 7px', alignSelf: 'flex-start',
@@ -6270,7 +6289,7 @@ const KonkurrenterPage: React.FC<{
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
                 {filteredOpps.map((opp, i) => {
                   const diffLabel = opp.difficulty === 'easy' ? 'Lett' : opp.difficulty === 'medium' ? 'Middels' : 'Vanskelig';
                   const diffDots  = opp.difficulty === 'easy' ? '●' : opp.difficulty === 'medium' ? '●●' : '●●●';
@@ -7795,6 +7814,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [activeTab, setActiveTab] = useState<PortalTab>('home');
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
+  const isMobile = useIsMobile(); // responsiv stabling i inline-style-faner (Verksted/Innstillinger)
 
   // Sidebar mobile-state (under 768px viser vi hamburger).
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -13179,7 +13199,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                        SCREEN B — INNHOLD (løst via push)
                        ═══════════════════════════════════ */
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                      <div style={{ padding: isMobile ? '14px 16px' : '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -13199,7 +13219,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </span>
                       </div>
 
-                      <div style={{ padding: '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div style={{ padding: isMobile ? '20px 16px' : '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <div>
                           <h2 style={{ margin: '0 0 10px', color: W.ink, fontSize: 'clamp(24px,3.2vw,38px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.15 }}>
                             {selectedProblem.title}
@@ -13439,7 +13459,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                        SCREEN B — INNHOLD (WordPress diff)
                        ═══════════════════════════════════ */
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                      <div style={{ padding: isMobile ? '14px 16px' : '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
                         <button
                           type="button"
                           onClick={() => setExpandedWorkshopProblem(null)}
@@ -13456,7 +13476,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         </span>
                       </div>
 
-                      <div style={{ padding: '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div style={{ padding: isMobile ? '20px 16px' : '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
                             <span style={{ background: W.ink, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
@@ -14153,7 +14173,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
 
                       {/* Breadcrumb */}
-                      <div style={{ padding: '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                      <div style={{ padding: isMobile ? '14px 16px' : '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
                         <button
                           type="button"
                           onClick={() => setExpandedWorkshopProblem(null)}
@@ -14172,7 +14192,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </div>
 
                       {/* Two-column main */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,0.7fr)', gap: 32, padding: '32px 48px', alignItems: 'start' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1.3fr) minmax(0,0.7fr)', gap: isMobile ? 20 : 32, padding: isMobile ? '20px 16px' : '32px 48px', alignItems: 'start' }}>
 
                         {/* Left: title + meta */}
                         <div>
@@ -14186,7 +14206,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </div>
 
                           {/* Title */}
-                          <h2 style={{ margin: '0 0 16px', color: W.ink, fontSize: 'clamp(30px,4vw,50px)', fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.05 }}>
+                          <h2 style={{ margin: '0 0 16px', color: W.ink, fontSize: isMobile ? 'clamp(24px,7vw,30px)' : 'clamp(30px,4vw,50px)', fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.05 }}>
                             {selectedProblem.title}
                           </h2>
 
@@ -14224,10 +14244,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </div>
 
                       {/* Divider */}
-                      <div style={{ height: 1, background: W.border, margin: '0 48px' }} />
+                      <div style={{ height: 1, background: W.border, margin: isMobile ? '0 16px' : '0 48px' }} />
 
                       {/* AI solution section */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 32, padding: '32px 48px', alignItems: 'start' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)', gap: isMobile ? 20 : 32, padding: isMobile ? '20px 16px' : '32px 48px', alignItems: 'start' }}>
 
                         {/* Left: explanation + steps */}
                         <div>
@@ -14388,10 +14408,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       </div>
 
                       {/* Divider */}
-                      <div style={{ height: 1, background: W.border, margin: '0 48px' }} />
+                      <div style={{ height: 1, background: W.border, margin: isMobile ? '0 16px' : '0 48px' }} />
 
                       {/* Action row */}
-                      <div style={{ padding: '22px 48px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <div style={{ padding: isMobile ? '18px 16px' : '22px 48px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                         <button
                           type="button"
                           onClick={() => toastSuccess('Markert som løst (lagres ikke i denne versjonen).')}
@@ -14428,7 +14448,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                       {/* Tier teaser */}
                       {!hasStandardOrHigher && (
-                        <div style={{ margin: '0 48px 32px', background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ margin: isMobile ? '0 16px 24px' : '0 48px 32px', background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Sparkles size={16} style={{ color: W.green }} />
                           </div>
@@ -14454,7 +14474,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </div>
 
                   ) : (
-                    <div style={{ padding: '64px 48px', textAlign: 'center' }}>
+                    <div style={{ padding: isMobile ? '48px 20px' : '64px 48px', textAlign: 'center' }}>
                       <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 18, fontWeight: 700 }}>Funn ikke funnet</p>
                       <button type="button" onClick={() => setExpandedWorkshopProblem(null)} style={{ marginTop: 12, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>← Tilbake</button>
                     </div>
@@ -14604,7 +14624,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               {/* ── TWO-COLUMN WRAPPER ── */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(0,300px) 1fr',
+                gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,300px) 1fr',
                 gap: 0,
                 alignItems: 'start',
                 background: 'transparent',
@@ -14614,12 +14634,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     LEFT SIDEBAR
                     ══════════════════════════════════ */}
                 <aside style={{
-                  borderRight: `1px solid ${L.border}`,
-                  padding: '28px 24px',
+                  borderRight: isMobile ? 'none' : `1px solid ${L.border}`,
+                  borderBottom: isMobile ? `1px solid ${L.border}` : 'none',
+                  padding: isMobile ? '18px 16px' : '28px 24px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 14,
-                  position: 'sticky',
+                  position: isMobile ? 'static' : 'sticky',
                   top: 24,
                   alignSelf: 'start',
                 }}>
@@ -14792,7 +14813,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 {/* ══════════════════════════════════
                     RIGHT FEED
                     ══════════════════════════════════ */}
-                <main style={{ padding: '28px 40px', minWidth: 0 }}>
+                <main style={{ padding: isMobile ? '20px 16px' : '28px 40px', minWidth: 0 }}>
 
                   {/* Feed header */}
                   <div style={{ marginBottom: 16 }}>

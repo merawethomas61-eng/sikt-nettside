@@ -10,7 +10,7 @@ import {
   Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar,
   RadialBarChart, RadialBar, Cell,
 } from 'recharts';
-import { PORTAL, chartPalette, chartTooltipStyle, scoreColor } from './portalTheme';
+import { PORTAL, chartPalette, chartTooltipStyle, scoreColor, formatChartDate } from './portalTheme';
 
 export type PortalTheme = 'light' | 'dark';
 
@@ -110,12 +110,22 @@ export const ScoreHistoryChart: React.FC<{
       margin={{ top: 6, right: 6, bottom: 0, left: -20 }}
     >
       <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={palette.border} />
-      <XAxis dataKey="idx" tick={false} axisLine={false} tickLine={false} />
+      <XAxis
+        dataKey="idx"
+        tickFormatter={(idx: number) => formatChartDate(scoreHistory[idx]?.at)}
+        tick={{ fontSize: 10, fill: palette.muted }}
+        axisLine={false}
+        tickLine={false}
+        interval="preserveStartEnd"
+        minTickGap={28}
+        height={18}
+      />
       <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: palette.muted }} axisLine={false} tickLine={false} width={28} />
       <RechartsTooltip
         contentStyle={chartTooltipStyle}
-        cursor={{ stroke: palette.border, strokeWidth: 1 }}
-        labelFormatter={(idx: number) => scoreHistory[idx] ? new Date(scoreHistory[idx].at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }) : ''}
+        cursor={{ stroke: palette.muted, strokeWidth: 1, strokeDasharray: '3 3' }}
+        labelFormatter={(idx: number) => formatChartDate(scoreHistory[idx]?.at)}
+        formatter={(val: any, name: any) => [val, name === 'perf' ? 'Fart' : 'SEO']}
       />
       <Line type="monotone" dataKey="perf" stroke={palette.success} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
       <Line type="monotone" dataKey="seo" stroke={palette.ink} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
@@ -146,7 +156,8 @@ export const KeywordRankChart: React.FC<{ data: any[] }> = ({ data }) => (
       />
       <RechartsTooltip
         contentStyle={chartTooltipStyle}
-        cursor={{ stroke: chartPalette.grid, strokeWidth: 1 }}
+        cursor={{ stroke: chartPalette.axis, strokeWidth: 1, strokeDasharray: '3 3' }}
+        labelFormatter={(label: any) => label}
         formatter={(val: any) => [`#${val}`, 'Posisjon']}
       />
       <Area

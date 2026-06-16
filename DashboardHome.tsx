@@ -13,8 +13,10 @@ import {
   AreaChart,
   ResponsiveContainer,
   Tooltip,
+  XAxis,
   YAxis,
 } from 'recharts';
+import { formatChartDate, chartTooltipStyle } from './src/portalTheme';
 
 type PortalTab =
   | 'home'
@@ -302,7 +304,7 @@ const ScoreCard = ({
 }: {
   label: string;
   score: number | null;
-  data: { v: number }[];
+  data: { v: number; at?: string; label?: string }[];
   delta: number | null;
   period: number;
   setPeriod: (v: number) => void;
@@ -360,8 +362,13 @@ const ScoreCard = ({
                 <stop offset="100%" stopColor="#6B9E82" stopOpacity={0.04} />
               </linearGradient>
             </defs>
+            <XAxis dataKey="label" hide />
             <YAxis hide domain={[0, 100]} />
-            <Tooltip cursor={false} />
+            <Tooltip
+              cursor={{ stroke: '#8A8578', strokeWidth: 1, strokeDasharray: '3 3' }}
+              contentStyle={chartTooltipStyle}
+              formatter={(v: any) => [v, 'Score']}
+            />
             <Area
               type="monotone"
               dataKey="v"
@@ -441,19 +448,21 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       filterHistoryByDays(scoreHistory, chartPeriod)
         .map((r) => ({
           v: Math.round(((r.mobilePerf ?? 0) + (r.mobileSeo ?? 0)) / 2),
+          at: r.at,
+          label: formatChartDate(r.at),
         })),
     [scoreHistory, chartPeriod],
   );
   const techTrend = useMemo(
     () =>
       filterHistoryByDays(scoreHistory, techPeriod)
-        .map((r) => ({ v: r.mobilePerf ?? 0 })),
+        .map((r) => ({ v: r.mobilePerf ?? 0, at: r.at, label: formatChartDate(r.at) })),
     [scoreHistory, techPeriod],
   );
   const visTrend = useMemo(
     () =>
       filterHistoryByDays(scoreHistory, visPeriod)
-        .map((r) => ({ v: r.mobileSeo ?? 0 })),
+        .map((r) => ({ v: r.mobileSeo ?? 0, at: r.at, label: formatChartDate(r.at) })),
     [scoreHistory, visPeriod],
   );
 
@@ -702,7 +711,21 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                           <stop offset="100%" stopColor="#6B9E82" stopOpacity={0} />
                         </linearGradient>
                       </defs>
+                      <XAxis
+                        dataKey="label"
+                        tick={{ fontSize: 9, fill: '#B3AD9F' }}
+                        axisLine={false}
+                        tickLine={false}
+                        interval="preserveStartEnd"
+                        minTickGap={40}
+                        height={14}
+                      />
                       <YAxis hide domain={[0, 100]} />
+                      <Tooltip
+                        cursor={{ stroke: '#8A8578', strokeWidth: 1, strokeDasharray: '3 3' }}
+                        contentStyle={chartTooltipStyle}
+                        formatter={(v: any) => [v, 'Score']}
+                      />
                       <Area
                         type="monotone"
                         dataKey="v"

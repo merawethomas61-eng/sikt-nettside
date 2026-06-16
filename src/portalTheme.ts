@@ -51,6 +51,14 @@ export const chartTooltipStyle: CSSProperties = {
   color: PORTAL.ink,
 };
 
+// Felles dato-format for tidsakser/tooltips på alle tidsserie-grafer («12. jun»).
+export const formatChartDate = (iso?: string | null) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+};
+
 // Skår 0–100 → farge + etikett, i tråd med paletten (erstatter slate/emerald/amber/rose).
 export const scoreColor = (score: number | null) => {
   if (score == null) return { label: 'Ikke målt', shortLabel: 'Mangler data', color: PORTAL.muted };
