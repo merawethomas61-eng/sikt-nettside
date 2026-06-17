@@ -19,7 +19,7 @@ export type ActivationChecklistProps = {
 
 type Step = {
   done: boolean; title: string; desc: string; cta: string;
-  onClick: () => void; icon: any; disabled?: boolean; accent?: boolean;
+  onClick: () => void; icon: any; disabled?: boolean; accent?: boolean; optional?: boolean;
 };
 
 /**
@@ -52,10 +52,11 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
   });
   steps.push({
     done: gscConnected,
-    title: 'Koble til Google Search Console',
-    desc: 'Låser opp rangering, søkeorddata og «Nesten på side 1»-muligheter.',
+    title: 'Koble til Google Search Console (valgfritt)',
+    desc: 'Du er allerede i gang uten dette. Koble til når du vil, så henter vi søkeordene Google gir deg — og «Nesten på side 1»-muligheter — automatisk.',
     cta: 'Koble til', icon: Search,
     onClick: onConnectGsc,
+    optional: true,
   });
   if (hasStandardOrHigher) {
     steps.push({
@@ -68,7 +69,9 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
   }
 
   const doneCount = steps.filter(s => s.done).length;
-  if (doneCount === steps.length) return null;
+  // GSC er valgfritt — skjul trakten når de PÅKREVDE stegene er gjort, så vi
+  // ikke maser om en tilkobling kunden ikke trenger for å få verdi.
+  if (steps.filter(s => !s.optional).every(s => s.done)) return null;
   const pct = Math.round((doneCount / steps.length) * 100);
 
   // Tema-tokens (matcher PortalCard / portal*Class i App.tsx)

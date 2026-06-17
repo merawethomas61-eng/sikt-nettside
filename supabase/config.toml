@@ -46,3 +46,8 @@ verify_jwt = true
 [functions.gbp-reviews]
 enabled = true
 verify_jwt = false
+
+# resend-webhook: offentlig webhook fra Resend (Svix-signatur i koden) → false.
+[functions.resend-webhook]
+enabled = true
+verify_jwt = false

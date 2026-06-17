@@ -1436,8 +1436,11 @@ const Hero = () => {
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
-              Ta meg til toppen av Google <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
+            <a href="#gratis-analyse" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
+              Sjekk siden din gratis <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
+            </a>
+            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700">
+              Se priser
             </a>
           </div>
         </RevealOnScroll>
@@ -1964,6 +1967,9 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         setPrefillLoading(false);
         return;
       }
+      // URL fra gratis-analysen på forsiden — friksjonsfri overgang til konto.
+      let auditUrl = '';
+      try { auditUrl = (localStorage.getItem('sikt_audit_url') || '').trim(); } catch { /* ignore */ }
       try {
         const rows = await supabaseRest<any[]>(
           `clients?user_id=eq.${user.id}&select=company_name,contact_person,email,phone,website_url,industry,target_audience&limit=1`,
@@ -1976,13 +1982,13 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             contactPerson: existing.contact_person || '',
             email: existing.email || user.email || '',
             phone: existing.phone || '',
-            websiteUrl: existing.website_url || '',
+            websiteUrl: existing.website_url || auditUrl || '',
             industry: existing.industry || '',
             targetAudience: existing.target_audience || '',
           });
-        } else if (user.email) {
-          // Førstegangs-bruker: bare preutfyll e-post fra Google-kontoen
-          setFormData(prev => ({ ...prev, email: user.email }));
+        } else if (user.email || auditUrl) {
+          // Førstegangs-bruker: preutfyll e-post fra Google + URL fra gratis-analysen
+          setFormData(prev => ({ ...prev, email: user.email || prev.email, websiteUrl: auditUrl || prev.websiteUrl }));
         }
       } catch (err: any) {
         console.warn('[Onboarding] Kunne ikke hente eksisterende data:', err?.message || err);
@@ -2579,8 +2585,8 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "BASIC",
       price: "499",
-      tagline: "Hjernen bak rangeringen din.",
-      desc: "Sikt forteller deg nøyaktig hva du skal fikse og sporer hva som virker — uansett hvordan siden din er bygd. Anvend forslagene selv, eller lim dem rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …).",
+      tagline: "Den enkleste måten å starte på.",
+      desc: "Lavest terskel, ingen tilkobling nødvendig: Sikt viser deg nøyaktig hva du skal fikse for å få flere kunder fra Google — uansett hvordan siden din er bygd. Du gjør endringene selv, eller limer dem rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …).",
       features: [
         { text: "Funker uansett plattform — også AI-bygde sider", detail: "WordPress, Wix, Squarespace, Webflow, eller en side du bygde med Claude/Cursor/v0/Lovable. Sikt gir deg ferdige forslag du limer inn der du redigerer — eller rett inn i AI-verktøyet ditt." },
         { text: "Se hvor du står på Google — ubegrenset antall søkeord", detail: "Posisjon, klikk og visninger for alle søkeord du allerede rangerer på, hentet direkte fra Google Search Console." },
@@ -2596,9 +2602,9 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "STANDARD",
       price: "1 499",
-      tagline: "Vi gjør jobben for deg.",
+      tagline: "Flere kunder — uten at du løfter en finger.",
       highlighted: true,
-      desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene — automatisk, hver uke.",
+      desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene automatisk, hver uke — så du blir mer synlig og får flere kunder uten å gjøre jobben selv.",
       features: [
         { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag, månedlig rapport og konkurrent-radar er inkludert." },
         { text: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger." },
@@ -2936,11 +2942,163 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
 // --- VIEWS ---
 
+// Gratis e-post-gated analyse — lokkemiddelet øverst i trakten.
+// Lar besøkende se ekte score + topp-funn FØR de logger inn/kjøper.
+const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => void }) => {
+  const [url, setUrl] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{
+    url: string;
+    scores: { performance: number | null; seo: number | null; accessibility: number | null; bestPractices: number | null };
+    topIssues: { title: string; displayValue: string }[];
+  } | null>(null);
+
+  const runAudit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setError(null);
+    const cleanUrl = url.trim();
+    const cleanEmail = email.trim();
+    if (!cleanUrl) { setError('Skriv inn nettsiden din.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { setError('Skriv inn en gyldig e-postadresse.'); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ url: cleanUrl, email: cleanEmail, mode: 'public' }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data?.error || 'Kunne ikke analysere siden. Prøv igjen.'); return; }
+      setResult(data);
+      try { localStorage.setItem('sikt_audit_url', data?.url || cleanUrl); } catch { /* ignore */ }
+    } catch {
+      setError('Noe gikk galt. Sjekk URL-en og prøv igjen.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scoreColor = (s: number | null) => {
+    if (s === null || s === undefined) return '#808080';
+    if (s >= 90) return '#3F8F38';
+    if (s >= 50) return '#C77700';
+    return '#DC2626';
+  };
+
+  const scoreCards = result ? [
+    { label: 'Fart', value: result.scores.performance },
+    { label: 'SEO', value: result.scores.seo },
+    { label: 'Tilgjengelighet', value: result.scores.accessibility },
+    { label: 'Teknisk', value: result.scores.bestPractices },
+  ] : [];
+
+  return (
+    <section id="gratis-analyse" className="py-16 sm:py-24 md:py-28 bg-white relative overflow-hidden scroll-mt-24">
+      <div className="max-w-3xl mx-auto px-4 sm:px-5 relative z-10">
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-8 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+              Gratis · Tar 30 sekunder
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">Hvor synlig er siden din <span className="text-violet-600">i dag?</span></h2>
+            <p className="text-base sm:text-lg text-[#808080] max-w-xl mx-auto">Skriv inn nettsiden din, så analyserer vi fart, SEO og teknisk kvalitet — og viser deg de største mulighetene. Ingen forpliktelser.</p>
+          </div>
+        </RevealOnScroll>
+
+        {!result ? (
+          <RevealOnScroll direction="up" delay={100}>
+            <form onSubmit={runAudit} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-5 sm:p-8 shadow-sm">
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  inputMode="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="dinbedrift.no"
+                  className="w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="din@epost.no"
+                  className="w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                />
+              </div>
+              {error && (
+                <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#DC2626]"><AlertCircle size={16} /> {error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="group w-full mt-4 px-8 py-4 bg-[#1A1A1A] text-white rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-center gap-3 disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
+              >
+                {loading ? (<><Loader2 size={20} className="animate-spin" /> Analyserer siden …</>) : (<>Analyser gratis <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" /></>)}
+              </button>
+              <p className="mt-3 text-center text-xs text-[#808080]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst.</p>
+            </form>
+          </RevealOnScroll>
+        ) : (
+          <RevealOnScroll direction="up">
+            <div className="bg-white border border-[#EBEBE6] rounded-3xl p-5 sm:p-8 shadow-xl">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#808080] mb-1">Resultat for</p>
+              <p className="text-lg font-black text-[#1A1A1A] mb-6 break-all">{result.url}</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-7">
+                {scoreCards.map((c) => (
+                  <div key={c.label} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-black tabular-nums" style={{ color: scoreColor(c.value) }}>{c.value ?? '–'}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#808080] mt-1">{c.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {result.topIssues.length > 0 && (
+                <div className="mb-7">
+                  <p className="text-sm font-black text-[#1A1A1A] mb-3">Største muligheter vi fant:</p>
+                  <ul className="space-y-2">
+                    {result.topIssues.map((issue, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-[#1A1A1A]">
+                        <AlertCircle size={16} className="text-[#C77700] mt-0.5 shrink-0" />
+                        <span className="font-semibold">{issue.title}{issue.displayValue ? <span className="text-[#808080] font-normal"> — {issue.displayValue}</span> : null}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="bg-gradient-to-br from-violet-50 to-white border border-violet-200 rounded-2xl p-5 sm:p-6">
+                <p className="text-base font-black text-[#1A1A1A] mb-1">Vil du ha hele bildet — og at vi fikser det?</p>
+                <p className="text-sm text-[#808080] mb-4">Full rapport med alle funn, ferdige tekstforslag og automatisk fiks av siden din. Start med Basic.</p>
+                <button
+                  onClick={() => onSelectPlan('BASIC')}
+                  className="group w-full px-8 py-4 bg-violet-700 text-white rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-center gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600"
+                >
+                  Opprett konto for full rapport <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
+                </button>
+                <button onClick={() => { setResult(null); setError(null); }} className="w-full mt-3 text-sm font-bold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
+              </div>
+            </div>
+          </RevealOnScroll>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
     <ScrollProgressRing />
     <Hero />
     <DashboardPreview />
+    {/* Gratis-analyse: lokkemiddel høyt i trakten — verdi før innlogging */}
+    <FreeAuditSection onSelectPlan={onSelectPlan} />
     <StoryBrandOneLiner />
     <PainPointsSection />
     <ValuePropositionSection />
@@ -3460,14 +3618,14 @@ const TrustSection = () => {
         <div className="mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/15 text-violet-200 text-xs sm:text-sm font-bold mb-6 sm:mb-8">
             <ShieldCheck size={14} className="text-[#6BBF63]" />
-            <span>Null risiko. Full kontroll.</span>
+            <span>Founding-kunder · Tidlig tilgang</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight text-white">
-            Vår <span className="text-violet-300">Kvalitetsgaranti</span>
+            Bli en av våre <span className="text-violet-300">første kunder</span>
           </h2>
           <p className="text-base sm:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed px-2">
-            Vi vet at du har brent deg på byråer før. Derfor har vi fjernet usikkerheten og lagt risikoen på våre skuldre, ikke dine.
+            Vi er et nytt norsk produkt — og helt åpne om det. Derfor får de første kundene founding-pris, tett oppfølging fra grunnleggeren, og null risiko mens vi beviser verdien.
           </p>
         </div>
 
@@ -3499,14 +3657,14 @@ const TrustSection = () => {
             </p>
           </div>
 
-          {/* Punkt 3: Kvalitet */}
+          {/* Punkt 3: Founding-kunde */}
           <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
             <div className={`${iconTileClass} text-violet-300`}>
-              <User size={22} />
+              <HeartHandshake size={22} />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Ekte eksperter</h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Founding-pris + grunnlegger på laget</h3>
             <p className="text-white/60 text-sm leading-relaxed">
-              Ingen automatiserte søppel-rapporter. En rådgiver analyserer din bedrift manuelt og legger en konkret slagplan for å slå dine konkurrenter.
+              Som en av våre første kunder beholder du en lav fast pris så lenge abonnementet løper — også når vi setter opp prisen for nye kunder senere. Og du får direkte oppfølging fra grunnleggeren, ikke en støtte-kø.
             </p>
           </div>
 
@@ -3529,18 +3687,18 @@ const TrustSection = () => {
                 <TrendingUp size={22} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Hva skjer på toppen?</h3>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Vi jobber kontinuerlig — ikke én gang</h3>
                 <p className="text-white/60 text-sm leading-relaxed mb-3 sm:mb-4">
-                  Når vi når 1. plassen, er ikke jobben over. Da velger du veien videre:
+                  SEO er ferskvare. Hver uke jobber vi videre med to ting:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="bg-white/[0.06] p-3 sm:p-4 rounded-xl border border-white/10">
                     <strong className="text-white block text-sm mb-1">A) Forsvar</strong>
-                    <span className="text-xs text-white/55">Vi overvåker og nøytraliserer konkurrenter som prøver å ta plassen din.</span>
+                    <span className="text-xs text-white/55">Vi overvåker konkurrentene dine og varsler når de gjør grep som kan true posisjonene dine.</span>
                   </div>
                   <div className="bg-white/[0.06] p-3 sm:p-4 rounded-xl border border-white/10">
-                    <strong className="text-white block text-sm mb-1">B) Dominans</strong>
-                    <span className="text-xs text-white/55">Vi bruker tilliten Google nå har til deg for å vinne enda flere lønnsomme søkeord.</span>
+                    <strong className="text-white block text-sm mb-1">B) Vekst</strong>
+                    <span className="text-xs text-white/55">Vi finner nye, lønnsomme søkeord og innholdsmuligheter du kan ta — steg for steg.</span>
                   </div>
                 </div>
               </div>
@@ -7893,6 +8051,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState('');
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  // Oppsigelse: grunn-survey før redirect til Stripe-portalen (fanger churn-grunn).
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelComment, setCancelComment] = useState('');
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelDone, setCancelDone] = useState(false);
+  // Plan-baserte bruksgrenser: analyser brukt inneværende måned (fra clients).
+  const [analysesMonth, setAnalysesMonth] = useState<string | null>(null);
+  const [analysesUsed, setAnalysesUsed] = useState(0);
 
   // Host-tilkoblings-info (fra client_hosts-tabellen). null = ikke hentet ennå eller
   // ingen rad finnes. Relevante felt: connectionMode ('light' | 'full' | 'skipped'),
@@ -8833,6 +9001,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const bundlePackageLevel = hasPremium ? 3 : hasStandardOrHigher ? 2 : 1;
   const currentLevel = Math.max(dbPackageLevel, bundlePackageLevel);
 
+  // ── Plan-baserte bruksgrenser (analyser per måned) ─────────────────
+  // Basic < Standard < Premium (ubegrenset). Justér tallene her ved behov.
+  const ANALYSIS_LIMITS: Record<number, number> = { 1: 10, 2: 50, 3: Infinity };
+  const analysisLimit = ANALYSIS_LIMITS[currentLevel] ?? 10;
+  const currentMonthKey = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const analysesUsedThisMonth = analysesMonth === currentMonthKey ? analysesUsed : 0;
+  const analysesRemaining =
+    analysisLimit === Infinity ? Infinity : Math.max(0, analysisLimit - analysesUsedThisMonth);
+
   // Sidebar-navigasjon (8 faner). Hvert ikon gir rask gjenkjennelse selv naar
   // navnet er kort. Tier-faner (konkurrenter, geo) er ALLTID synlige — innholdet
   // viser TierTeaser hvis brukeren ikke har riktig pakke.
@@ -9726,6 +9903,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const runRealAnalysis = async () => {
     const url = formData.websiteUrl || clientData?.websiteUrl;
     if (!url) { setAnalyzeError("Mangler URL. Legg inn nettadresse under Innstillinger."); return; }
+    // Plan-grense: stopp før kjøring hvis månedens analyser er brukt opp.
+    if (!isMockUser && analysisLimit !== Infinity && analysesUsedThisMonth >= analysisLimit) {
+      const planLabel = ({ 1: 'Basic', 2: 'Standard', 3: 'Premium' } as Record<number, string>)[currentLevel] || 'planen din';
+      const msg = `Du har brukt månedens ${analysisLimit} analyser på ${planLabel}-planen.${currentLevel < 3 ? ' Oppgrader for flere.' : ''}`;
+      setAnalyzeError(msg);
+      try { toastError(msg); } catch { /* ignore */ }
+      return;
+    }
     setIsAnalyzing(true); setAnalyzeError(null);
     let formattedUrl = String(url).trim();
     if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
@@ -9766,6 +9951,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           return;
         }
 
+        // Server-side plan-grense nådd → vis melding + oppgrader, ikke prøv igjen.
+        if (res.status === 403 && errBody?.error === 'analysis_limit_reached') {
+          const planLabel = ({ 1: 'Basic', 2: 'Standard', 3: 'Premium' } as Record<number, string>)[currentLevel] || 'planen din';
+          const lim = errBody?.usage?.limit ?? analysisLimit;
+          if (errBody?.usage) { setAnalysesMonth(errBody.usage.month); setAnalysesUsed(errBody.usage.used); }
+          const msg = `Du har brukt månedens ${lim} analyser på ${planLabel}-planen.${currentLevel < 3 ? ' Oppgrader for flere.' : ''}`;
+          setAnalyzeError(msg);
+          try { toastError(msg); } catch { /* ignore */ }
+          return;
+        }
+
         if (res.ok) {
           const { mobile: mobileRaw, desktop: desktopRaw } = errBody;
           const mobile = formatLighthouseData(mobileRaw);
@@ -9790,6 +9986,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           });
 
           await logSiktActionsBatch(buildAnalysisLogEntries(mobile, formattedUrl));
+          // Server teller opp kvoten og returnerer ny status — synk lokalt.
+          if (errBody?.usage) { setAnalysesMonth(errBody.usage.month); setAnalysesUsed(errBody.usage.used); }
           return;
         }
 
@@ -9855,8 +10053,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         } catch { return true; }
       })();
 
+      // Hopp over hvis suksess-sidens første-analyse allerede har levert et
+      // rå-resultat eller fortsatt er underveis — da hydrerer vi det i stedet
+      // for å kjøre en NY analyse (unngår dobbel kvote-bruk).
+      const firstAnalysisHandledElsewhere = (() => {
+        try {
+          if (localStorage.getItem(`sikt_first_analysis_raw_${user.id}`)) return true;
+          const pend = localStorage.getItem(`sikt_first_analysis_pending_${user.id}`);
+          if (pend && Date.now() - Number(pend) < 120000) return true;
+        } catch { /* ignore */ }
+        return false;
+      })();
+
       try {
-        if (!analysisResults && !isAnalyzing && pageSpeedStale) {
+        if (!analysisResults && !isAnalyzing && pageSpeedStale && !firstAnalysisHandledElsewhere) {
           setAutoScanInfo({ active: true, label: 'Sjekker PageSpeed mot Google…' });
           await runRealAnalysis();
         }
@@ -9879,6 +10089,55 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       setAutoScanInfo({ active: false, label: '' });
     })();
   }, [loading, user?.id, formData.websiteUrl, clientData?.websiteUrl]);
+
+  // ===================================================================
+  // FØRSTE-ANALYSE-HYDRERING — promoterer rå-resultatet fra suksess-siden
+  // (sikt_first_analysis_raw) til analyse-cachen, så dashbordet viser ekte
+  // tall MED EN GANG uten å kjøre en ny analyse. Poller i ~90 s i tilfelle
+  // bakgrunns-analysen fortsatt fullføres når kunden kommer inn.
+  // ===================================================================
+  useEffect(() => {
+    if (!user?.id) return;
+    const urlNow = (formData.websiteUrl || clientData?.websiteUrl || '').trim();
+    if (!urlNow) return;
+    const norm = (s: string) => String(s || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
+    let tries = 0;
+
+    const tryHydrate = (): boolean => {
+      try {
+        // Allerede en cache? La cache-restore/auto-scan håndtere det.
+        if (localStorage.getItem(`sikt_analysis_cache_${user.id}`)) return true;
+        const raw = localStorage.getItem(`sikt_first_analysis_raw_${user.id}`);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.mobileRaw || !parsed?.desktopRaw) return true;
+        if (parsed.url && norm(parsed.url) !== norm(urlNow)) return true; // annen side enn nå
+        const mobile = formatLighthouseData(parsed.mobileRaw);
+        const desktop = formatLighthouseData(parsed.desktopRaw);
+        setAnalysisResults({ mobile, desktop });
+        const formattedUrl = parsed.url || urlNow;
+        try {
+          localStorage.setItem(`sikt_analysis_cache_${user.id}`, JSON.stringify({ url: formattedUrl, results: { mobile, desktop }, timestamp: parsed.timestamp || Date.now() }));
+        } catch { /* ignore */ }
+        setScoreHistory((prev) => {
+          const next = [...prev, { at: new Date().toISOString(), mobilePerf: mobile.performance, mobileSeo: mobile.seo, desktopPerf: desktop.performance }].slice(-30);
+          try { localStorage.setItem(`sikt_portal_score_history_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+          return next;
+        });
+        try { localStorage.removeItem(`sikt_first_analysis_raw_${user.id}`); } catch { /* ignore */ }
+        try { localStorage.removeItem(`sikt_first_analysis_pending_${user.id}`); } catch { /* ignore */ }
+        void logSiktActionsBatch(buildAnalysisLogEntries(mobile, formattedUrl));
+        return true;
+      } catch { return true; }
+    };
+
+    if (tryHydrate()) return;
+    const iv = setInterval(() => {
+      tries += 1;
+      if (tryHydrate() || tries >= 30) clearInterval(iv); // 30 × 3 s ≈ 90 s
+    }, 3000);
+    return () => clearInterval(iv);
+  }, [user?.id, formData.websiteUrl, clientData?.websiteUrl]);
 
   // VIKTIG: Vi gjør IKKE en early return for loading her. Det vil bryte React
   // Rules of Hooks fordi useMemo (todos) lenger ned ikke ville bli kalt under
@@ -9996,6 +10255,50 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const isDevMode = import.meta.env.DEV;
   const isMockUser = user?.id === 'dev-mock-user-id' || user?.app_metadata?.provider === 'dev' ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user?.id || '');
+
+  // ── Churn-instrumentering: aktivitets-tidsstempel ──────────────────
+  // Skriver clients.last_active_at (maks 1×/døgn) og last_login_at (1×/økt)
+  // så vi kan se hvem som glir mot churn (client_health-viewet). Bruker samme
+  // update-own-RLS som plan-bytte. Stille no-op ved feil — aldri blokkér UI.
+  useEffect(() => {
+    if (!user?.id || isMockUser) return;
+    const iso = new Date().toISOString();
+    const day = iso.slice(0, 10);
+    const patch: Record<string, string> = {};
+
+    let newSession = true;
+    try { newSession = !sessionStorage.getItem('sikt_session_started'); } catch { /* ignore */ }
+    if (newSession) patch.last_login_at = iso;
+
+    let lastActiveDay: string | null = null;
+    try { lastActiveDay = localStorage.getItem(`sikt_active_day_${user.id}`); } catch { /* ignore */ }
+    if (lastActiveDay !== day) patch.last_active_at = iso;
+
+    if (Object.keys(patch).length === 0) return;
+
+    supabaseRest(`clients?user_id=eq.${user.id}`, {
+      method: 'PATCH',
+      body: patch,
+      headers: { Prefer: 'return=minimal' },
+    }).catch(() => { /* instrumentering skal aldri kaste mot brukeren */ });
+
+    try { sessionStorage.setItem('sikt_session_started', '1'); } catch { /* ignore */ }
+    try { localStorage.setItem(`sikt_active_day_${user.id}`, day); } catch { /* ignore */ }
+  }, [user?.id, isMockUser]);
+
+  // ── Plan-grenser: last inn antall analyser brukt denne måneden ─────
+  useEffect(() => {
+    if (!user?.id || isMockUser) return;
+    supabaseRest<{ analyses_month: string | null; analyses_count: number }[]>(
+      `clients?user_id=eq.${user.id}&select=analyses_month,analyses_count&limit=1`,
+    ).then((rows) => {
+      const r = Array.isArray(rows) ? rows[0] : null;
+      if (r) { setAnalysesMonth(r.analyses_month ?? null); setAnalysesUsed(r.analyses_count ?? 0); }
+    }).catch(() => { /* ignore */ });
+  }, [user?.id, isMockUser]);
+
+  // Merk: opptelling av analyse-kvoten skjer nå server-side i scan-pagespeed
+  // (kan ikke omgås). Frontend leser status fra svaret (usage) + ved innlasting.
 
   // Lokal handler for plan-bytte (dev) — speiler den gamle logikken fra PortalSettings
   const performPlanChange = async () => {
@@ -10142,6 +10445,67 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     if (deletingAccount) return;
     setShowDeleteAccountModal(false);
     resetDeleteAccountModal();
+  };
+
+  // ── Oppsigelse ────────────────────────────────────────────────────
+  // Stripe «no-code» customer-portal login-lenke. Konfigureres i Stripe
+  // Dashboard → Settings → Billing → Customer portal → «login page».
+  // Tom streng = ikke satt opp ennå → vi viser bekreftelse + e-post-fallback
+  // i stedet for å sende kunden til en død lenke.
+  const STRIPE_BILLING_PORTAL_URL = '';
+  const CANCEL_REASONS: { id: string; label: string }[] = [
+    { id: 'too_expensive', label: 'For dyrt' },
+    { id: 'no_value', label: 'Fikk ikke nok verdi' },
+    { id: 'too_hard', label: 'For vanskelig å bruke' },
+    { id: 'hired_someone', label: 'Ansatte noen / byrå i stedet' },
+    { id: 'switching', label: 'Bytter til et annet verktøy' },
+    { id: 'other', label: 'Annet' },
+  ];
+
+  const openCancelModal = () => {
+    setCancelReason('');
+    setCancelComment('');
+    setCancelError(null);
+    setCancelDone(false);
+    setCancelSubmitting(false);
+    setShowCancelModal(true);
+  };
+  const closeCancelModal = () => {
+    if (cancelSubmitting) return;
+    setShowCancelModal(false);
+  };
+
+  const submitCancellation = async () => {
+    if (!cancelReason) { setCancelError('Velg en grunn først.'); return; }
+    setCancelSubmitting(true);
+    setCancelError(null);
+    try {
+      // Dev-modus: ikke skriv mot prod-tabellen.
+      if (!isMockUser && user?.id) {
+        await supabaseRest('cancellation_feedback', {
+          method: 'POST',
+          body: {
+            user_id: user.id,
+            package_name: clientData?.package_name || null,
+            reason: cancelReason,
+            comment: cancelComment.trim() || null,
+          },
+          headers: { Prefer: 'return=minimal' },
+        });
+      }
+      // Selve oppsigelsen skjer i Stripe (webhooken fanger subscription.deleted).
+      if (STRIPE_BILLING_PORTAL_URL) {
+        window.location.href =
+          `${STRIPE_BILLING_PORTAL_URL}?prefilled_email=${encodeURIComponent(user?.email || '')}`;
+        return;
+      }
+      // Portal ikke konfigurert ennå → bekreft at vi har registrert det.
+      setCancelDone(true);
+    } catch {
+      setCancelError('Kunne ikke registrere oppsigelsen. Prøv igjen, eller skriv til support@siktseo.com.');
+    } finally {
+      setCancelSubmitting(false);
+    }
   };
 
   const confirmDeleteAccount = async () => {
@@ -11106,7 +11470,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         </div>
       </header>
 
-    <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%' }}
+    <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%', overflowX: 'clip' }}
           className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
         {/* =============================================================== */}
@@ -11118,6 +11482,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <div>
                 <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] text-[#1A1A1A] font-['Geist',sans-serif]">Dashboard</h1>
                 <p className="text-base mt-3 text-[#8A8578]">Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+                {analysisLimit !== Infinity && (
+                  <p className="text-xs mt-1.5 text-[#8A8578] tabular-nums">
+                    {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
+                    {analysesRemaining === 0 && currentLevel < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => handleUpgrade()}
+                        className="ml-2 font-semibold text-[#15795A] underline"
+                      >
+                        Oppgrader
+                      </button>
+                    )}
+                  </p>
+                )}
               </div>
             </header>
 
@@ -12229,8 +12607,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Koble til Google for å se hva folk søker på</p>
-                    <p className="text-xs" style={{ color: '#8A8578' }}>Google sender tallene vanligvis 1–2 uker etter tilkobling. Vi sier fra når de er klare.</p>
+                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Følg dine egne søkeord nå — uten Google-tilkobling</p>
+                    <p className="text-xs" style={{ color: '#8A8578' }}>Legg dem til nedenfor, så måler vi Google-plasseringen din med en gang. Koble til Google (valgfritt) for å få flere søkeord foreslått automatisk.</p>
                   </div>
                 </div>
                 {!showGscPreCheck ? (
@@ -12239,7 +12617,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     className="shrink-0 inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97]"
                     style={{ background: '#1A1A1A', color: '#fff' }}
                   >
-                    Koble til Google
+                    Koble til (valgfritt)
                   </button>
                 ) : (
                   <GscPreCheck onConfirm={handleConnectGsc} onCancel={() => setShowGscPreCheck(false)} theme={themed} />
@@ -12380,7 +12758,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             ? 'Ingen treff på søket — prøv et annet ord'
                             : gscConnected
                               ? 'Google sender flere søkeord fortløpende — typisk 1–2 uker etter tilkobling. Vi sier fra når listen fylles.'
-                              : 'Koble til Google, eller legg til egne søkeord nedenfor. Plasseringen måles ved første sjekk.'}
+                              : 'Legg til søkeordene du vil følge nedenfor — vi måler Google-plasseringen ved første sjekk. Kobler du til Google senere, fyller vi på med flere automatisk.'}
                         </div>
                       ) : (
                         <ul>
@@ -15395,6 +15773,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       );
                     })}
                   </div>
+                  <div className="mt-4 pt-4 border-t border-[#EFEBE2]">
+                    <button
+                      type="button"
+                      onClick={openCancelModal}
+                      className="text-sm font-medium"
+                      style={{ color: '#8A8578', transition: 'color 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#B4231F'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#8A8578'; }}
+                    >
+                      Avslutt abonnement
+                    </button>
+                  </div>
                 </div>
               </details>
 
@@ -16103,6 +16493,103 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         </div>
       )}
 
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Lukk"
+            onClick={closeCancelModal}
+            disabled={cancelSubmitting}
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-[#E9E4DA] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto font-['Geist','DM_Sans',sans-serif]">
+            {!cancelDone ? (
+              <>
+                <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Avslutt abonnement</h3>
+                <p className="text-sm mb-4" style={{ color: '#5C574C', lineHeight: 1.55 }}>
+                  Ingen bindingstid — du beholder tilgang ut perioden du har betalt for. Før du går: hva er hovedgrunnen? Det hjelper oss å bli bedre.
+                </p>
+                <div className="space-y-1.5 mb-4">
+                  {CANCEL_REASONS.map((r) => (
+                    <label
+                      key={r.id}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer border"
+                      style={{
+                        borderColor: cancelReason === r.id ? '#1A1A1A' : '#E9E4DA',
+                        background: cancelReason === r.id ? '#FAF8F3' : '#FFFFFF',
+                        transition: 'border-color 140ms, background 140ms',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="cancel-reason"
+                        value={r.id}
+                        checked={cancelReason === r.id}
+                        onChange={() => { setCancelReason(r.id); setCancelError(null); }}
+                        className="accent-[#1A1A1A]"
+                      />
+                      <span className="text-sm" style={{ color: '#1A1A1A' }}>{r.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  value={cancelComment}
+                  onChange={(e) => setCancelComment(e.target.value)}
+                  placeholder="Vil du si mer? (valgfritt)"
+                  rows={3}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#E9E4DA] bg-[#FFFFFF] focus:outline-none resize-none"
+                  style={{ color: '#1A1A1A' }}
+                />
+                {cancelError && (
+                  <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: '#FBECEB', color: '#B4231F', border: '1px solid rgba(180,35,31,0.25)' }}>
+                    {cancelError}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 mt-5">
+                  <button
+                    type="button"
+                    onClick={closeCancelModal}
+                    disabled={cancelSubmitting}
+                    className="rounded-full px-4 py-2 text-sm border border-[#E9E4DA] bg-[#FFFFFF] disabled:opacity-50"
+                    style={{ color: '#1A1A1A' }}
+                  >
+                    Behold abonnementet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitCancellation}
+                    disabled={cancelSubmitting || !cancelReason}
+                    className={`rounded-full px-4 py-2 text-sm text-white inline-flex items-center gap-2${cancelSubmitting || !cancelReason ? ' opacity-50 cursor-not-allowed' : ''}`}
+                    style={{ background: '#B4231F' }}
+                  >
+                    {cancelSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                    Avslutt abonnement
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Takk — vi har registrert det</h3>
+                <p className="text-sm mb-4" style={{ color: '#5C574C', lineHeight: 1.55 }}>
+                  Vi har lagret tilbakemeldingen din. For å stoppe videre trekk fullfører vi oppsigelsen i betalingsløsningen — skriv til
+                  {' '}<a href="mailto:support@siktseo.com?subject=Avslutt%20abonnement" className="underline" style={{ color: '#1A1A1A' }}>support@siktseo.com</a>{' '}
+                  så bekrefter vi med en gang. Du beholder tilgang ut perioden du har betalt for.
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(false)}
+                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                  >
+                    Lukk
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {showDisconnectConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <button
@@ -16687,24 +17174,41 @@ function App() {
         );
         const client = Array.isArray(rows) && rows.length ? rows[0] : null;
         if (!client?.website_url) return;
+        let formattedUrl = String(client.website_url).trim();
+        if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
 
         const { data: { session } } = await supabase.auth.getSession();
         toastInfo('Vi kjører en første analyse av nettsiden din i bakgrunnen...');
+        // Marker som «underveis» så portalens auto-scan venter på dette resultatet
+        // i stedet for å starte en konkurrerende analyse.
+        try { localStorage.setItem(`sikt_first_analysis_pending_${user.id}`, String(Date.now())); } catch { /* ignore */ }
 
-        void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
+        // Vent på resultatet og lagre RÅ-svaret lokalt. Portalen formaterer og
+        // viser det ved innlasting (sikt_first_analysis_raw → analyse-cache),
+        // så dashbordet ikke er tomt når kunden kommer inn første gang.
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({
-            url: client.website_url,
-            user_id: user.id,
-          }),
-        }).catch((err) => console.error('[first-analysis] scan-pagespeed feilet:', err));
+          body: JSON.stringify({ url: formattedUrl, user_id: user.id }),
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data?.mobile && data?.desktop) {
+            try {
+              localStorage.setItem(
+                `sikt_first_analysis_raw_${user.id}`,
+                JSON.stringify({ url: formattedUrl, mobileRaw: data.mobile, desktopRaw: data.desktop, timestamp: Date.now() }),
+              );
+            } catch { /* ignore */ }
+          }
+        }
       } catch (err: any) {
         console.error('[first-analysis] Kunne ikke starte analyse:', err?.message || err);
       } finally {
+        try { localStorage.removeItem(`sikt_first_analysis_pending_${user.id}`); } catch { /* ignore */ }
         if (!cancelled) setJustCompletedOnboarding(false);
       }
     };

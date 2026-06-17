@@ -6,6 +6,30 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const json = (payload: unknown, status = 200) =>
+  new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+// Lett URL-validering for den utloggede gratis-analysen. Google PSI henter
+// selve siden (ikke oss), så SSRF-risikoen er minimal — vi avviser bare
+// åpenbart interne/ugyldige adresser.
+function normalizePublicUrl(raw: string): string {
+  let candidate = (raw || '').trim();
+  if (!candidate) throw new Error('Mangler URL.');
+  if (!/^https?:\/\//i.test(candidate)) candidate = `https://${candidate}`;
+  let parsed: URL;
+  try { parsed = new URL(candidate); } catch { throw new Error('Ugyldig URL.'); }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Kun http- og https-URL-er er tillatt.');
+  }
+  const host = parsed.hostname.toLowerCase();
+  const blocked =
+    host === 'localhost' || host === '0.0.0.0' || host.endsWith('.local') ||
+    /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host) || /^169\.254\./.test(host);
+  if (blocked) throw new Error('URL peker mot et ikke-tillatt nettverk.');
+  return parsed.href;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,16 +45,81 @@ Deno.serve(async (req) => {
 
   let targetUrl: string | null = null;
   let siteId: string | null = null;
+  let userId: string | null = null;
+  let mode: string | null = null;
+  let email = '';
 
   try {
     const body = await req.json();
     targetUrl = body.url ?? null;
     siteId = body.site_id ?? null;
+    userId = body.user_id ?? null;
+    mode = body.mode ?? null;
+    email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   } catch {
     return new Response(
       JSON.stringify({ error: 'Ugyldig JSON i request body.' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
+  }
+
+  // ── Utlogget gratis-analyse (forsiden, e-post-gated) ────────────────
+  // Kjører FØRST og isolert, før all site/limit-logikk, så den ikke kan
+  // påvirke betalende kunders flyt. Returnerer KUN en teaser, aldri full rapport.
+  if (mode === 'public') {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'Ugyldig e-postadresse.' }, 400);
+    }
+    let publicUrl: string;
+    try {
+      publicUrl = normalizePublicUrl(targetUrl ?? '');
+    } catch (e) {
+      return json({ error: (e as Error)?.message || 'URL er ikke tillatt.' }, 400);
+    }
+
+    const cats = ['performance', 'seo', 'accessibility', 'best-practices']
+      .map((c) => `category=${encodeURIComponent(c)}`).join('&');
+    const psi = (strategy: string) =>
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(publicUrl)}&key=${encodeURIComponent(apiKey)}&strategy=${strategy}&${cats}`;
+
+    const [mRes, dRes] = await Promise.all([fetch(psi('mobile')), fetch(psi('desktop'))]);
+    if (mRes.status === 429 || dRes.status === 429) {
+      return json({ error: 'rate_limited', message: 'For mange forespørsler akkurat nå. Prøv igjen om litt.' }, 429);
+    }
+    if (!mRes.ok || !dRes.ok) {
+      return json({ error: 'Kunne ikke analysere siden. Sjekk at URL-en er riktig.' }, 502);
+    }
+    const [m, d] = await Promise.all([mRes.json(), dRes.json()]);
+
+    const scoreOf = (cat: any) => (cat && typeof cat.score === 'number' ? Math.round(cat.score * 100) : null);
+    const mc = m.lighthouseResult?.categories ?? {};
+    const scores = {
+      performance: scoreOf(mc.performance),
+      seo: scoreOf(mc.seo),
+      accessibility: scoreOf(mc.accessibility),
+      bestPractices: scoreOf(mc['best-practices']),
+    };
+    const audits = m.lighthouseResult?.audits ?? {};
+    const topIssues = (Object.values(audits) as any[])
+      .filter((a) => a && typeof a.score === 'number' && a.score < 0.9 && a.title)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map((a) => ({ title: a.title, displayValue: a.displayValue || '' }));
+
+    // Lead-lagring (service-role) — skal aldri blokkere svaret til besøkende.
+    try {
+      const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      await svc.from('audit_leads').insert({
+        email,
+        url: publicUrl,
+        mobile_score: scores.performance,
+        desktop_score: scoreOf(d.lighthouseResult?.categories?.performance),
+      });
+    } catch (err) {
+      console.error('[scan-pagespeed] audit_leads insert feilet:', err);
+    }
+
+    return json({ teaser: true, url: publicUrl, scores, topIssues }, 200);
   }
 
   // If no direct url, fetch homepage_url from database via site_id
@@ -59,6 +148,47 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Mangler url eller site_id i request body.' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
+  }
+
+  // ── Plan-grense (server-side håndhevet) ──────────────────────────────
+  // Gjelder KUN bruker-initierte kall (user_id satt). System/cron-kall via
+  // site_id hoppes over. Vi utleder ekte bruker fra JWT så kvoten ikke kan
+  // forfalskes ved å sende et annet user_id; faller tilbake til body ved feil.
+  const ANALYSIS_LIMIT_FOR = (pkg: string): number =>
+    pkg.includes('premium') ? Infinity : pkg.includes('standard') ? 50 : 10;
+  let usage: { used: number; limit: number; month: string } | null = null;
+  let enforceUserId: string | null = null;
+
+  if (userId) {
+    const supaUrl = Deno.env.get('SUPABASE_URL')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const authHeader = req.headers.get('Authorization') || '';
+    try {
+      const asUser = createClient(supaUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await asUser.auth.getUser();
+      enforceUserId = user?.id ?? userId;
+    } catch {
+      enforceUserId = userId;
+    }
+
+    const svc = createClient(supaUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: client } = await svc
+      .from('clients')
+      .select('package_name, analyses_month, analyses_count')
+      .eq('user_id', enforceUserId)
+      .maybeSingle();
+
+    const limit = ANALYSIS_LIMIT_FOR((client?.package_name || '').toLowerCase());
+    const month = new Date().toISOString().slice(0, 7);
+    const used = client?.analyses_month === month ? (client?.analyses_count ?? 0) : 0;
+
+    if (limit !== Infinity && used >= limit) {
+      return new Response(
+        JSON.stringify({ error: 'analysis_limit_reached', usage: { used, limit, month } }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    if (limit !== Infinity) usage = { used, limit, month };
   }
 
   const strategies = ['mobile', 'desktop'] as const;
@@ -139,8 +269,22 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Tell opp analysen (kun bruker-initierte kall på begrensede planer).
+  if (enforceUserId && usage) {
+    try {
+      const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const newCount = usage.used + 1;
+      await svc.from('clients')
+        .update({ analyses_month: usage.month, analyses_count: newCount })
+        .eq('user_id', enforceUserId);
+      usage = { ...usage, used: newCount };
+    } catch (err) {
+      console.error('[scan-pagespeed] Kunne ikke telle opp analyse:', err);
+    }
+  }
+
   return new Response(
-    JSON.stringify({ mobile: mobileData, desktop: desktopData }),
+    JSON.stringify({ mobile: mobileData, desktop: desktopData, usage }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
   );
 });
