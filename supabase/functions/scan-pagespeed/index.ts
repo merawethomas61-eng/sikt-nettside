@@ -30,6 +30,109 @@ function normalizePublicUrl(raw: string): string {
   return parsed.href;
 }
 
+// ── On-page-fakta for gratis-analysen ────────────────────────────────────
+// Deterministisk uttrekk fra kundens faktiske HTML (det Google ser ved
+// første lasting). Ingen ekstern parser-dependency — kun regex/streng — og
+// alt er pakket i try/catch hos kalleren, så et mislykket HTML-hent aldri
+// kan bryte PSI-resultatet (returnerer da pageFacts: null).
+type PageFacts = {
+  title: string | null;
+  titleLen: number;
+  metaDescription: string | null;
+  metaLen: number;
+  h1Count: number;
+  h1Text: string | null;
+  imgTotal: number;
+  imgMissingAlt: number;
+  wordCount: number;
+  hasOg: boolean;
+  hasSchema: boolean;
+  hasViewport: boolean;
+};
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&aelig;/gi, 'æ').replace(/&oslash;/gi, 'ø').replace(/&aring;/gi, 'å');
+}
+
+function extractFacts(rawHtml: string): PageFacts {
+  const html = rawHtml;
+
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? decodeEntities(titleMatch[1].replace(/\s+/g, ' ').trim()) : null;
+
+  let metaDescription: string | null = null;
+  for (const tag of (html.match(/<meta\b[^>]*>/gi) || [])) {
+    if (/name\s*=\s*["']description["']/i.test(tag)) {
+      const c = tag.match(/content\s*=\s*["']([\s\S]*?)["']/i);
+      if (c) { metaDescription = decodeEntities(c[1].replace(/\s+/g, ' ').trim()); break; }
+    }
+  }
+
+  const h1s = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi) || [];
+  const h1Count = h1s.length;
+  const h1Text = h1Count > 0
+    ? decodeEntities(h1s[0].replace(/<h1\b[^>]*>/i, '').replace(/<\/h1>/i, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+    : null;
+
+  const imgs = html.match(/<img\b[^>]*>/gi) || [];
+  const imgTotal = imgs.length;
+  let imgMissingAlt = 0;
+  for (const tag of imgs) {
+    const alt = tag.match(/\balt\s*=\s*["']([\s\S]*?)["']/i);
+    if (!alt || alt[1].trim() === '') imgMissingAlt++;
+  }
+
+  const stripped = html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ');
+  const text = decodeEntities(stripped).replace(/\s+/g, ' ').trim();
+  const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+
+  return {
+    title, titleLen: title ? title.length : 0,
+    metaDescription, metaLen: metaDescription ? metaDescription.length : 0,
+    h1Count, h1Text,
+    imgTotal, imgMissingAlt,
+    wordCount,
+    hasOg: /property\s*=\s*["']og:(title|image|description)["']/i.test(html),
+    hasSchema: /application\/ld\+json/i.test(html) || /\bitemscope\b/i.test(html),
+    hasViewport: /name\s*=\s*["']viewport["']/i.test(html),
+  };
+}
+
+async function fetchPageFacts(targetUrl: string): Promise<PageFacts | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let res: Response;
+    try {
+      res = await fetch(targetUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'SiktBot/1.0 (+https://sikt.no)', 'Accept': 'text/html,application/xhtml+xml' },
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!res.ok) return null;
+    if (!/html/i.test(res.headers.get('content-type') || '')) return null;
+    let html = await res.text();
+    if (html.length > 500_000) html = html.slice(0, 500_000);
+    return extractFacts(html);
+  } catch (err) {
+    console.error('[scan-pagespeed] fetchPageFacts feilet:', err);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -108,6 +211,10 @@ Deno.serve(async (req) => {
       .slice(0, 3)
       .map((a) => ({ title: a.title, displayValue: a.displayValue || '' }));
 
+    // On-page-fakta fra kundens faktiske HTML (det Google ser ved første
+    // lasting). Isolert: feiler den, faller vi grasiøst tilbake til kun PSI.
+    const pageFacts = await fetchPageFacts(publicUrl);
+
     // Lead-lagring (service-role) — skal aldri blokkere svaret til besøkende.
     try {
       const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -121,7 +228,7 @@ Deno.serve(async (req) => {
       console.error('[scan-pagespeed] audit_leads insert feilet:', err);
     }
 
-    return json({ teaser: true, url: publicUrl, scores, topIssues, issueCount }, 200);
+    return json({ teaser: true, url: publicUrl, scores, topIssues, issueCount, pageFacts }, 200);
   }
 
   // If no direct url, fetch homepage_url from database via site_id

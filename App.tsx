@@ -3001,6 +3001,76 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
 // Gratis e-post-gated analyse — lokkemiddelet øverst i trakten.
 // Lar besøkende se ekte score + topp-funn FØR de logger inn/kjøper.
+// On-page-fakta som edge-funksjonen henter fra kundens faktiske HTML.
+type PageFacts = {
+  title: string | null;
+  titleLen: number;
+  metaDescription: string | null;
+  metaLen: number;
+  h1Count: number;
+  h1Text: string | null;
+  imgTotal: number;
+  imgMissingAlt: number;
+  wordCount: number;
+  hasOg: boolean;
+  hasSchema: boolean;
+  hasViewport: boolean;
+};
+
+type PageFinding = { w: number; title: string; impact: string };
+
+// Bygger spesifikke, plain-norsk-funn fra on-page-fakta. Ren funksjon, ferdige
+// maler (ingen AI) — siterer kundens egen side så det føles som «de leste MIN
+// side». Sortert sterkest først; kalleren viser topp 3 og låser resten.
+const GENERIC_TITLES = ['hjem', 'home', 'forside', 'startside', 'velkommen', 'min side', 'untitled', 'document', 'ny side'];
+function buildPageFindings(f: PageFacts): PageFinding[] {
+  const out: PageFinding[] = [];
+
+  if (!f.title || f.titleLen === 0) {
+    out.push({ w: 100, title: 'Siden din mangler en tittel', impact: 'Tittelen er det aller første Google viser i søkeresultatet. Uten den blir du nesten usynlig.' });
+  } else if (f.titleLen < 15 || GENERIC_TITLES.includes(f.title.toLowerCase())) {
+    out.push({ w: 90, title: `Tittelen din: «${f.title}»`, impact: 'Dette er det aller første Google og kundene ser. Den sier ikke hva du tilbyr — folk scroller forbi.' });
+  } else if (f.titleLen > 60) {
+    out.push({ w: 55, title: `Tittelen din er ${f.titleLen} tegn — Google kutter den midt i setningen`, impact: 'Det viktigste forsvinner bak «…». Hold den under ~60 tegn så hele budskapet vises.' });
+  }
+
+  if (!f.metaDescription || f.metaLen === 0) {
+    out.push({ w: 85, title: 'Du mangler meta-beskrivelse', impact: 'Teksten under lenken i Google. Uten den gjetter Google selv — ofte feil, og færre klikker seg inn.' });
+  } else if (f.metaLen < 50) {
+    out.push({ w: 50, title: `Meta-beskrivelsen din er bare ${f.metaLen} tegn`, impact: 'Du lar verdifull plass i Google stå tom. 120–158 tegn gir flere klikk.' });
+  } else if (f.metaLen > 160) {
+    out.push({ w: 40, title: `Meta-beskrivelsen din er ${f.metaLen} tegn — Google kutter den`, impact: 'Slutten forsvinner bak «…». Hold den under ~158 tegn så hele teksten vises.' });
+  }
+
+  if (!f.hasViewport) {
+    out.push({ w: 80, title: 'Siden er ikke satt opp for mobil', impact: 'Uten viewport-tag vises siden feil på telefon. Google rangerer mobil-først — dette straffer deg direkte.' });
+  }
+
+  if (f.h1Count === 0) {
+    out.push({ w: 75, title: 'Forsiden mangler en H1-overskrift', impact: 'Google bruker H1 til å forstå hva siden handler om. Uten den famler den i blinde.' });
+  } else if (f.h1Count > 1) {
+    out.push({ w: 30, title: `Forsiden har ${f.h1Count} H1-overskrifter`, impact: 'Flere H1-er forvirrer Google om hva som er hovedbudskapet. Én tydelig H1 er best.' });
+  }
+
+  if (f.wordCount < 300) {
+    out.push({ w: 70, title: `Forsiden leverer bare ${f.wordCount} ord til Google ved første lasting`, impact: 'Google belønner sider som svarer grundig. Under 300 ord oppfattes ofte som tynt — og rankes lavere.' });
+  }
+
+  if (f.imgMissingAlt > 0) {
+    out.push({ w: 60, title: `${f.imgMissingAlt} av ${f.imgTotal} bilder mangler alt-tekst`, impact: 'Google «ser» ikke bilder uten alt-tekst — du taper Google Bilder-trafikk, og siden blir utilgjengelig for skjermlesere.' });
+  }
+
+  if (!f.hasSchema) {
+    out.push({ w: 45, title: 'Google vet ikke at du er en bedrift', impact: 'Uten strukturert data (schema) går du glipp av rik visning — stjerner, åpningstider og kontaktinfo rett i søket.' });
+  }
+
+  if (!f.hasOg) {
+    out.push({ w: 35, title: 'Lenken din ser kjedelig ut når den deles', impact: 'Uten Open Graph-bilde og -tittel blir delinger på Facebook og LinkedIn grå og tomme — nesten ingen klikker.' });
+  }
+
+  return out.sort((a, b) => b.w - a.w);
+}
+
 const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => void }) => {
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
@@ -3011,6 +3081,7 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
     scores: { performance: number | null; seo: number | null; accessibility: number | null; bestPractices: number | null };
     topIssues: { title: string; displayValue: string }[];
     issueCount?: number;
+    pageFacts?: PageFacts | null;
   } | null>(null);
   const [monthlyVisits, setMonthlyVisits] = useState(1000);
 
@@ -3070,6 +3141,13 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
   const issueCount = result?.issueCount ?? result?.topIssues.length ?? 0;
   const hiddenIssues = Math.max(0, issueCount - (result?.topIssues.length ?? 0));
 
+  // Spesifikke on-page-funn (det Google ser) — leder resultatet når vi klarte
+  // å lese HTML-en. Topp 3 vises; resten (inkl. PSI-funn) låses ærlig.
+  const pageFindings = result?.pageFacts ? buildPageFindings(result.pageFacts) : [];
+  const shownFindings = pageFindings.slice(0, 3);
+  const totalFindings = pageFindings.length + issueCount;
+  const hiddenFindings = Math.max(0, totalFindings - shownFindings.length);
+
   return (
     <section id="gratis-analyse" className="py-16 sm:py-24 md:py-28 bg-white relative overflow-hidden scroll-mt-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-5 relative z-10">
@@ -3123,6 +3201,31 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               <p className="text-xs font-bold uppercase tracking-widest text-[#808080] mb-1">Resultat for</p>
               <p className="text-sm font-bold text-[#1A1A1A] mb-5 break-all">{result.url}</p>
 
+              {/* Leder med spesifikke on-page-funn — det som føles som «de leste MIN side». */}
+              {shownFindings.length > 0 && (
+                <div className="mb-7">
+                  <p className="text-sm font-black text-[#1A1A1A] mb-1">Vi leste faktisk siden din. Dette fant vi:</p>
+                  <p className="text-xs text-[#B3AD9F] mb-3">Slik ser forsiden din ut for Google ved første lasting.</p>
+                  <ul className="space-y-3">
+                    {shownFindings.map((find, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <AlertCircle size={16} className="text-[#C77700] mt-0.5 shrink-0" />
+                        <span className="text-sm text-[#1A1A1A]">
+                          <span className="font-bold">{find.title}</span>
+                          <span className="block text-[#808080] font-normal mt-0.5">{find.impact}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {hiddenFindings > 0 && (
+                    <div className="mt-3 rounded-xl border border-dashed border-[#EBEBE6] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
+                      <Lock size={15} className="text-[#B3AD9F] shrink-0" />
+                      <span className="text-sm font-bold text-[#808080]">+{hiddenFindings} flere funn venter i full rapport</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-end gap-2 mb-1">
                 <span className="text-5xl sm:text-6xl font-black tabular-nums leading-none" style={{ color: scoreColor(overall) }}>{overall ?? '–'}</span>
                 <span className="text-lg font-bold text-[#B3AD9F] mb-1">/ 100</span>
@@ -3144,8 +3247,8 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               </div>
               <p className="text-xs text-[#B3AD9F] mb-7">Beste i bransjen ligger på 90+ på alle fire.</p>
 
-              {/* Funn + skjult gap */}
-              {issueCount > 0 && (
+              {/* Fallback: rene PSI-funn vises kun når vi IKKE klarte å lese HTML-en (ingen on-page-funn). */}
+              {shownFindings.length === 0 && issueCount > 0 && (
                 <div className="mb-7">
                   <p className="text-sm font-black text-[#1A1A1A] mb-3">Vi fant <span className="text-[#DC2626]">{issueCount}</span> ting som koster deg synlighet:</p>
                   <ul className="space-y-2">
