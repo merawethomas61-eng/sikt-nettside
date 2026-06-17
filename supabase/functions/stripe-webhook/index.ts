@@ -39,14 +39,24 @@ const PRICE_TO_PLAN: Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'> = {
 };
 
 const AMOUNT_TO_PLAN: Record<number, 'BASIC' | 'STANDARD' | 'PREMIUM'> = {
-  // Førstegangs (introduksjons-rabatt) i øre — juster om dere endrer prisen
-  17970: 'BASIC',     // 599 × 0.30 ≈ 179,70
-  44970: 'STANDARD',  // 1499 × 0.30 ≈ 449,70
-  149970: 'PREMIUM',  // 4999 × 0.30 ≈ 1499,70
-  // Vanlige måneder
-  59900: 'BASIC',
-  149900: 'STANDARD',
-  499900: 'PREMIUM',
+  // Beløp i øre. Kun fallback på total-beløpet — foretrukket er metadata.plan
+  // eller PRICE_TO_PLAN over. Juster hvis prisene endres.
+  // Introrabatt de tre første månedene: kunden betaler 50 % / 70 % / 85 % av full pris.
+  // — Basic (790 kr/mnd)
+  39500: 'BASIC',     // mnd 1 (50 %)
+  55300: 'BASIC',     // mnd 2 (70 %)
+  67150: 'BASIC',     // mnd 3 (85 %)
+  79000: 'BASIC',     // full pris
+  // — Standard (1 690 kr/mnd)
+  84500: 'STANDARD',  // mnd 1 (50 %)
+  118300: 'STANDARD', // mnd 2 (70 %)
+  143650: 'STANDARD', // mnd 3 (85 %)
+  169000: 'STANDARD', // full pris
+  // — Premium (4 990 kr/mnd)
+  249500: 'PREMIUM',  // mnd 1 (50 %)
+  349300: 'PREMIUM',  // mnd 2 (70 %)
+  424150: 'PREMIUM',  // mnd 3 (85 %)
+  499000: 'PREMIUM',  // full pris
 };
 
 const PLAN_TO_PACKAGE_NAME: Record<'BASIC' | 'STANDARD' | 'PREMIUM', string> = {

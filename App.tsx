@@ -2616,11 +2616,12 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   const plans: Plan[] = [
     {
       title: "BASIC",
-      price: "499",
-      tagline: "Motoren tenker. Du limer inn.",
-      desc: "Sikt analyserer hele siden, finner nøyaktig hva som stopper deg på Google, og skriver ferdige løsninger du bare limer inn — uansett plattform. Du gjør ikke SEO-jobben selv; du kopierer svaret. Ingen tilkobling nødvendig.",
+      price: "790",
+      tagline: "Vi fikser det viktigste — så viser vi deg resten.",
+      desc: "Koble til siden din, så fikser Sikt de tre viktigste tingene automatisk i oppstart — du ser det skje. Deretter finner vi hva mer som stopper deg på Google og skriver ferdige løsninger du limer inn selv. Ikke tilkoblet? Du får alt som ferdig tekst.",
       features: [
-        { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Sikt finner hver manglende eller svake meta-tittel, beskrivelse og bilde-alt, og skriver ferdig teksten for deg. Du kopierer den rett inn i ditt eget system — ingen blank side, ingen gjetting." },
+        { text: "Sikt fikser de 3 viktigste tingene automatisk i oppstart", detail: "Koble til WordPress eller Shopify, så pusher Sikt de tre mest verdifulle meta-fiksene (titler og beskrivelser) rett inn på siden din i oppstart — så du ser med egne øyne at det funker. På andre plattformer får du dem som ferdig tekst klar til innliming." },
+        { text: "AI skriver meta-tekster og alt-tekster — klar til innliming", detail: "Sikt finner hver manglende eller svake meta-tittel, beskrivelse og bilde-alt, og skriver ferdig teksten for deg. Du kopierer den rett inn i ditt eget system — ingen blank side, ingen gjetting." },
         { text: "Kopier-og-lim-inn kode for tekniske fikser", detail: "Når vi finner en teknisk feil, får du nøyaktig hvilken kode som må endres — forklart på plain norsk. Lim den rett inn der du redigerer, eller rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …)." },
         { text: "Konkurrent-radar: varsel når 2 konkurrenter endrer seg", detail: "Du sover — Sikt holder øye. E-postvarsel når dine 2 hovedkonkurrenter publiserer nytt innhold, endrer priser eller fikser tekniske ting, så du aldri blir overrasket." },
         { text: "Funker uansett plattform — også AI-bygde sider", detail: "WordPress, Wix, Squarespace, Webflow, eller en side du bygde med Claude/Cursor/v0/Lovable. Sikt gir deg ferdige forslag du limer inn der du redigerer — eller rett inn i AI-verktøyet ditt." },
@@ -2633,10 +2634,10 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     },
     {
       title: "STANDARD",
-      price: "1 499",
+      price: "1 690",
       tagline: "Flere kunder — uten at du løfter en finger.",
       highlighted: true,
-      desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene automatisk, hver uke — så du blir mer synlig og får flere kunder uten å gjøre jobben selv.",
+      desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene automatisk — kontinuerlig og uten grense, hver uke, ikke bare i oppstart. Du blir mer synlig og får flere kunder uten å gjøre jobben selv.",
       features: [
         { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag, månedlig rapport og konkurrent-radar er inkludert." },
         { text: "Sikt fikser nettsiden din automatisk", detail: "WordPress og Shopify: Sikt pusher endringene rett inn — du løfter ikke en finger. Bygde du siden med AI (Claude, Cursor, v0, Lovable …)? Da får du en ferdig, lim-inn-klar prompt per problem som fikser det i din egen kodebase. Andre plattformer: ferdige forslag du limer inn." },
@@ -2650,7 +2651,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     },
     {
       title: "PREMIUM",
-      price: "4 999",
+      price: "4 990",
       tagline: "Når én ny kunde er verdt titusener.",
       ctaLabel: "Book en GEO-gjennomgang",
       ctaHref: "mailto:siktseo@gmail.com?subject=GEO-gjennomgang%20(Premium)&body=Hei%20Sikt%2C%0A%0AJeg%20vil%20ha%20en%20GEO-gjennomgang%20og%20se%20om%20ChatGPT%2FGemini%2FPerplexity%20nevner%20bedriften%20min.%0A%0ABedrift%2Fnettside%3A%20%0ABransje%3A%20%0A",
@@ -3510,7 +3511,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           </h2>
 
           <p className="text-base sm:text-lg md:text-xl text-violet-100 max-w-2xl mx-auto leading-relaxed font-medium mb-8 sm:mb-12 px-2">
-            Ingen bindingstid. Rabattert de tre første månedene — 50 %, 30 %, 15 % — så du rekker å se resultater før fullpris. Start med Basic for 499 kr.
+            Ingen bindingstid. Rabattert de tre første månedene — 50 %, 30 %, 15 % — så du rekker å se resultater før fullpris. Start med Basic for 790 kr.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -6719,7 +6720,7 @@ const KonkurrenterPage: React.FC<{
                   style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}` }}
                   onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
                 >
-                  Premium → 4 999 kr
+                  Premium → 4 990 kr
                 </button>
               </div>
             )}
@@ -10539,7 +10540,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const keywordLimit = getKeywordLimit(currentLevel);
 
   // Pakke-pris-tekst (brukes i settings + teaser)
-  const planPrices: Record<string, string> = { BASIC: '499 kr', STANDARD: '1 499 kr', PREMIUM: '4 999 kr' };
+  const planPrices: Record<string, string> = { BASIC: '790 kr', STANDARD: '1 690 kr', PREMIUM: '4 990 kr' };
   const planNames: Record<string, string> = { BASIC: 'Basic', STANDARD: 'Standard', PREMIUM: 'Premium' };
   const activePlanKey: 'BASIC' | 'STANDARD' | 'PREMIUM' =
     /premium/i.test(planBundle) ? 'PREMIUM' : /standard/i.test(planBundle) ? 'STANDARD' : 'BASIC';
@@ -13867,7 +13868,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Inkluderer automatisk re-analyse hver natt, søkeordsposisjon og konkurrent-sporing.</p>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 499 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 690 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
                             <button
                               type="button"
                               onClick={() => handleUpgrade('Standard')}
@@ -15179,7 +15180,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Inkluderer automatisk re-analyse hver natt, søkeordsposisjon og konkurrent-sporing.</p>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 499 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 600 }}>1 690 kr <span style={{ fontWeight: 400, fontSize: 11 }}>/mnd</span></p>
                             <button
                               type="button"
                               onClick={() => handleUpgrade('Standard')}

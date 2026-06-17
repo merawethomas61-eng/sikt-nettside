@@ -38,7 +38,9 @@ const AF_META_TARGET_MAX = 158;
 const AF_TITLE_MIN_LENGTH = 10;
 const AF_WP_TIMEOUT_MS = 10_000;
 const AF_DEDUP_WINDOW_DAYS = 30;
-const AF_PAID_PLANS = new Set(['Standard Pakke', 'Premium Pakke']);
+const AF_PAID_PLANS = new Set(['Basic Pakke', 'Standard Pakke', 'Premium Pakke']);
+const AF_BASIC_PLAN = 'Basic Pakke';
+const AF_BASIC_ONBOARDING_FIXES = 3; // Basic: engangs «wow» — 3 ekte meta/tittel-fikser i oppstart, så ikke mer
 
 // Delt regel mot oppdiktede påstander — AI-en vet ikke disse fakta om kunden.
 const AF_NO_CLAIMS =
@@ -395,6 +397,18 @@ async function runAutoFix(req, res) {
             .maybeSingle();
         if (!client || !AF_PAID_PLANS.has(client.package_name)) continue;
 
+        // Basic får kun en engangs «wow» (3 ekte meta/tittel-fikser i oppstart).
+        // Standard/Premium får løpende fikser opp til AF_MAX_FIXES_PER_CUSTOMER per kjøring.
+        const isBasic = client.package_name === AF_BASIC_PLAN;
+        if (isBasic) {
+            const { count: prevFixCount } = await supabase
+                .from('sikt_changes')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', host.user_id);
+            if ((prevFixCount ?? 0) >= AF_BASIC_ONBOARDING_FIXES) continue;
+        }
+        const maxFixes = isBasic ? AF_BASIC_ONBOARDING_FIXES : AF_MAX_FIXES_PER_CUSTOMER;
+
         summary.customers += 1;
 
         let appPassword;
@@ -433,13 +447,13 @@ async function runAutoFix(req, res) {
         // AUTO-PUSH: meta-description + seo-title
         let autoCount = 0;
         for (const page of pages) {
-            if (autoCount >= AF_MAX_FIXES_PER_CUSTOMER) break;
+            if (autoCount >= maxFixes) break;
             const jobs = [];
             if (page.currentMeta.length < AF_META_MIN_LENGTH) jobs.push({ field: 'meta-description', gen: afGenerateMeta });
             if (page.currentTitle.length < AF_TITLE_MIN_LENGTH) jobs.push({ field: 'seo-title', gen: afGenerateTitle });
 
             for (const job of jobs) {
-                if (autoCount >= AF_MAX_FIXES_PER_CUSTOMER) break;
+                if (autoCount >= maxFixes) break;
                 if (await recentlyChanged(page.link, job.field)) { summary.skipped += 1; continue; }
                 const value = await job.gen({ pageTitle: page.title, pageUrl: page.link, companyName });
                 if (!value) { summary.skipped += 1; continue; }
@@ -450,7 +464,8 @@ async function runAutoFix(req, res) {
             }
         }
 
-        // KØ: manglende H1
+        // KØ: manglende H1 — kun Standard+ (Basic får bare engangs meta/tittel-fiksene i oppstart)
+        if (!isBasic) {
         let queueCount = 0;
         for (const page of pages.slice(0, AF_QUEUE_SCAN_LIMIT)) {
             if (queueCount >= AF_MAX_QUEUE_PER_CUSTOMER) break;
@@ -481,6 +496,7 @@ async function runAutoFix(req, res) {
             if (qErr) { summary.errors += 1; console.warn('[autofix] kunne ikke kø-lagre H1:', page.link, qErr.message); }
             else { summary.queued += 1; queueCount += 1; }
         }
+        } // /if (!isBasic) — Basic hopper over H1-køen
     }
 
     console.log('[autofix] ferdig:', JSON.stringify(summary));

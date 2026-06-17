@@ -291,7 +291,7 @@ function row(items: SiktAction[], borderColor: string): string {
   `).join('')
 }
 
-function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean, canAutoFix: boolean): string {
+function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean, canAutoFix: boolean, isBasic: boolean, basicGotFixes: boolean): string {
   if (!opp) return ''
 
   const traffic = typeof opp.estimated_traffic === 'number' && opp.estimated_traffic > 0
@@ -304,11 +304,14 @@ function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean,
 
   // Plattform-bevisst: lov bare auto-fiks når siden faktisk er koblet til for skriving.
   // Standard+ på en rådgiver-plattform (Wix/Squarespace m.fl.) får ferdig forslag å lime inn.
-  const action = canAutoFix
-    ? 'Sikt tar tak i denne for deg — du ser den i neste kvittering.'
-    : isStandardOrAbove
-      ? 'Forslaget er klart til å limes inn. Koble til siden din for skrivetilgang, så fikser Sikt slikt automatisk.'
-      : 'Med Standard fikser Sikt slike muligheter automatisk. På Basic får du oppskriften — gjør det selv, eller oppgrader.'
+  // Basic får kun engangs auto-fiks i oppstart — aldri løpende, selv om siden er tilkoblet.
+  const action = isBasic
+    ? (basicGotFixes
+        ? 'Sikt fikset allerede de viktigste tingene for deg i oppstart. Denne muligheten får du som ferdig oppskrift — eller oppgrader til Standard for løpende auto-fiks hver uke.'
+        : 'Med Standard fikser Sikt slike muligheter automatisk, hver uke. På Basic får du oppskriften — gjør det selv, eller oppgrader.')
+    : canAutoFix
+      ? 'Sikt tar tak i denne for deg — du ser den i neste kvittering.'
+      : 'Forslaget er klart til å limes inn. Koble til siden din for skrivetilgang, så fikser Sikt slikt automatisk.'
 
   // Fremhevet kort (lys lilla) når det er ukens hovedsak; ellers samme stil som øvrige seksjoner.
   const bg = lightWeek ? '#faf7ff' : '#ffffff'
@@ -457,7 +460,7 @@ function buildEmailHtml(opts: {
   <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
   ` : ''}
 
-  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek, canAutoFix)}
+  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek, canAutoFix, !isStandardOrAbove, totalFixes > 0)}
 
   ${fixes.length > 0 ? section('Fikset av Sikt', row(fixes, '#7c3aed')) : ''}
   ${findings.length > 0 ? section('Vi fant også', row(findings, '#e2e0ea')) : ''}
