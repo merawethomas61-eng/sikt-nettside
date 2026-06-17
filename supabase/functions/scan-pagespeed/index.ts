@@ -100,9 +100,11 @@ Deno.serve(async (req) => {
       bestPractices: scoreOf(mc['best-practices']),
     };
     const audits = m.lighthouseResult?.audits ?? {};
-    const topIssues = (Object.values(audits) as any[])
+    const failing = (Object.values(audits) as any[])
       .filter((a) => a && typeof a.score === 'number' && a.score < 0.9 && a.title)
-      .sort((a, b) => a.score - b.score)
+      .sort((a, b) => a.score - b.score);
+    const issueCount = failing.length;
+    const topIssues = failing
       .slice(0, 3)
       .map((a) => ({ title: a.title, displayValue: a.displayValue || '' }));
 
@@ -119,7 +121,7 @@ Deno.serve(async (req) => {
       console.error('[scan-pagespeed] audit_leads insert feilet:', err);
     }
 
-    return json({ teaser: true, url: publicUrl, scores, topIssues }, 200);
+    return json({ teaser: true, url: publicUrl, scores, topIssues, issueCount }, 200);
   }
 
   // If no direct url, fetch homepage_url from database via site_id

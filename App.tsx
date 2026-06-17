@@ -2953,7 +2953,9 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
     url: string;
     scores: { performance: number | null; seo: number | null; accessibility: number | null; bestPractices: number | null };
     topIssues: { title: string; displayValue: string }[];
+    issueCount?: number;
   } | null>(null);
+  const [monthlyVisits, setMonthlyVisits] = useState(1000);
 
   const runAudit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2997,6 +2999,19 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
     { label: 'Tilgjengelighet', value: result.scores.accessibility },
     { label: 'Teknisk', value: result.scores.bestPractices },
   ] : [];
+
+  // Avledede salgs-tall (brukes kun i resultat-grenen).
+  const availableScores = result
+    ? [result.scores.performance, result.scores.seo, result.scores.accessibility, result.scores.bestPractices].filter((n): n is number => typeof n === 'number')
+    : [];
+  const overall = availableScores.length ? Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length) : null;
+  // Ærlig estimat: PSI vet IKKE faktisk trafikk → bygger på en synlig forutsetning (besøk/mnd).
+  const perfForEstimate = result?.scores.performance ?? overall ?? 90;
+  const uplift = Math.max(0, Math.min(0.3, (90 - perfForEstimate) / 100));
+  const extraVisits = Math.round(monthlyVisits * uplift);
+  const krLost = extraVisits * 8; // 8 kr/besøk — samme antakelse som ROI-/kvitterings-arbeidet.
+  const issueCount = result?.issueCount ?? result?.topIssues.length ?? 0;
+  const hiddenIssues = Math.max(0, issueCount - (result?.topIssues.length ?? 0));
 
   return (
     <section id="gratis-analyse" className="py-16 sm:py-24 md:py-28 bg-white relative overflow-hidden scroll-mt-24">
@@ -3047,10 +3062,22 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
         ) : (
           <RevealOnScroll direction="up">
             <div className="bg-white border border-[#EBEBE6] rounded-3xl p-5 sm:p-8 shadow-xl">
+              {/* Dom */}
               <p className="text-xs font-bold uppercase tracking-widest text-[#808080] mb-1">Resultat for</p>
-              <p className="text-lg font-black text-[#1A1A1A] mb-6 break-all">{result.url}</p>
+              <p className="text-sm font-bold text-[#1A1A1A] mb-5 break-all">{result.url}</p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-7">
+              <div className="flex items-end gap-2 mb-1">
+                <span className="text-5xl sm:text-6xl font-black tabular-nums leading-none" style={{ color: scoreColor(overall) }}>{overall ?? '–'}</span>
+                <span className="text-lg font-bold text-[#B3AD9F] mb-1">/ 100</span>
+              </div>
+              <p className="text-base text-[#808080] mb-6">
+                {overall !== null && overall >= 90
+                  ? 'Sterkt! Men selv små forbedringer kan gi flere kunder.'
+                  : 'Under det Google belønner — her er hva som holder deg tilbake.'}
+              </p>
+
+              {/* Score-rad + benchmark */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-2">
                 {scoreCards.map((c) => (
                   <div key={c.label} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-2xl p-4 text-center">
                     <div className="text-3xl font-black tabular-nums" style={{ color: scoreColor(c.value) }}>{c.value ?? '–'}</div>
@@ -3058,10 +3085,12 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   </div>
                 ))}
               </div>
+              <p className="text-xs text-[#B3AD9F] mb-7">Beste i bransjen ligger på 90+ på alle fire.</p>
 
-              {result.topIssues.length > 0 && (
+              {/* Funn + skjult gap */}
+              {issueCount > 0 && (
                 <div className="mb-7">
-                  <p className="text-sm font-black text-[#1A1A1A] mb-3">Største muligheter vi fant:</p>
+                  <p className="text-sm font-black text-[#1A1A1A] mb-3">Vi fant <span className="text-[#DC2626]">{issueCount}</span> ting som koster deg synlighet:</p>
                   <ul className="space-y-2">
                     {result.topIssues.map((issue, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-[#1A1A1A]">
@@ -3070,18 +3099,54 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                       </li>
                     ))}
                   </ul>
+                  {hiddenIssues > 0 && (
+                    <div className="mt-2 rounded-xl border border-dashed border-[#EBEBE6] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
+                      <Lock size={15} className="text-[#B3AD9F] shrink-0" />
+                      <span className="text-sm font-bold text-[#808080]">+{hiddenIssues} flere funn venter i full rapport</span>
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* Ærlig estimat (synlig forutsetning, justerbar) */}
+              {extraVisits > 0 && (
+                <div className="mb-7 rounded-2xl bg-[#F5F5F0] border border-[#EBEBE6] p-4 sm:p-5">
+                  <p className="text-sm text-[#1A1A1A] leading-relaxed">
+                    <span className="font-black">Grovt anslag:</span> en side med ~<span className="font-bold tabular-nums">{monthlyVisits.toLocaleString('nb-NO')}</span> besøk/mnd kan tape i størrelsesorden <span className="font-black">~{krLost.toLocaleString('nb-NO')} kr/mnd</span> i tapt synlighet på denne scoren (≈ {extraVisits.toLocaleString('nb-NO')} besøk · 8 kr/besøk).
+                  </p>
+                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                    <label className="text-xs font-bold text-[#808080]">Tilpass med dine tall:</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={monthlyVisits}
+                      onChange={(e) => setMonthlyVisits(Math.max(0, Math.min(10000000, Number(e.target.value) || 0)))}
+                      className="w-28 px-3 py-1.5 rounded-lg border border-[#EBEBE6] bg-white text-sm font-bold text-[#1A1A1A] tabular-nums focus:outline-none focus:border-violet-400"
+                    />
+                    <span className="text-xs text-[#808080]">besøk/mnd</span>
+                  </div>
+                  <p className="mt-2 text-[11px] text-[#B3AD9F]">Anslag, ikke en måling av din faktiske trafikk — vi kan ikke se besøkstallet ditt fra en hastighetsanalyse.</p>
+                </div>
+              )}
+
+              {/* Verdi-stige-CTA */}
               <div className="bg-gradient-to-br from-violet-50 to-white border border-violet-200 rounded-2xl p-5 sm:p-6">
-                <p className="text-base font-black text-[#1A1A1A] mb-1">Vil du ha hele bildet — og at vi fikser det?</p>
-                <p className="text-sm text-[#808080] mb-4">Full rapport med alle funn, ferdige tekstforslag og automatisk fiks av siden din. Start med Basic.</p>
+                <p className="text-base font-black text-[#1A1A1A] mb-3">Slik fikser du det:</p>
                 <button
                   onClick={() => onSelectPlan('BASIC')}
-                  className="group w-full px-8 py-4 bg-violet-700 text-white rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-center gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600"
+                  className="group w-full px-6 py-4 bg-violet-700 text-white rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-between gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-600"
                 >
-                  Opprett konto for full rapport <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
+                  <span className="text-left leading-tight">Få hele lista + ferdige fikser<br /><span className="text-xs font-semibold text-violet-200">Start med Basic — gjør det selv</span></span>
+                  <ArrowRight size={20} className="shrink-0 transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
                 </button>
+                <button
+                  onClick={() => onSelectPlan('STANDARD')}
+                  className="group w-full mt-3 px-6 py-4 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-between gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700"
+                >
+                  <span className="text-left leading-tight">La oss fikse alt for deg<br /><span className="text-xs font-semibold text-[#808080]">Standard — vi gjør jobben automatisk</span></span>
+                  <ArrowRight size={20} className="shrink-0 transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
+                </button>
+                <p className="mt-4 text-center text-xs font-bold text-[#808080]">Founding-pris for de første kundene · ingen bindingstid</p>
                 <button onClick={() => { setResult(null); setError(null); }} className="w-full mt-3 text-sm font-bold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
               </div>
             </div>
