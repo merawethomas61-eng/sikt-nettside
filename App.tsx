@@ -1944,6 +1944,19 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 };
 
 
+// Plattform-valg i onboarding. id-ene MÅ matche client_hosts.platform-id-ene
+// (FULL_PLATFORMS/ADVISORY_PLATFORMS i ClientPortal) + solve-problem-logikken.
+const SITE_PLATFORMS: { id: string; label: string }[] = [
+  { id: 'wordpress', label: 'WordPress' },
+  { id: 'shopify', label: 'Shopify' },
+  { id: 'webflow', label: 'Webflow' },
+  { id: 'wix', label: 'Wix' },
+  { id: 'squarespace', label: 'Squarespace' },
+  { id: 'ghost', label: 'Ghost' },
+  { id: 'ai_built', label: 'Bygd med AI (Claude, Cursor, v0, Lovable …)' },
+  { id: 'other', label: 'Annet / egen side' },
+];
+
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
@@ -1951,7 +1964,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const [formData, setFormData] = useState({
     companyName: '', contactPerson: '', email: '', phone: '',
-    websiteUrl: '', industry: '', targetAudience: ''
+    websiteUrl: '', industry: '', targetAudience: '', platform: ''
   });
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -1972,7 +1985,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       try { auditUrl = (localStorage.getItem('sikt_audit_url') || '').trim(); } catch { /* ignore */ }
       try {
         const rows = await supabaseRest<any[]>(
-          `clients?user_id=eq.${user.id}&select=company_name,contact_person,email,phone,website_url,industry,target_audience&limit=1`,
+          `clients?user_id=eq.${user.id}&select=company_name,contact_person,email,phone,website_url,industry,target_audience,platform&limit=1`,
         );
         if (cancelled) return;
         const existing = Array.isArray(rows) && rows.length ? rows[0] : null;
@@ -1985,6 +1998,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             websiteUrl: existing.website_url || auditUrl || '',
             industry: existing.industry || '',
             targetAudience: existing.target_audience || '',
+            platform: existing.platform || '',
           });
         } else if (user.email || auditUrl) {
           // Førstegangs-bruker: preutfyll e-post fra Google + URL fra gratis-analysen
@@ -2020,6 +2034,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           website_url: latest.websiteUrl || null,
           industry: latest.industry || null,
           target_audience: latest.targetAudience || null,
+          platform: latest.platform || null,
         },
         headers: { Prefer: 'resolution=merge-duplicates' },
       });
@@ -2112,7 +2127,8 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         phone: formData.phone,
         website_url: formData.websiteUrl,
         industry: formData.industry,
-        target_audience: formData.targetAudience
+        target_audience: formData.targetAudience,
+        platform: formData.platform
       };
 
       // Vi bruker rå fetch mot Supabase REST API i stedet for supabase-js-klienten.
@@ -2236,6 +2252,22 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             {websiteUrlStatus === 'invalid' && (
               <p className="text-xs text-rose-600 mt-2">URL ser ugyldig ut. Husk å bruke et domenenavn med punktum.</p>
             )}
+          </div>
+
+          <div>
+            <select
+              required
+              name="platform"
+              value={formData.platform}
+              onChange={(e) => { const v = e.target.value; setFormData(prev => { const next = { ...prev, platform: v }; saveDraft(next); return next; }); }}
+              className={`w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none ${formData.platform ? 'text-[#1A1A1A]' : 'text-[#808080]'}`}
+            >
+              <option value="" disabled>Hvilken plattform er siden bygd på?</option>
+              {SITE_PLATFORMS.map((p) => (
+                <option key={p.id} value={p.id} className="text-[#1A1A1A]">{p.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-[#808080] mt-2">Bygde du siden med et AI-verktøy (Claude, Cursor, v0 …)? Velg «Bygd med AI» — da får du ferdige prompts du kan lime rett inn.</p>
           </div>
 
           <div className="relative">
@@ -2607,7 +2639,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       desc: "Koble nettsiden din til Sikt, så fikser vi feilene og skriver inn forbedringene automatisk, hver uke — så du blir mer synlig og får flere kunder uten å gjøre jobben selv.",
       features: [
         { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag, månedlig rapport og konkurrent-radar er inkludert." },
-        { text: "Sikt fikser nettsiden din automatisk", detail: "Koble til plattformen (WordPress, Shopify, Webflow, Wix, GitHub m.fl.) — Sikt pusher endringer rett inn uten at du løfter en finger." },
+        { text: "Sikt fikser nettsiden din automatisk", detail: "WordPress og Shopify: Sikt pusher endringene rett inn — du løfter ikke en finger. Bygde du siden med AI (Claude, Cursor, v0, Lovable …)? Da får du en ferdig, lim-inn-klar prompt per problem som fikser det i din egen kodebase. Andre plattformer: ferdige forslag du limer inn." },
         { text: "Ukentlig «Dette har Sikt fikset for deg»-kvittering (pushet til siden)", detail: "Hver mandag: «12 meta-titler oppdatert, 3 ødelagte lenker fikset, 1 ny redirect opprettet, 6 bilder komprimert til WebP.» I motsetning til Basic (hvor du limer inn selv), ligger disse endringene allerede live på siden din." },
         { text: "AI skriver og publiserer tekster, alt-tekster og schema", detail: "Meta-titler, beskrivelser, alt-tekster og strukturert data genereres og oppdateres automatisk på siden din." },
         { text: "Ukentlig rangeringssjekk på inntil 50 søkeord", detail: "Vi sporer posisjonen din hver uke — ikke bare hver måned — så du oppdager endringer tidlig." },
@@ -14805,6 +14837,39 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               </div>
                             );
                           })()}
+                          {/* AI-bygde sider (Standard+): ferdig lim-inn-prompt — hovedleveransen */}
+                          {aiSolution?.aiPrompt && (
+                            <div style={{ background: W.card, border: `1px solid ${W.green}`, borderRadius: 14, overflow: 'hidden' }}>
+                              <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                                <Sparkles size={12} style={{ color: W.green }} />
+                                <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.green, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Ferdig prompt for AI-verktøyet ditt</span>
+                              </div>
+                              <div style={{ padding: '12px 16px 6px' }}>
+                                <p style={{ margin: '0 0 10px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Lim denne inn i Claude, Cursor, v0 e.l. — den fikser dette i din egen kodebase.</p>
+                                <div style={{ background: W.ink, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
+                                  <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.9)', whiteSpace: 'pre-wrap' }}><code>{String(aiSolution.aiPrompt)}</code></pre>
+                                </div>
+                              </div>
+                              <div style={{ padding: '8px 14px 12px' }}>
+                                <button type="button" onClick={() => { navigator.clipboard?.writeText(String(aiSolution.aiPrompt)); toastSuccess('Prompt kopiert.'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.green, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                  <Copy size={12} /> Kopier prompt
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {/* AI-bygd side + Basic → oppsalg til Standard */}
+                          {aiSolution?.aiPromptLocked && (
+                            <div style={{ background: W.card, border: `1px dashed ${W.border}`, borderRadius: 14, padding: 16 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                                <Lock size={13} style={{ color: W.muted }} />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: W.ink }}>Ferdig AI-prompt — lås opp i Standard</span>
+                              </div>
+                              <p style={{ margin: '0 0 12px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Få en ferdig prompt du limer rett inn i Claude/Cursor, så fikser den dette i kodebasen din. Inkludert fra Standard og oppover.</p>
+                              <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                <Sparkles size={12} /> Oppgrader til Standard
+                              </button>
+                            </div>
+                          )}
                           {aiSolution?.originalCode && (
                             <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
                               <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

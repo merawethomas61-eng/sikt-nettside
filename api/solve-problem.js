@@ -145,17 +145,26 @@ export default withSentry(async function handler(req, res) {
     }
 
     let websiteUrl = '';
+    let packageName = '';
+    let declaredPlatform = null;
     try {
         const { data: clientRow } = await supabase
             .from('clients')
-            .select('website_url, websiteUrl')
+            .select('website_url, websiteUrl, package_name, platform')
             .eq('user_id', user.id)
             .limit(1)
             .maybeSingle();
         websiteUrl = (clientRow?.website_url || clientRow?.websiteUrl || '').trim();
+        packageName = (clientRow?.package_name || '').toString();
+        declaredPlatform = clientRow?.platform || null;
     } catch (urlErr) {
         console.warn('[solve-problem] Kunne ikke hente website_url:', urlErr?.message || urlErr);
     }
+
+    // Koblet host (client_hosts) vinner over deklarert plattform (onboarding).
+    const effectivePlatform = hostConnection?.platform || declaredPlatform || null;
+    const isStandardPlus = /standard|premium/i.test(packageName);
+    const isAiBuilt = effectivePlatform === 'ai_built';
 
     // Finn URL server-side også (fallback) slik at vi ikke er avhengig av at frontend
     // alltid sender riktig adresse i body.
@@ -339,6 +348,29 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
             }
         }
 
+        // --- AI-PROMPT for AI-bygde sider (Standard+) ---
+        // «Gjort-for-deg»-ekvivalenten for kode-bygde sider (Claude/Cursor/v0):
+        // en ferdig instruks kunden limer inn i AI-verktøyet sitt, som så endrer
+        // deres EGEN kildekode. Utledes fra det vi alt har — ingen nytt AI-kall.
+        const buildAiPrompt = () => {
+            const stepLines = (steps || [])
+                .map((s, i) => `${i + 1}. ${s.title || ''}${s.description ? ` — ${s.description}` : ''}`)
+                .join('\n');
+            const parts = [];
+            parts.push('Du er en senior webutvikler med tilgang til kildekoden til nettsiden min. Jeg vil fikse et konkret SEO-/ytelsesproblem.');
+            parts.push(`\nSide: ${effectiveUrl || websiteUrl || '(min nettside)'}\nProblem: ${problemTitle}`);
+            if (problemDesc) parts.push(`Detaljer: ${problemDesc}`);
+            if (stepLines) parts.push(`\nSlik skal det løses:\n${stepLines}`);
+            if (originalCode) parts.push(`\nI den rendrede HTML-en ser det omtrent slik ut i dag (kildekoden din kan se annerledes ut — finn det tilsvarende):\n${originalCode}`);
+            if (codePatch) parts.push(`\nØnsket slutt-tilstand / hva det skal bli:\n${codePatch}`);
+            if (aiResult.fileHint) parts.push(`\nSannsynlig sted: ${aiResult.fileHint}`);
+            parts.push('\nOppgave: Gjør endringen i de RIKTIGE kildefilene mine (ikke lim inn rendret HTML blindt). Behold eksisterende design og funksjonalitet. Forklar kort hva du endret til slutt.');
+            parts.push(SEO_COPY_RULES.trim());
+            return parts.join('\n');
+        };
+        const aiPrompt = (isAiBuilt && isStandardPlus) ? buildAiPrompt() : null;
+        const aiPromptLocked = isAiBuilt && !isStandardPlus;
+
         return res.status(200).json({
             steps,
             codePatch: codePatch || null,
@@ -352,6 +384,9 @@ VIKTIGE REGLER FOR KODE (COPY-PASTE):
             effectiveUrl: effectiveUrl || null,
             hostConnected: hasHost,
             hostPlatform: websiteHost,
+            aiPrompt,
+            aiPromptLocked,
+            effectivePlatform,
         });
 
     } catch (error) {
