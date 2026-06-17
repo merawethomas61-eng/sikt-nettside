@@ -3297,6 +3297,137 @@ const SocialProofSection = () => {
   );
 };
 
+// Ekte case legges i CASES når piloten har levert dokumenterte tall.
+// Bevisst tom til da — N=1 ærlig, INGEN oppdiktede resultater. Tallene hentes
+// rett fra sikt_changes (hva Sikt endret) + keyword_snapshots/GSC (klikk/posisjon
+// over uker). Seksjonen rendres KUN når arrayet har innhold — SocialProofSection
+// dekker allerede den ærlige tom-tilstanden, så vi unngår to redundante seksjoner.
+type CaseStudy = {
+  domain: string;            // samtykket, vises offentlig
+  consent: boolean;          // må være true for å vises
+  snippet: {                 // hva Sikt endret, vist som Google-resultat før/etter
+    url: string;
+    changedLabel: string;    // f.eks. «SEO-tittel» / «Meta-beskrivelse»
+    beforeTitle: string;
+    afterTitle: string;
+    beforeDescription: string;
+    afterDescription: string;
+  };
+  outcome?: {                // fra keyword_snapshots — fylles når ~4-ukers-tallene er inne
+    keyword: string;
+    posBefore: number;
+    posAfter: number;
+    clicksBefore: number;
+    clicksAfter: number;
+    period: string;          // f.eks. «4 uker»
+  };
+  quote?: string;
+};
+const CASES: CaseStudy[] = [];
+
+const CaseStudySection = () => {
+  const cases = CASES.filter((c) => c.consent);
+  if (cases.length === 0) return null; // ekte tall eller ingenting — aldri en tom skval
+  return (
+    <section id="resultater" className="py-16 sm:py-24 md:py-28 bg-[#F5F5F0] relative overflow-hidden scroll-mt-24">
+      <div className="max-w-5xl mx-auto px-4 sm:px-5 relative z-10">
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+              Dokumentert resultat
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">
+              {cases.length > 1
+                ? <>Ekte <span className="text-violet-600">resultater</span></>
+                : <>Vårt første <span className="text-violet-600">dokumenterte resultat</span></>}
+            </h2>
+            <p className="text-base sm:text-lg text-[#808080] max-w-2xl mx-auto">
+              Ikke et løfte — de faktiske endringene Sikt gjorde, og hva som skjedde etterpå. Tallene er hentet rett fra Google Search Console.
+            </p>
+          </div>
+        </RevealOnScroll>
+
+        <div className="space-y-12 sm:space-y-16">
+          {cases.map((c, i) => (
+            <RevealOnScroll key={i} direction="up" delay={i * 80}>
+              <div>
+                <div className="text-sm font-black text-[#1A1A1A] mb-4">{c.domain}</div>
+
+                <p className="text-[11px] tracking-wide uppercase text-[#808080] mb-3">
+                  Hva Sikt endret · {c.snippet.changedLabel}
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden">
+                    <p className="text-[11px] tracking-wide uppercase text-[#808080] px-4 pt-3">Før</p>
+                    <GoogleSnippetPreview
+                      title={c.snippet.beforeTitle}
+                      url={c.snippet.url}
+                      description={c.snippet.beforeDescription}
+                    />
+                  </div>
+                  <div className="relative rounded-2xl bg-white border-2 border-[#52A447]/40 overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-1 bg-[#EAF3DE]" />
+                    <p className="text-[11px] tracking-wide uppercase text-[#3B6D11] font-medium px-4 pt-3">Etter</p>
+                    <GoogleSnippetPreview
+                      title={c.snippet.afterTitle}
+                      url={c.snippet.url}
+                      description={c.snippet.afterDescription}
+                    />
+                  </div>
+                </div>
+
+                {c.outcome && (
+                  <div className="mt-5 rounded-2xl bg-white border border-[#EBEBE6] p-5 sm:p-6">
+                    <div className="flex items-center gap-2 mb-5">
+                      <TrendingUp size={16} className="text-[#52A447]" />
+                      <p className="text-sm font-black text-[#1A1A1A]">
+                        «{c.outcome.keyword}» etter {c.outcome.period}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-[#808080] mb-1">Posisjon i Google</p>
+                        <p className="text-2xl sm:text-3xl font-black tabular-nums text-[#1A1A1A]">
+                          #{c.outcome.posBefore}
+                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#808080]" />
+                          <span className="text-[#3F8F38]">#{c.outcome.posAfter}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide text-[#808080] mb-1">Klikk per måned</p>
+                        <p className="text-2xl sm:text-3xl font-black tabular-nums text-[#1A1A1A]">
+                          {c.outcome.clicksBefore}
+                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#808080]" />
+                          <span className="text-[#3F8F38]">{c.outcome.clicksAfter}</span>
+                        </p>
+                      </div>
+                    </div>
+                    {c.outcome.clicksAfter > c.outcome.clicksBefore && (
+                      <p className="text-xs text-[#808080] mt-4 leading-relaxed">
+                        ~{((c.outcome.clicksAfter - c.outcome.clicksBefore) * 8).toLocaleString('nb-NO')} kr/mnd i estimert verdi av de ekstra klikkene (8 kr/klikk — samme forsiktige anslag som i ukesrapporten).
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {c.quote && (
+                  <blockquote className="mt-5 text-[#1A1A1A] text-sm sm:text-base leading-relaxed font-medium border-l-2 border-violet-600 pl-4">
+                    «{c.quote}»
+                  </blockquote>
+                )}
+              </div>
+            </RevealOnScroll>
+          ))}
+        </div>
+
+        <p className="text-center text-[11px] text-[#b0b0aa] mt-10">
+          Tallene er hentet fra Google Search Console og delt med kundens samtykke.
+        </p>
+      </div>
+    </section>
+  );
+};
+
 const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
     <ScrollProgressRing />
@@ -3313,6 +3444,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <StepPlanSection onNavigate={onNavigate} onSelectPlan={onSelectPlan} />
     <InsightSection />
     <TrustSection />
+    {/* Ekte case: dokumentert før/etter — rendres KUN når CASES er fylt med ekte tall */}
+    <CaseStudySection />
     {/* Sosialt bevis: ærlig founding-tilstand (sitater når de finnes) */}
     <SocialProofSection />
     {/* GEO-seksjon: peak-end — siste wow-argument før pris */}
