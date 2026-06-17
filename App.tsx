@@ -2611,21 +2611,21 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   const [openDetail, setOpenDetail] = useState<string | null>(null);
 
   type PlanFeature = { text: string; detail?: string };
-  type Plan = { title: string; price: string; tagline: string; desc: string; features: PlanFeature[]; highlighted?: boolean };
+  type Plan = { title: string; price: string; tagline: string; desc: string; features: PlanFeature[]; highlighted?: boolean; ctaLabel?: string; ctaHref?: string; ctaNote?: string };
 
   const plans: Plan[] = [
     {
       title: "BASIC",
       price: "499",
-      tagline: "Den enkleste måten å starte på.",
-      desc: "Lavest terskel, ingen tilkobling nødvendig: Sikt viser deg nøyaktig hva du skal fikse for å få flere kunder fra Google — uansett hvordan siden din er bygd. Du gjør endringene selv, eller limer dem rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …).",
+      tagline: "Motoren tenker. Du limer inn.",
+      desc: "Sikt analyserer hele siden, finner nøyaktig hva som stopper deg på Google, og skriver ferdige løsninger du bare limer inn — uansett plattform. Du gjør ikke SEO-jobben selv; du kopierer svaret. Ingen tilkobling nødvendig.",
       features: [
+        { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Sikt finner hver manglende eller svake meta-tittel, beskrivelse og bilde-alt, og skriver ferdig teksten for deg. Du kopierer den rett inn i ditt eget system — ingen blank side, ingen gjetting." },
+        { text: "Kopier-og-lim-inn kode for tekniske fikser", detail: "Når vi finner en teknisk feil, får du nøyaktig hvilken kode som må endres — forklart på plain norsk. Lim den rett inn der du redigerer, eller rett inn i AI-verktøyet ditt (Claude, Cursor, v0 …)." },
+        { text: "Konkurrent-radar: varsel når 2 konkurrenter endrer seg", detail: "Du sover — Sikt holder øye. E-postvarsel når dine 2 hovedkonkurrenter publiserer nytt innhold, endrer priser eller fikser tekniske ting, så du aldri blir overrasket." },
         { text: "Funker uansett plattform — også AI-bygde sider", detail: "WordPress, Wix, Squarespace, Webflow, eller en side du bygde med Claude/Cursor/v0/Lovable. Sikt gir deg ferdige forslag du limer inn der du redigerer — eller rett inn i AI-verktøyet ditt." },
         { text: "Se hvor du står på Google — ubegrenset antall søkeord", detail: "Posisjon, klikk og visninger for alle søkeord du allerede rangerer på, hentet direkte fra Google Search Console." },
         { text: "Månedlig sjekk av hastighet og tekniske feil", detail: "Vi sjekker Core Web Vitals, mobilvennlighet, ødelagte lenker, SSL og redirect-kjeder hver måned." },
-        { text: "AI skriver meta-tekster og alt-tekster — du limer inn", detail: "Ferdige tekster for manglende meta-titler, beskrivelser og bilde-alt som du kan kopiere rett inn i ditt eget system." },
-        { text: "Kopier-og-lim-inn kode for tekniske fikser", detail: "Når vi finner en teknisk feil, får du nøyaktig hvilken kode som må endres — forklart på plain norsk." },
-        { text: "Konkurrent-radar: varsel når 2 konkurrenter endrer seg", detail: "Du sover — Sikt holder øye. E-postvarsel når dine 2 hovedkonkurrenter publiserer nytt innhold, endrer priser eller fikser tekniske ting, så du aldri blir overrasket." },
         { text: "Ukentlig «Dette har Sikt klargjort for deg»-kvittering", detail: "Hver mandag: konkret liste over funn og ferdige AI-forslag du kan lime inn selv. «3 meta-titler skrevet, 2 ødelagte lenker funnet, 4 alt-tekster generert.» Ingen abstrakte SEO-tall — bare konkret arbeid klart til bruk." },
         { text: "E-postvarsel når noe går galt", detail: "Øyeblikkelig varsel ved trafikkdropp, nye 404-feil eller nedetid." },
         { text: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som har endret seg og hva du bør gjøre — uten SEO-jargon." }
@@ -2640,11 +2640,11 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       features: [
         { text: "Alt i Basic", detail: "Full teknisk analyse, søkeord-sporing, AI-tekstforslag, månedlig rapport og konkurrent-radar er inkludert." },
         { text: "Sikt fikser nettsiden din automatisk", detail: "WordPress og Shopify: Sikt pusher endringene rett inn — du løfter ikke en finger. Bygde du siden med AI (Claude, Cursor, v0, Lovable …)? Da får du en ferdig, lim-inn-klar prompt per problem som fikser det i din egen kodebase. Andre plattformer: ferdige forslag du limer inn." },
+        { text: "1-klikks angre på alt — siden din kan aldri ødelegges", detail: "Hver eneste endring logges med før- og etterverdi, og kan reverseres med ett klikk. Du ser nøyaktig hva som ble endret, når, og kan rulle det tilbake når som helst. Ingenting gjøres som ikke kan angres — derfor er det trygt å la Sikt jobbe på siden din." },
         { text: "Ukentlig «Dette har Sikt fikset for deg»-kvittering (pushet til siden)", detail: "Hver mandag: «12 meta-titler oppdatert, 3 ødelagte lenker fikset, 1 ny redirect opprettet, 6 bilder komprimert til WebP.» I motsetning til Basic (hvor du limer inn selv), ligger disse endringene allerede live på siden din." },
         { text: "AI skriver og publiserer tekster, alt-tekster og schema", detail: "Meta-titler, beskrivelser, alt-tekster og strukturert data genereres og oppdateres automatisk på siden din." },
         { text: "Ukentlig rangeringssjekk på inntil 50 søkeord", detail: "Vi sporer posisjonen din hver uke — ikke bare hver måned — så du oppdager endringer tidlig." },
         { text: "Konkurrent-radar utvidet: 3 konkurrenter + innholdsanalyse", detail: "Som i Basic, men utvidet til 3 konkurrenter og med AI-drevet analyse av hva som faktisk virker for dem — så du kan slå tilbake raskt." },
-        { text: "1-klikks angre på enhver endring", detail: "Full endringslogg + rollback. Du er alltid i kontroll — ingenting gjøres som ikke kan reverseres." },
         { text: "Prioritert e-post-support", detail: "Svar innen 24 timer på hverdager." }
       ]
     },
@@ -2652,6 +2652,9 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       title: "PREMIUM",
       price: "4 999",
       tagline: "Når én ny kunde er verdt titusener.",
+      ctaLabel: "Book en GEO-gjennomgang",
+      ctaHref: "mailto:siktseo@gmail.com?subject=GEO-gjennomgang%20(Premium)&body=Hei%20Sikt%2C%0A%0AJeg%20vil%20ha%20en%20GEO-gjennomgang%20og%20se%20om%20ChatGPT%2FGemini%2FPerplexity%20nevner%20bedriften%20min.%0A%0ABedrift%2Fnettside%3A%20%0ABransje%3A%20%0A",
+      ctaNote: "Én ny klient betaler hele året — vi går gjennom tallene sammen først.",
       desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
       features: [
         { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, 50-søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
@@ -2733,16 +2736,37 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                   })}
                 </ul>
 
-                {/* HER ER RETTELSEN: Vi sender 'plan.title' opp til Appen */}
-                <button
-                  onClick={() => onSelectPlan(plan.title)}
-                  className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base ui-motion transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${plan.highlighted
-                    ? 'bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200'
-                    : 'bg-[#F5F5F0] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#EBEBE6]'
-                    }`}
-                >
-                  Velg {plan.title}
-                </button>
+                {/* CTA: Basic/Standard → selvbetjent signup. Premium → samtale (vurdert kjøp), med en sekundærlenke for den som vil starte direkte. */}
+                {plan.ctaNote && (
+                  <p className="text-center text-xs sm:text-sm font-semibold text-violet-700 mb-3">{plan.ctaNote}</p>
+                )}
+                {plan.ctaHref ? (
+                  <>
+                    <a
+                      href={plan.ctaHref}
+                      className="block text-center w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base ui-motion transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200"
+                    >
+                      {plan.ctaLabel ?? `Velg ${plan.title}`}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => onSelectPlan(plan.title)}
+                      className="mt-3 w-full text-xs sm:text-sm font-semibold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
+                    >
+                      eller start abonnementet direkte →
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => onSelectPlan(plan.title)}
+                    className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base ui-motion transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${plan.highlighted
+                      ? 'bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200'
+                      : 'bg-[#F5F5F0] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#EBEBE6]'
+                      }`}
+                  >
+                    Velg {plan.title}
+                  </button>
+                )}
               </div>
             </RevealOnScroll>
           ))}
@@ -3189,6 +3213,89 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
   );
 };
 
+// --- A2: Sosialt bevis (ærlig founding-stage) ---------------------------
+// Ekte sitater legges i TESTIMONIALS når de finnes. Til da viser vi en
+// ærlig founding-tilstand — bevisst INGEN oppdiktede sitater, fordi falsk
+// sosialt bevis undergraver nettopp tilliten denne seksjonen skal bygge.
+// Når arrayet får oppføringer, flipper seksjonen automatisk til sitat-grid.
+type Testimonial = { quote: string; name: string; role: string; rating?: number };
+const TESTIMONIALS: Testimonial[] = [];
+
+const SocialProofSection = () => {
+  const hasTestimonials = TESTIMONIALS.length > 0;
+  return (
+    <section id="kundehistorier" className="py-16 sm:py-24 md:py-28 bg-white relative overflow-hidden scroll-mt-24">
+      <div className="max-w-5xl mx-auto px-4 sm:px-5 relative z-10">
+        <RevealOnScroll direction="up">
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+              {hasTestimonials ? 'Kundehistorier' : 'Bygget i åpenhet'}
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">
+              {hasTestimonials
+                ? <>Hva kundene <span className="text-violet-600">faktisk sier</span></>
+                : <>Vi er nye — og <span className="text-violet-600">ærlige om det</span></>}
+            </h2>
+            <p className="text-base sm:text-lg text-[#808080] max-w-2xl mx-auto">
+              {hasTestimonials
+                ? 'Ekte resultater fra bedrifter som bruker Sikt.'
+                : 'De fleste SEO-løfter er umulige å etterprøve. Vi gjør det motsatte: se nøyaktig hva som er galt på din egen side først — gratis — så bestemmer du.'}
+            </p>
+          </div>
+        </RevealOnScroll>
+
+        {hasTestimonials ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {TESTIMONIALS.map((t, i) => (
+              <RevealOnScroll key={i} direction="up" delay={i * 80}>
+                <figure className="h-full bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-6 sm:p-7 flex flex-col">
+                  {typeof t.rating === 'number' && (
+                    <div className="flex gap-0.5 mb-3">
+                      {Array.from({ length: 5 }).map((_, s) => (
+                        <Star key={s} size={15} className={s < t.rating! ? 'text-[#C77700] fill-[#C77700]' : 'text-[#D8D3C7]'} />
+                      ))}
+                    </div>
+                  )}
+                  <blockquote className="text-[#1A1A1A] text-sm sm:text-base leading-relaxed font-medium flex-1">«{t.quote}»</blockquote>
+                  <figcaption className="mt-5 pt-4 border-t border-[#EBEBE6]">
+                    <div className="text-sm font-black text-[#1A1A1A]">{t.name}</div>
+                    <div className="text-xs text-[#808080]">{t.role}</div>
+                  </figcaption>
+                </figure>
+              </RevealOnScroll>
+            ))}
+          </div>
+        ) : (
+          <RevealOnScroll direction="up">
+            <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+              {[
+                { icon: SearchCheck, title: 'Se det selv først', body: 'Kjør en gratis analyse av din egen side og se ekte funn på 30 sekunder — før du betaler en krone.' },
+                { icon: HeartHandshake, title: 'Grunnleggeren svarer', body: 'Som en av de første kundene snakker du direkte med grunnleggeren, ikke en støtte-kø.' },
+                { icon: Shield, title: 'Ingen binding', body: 'Måned for måned. Alt Sikt gjør på siden din kan angres med ett klikk.' },
+              ].map((card, i) => {
+                const Icon = card.icon;
+                return (
+                  <div key={i} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-5 sm:p-6">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#EBEBE6] flex items-center justify-center text-violet-700 mb-3"><Icon size={18} /></div>
+                    <div className="text-sm font-black text-[#1A1A1A] mb-1">{card.title}</div>
+                    <div className="text-xs text-[#808080] leading-relaxed">{card.body}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-center mt-8">
+              <a href="#gratis-analyse" className="group inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full text-sm sm:text-base font-black tracking-tight ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">
+                Test din egen side gratis
+                <ArrowRight size={18} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
+              </a>
+            </div>
+          </RevealOnScroll>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
     <ScrollProgressRing />
@@ -3205,6 +3312,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <StepPlanSection onNavigate={onNavigate} onSelectPlan={onSelectPlan} />
     <InsightSection />
     <TrustSection />
+    {/* Sosialt bevis: ærlig founding-tilstand (sitater når de finnes) */}
+    <SocialProofSection />
     {/* GEO-seksjon: peak-end — siste wow-argument før pris */}
     <GeoShiftSection onSelectPlan={onSelectPlan as (plan: string) => void} />
     <Pricing onSelectPlan={onSelectPlan} />
@@ -7152,6 +7261,106 @@ type ContentChangeRow = {
   new_value: string;
   pushed_at: string;
   client_host_id: string | null;
+};
+
+// --- B1: Frittstående endringslogg --------------------------------------
+// Gjør løftet «full endringslogg + 1-klikks angre» synlig sant. Lister alle
+// aktive endringer Sikt har pushet til siden (sikt_changes) med før→etter og
+// en angre-knapp per rad. Gjenbruker den eksisterende rollback-flyten via
+// onRollback (executeContentFixRollback), så ingen ny backend-logikk trengs.
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  'seo-title': 'Sidetittel',
+  'meta-description': 'Meta-beskrivelse',
+  'h1': 'Overskrift (H1)',
+  'content': 'Innhold',
+};
+
+const ChangelogPanel = ({
+  changes,
+  onRollback,
+  colors,
+}: {
+  changes: ContentChangeRow[];
+  onRollback: (changeId: string) => Promise<void>;
+  colors: { card: string; ink: string; muted: string; border: string; sub: string; subtle: string; green: string };
+}) => {
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const sorted = [...changes].sort(
+    (a, b) => new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime(),
+  );
+  const handle = async (id: string) => {
+    if (busyId) return;
+    setBusyId(id);
+    try { await onRollback(id); } finally { setBusyId(null); }
+  };
+  const prettyUrl = (u: string) => (u || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+  const fmt = (iso: string) => {
+    try { return new Date(iso).toLocaleString('nb-NO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+    catch { return ''; }
+  };
+  return (
+    <section style={{ background: colors.card, border: `1px solid ${colors.border}`, borderRadius: 20, padding: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: colors.subtle, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.ink }}>
+          <FileEdit size={17} />
+        </div>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: colors.ink }}>Endringslogg</h2>
+          <p style={{ margin: 0, fontSize: 12.5, color: colors.muted }}>Alt Sikt har endret på siden din — angre når som helst.</p>
+        </div>
+      </div>
+
+      {sorted.length === 0 ? (
+        <p style={{ marginTop: 14, fontSize: 13.5, color: colors.muted, background: colors.subtle, border: `1px dashed ${colors.border}`, borderRadius: 12, padding: '14px 16px' }}>
+          Ingen aktive endringer enda. Når Sikt fikser noe på siden din, dukker det opp her — med før- og etterverdi og ett-klikks angre.
+        </p>
+      ) : (
+        <ul style={{ listStyle: 'none', margin: '14px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sorted.map((c) => {
+            const busy = busyId === c.id;
+            const otherBusy = !!busyId && !busy;
+            return (
+              <li key={c.id} style={{ border: `1px solid ${colors.border}`, borderRadius: 14, padding: 14, background: colors.subtle }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.sub }}>
+                      {CHANGE_FIELD_LABELS[c.field] || c.field}
+                    </span>
+                    <div style={{ fontSize: 12.5, color: colors.muted, marginTop: 2, wordBreak: 'break-word' }}>
+                      {prettyUrl(c.page_url)}{c.pushed_at ? ` · ${fmt(c.pushed_at)}` : ''}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handle(c.id)}
+                    disabled={busy || otherBusy}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700,
+                      color: colors.ink, background: '#FFFFFF', border: `1px solid ${colors.border}`,
+                      borderRadius: 999, padding: '7px 14px', cursor: busy || otherBusy ? 'default' : 'pointer',
+                      opacity: otherBusy ? 0.5 : 1, whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {busy ? <><Loader2 size={13} className="animate-spin" /> Angrer …</> : 'Angre'}
+                  </button>
+                </div>
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {c.old_value != null && c.old_value !== '' && (
+                    <div style={{ fontSize: 12.5, color: colors.muted, textDecoration: 'line-through', wordBreak: 'break-word' }}>
+                      {c.old_value}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 13, fontWeight: 600, color: colors.green, wordBreak: 'break-word' }}>
+                    {c.new_value}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
 };
 
 type TodoChangeData = {
@@ -13463,6 +13672,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </header>
               <div className={`${tabFadeInClass} space-y-6`}>
+              <ChangelogPanel
+                changes={contentChanges}
+                onRollback={(id) => executeContentFixRollback(id)}
+                colors={W}
+              />
               <style>{`
                 @keyframes ws-fade-up {
                   from { opacity: 0; transform: translateY(6px); }
