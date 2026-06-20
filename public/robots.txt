@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://sikt.no/sitemap.xml
+Sitemap: https://siktseo.com/sitemap.xml

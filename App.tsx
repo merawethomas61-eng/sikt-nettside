@@ -18,6 +18,7 @@ import {
   ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type, Star, MessageSquare, QrCode
 } from 'lucide-react';
 import { gsap } from 'gsap';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -4406,8 +4407,11 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
         <div className="text-center md:text-left">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-[#808080] mb-6 sm:mb-8">Selskap</h4>
           <ul className="space-y-3 sm:space-y-4 text-[#808080] font-bold text-sm">
-            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Om Sikt</a></li>
-            <li><a href="#" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Tjenester</a></li>
+            <li><Link to="/funksjoner" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">Funksjoner</Link></li>
+            <li><Link to="/priser" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">Priser</Link></li>
+            <li><Link to="/blogg" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">Blogg</Link></li>
+            <li><Link to="/om-oss" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">Om Sikt</Link></li>
+            <li><Link to="/kontakt" className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">Kontakt</Link></li>
           </ul>
         </div>
         <div className="text-center md:text-left">
@@ -4421,26 +4425,18 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
       <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#808080] text-center">
         <p>© 2026 SIKT TECHNOLOGIES AS. NORSK DESIGN.</p>
         <div className="flex gap-6 sm:gap-10">
-          <button
-            type="button"
-            onClick={() => {
-              onNavigate?.('privacy');
-              window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-            }}
+          <Link
+            to="/personvern"
             className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] uppercase tracking-widest [@media(hover:hover)_and_(pointer:fine)]:hover:text-white active:text-white/90"
           >
             Personvern
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onNavigate?.('terms');
-              window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-            }}
+          </Link>
+          <Link
+            to="/vilkar"
             className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] uppercase tracking-widest [@media(hover:hover)_and_(pointer:fine)]:hover:text-white active:text-white/90"
           >
             Vilkår
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -4452,6 +4448,18 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Ekte URL-lenker (react-router). På nye sider mangler onNavigate/onLoginTrigger,
+  // så «Kom i gang» faller tilbake til /priser i stedet.
+  const marketingLinks = [
+    { to: '/funksjoner', label: 'Funksjoner' },
+    { to: '/priser', label: 'Priser' },
+    { to: '/blogg', label: 'Blogg' },
+    { to: '/om-oss', label: 'Om oss' },
+  ];
+  const startCta = onLoginTrigger ?? (() => navigate('/priser'));
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);
@@ -4466,7 +4474,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
 
         {/* LOGO */}
-        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
+        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
           <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#1A1A1A] rounded-xl flex items-center justify-center text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">S</div>
           <span className="text-lg sm:text-xl font-black text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">Sikt</span>
         </div>
@@ -4485,8 +4493,15 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
             </button>
           )}
 
-          <button onClick={() => onNavigate('deepdive')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'deepdive' ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}>Bli synlig på google</button>
-          <button onClick={() => onNavigate('technology')} className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'technology' ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}>Teknologien</button>
+          {marketingLinks.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${location.pathname === l.to ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}
+            >
+              {l.label}
+            </Link>
+          ))}
 
           {user ? (
             <div className="relative">
@@ -4531,7 +4546,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               )}
             </div>
           ) : (
-            <button onClick={onLoginTrigger} className="ui-motion bg-[#1A1A1A] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
+            <button onClick={startCta} className="ui-motion bg-[#1A1A1A] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
           )}
         </div>
 
@@ -4547,13 +4562,21 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               <BarChart3 size={20} /> Dashboard
             </button>
           )}
-          <button onClick={() => { onNavigate('deepdive'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Bli synlig på google</button>
-          <button onClick={() => { onNavigate('technology'); setIsMobileMenuOpen(false); }} className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Teknologien</button>
+          {marketingLinks.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]"
+            >
+              {l.label}
+            </Link>
+          ))}
           {user && (
             <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-left font-bold text-rose-500 p-2 flex items-center gap-2"><LogOut size={16} /> Logg ut</button>
           )}
           {!user && (
-            <button onClick={() => { onLoginTrigger(); setIsMobileMenuOpen(false); }} className="bg-[#1A1A1A] text-white py-3 rounded-xl font-bold ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
+            <button onClick={() => { startCta(); setIsMobileMenuOpen(false); }} className="bg-[#1A1A1A] text-white py-3 rounded-xl font-bold ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">Kom i gang</button>
           )}
         </div>
       )}
@@ -17865,6 +17888,31 @@ function App() {
     }
   };
 
+  // Bro fra frittstående /priser-side: ?plan=BASIC|STANDARD|PREMIUM ved mount
+  // → start plan-valg gjennom den eksisterende checkout-flyten (login → Stripe).
+  // App er fortsatt eneste kilde til betalingslogikk; nye sider sender bare planen.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const planParam = new URLSearchParams(window.location.search).get('plan');
+    if (!planParam) return;
+    // Rydd URL-en så refresh ikke trigger checkout på nytt.
+    const clean = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    window.history.replaceState({ path: clean }, '', clean);
+    handlePlanSelect(planParam.toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Når man kommer fra en annen side med en hash (f.eks. /#gratis-analyse),
+  // scroll til seksjonen når forsiden er rendret.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  }, []);
+
 
   const handleLogout = async () => {
     try {
@@ -18057,5 +18105,9 @@ function App() {
     </div>
   );
 }
+
+// Delte komponenter gjenbrukt av de frittstående marketing-sidene (src/pages/*).
+// Named export kjører ikke <App/> — kun deklarasjonene — så dette er trygt.
+export { RevealOnScroll, PrimaryButton, SecondaryButton, Pricing, Navbar, Footer, PrivacyPage, TermsPage };
 
 export default App;

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/build-plugin-zip.mjs",
-    "build": "vite build",
+    "prebuild": "node scripts/build-plugin-zip.mjs && node scripts/build-sitemap.mjs",
+    "build": "vite build && node scripts/prerender-blog.mjs",
     "build:plugin": "node scripts/build-plugin-zip.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
@@ -21,8 +21,10 @@
     "cheerio": "^1.2.0",
     "gsap": "^3.15.0",
     "lucide-react": "^0.562.0",
+    "marked": "^18.0.5",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-router-dom": "^7.18.0",
     "recharts": "^3.7.0",
     "stripe": "^20.4.1"
   },

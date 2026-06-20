@@ -2,7 +2,7 @@ import './index.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
-import App from './App'
+import Root from './src/Root'
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -16,7 +16,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<p>Noe gikk galt. Last siden på nytt.</p>}>
-      <App />
+      <Root />
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
 )
