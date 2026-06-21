@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/build-plugin-zip.mjs && node scripts/build-sitemap.mjs",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build && node scripts/generate-og.mjs && node scripts/prerender.mjs",
     "build:plugin": "node scripts/build-plugin-zip.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@sentry/node": "^10.55.0",
     "@sentry/react": "^10.55.0",
     "@stripe/react-stripe-js": "^5.4.1",
@@ -27,6 +28,7 @@
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.18.0",
     "recharts": "^3.7.0",
+    "satori": "^0.26.0",
     "stripe": "^20.4.1"
   },
   "devDependencies": {

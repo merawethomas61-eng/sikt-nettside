@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, ArrowRight, Check, Clock, MessageSquare, Sparkles, ShieldCheck } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { RevealOnScroll } from '../../App';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
 import { Badge } from '../components/marketing/Badge';
@@ -40,6 +40,7 @@ export default function KontaktPage() {
         title="Kontakt oss | Sikt"
         description="Har du spørsmål om Sikt, SEO eller AI-synlighet? Ta kontakt, så svarer vi raskt. Vi snakker plain norsk."
         canonical="https://siktseo.com/kontakt"
+        image="https://siktseo.com/og/kontakt.png"
       />
 
       {/* Hero */}

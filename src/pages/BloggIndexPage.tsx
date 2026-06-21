@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Sparkles } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { RevealOnScroll } from '../../App';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
 import { PillButton } from '../components/marketing/PillButton';
@@ -76,6 +76,7 @@ export default function BloggIndexPage() {
         title="Bloggen — SEO og AI-synlighet på plain norsk | Sikt"
         description="Guider og innsikt om SEO, Google og hvordan du blir synlig i AI-søk som ChatGPT — skrevet for norske bedrifter, uten sjargong."
         canonical="https://siktseo.com/blogg"
+        image="https://siktseo.com/og/blogg.png"
         jsonLd={jsonLd}
       />
 

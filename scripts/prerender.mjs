@@ -22,6 +22,8 @@ const distDir = join(root, 'dist');
 const blogDir = join(root, 'content', 'blog');
 const BASE = 'https://siktseo.com';
 const DEFAULT_IMAGE = `${BASE}/og-image.png`;
+// Per-side OG-bilder genereres av scripts/generate-og.mjs til dist/og/<slug>.png.
+const ogImage = (slug) => `${BASE}/og/${slug}.png`;
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -44,9 +46,10 @@ function replaceMeta(html, attr, name, value) {
   return re.test(html) ? html.replace(re, tag) : html.replace('</head>', `  ${tag}\n</head>`);
 }
 
-function applyHead(html, { title, description, canonical, ogType, image, jsonLd }) {
+function applyHead(html, { title, description, canonical, ogType, image, jsonLd, robots }) {
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escHtml(title)}</title>`);
   html = replaceMeta(html, 'name', 'description', description);
+  if (robots) html = replaceMeta(html, 'name', 'robots', robots);
   if (/<link\s+rel=["']canonical["'][^>]*>/i.test(html)) {
     html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escAttr(canonical)}">`);
   } else {
@@ -345,6 +348,48 @@ const MARKETING = [
       links: NAV_LINKS,
     }),
   },
+  {
+    dir: 'personvern',
+    title: 'Personvern | Sikt',
+    description:
+      'Slik samler, bruker og beskytter Sikt personopplysningene dine. Plain norsk, i tråd med GDPR.',
+    canonical: `${BASE}/personvern`,
+    ogType: 'website',
+    jsonLd: [
+      { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Personvern', url: `${BASE}/personvern`, inLanguage: 'nb-NO' },
+      breadcrumbLd([['Hjem', `${BASE}/`], ['Personvern', `${BASE}/personvern`]]),
+    ],
+    body: pageBody({
+      h1: 'Personvern',
+      lead: 'Sikt Technologies AS respekterer personvernet ditt. Her forklarer vi på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har etter GDPR.',
+      blocks: [
+        { h2: 'Kort fortalt', items: ['Vi selger aldri data', 'Data lagres i EU (Supabase)', 'Du kan få innsyn, retting og sletting når som helst'] },
+        { h2: 'Kontakt', p: 'Spørsmål om personvern? Send e-post til siktseo@gmail.com.' },
+      ],
+      links: NAV_LINKS,
+    }),
+  },
+  {
+    dir: 'vilkar',
+    title: 'Vilkår for bruk | Sikt',
+    description:
+      'Vilkårene for å bruke Sikt: tjenesten, priser, oppsigelse, ansvar og lovvalg — forklart på plain norsk.',
+    canonical: `${BASE}/vilkar`,
+    ogType: 'website',
+    jsonLd: [
+      { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Vilkår for bruk', url: `${BASE}/vilkar`, inLanguage: 'nb-NO' },
+      breadcrumbLd([['Hjem', `${BASE}/`], ['Vilkår', `${BASE}/vilkar`]]),
+    ],
+    body: pageBody({
+      h1: 'Vilkår for bruk',
+      lead: 'Disse vilkårene gjelder mellom deg som kunde og Sikt Technologies AS. Ved å registrere deg og betale for tjenesten godtar du vilkårene.',
+      blocks: [
+        { h2: 'Det viktigste', items: ['Ingen bindingstid — si opp når du vil', 'Månedlig betaling via Stripe', 'Norsk lov, Oslo tingrett som verneting'] },
+        { h2: 'Kontakt', p: 'Spørsmål om vilkårene? Send e-post til siktseo@gmail.com.' },
+      ],
+      links: NAV_LINKS,
+    }),
+  },
 ];
 
 /* ---------- blogg-brødtekst ---------- */
@@ -404,7 +449,7 @@ function main() {
           description: r.description,
           canonical: r.canonical,
           ogType: r.ogType,
-          image: DEFAULT_IMAGE,
+          image: ogImage(r.dir || 'home'),
           jsonLd: r.jsonLd,
         }),
         r.body,
@@ -425,7 +470,7 @@ function main() {
             'Guider og innsikt om SEO, Google og hvordan du blir synlig i AI-søk som ChatGPT — skrevet for norske bedrifter, uten sjargong.',
           canonical: `${BASE}/blogg`,
           ogType: 'website',
-          image: DEFAULT_IMAGE,
+          image: ogImage('blogg'),
           jsonLd: [
             { '@context': 'https://schema.org', '@type': 'Blog', name: 'Sikt-bloggen', url: `${BASE}/blogg`, description: 'Guider og innsikt om SEO, Google og AI-synlighet for norske bedrifter.' },
             breadcrumbLd([['Hjem', `${BASE}/`], ['Blogg', `${BASE}/blogg`]]),
@@ -438,7 +483,7 @@ function main() {
 
     for (const post of posts) {
       const url = `${BASE}/blogg/${post.slug}`;
-      const image = post.ogImage || DEFAULT_IMAGE;
+      const image = post.ogImage || ogImage('blog-' + post.slug);
       const ld = [
         {
           '@context': 'https://schema.org',
@@ -481,7 +526,31 @@ function main() {
     }
   }
 
-  console.log(`[prerender] Skrev statisk HTML for ${count} ruter (markedssider + blogg).`);
+  // Ekte 404: Vercel serverer dist/404.html med HTTP 404 for ukjente paths
+  // (ingen blanket SPA-rewrite lenger). noindex så Google ikke indekserer den.
+  writeFileSync(
+    join(distDir, '404.html'),
+    injectBody(
+      applyHead(template, {
+        title: '404 — Siden finnes ikke | Sikt',
+        description: 'Siden du leter etter finnes ikke eller er flyttet.',
+        canonical: `${BASE}/404`,
+        ogType: 'website',
+        image: DEFAULT_IMAGE,
+        robots: 'noindex, nofollow',
+        jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: '404 — Siden finnes ikke', url: `${BASE}/404` },
+      }),
+      pageBody({
+        h1: 'Siden finnes ikke',
+        lead: 'Lenken kan være feil, eller så er siden flyttet. Gå til forsiden, så hjelper vi deg videre.',
+        links: NAV_LINKS,
+      }),
+    ),
+    'utf8',
+  );
+  count += 1;
+
+  console.log(`[prerender] Skrev statisk HTML for ${count} ruter (markedssider + blogg + 404).`);
 }
 
 try {

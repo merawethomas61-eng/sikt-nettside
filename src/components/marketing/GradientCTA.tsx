@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { RevealOnScroll } from '../../../App';
+import { RevealOnScroll } from '../../shared/RevealOnScroll';
 import { Badge } from './Badge';
 
 // Lilla gradient-CTA i forsidens stil (samme som FinalCTASection): gløde-blobs,

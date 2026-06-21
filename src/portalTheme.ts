@@ -3,6 +3,8 @@
 // slik at grafer (PortalCharts) og tabell-/kort-primitiver holder seg konsistente.
 import type { CSSProperties } from 'react';
 
+export type PortalTheme = 'light' | 'dark';
+
 export const PORTAL = {
   // Flater
   bg: '#F2EFE8',

@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, Sparkles, Check } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { RevealOnScroll } from '../../App';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
 import { Badge } from '../components/marketing/Badge';
@@ -52,6 +52,7 @@ export default function OmOssPage() {
         title="Om oss — hvorfor Sikt finnes | Sikt"
         description="Sikt er bygget for norske småbedrifter som vil bli funnet på Google og i AI-søk, uten teknisk sjargong. Les historien og verdiene våre."
         canonical="https://siktseo.com/om-oss"
+        image="https://siktseo.com/og/om-oss.png"
       />
 
       {/* Hero */}

@@ -2,7 +2,8 @@
 // hoved-appen så alt matcher merkevaren (forsiden), og gir riktig topp-padding
 // under den faste navbaren. Hver side legger sin egen <Seo/> som første child.
 import React from 'react';
-import { Navbar, Footer } from '../../App';
+import { Navbar } from '../shared/Navbar';
+import { Footer } from '../shared/Footer';
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (

@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { Pricing, RevealOnScroll } from '../../App';
+import { Pricing } from '../shared/Pricing';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
 import { Badge } from '../components/marketing/Badge';
@@ -103,6 +104,7 @@ export default function PriserPage() {
         title="Priser — fra 790 kr/mnd, ingen bindingstid | Sikt"
         description="Tre enkle planer for SEO og AI-synlighet. Basic 790, Standard 1690, Premium 4990 kr/mnd. Ingen skjulte kostnader, ingen bindingstid."
         canonical="https://siktseo.com/priser"
+        image="https://siktseo.com/og/priser.png"
         jsonLd={jsonLd}
       />
 

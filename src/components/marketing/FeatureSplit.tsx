@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { RevealOnScroll } from '../../../App';
+import { RevealOnScroll } from '../../shared/RevealOnScroll';
 
 // Redaksjonell feature-rad: tekst på én side, ekte produkt-mockup på den andre,
 // vekslende side nedover via `reverse`. Hovedgrepet mot «repetitivt / malete» preg

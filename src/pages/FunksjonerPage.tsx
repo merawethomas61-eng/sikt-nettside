@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { RevealOnScroll } from '../../App';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
 import { Badge } from '../components/marketing/Badge';
@@ -335,6 +335,7 @@ export default function FunksjonerPage() {
         title="Funksjoner — slik funker Sikt | Sikt"
         description="Sikt fikser SEO-feilene dine automatisk, rapporterer på plain norsk og gjør deg synlig i både Google og AI-søk som ChatGPT. Se hvordan det funker."
         canonical="https://siktseo.com/funksjoner"
+        image="https://siktseo.com/og/funksjoner.png"
       />
 
       {/* Hero */}

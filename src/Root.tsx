@@ -1,16 +1,28 @@
-// Topp-nivå ruting. Nye marketing-sider får ekte URL-er; alt annet (forside,
-// login, portal, onboarding, success, settings) går via catch-all til den
-// eksisterende App-komponenten, som beholder hele den auth-gatede flyten.
-import React from 'react';
+// Topp-nivå ruting. Marketing-sider + forsiden/portalen lastes lazy slik at hver
+// rute blir sin egen chunk: marketing-/blogg-sider drar IKKE lenger inn den store
+// App.tsx (med ClientPortal). Forsiden + alle auth-gatede flyter (login, portal,
+// onboarding, success, settings) bor fortsatt i App, som nå er en egen lazy chunk.
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import App, { Navbar, Footer, PrivacyPage, TermsPage } from '../App';
-import FunksjonerPage from './pages/FunksjonerPage';
-import OmOssPage from './pages/OmOssPage';
-import KontaktPage from './pages/KontaktPage';
-import PriserPage from './pages/PriserPage';
-import BloggIndexPage from './pages/BloggIndexPage';
-import BloggPostPage from './pages/BloggPostPage';
+import { Navbar } from './shared/Navbar';
+import { Footer } from './shared/Footer';
+import { PrivacyPage, TermsPage } from './shared/Legal';
 import { ConsentBanner } from './components/ConsentBanner';
+
+const App = lazy(() => import('../App'));
+const FunksjonerPage = lazy(() => import('./pages/FunksjonerPage'));
+const OmOssPage = lazy(() => import('./pages/OmOssPage'));
+const KontaktPage = lazy(() => import('./pages/KontaktPage'));
+const PriserPage = lazy(() => import('./pages/PriserPage'));
+const BloggIndexPage = lazy(() => import('./pages/BloggIndexPage'));
+const BloggPostPage = lazy(() => import('./pages/BloggPostPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+// Nøytral fallback mens en rute-chunk lastes. Holder forsidens bakgrunnsfarge så
+// det ikke blir et hvitt blink, men uten innhold (rask, layout-stabil).
+function RouteFallback() {
+  return <div className="min-h-screen bg-[#F5F5F0]" aria-hidden="true" />;
+}
 
 // De juridiske sidene gjenbrukes som ekte URL-er, med Navbar/Footer rundt (samme
 // layout som når de vises inne i App).
@@ -32,21 +44,25 @@ function LegalRoute({ kind }: { kind: 'privacy' | 'terms' }) {
 export default function Root() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/funksjoner" element={<FunksjonerPage />} />
-        <Route path="/om-oss" element={<OmOssPage />} />
-        <Route path="/blogg" element={<BloggIndexPage />} />
-        <Route path="/blogg/:slug" element={<BloggPostPage />} />
-        <Route path="/priser" element={<PriserPage />} />
-        <Route path="/kontakt" element={<KontaktPage />} />
-        <Route path="/personvern" element={<LegalRoute kind="privacy" />} />
-        <Route path="/vilkar" element={<LegalRoute kind="terms" />} />
-        {/* Bevar gamle interne lenker */}
-        <Route path="/deepdive" element={<Navigate to="/funksjoner" replace />} />
-        <Route path="/technology" element={<Navigate to="/funksjoner" replace />} />
-        {/* Alt annet → eksisterende app (forside, login, portal, onboarding …) */}
-        <Route path="*" element={<App />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/funksjoner" element={<FunksjonerPage />} />
+          <Route path="/om-oss" element={<OmOssPage />} />
+          <Route path="/blogg" element={<BloggIndexPage />} />
+          <Route path="/blogg/:slug" element={<BloggPostPage />} />
+          <Route path="/priser" element={<PriserPage />} />
+          <Route path="/kontakt" element={<KontaktPage />} />
+          <Route path="/personvern" element={<LegalRoute kind="privacy" />} />
+          <Route path="/vilkar" element={<LegalRoute kind="terms" />} />
+          {/* Bevar gamle interne lenker (server-redirect i vercel.json; dette er klient-fallback) */}
+          <Route path="/deepdive" element={<Navigate to="/funksjoner" replace />} />
+          <Route path="/technology" element={<Navigate to="/funksjoner" replace />} />
+          {/* Forsiden + alle auth-gatede flyter (login, portal, onboarding, success) */}
+          <Route path="/" element={<App />} />
+          {/* Ekte 404: ukjente URL-er viser NotFound (ikke forsiden) */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
       <ConsentBanner />
     </BrowserRouter>
   );

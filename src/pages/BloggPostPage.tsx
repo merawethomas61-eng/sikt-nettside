@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, ArrowRight, Sparkles, ChevronRight, List } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
-import { RevealOnScroll } from '../../App';
+import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { PillButton } from '../components/marketing/PillButton';
 import { GradientCTA } from '../components/marketing/GradientCTA';
@@ -134,6 +134,7 @@ export default function BloggPostPage() {
   }
 
   const url = `https://siktseo.com/blogg/${post.slug}`;
+  const ogImg = post.ogImage || `https://siktseo.com/og/blog-${post.slug}.png`;
   const related = getRelatedPosts(post.slug, 2);
 
   const articleLd = {
@@ -153,7 +154,7 @@ export default function BloggPostPage() {
     mainEntityOfPage: url,
     inLanguage: 'nb-NO',
     keywords: post.tags.join(', '),
-    ...(post.ogImage ? { image: post.ogImage } : {}),
+    image: ogImg,
   };
   const breadcrumbLd = {
     '@context': 'https://schema.org',
@@ -185,7 +186,7 @@ export default function BloggPostPage() {
         description={post.description}
         canonical={url}
         type="article"
-        image={post.ogImage}
+        image={ogImg}
         jsonLd={jsonLd}
       />
       {/* scroll-offset for anker (blogg-scopet, rører ikke forsiden) */}
