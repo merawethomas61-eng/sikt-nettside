@@ -1,0 +1,25 @@
+# Sikt
+
+> Sikt er et moderne norsk SEO-verktøy som hjelper småbedrifter å bli mer synlige på Google og i AI-søk (ChatGPT, Gemini, Perplexity). AI finner og fikser SEO-feil automatisk og forklarer alt på plain norsk. Ingen bindingstid.
+
+Sikt (SIKT TECHNOLOGIES AS) er laget for norske småbedrifter uten eget markedsbyrå. Verktøyet kobler seg til nettsiden din, finner hva som stopper deg på Google, fikser det automatisk (meta-titler, beskrivelser, alt-tekster og tekniske feil), og sjekker hver uke om AI-verktøy nevner bedriften din. Tre planer fra 790 kr/mnd. Nettsted: https://siktseo.com
+
+## Sider
+
+- [Funksjoner](https://siktseo.com/funksjoner): Hvordan Sikt funker — automatiske fikser, ukerapporter på plain norsk, synlighet i AI-søk (GEO), konkurrent-radar og 1-klikks angre.
+- [Priser](https://siktseo.com/priser): Tre planer — Basic 790 kr/mnd, Standard 1690 kr/mnd, Premium 4990 kr/mnd. Ingen bindingstid, rabattert de tre første månedene.
+- [Om oss](https://siktseo.com/om-oss): Hvorfor Sikt finnes — synlighet skal ikke være forbeholdt de store.
+- [Kontakt](https://siktseo.com/kontakt): Ta kontakt på siktseo@gmail.com. Vi svarer som regel innen én arbeidsdag.
+
+## Blogg
+
+- [Hva er GEO (Generative Engine Optimization)?](https://siktseo.com/blogg/hva-er-geo): GEO forklart — å bli svaret AI-en gir når folk spør ChatGPT.
+- [GEO vs SEO — hva er forskjellen?](https://siktseo.com/blogg/geo-vs-seo): Forskjellen mellom å rangere på Google og å bli sitert av AI, og hvorfor du bør gjøre begge.
+- [Slik blir bedriften din nevnt i ChatGPT](https://siktseo.com/blogg/bli-nevnt-i-chatgpt): Praktisk oppskrift for å bli anbefalt av AI-verktøy.
+- [Lokal SEO for småbedrifter](https://siktseo.com/blogg/lokal-seo-smabedrift): Bli funnet der kundene er — Google-bedriftsprofil, anmeldelser og lokalt innhold.
+- [5 SEO-feil norske småbedrifter gjør](https://siktseo.com/blogg/5-seo-feil-smabedrifter): De vanligste feilene og en konkret fiks for hver.
+
+## Kontakt
+
+- E-post: siktseo@gmail.com
+- Nettsted: https://siktseo.com

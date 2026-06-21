@@ -10,6 +10,7 @@ import KontaktPage from './pages/KontaktPage';
 import PriserPage from './pages/PriserPage';
 import BloggIndexPage from './pages/BloggIndexPage';
 import BloggPostPage from './pages/BloggPostPage';
+import { ConsentBanner } from './components/ConsentBanner';
 
 // De juridiske sidene gjenbrukes som ekte URL-er, med Navbar/Footer rundt (samme
 // layout som når de vises inne i App).
@@ -46,6 +47,7 @@ export default function Root() {
         {/* Alt annet → eksisterende app (forside, login, portal, onboarding …) */}
         <Route path="*" element={<App />} />
       </Routes>
+      <ConsentBanner />
     </BrowserRouter>
   );
 }
