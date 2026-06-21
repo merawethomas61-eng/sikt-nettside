@@ -56,6 +56,7 @@ h4 {
   position: relative;
   z-index: 1;
   background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
@@ -425,4 +426,36 @@ h4 {
   padding-left: 1rem;
   color: #808080;
   font-style: italic;
+}
+
+/* =====================================================================
+   Kryss-enhet / kryss-nettleser — gjør at siden sitter riktig på
+   mobil, nettbrett og PC, i Chrome/Safari/Firefox/Edge.
+   ===================================================================== */
+
+/* 1) iOS «100vh»-problemet: 100vh teller bak adresselinjen i Safari, så
+   full-skjerm-seksjoner blir for høye og «hopper». svh = liten viewport,
+   passer alltid. Eldre nettlesere uten svh beholder 100vh (Tailwind-default). */
+@supports (height: 100svh) {
+  .min-h-screen { min-height: 100svh; }
+  .h-screen { height: 100svh; }
+}
+
+/* 2) iOS zoomer automatisk inn når man fokuserer et felt med skrift < 16px.
+   På mobil tvinger vi derfor minst 16px på skjemafelt — Apples egen anbefaling. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* 3) Notch / hjemindikator: toast holder seg klar av trygge soner DERSOM
+   viewport-fit=cover slås på i index.html. Uten cover er env()-verdiene 0
+   (no-op) — vi lar siden bruke nettleserens trygge standard inntil notch-
+   håndtering er testet på ekte enhet (navbar trenger da også safe-area-pt). */
+#sikt-toast-container {
+  top: calc(24px + env(safe-area-inset-top));
+  right: calc(24px + env(safe-area-inset-right));
 }
