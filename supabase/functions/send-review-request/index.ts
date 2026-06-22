@@ -8,6 +8,7 @@
 // Vi gjør det bare lett å be ekte kunder om en ekte anmeldelse.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { renderEmail, note } from '../_shared/email.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -44,44 +45,18 @@ function buildEmail(opts: {
   const first = (customerName || '').trim().split(/\s+/)[0] || 'hei';
   const biz = businessName || 'oss';
 
-  const privateBlock = privateFeedback
-    ? `<p style="margin:18px 0 0;font-size:14px;line-height:1.6;color:#5C574C">
-         Var det noe som ikke var helt bra? Du kan bare svare på denne e-posten,
-         så hører vi fra deg direkte.
-       </p>`
-    : '';
-
-  const html = `<!doctype html><html lang="no"><body style="margin:0;padding:0;background:#F6F5F1">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F5F1;padding:32px 0">
-    <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FFFFFF;border:1px solid #E9E4DA;border-radius:16px;padding:32px 32px 36px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-        <tr><td>
-          <p style="margin:0 0 4px;font-size:15px;color:#1A1A1A;font-weight:600">Hei ${escapeHtml(first)},</p>
-          <p style="margin:14px 0 0;font-size:15px;line-height:1.65;color:#1A1A1A">
-            Tusen takk for at du valgte <strong>${escapeHtml(biz)}</strong>. Hvis du var fornøyd,
-            ville det betydd mye om du ga oss noen ord på Google — det tar under ett minutt
-            og hjelper andre med å finne oss.
-          </p>
-          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 6px">
-            <tr><td style="border-radius:11px;background:#1A1A1A">
-              <a href="${escapeHtml(buttonUrl)}" target="_blank"
-                 style="display:inline-block;padding:13px 26px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:11px">
-                ⭐ Gi en vurdering på Google
-              </a>
-            </td></tr>
-          </table>
-          ${privateBlock}
-          <p style="margin:26px 0 0;font-size:12px;line-height:1.6;color:#8A8578">
-            Fungerer ikke knappen? Kopier denne lenken inn i nettleseren:<br>
-            <a href="${escapeHtml(buttonUrl)}" target="_blank" style="color:#15795A;word-break:break-all">${escapeHtml(buttonUrl)}</a>
-          </p>
-        </td></tr>
-      </table>
-      <p style="margin:18px 0 0;font-size:11px;color:#B3AD9F;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-        Sendt på vegne av ${escapeHtml(biz)} · drevet av Sikt
-      </p>
-    </td></tr>
-  </table></body></html>`;
+  const html = renderEmail({
+    preheader: `Hadde du en god opplevelse med ${biz}? Noen ord på Google tar under ett minutt.`,
+    brand: 'none', // white-label: sendt på vegne av kundens bedrift — ingen Sikt-logo
+    heading: 'Takk for at du valgte oss',
+    intro: `Hei ${escapeHtml(first)}, tusen takk for at du valgte <strong style="color:#1A1A1A">${escapeHtml(biz)}</strong>. Var du fornøyd, ville det betydd mye om du ga oss noen ord på Google — det tar under ett minutt og hjelper andre med å finne oss.`,
+    blocks: privateFeedback
+      ? [note('Var det noe som ikke satt helt? Bare svar på denne e-posten, så hører vi fra deg direkte.')]
+      : [],
+    cta: { label: 'Gi en vurdering på Google', url: buttonUrl },
+    secondary: `Fungerer ikke knappen? Lim inn: <a href="${escapeHtml(buttonUrl)}" target="_blank" style="color:#6D28D9;text-decoration:underline;word-break:break-all">${escapeHtml(buttonUrl)}</a>`,
+    footer: `Sendt på vegne av ${escapeHtml(biz)} &nbsp;·&nbsp; drevet av Sikt`,
+  });
 
   return { subject: `Hvordan var opplevelsen med ${biz}?`, html };
 }

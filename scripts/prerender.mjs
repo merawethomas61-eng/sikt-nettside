@@ -361,7 +361,7 @@ const MARKETING = [
     ],
     body: pageBody({
       h1: 'Personvern',
-      lead: 'Sikt Technologies AS respekterer personvernet ditt. Her forklarer vi på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har etter GDPR.',
+      lead: 'Sikt respekterer personvernet ditt. Her forklarer vi på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har etter GDPR.',
       blocks: [
         { h2: 'Kort fortalt', items: ['Vi selger aldri data', 'Data lagres i EU (Supabase)', 'Du kan få innsyn, retting og sletting når som helst'] },
         { h2: 'Kontakt', p: 'Spørsmål om personvern? Send e-post til siktseo@gmail.com.' },
@@ -382,9 +382,9 @@ const MARKETING = [
     ],
     body: pageBody({
       h1: 'Vilkår for bruk',
-      lead: 'Disse vilkårene gjelder mellom deg som kunde og Sikt Technologies AS. Ved å registrere deg og betale for tjenesten godtar du vilkårene.',
+      lead: 'Disse vilkårene gjelder mellom deg som kunde og Sikt. Ved å registrere deg og betale for tjenesten godtar du vilkårene.',
       blocks: [
-        { h2: 'Det viktigste', items: ['Ingen bindingstid — si opp når du vil', 'Månedlig betaling via Stripe', 'Norsk lov, Oslo tingrett som verneting'] },
+        { h2: 'Det viktigste', items: ['Ingen bindingstid — si opp når du vil', 'Månedlig betaling via Stripe', 'Norsk lov og verneting'] },
         { h2: 'Kontakt', p: 'Spørsmål om vilkårene? Send e-post til siktseo@gmail.com.' },
       ],
       links: NAV_LINKS,

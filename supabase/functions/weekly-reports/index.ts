@@ -1,4 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
+import {
+  renderEmail, sectionHead, paragraph, statement, winList, statRow,
+  defList, railNote, note, TOKENS,
+} from '../_shared/email.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
@@ -9,6 +13,8 @@ const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
 // Estimert verdi per organisk klikk (NOK) — konservativt anslag for hva et
 // tilsvarende Google Ads-klikk ville kostet. Brukes til ROI-linjen i kvitteringen.
 const CLICK_VALUE_NOK = 8
+
+const PORTAL_URL = 'https://siktseo.com/portal'
 
 type SiktAction = {
   action_type: string
@@ -274,28 +280,19 @@ function buildSubject({ fixes, findings, plan, topOpportunity }: { fixes: SiktAc
   return `Din ukentlige rapport fra Sikt`
 }
 
-function row(items: SiktAction[], borderColor: string): string {
-  return items.slice(0, 5).map(a => `
-    <tr>
-      <td style="width:3px;background:${borderColor};border-radius:2px" valign="top">&nbsp;</td>
-      <td style="padding-left:16px;padding-bottom:18px">
-        <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(a.title)}</div>
-        ${a.details && (a.details as Record<string,string>).explanation
-          ? `<div style="font-size:13px;color:#6b6880;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml((a.details as Record<string,string>).explanation)}</div>`
-          : a.page_url
-            ? `<div style="font-size:13px;color:#9591a8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(a.page_url)}</div>`
-            : ''
-        }
-      </td>
-    </tr>
-  `).join('')
-}
+// =====================================================================
+// HTML — redaksjonell mal (../_shared/email.ts). Kun presentasjon;
+// all data-henting over er urørt.
+// =====================================================================
 
-function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean, lightWeek: boolean, canAutoFix: boolean, isBasic: boolean, basicGotFixes: boolean): string {
+/** «Ukens mulighet» — redaksjonell blokk (serif-nøkkelord, ingen pille-boks). */
+function opportunityBlock(
+  opp: Opportunity | null, canAutoFix: boolean, isBasic: boolean, basicGotFixes: boolean,
+): string {
   if (!opp) return ''
 
   const traffic = typeof opp.estimated_traffic === 'number' && opp.estimated_traffic > 0
-    ? `~${opp.estimated_traffic} flere besøk/mnd hvis du tar den`
+    ? `~${opp.estimated_traffic} flere besøk i måneden hvis du tar den`
     : null
 
   const recommendation = opp.recommendation_text
@@ -303,8 +300,7 @@ function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean,
     : `En konkurrent rangerer på «${escapeHtml(opp.keyword)}» — det gjør ikke du ennå. Tar du dette søkeordet, henter du trafikken deres.`
 
   // Plattform-bevisst: lov bare auto-fiks når siden faktisk er koblet til for skriving.
-  // Standard+ på en rådgiver-plattform (Wix/Squarespace m.fl.) får ferdig forslag å lime inn.
-  // Basic får kun engangs auto-fiks i oppstart — aldri løpende, selv om siden er tilkoblet.
+  // Basic får kun engangs auto-fiks i oppstart — aldri løpende, selv om tilkoblet.
   const action = isBasic
     ? (basicGotFixes
         ? 'Sikt fikset allerede de viktigste tingene for deg i oppstart. Denne muligheten får du som ferdig oppskrift — eller oppgrader til Standard for løpende auto-fiks hver uke.'
@@ -313,34 +309,43 @@ function opportunitySection(opp: Opportunity | null, isStandardOrAbove: boolean,
       ? 'Sikt tar tak i denne for deg — du ser den i neste kvittering.'
       : 'Forslaget er klart til å limes inn. Koble til siden din for skrivetilgang, så fikser Sikt slikt automatisk.'
 
-  // Fremhevet kort (lys lilla) når det er ukens hovedsak; ellers samme stil som øvrige seksjoner.
-  const bg = lightWeek ? '#faf7ff' : '#ffffff'
-  const border = lightWeek ? '#e4d8fb' : '#e2e0ea'
-
-  return `
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Ukens mulighet</div>
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="background:${bg};border:1px solid ${border};border-radius:14px;padding:20px">
-        <div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:6px;letter-spacing:-0.3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(opp.keyword)}</div>
-        ${traffic ? `<div style="display:inline-block;background:#f0e9fe;color:#6b21a8;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${traffic}</div>` : ''}
-        <div style="font-size:14px;color:#6b6880;line-height:1.65;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${recommendation}</div>
-        <div style="font-size:13px;color:#7c3aed;font-weight:700;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${action}</div>
-      </td></tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  `
+  return sectionHead('Ukens mulighet')
+    + `<div style="font-family:${TOKENS.serif};font-size:20px;font-weight:700;color:${TOKENS.color.ink};letter-spacing:-0.3px;margin-bottom:6px">${escapeHtml(opp.keyword)}</div>`
+    + (traffic ? `<div style="font-family:${TOKENS.sans};font-size:13px;font-weight:600;color:${TOKENS.color.green};margin-bottom:12px">${escapeHtml(traffic)}</div>` : '')
+    + paragraph(recommendation)
+    + `<div style="font-family:${TOKENS.sans};font-size:13px;font-weight:600;color:${TOKENS.color.accent};line-height:1.55;margin-top:12px">${action}</div>`
 }
 
-function section(label: string, content: string): string {
-  return `
-    <tr><td style="padding-top:32px">
-      <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${label}</div>
-      <table width="100%" cellpadding="0" cellspacing="0">${content}</table>
-    </td></tr>
-    <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  `
+/** «AI-synlighet» (Premium) — kompakt score-blokk, så ROI-tallet forblir fokus. */
+function geoBlock(geoScore: number, geoPrevScore: number | null, geoMentioned: number, geoTotal: number): string {
+  if (geoTotal > 0) {
+    let trend: string
+    if (geoPrevScore === null) {
+      trend = `<span style="font-family:${TOKENS.sans};font-size:12px;font-weight:600;color:${TOKENS.color.muted}">Ny måling</span>`
+    } else {
+      const d = geoScore - geoPrevScore
+      const col = d > 0 ? TOKENS.color.green : d < 0 ? TOKENS.color.danger : TOKENS.color.muted
+      const txt = d > 0 ? `+${d} fra forrige uke` : d < 0 ? `${d} fra forrige uke` : 'uendret fra forrige uke'
+      trend = `<span style="font-family:${TOKENS.sans};font-size:12px;font-weight:600;color:${col}">${txt}</span>`
+    }
+    return sectionHead('AI-synlighet')
+      + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td valign="top">
+            <div style="font-family:${TOKENS.serif};font-size:30px;font-weight:700;color:${TOKENS.color.ink};line-height:1">${geoScore}<span style="font-family:${TOKENS.sans};font-size:15px;color:${TOKENS.color.muted};font-weight:600"> / 100</span></div>
+            <div style="font-family:${TOKENS.sans};font-size:12px;color:${TOKENS.color.muted};text-transform:uppercase;letter-spacing:1px;margin-top:8px">AI-synlighet denne uken</div>
+          </td>
+          <td valign="top" align="right">${trend}</td>
+        </tr></table>`
+      + paragraph(
+          `Nevnt i <strong style="color:${TOKENS.color.ink}">${geoMentioned} av ${geoTotal}</strong> AI-svar. Vi spør ChatGPT, Gemini og Perplexity bransjespørsmål en kunde ville stilt${geoMentioned > 0 ? ' — og du dukker opp.' : '. Vi jobber med å få deg inn i svarene.'}`,
+          { mt: TOKENS.space.md },
+        )
+  }
+  return sectionHead('AI-synlighet') + railNote({
+    title: 'Nevner ChatGPT deg?',
+    body: 'Stadig flere spør AI-assistenter om anbefalinger i stedet for å google. Vi sjekker ukentlig om ChatGPT, Gemini og Perplexity nevner bedriften din.',
+    tone: 'accent',
+  })
 }
 
 function buildEmailHtml(opts: {
@@ -371,238 +376,110 @@ function buildEmailHtml(opts: {
   canAutoFix: boolean
   wins: { keyword: string; position: number; prev: number }[]
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, alerts, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins } = opts
+  const ink = TOKENS.color.ink
+  const accent = TOKENS.color.accent
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
-  const monthName = now.toLocaleDateString('nb-NO', { month: 'long' })
   const dateStr = now.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const findFindCount = findings.length + suggestions.length
-  const lightWeek = fixes.length === 0 && findings.length === 0 && suggestions.length === 0 && alerts.length === 0
 
   // Aldri «0 ting». Tom arbeidsuke → led med vekst (Ukens mulighet) eller vedlikehold.
-  const italic = (t: string) => `<span style="font-family:Georgia,serif;font-style:italic;font-weight:400">${t}</span>`
+  const italic = (t: string) => `<span style="font-style:italic;font-weight:400">${t}</span>`
   let headlineHtml: string
   let sublineHtml: string
   if (fixes.length > 0) {
-    headlineHtml = `${italic('Denne uken')} fikset vi<br>${fixes.length} ting for deg.`
-    sublineHtml = `Alt skjedde automatisk${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''} og du trengte ikke å gjøre noe.`
+    headlineHtml = `${italic('Denne uken')} fikset vi ${fixes.length} ting for deg.`
+    sublineHtml = `Alt skjedde automatisk${websiteUrl ? ` på <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ''}, uten at du trengte å løfte en finger.`
   } else if (findFindCount > 0) {
-    headlineHtml = `${italic('Denne uken')} fant vi<br>${findFindCount} ting du bør se på.`
-    sublineHtml = `Vi gikk gjennom${websiteUrl ? ` <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ' nettstedet ditt'} og fant nye forbedringer du kan ta tak i.`
+    headlineHtml = `${italic('Denne uken')} fant vi ${findFindCount} ting du bør se på.`
+    sublineHtml = `Vi gikk gjennom${websiteUrl ? ` <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ' nettstedet ditt'} og fant nye forbedringer du kan ta tak i.`
   } else if (topOpportunity) {
-    headlineHtml = `${italic('Denne uken')} jaktet vi<br>vekst for deg.`
+    headlineHtml = `${italic('Denne uken')} jaktet vi vekst for deg.`
     sublineHtml = `Ingen nye feil dukket opp — grunnmuren er i god form. Så vi brukte uken på å finne neste mulighet til å klatre.`
   } else {
-    headlineHtml = `${italic('Denne uken')} holdt vi<br>vakt for deg.`
-    sublineHtml = `Ingen nye feil, ingen drop${websiteUrl ? ` på <strong style="color:#1a1a2e">${escapeHtml(websiteUrl)}</strong>` : ''}. Vi overvåket siden og konkurrentene dine døgnet rundt så du slapp.`
+    headlineHtml = `${italic('Denne uken')} holdt vi vakt for deg.`
+    sublineHtml = `Ingen nye feil, ingen drop${websiteUrl ? ` på <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ''}. Vi overvåket siden og konkurrentene dine døgnet rundt, så du slapp.`
   }
 
-  // GEO-trend (Premium): badge som viser bevegelse i AI-synlighet mot forrige uke.
-  let geoTrendHtml = ''
-  if (geoPrevScore === null) {
-    geoTrendHtml = `<span style="display:inline-block;background:#f0e9fe;color:#6b21a8;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">Ny måling</span>`
-  } else {
-    const delta = geoScore - geoPrevScore
-    if (delta > 0) {
-      geoTrendHtml = `<span style="display:inline-block;background:#e7f7ee;color:#137a47;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#9650; +${delta} fra forrige uke</span>`
-    } else if (delta < 0) {
-      geoTrendHtml = `<span style="display:inline-block;background:#fdeeee;color:#b42318;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#9660; ${delta} fra forrige uke</span>`
-    } else {
-      geoTrendHtml = `<span style="display:inline-block;background:#f0eff4;color:#6b6880;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">&#8594; uendret fra forrige uke</span>`
-    }
+  // Blokker bygges i lese-rekkefølge: resultater først (seire → verdi), så
+  // mulighet, arbeid, konkurrenter, AI-synlighet og til slutt livstidstall.
+  const blocks: string[] = []
+
+  if (wins.length > 0) {
+    blocks.push(sectionHead('Seire denne uken') + winList(wins.map(w => ({
+      keyword: w.keyword,
+      from: w.prev,
+      to: w.position,
+      flag: w.position <= 3 ? 'topp 3' : w.position <= 10 ? 'side 1' : undefined,
+    }))))
   }
 
-  return `<!DOCTYPE html>
-<html lang="no">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f0eff4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0eff4;padding:32px 16px">
-<tr><td align="center">
-<table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%">
+  if (gscClicks > 0) {
+    blocks.push(sectionHead('Hva dette er verdt') + statement({
+      value: `~${estValue.toLocaleString('nb-NO')} kr`,
+      label: 'Estimert verdi per måned',
+      trend: (clicksDeltaPct !== null && clicksDeltaPct >= 0) ? `+${clicksDeltaPct} % klikk mot forrige måned` : undefined,
+      sub: `${gscClicks.toLocaleString('nb-NO')} klikk fra ${gscImpressions.toLocaleString('nb-NO')} visninger i Google siste 28 dager — verdsatt som hva tilsvarende annonseklikk ville kostet (~${CLICK_VALUE_NOK} kr per klikk).`,
+    }))
+  }
 
-  <!-- LOGO -->
-  <tr><td style="padding:40px 0 36px">
-    <table cellpadding="0" cellspacing="0"><tr>
-      <td style="width:34px;height:34px;background:linear-gradient(135deg,#2d1054,#6b21a8);border-radius:9px;text-align:center;vertical-align:middle">
-        <span style="font-size:18px;font-weight:900;color:#fff;line-height:34px;font-family:Georgia,serif">S</span>
-      </td>
-      <td style="padding-left:11px;font-size:15px;font-weight:700;color:#1a1a2e;letter-spacing:-0.2px">Sikt</td>
-    </tr></table>
-  </td></tr>
+  const opp = opportunityBlock(topOpportunity, canAutoFix, !isStandardOrAbove, totalFixes > 0)
+  if (opp) blocks.push(opp)
 
-  <!-- INTRO -->
-  <tr><td style="padding-bottom:32px;border-bottom:1px solid #e2e0ea">
-    <div style="font-size:12px;color:#9591a8;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:1.5px">Uke ${weekNum} — ${dateStr}</div>
-    ${firstName ? `<div style="font-size:15px;color:#6b6880;margin-bottom:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Hei, <span style="color:#1a1a2e;font-weight:700">${escapeHtml(firstName)}</span></div>` : ''}
-    <div style="font-size:28px;font-weight:800;color:#1a1a2e;line-height:1.25;margin-bottom:14px;letter-spacing:-0.5px">
-      ${headlineHtml}
-    </div>
-    <div style="font-size:15px;color:#6b6880;line-height:1.7;margin-bottom:28px">${sublineHtml}</div>
-  </td></tr>
+  const explanationOf = (a: SiktAction): string | undefined => {
+    const ex = a.details && (a.details as Record<string, string>).explanation
+    return ex ? ex : (a.page_url ?? undefined)
+  }
+  if (fixes.length > 0) blocks.push(sectionHead('Fikset av Sikt') + defList(fixes.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
+  if (findings.length > 0) blocks.push(sectionHead('Vi fant også') + defList(findings.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
+  if (suggestions.length > 0) blocks.push(sectionHead('AI-forslag') + defList(suggestions.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
 
-  ${wins.length > 0 ? `
-  <!-- SEIRE: søkeord som klatret -->
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#137a47;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">&#127881; Seire denne uken</div>
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="background:#f3fbf6;border:1px solid #cdeed9;border-radius:14px;padding:18px 20px">
-        ${wins.map(w => `
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px"><tr>
-          <td style="font-size:14px;font-weight:700;color:#1a1a2e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${escapeHtml(w.keyword)}</td>
-          <td align="right" style="white-space:nowrap;font-size:13px;font-weight:700;color:#137a47;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">nr. ${w.prev} &#8594; ${w.position}${w.position <= 3 ? ' &#11088;' : w.position <= 10 ? ' (side 1)' : ''}</td>
-        </tr></table>`).join('')}
-        <div style="font-size:13px;color:#5a7e6a;line-height:1.6;margin-top:6px;padding-top:12px;border-top:1px solid #d8efe0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">Arbeidet gir resultater — du klatret på ${wins.length === 1 ? 'ett søkeord' : `${wins.length} søkeord`} siden sist. Slik ser fremgang ut.</div>
-      </td></tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  ` : ''}
+  if (doneThisWeek > 0 || openSuggestions > 0) {
+    blocks.push(note(
+      `${doneThisWeek > 0 ? `<strong style="color:${ink}">Du tok unna ${doneThisWeek} forslag denne uken.</strong> ` : ''}` +
+      `${openSuggestions > 0
+        ? `${openSuggestions} forslag venter i <a href="${PORTAL_URL}" style="color:${accent};text-decoration:underline;font-weight:600">Sikt-loggen</a> — hvert ferdig skrevet, klart til å limes inn.`
+        : 'Alt er tatt unna. Nytt påfyll kommer.'}`,
+    ))
+  }
 
-  ${opportunitySection(topOpportunity, isStandardOrAbove, lightWeek, canAutoFix, !isStandardOrAbove, totalFixes > 0)}
+  if (isStandardOrAbove) {
+    blocks.push(sectionHead('Konkurrentene dine') + railNote({
+      title: 'Vi holder øye mens du jobber',
+      body: 'Publiserer en konkurrent noe nytt, endrer priser eller klatrer på Google, får du beskjed. Du slipper å følge med selv.',
+    }))
+  }
 
-  ${fixes.length > 0 ? section('Fikset av Sikt', row(fixes, '#7c3aed')) : ''}
-  ${findings.length > 0 ? section('Vi fant også', row(findings, '#e2e0ea')) : ''}
-  ${suggestions.length > 0 ? section('AI-forslag', row(suggestions, '#e2e0ea')) : ''}
+  if (isPremium) blocks.push(geoBlock(geoScore, geoPrevScore, geoMentioned, geoTotal))
 
-  ${(doneThisWeek > 0 || openSuggestions > 0) ? `
-  <tr><td style="padding-top:24px">
-    <div style="font-size:13px;color:#6b6880;line-height:1.7;background:#ffffff;border:1px solid #e2e0ea;border-radius:12px;padding:14px 16px">
-      ${doneThisWeek > 0 ? `<strong style="color:#137a47">Du tok unna ${doneThisWeek} forslag denne uken — sterkt!</strong> ` : ''}${openSuggestions > 0 ? `${openSuggestions} forslag venter på deg i <a href="https://siktseo.com/portal" style="color:#7c3aed;font-weight:700;text-decoration:none">Sikt-loggen</a> — hvert av dem er ferdig skrevet, klart til å limes inn.` : 'Alt er tatt unna. Ny påfyll kommer.'}
-    </div>
-  </td></tr>
-  ` : ''}
+  blocks.push(sectionHead('Siden du startet med Sikt') + statRow([
+    { value: totalFixes, label: 'ting fikset' },
+    { value: totalFindings, label: 'funn oppdaget' },
+    { value: weeksActive, label: weeksActive === 1 ? 'uke aktiv' : 'uker aktiv' },
+  ]))
 
-  ${isStandardOrAbove ? `
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">Konkurrentene dine</div>
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="width:3px;background:#e2e0ea;border-radius:2px" valign="top">&nbsp;</td>
-        <td style="padding-left:16px;padding-bottom:16px">
-          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Vi holder øye mens du jobber</div>
-          <div style="font-size:13px;color:#6b6880;line-height:1.6">Hvis en konkurrent publiserer noe nytt, endrer priser eller klatrer på Google får du vite det. Du slipper å følge med selv.</div>
-          <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se konkurrentoversikt</a>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  ` : ''}
+  const preheader = gscClicks > 0
+    ? `Trafikken din er verdt ~${estValue.toLocaleString('nb-NO')} kr i måneden. Her er uken som var.`
+    : wins.length > 0
+      ? `Du klatret på ${wins.length} søkeord denne uken.`
+      : topOpportunity
+        ? `Ukens mulighet: ${topOpportunity.keyword}.`
+        : 'Her er din ukentlige rapport fra Sikt.'
 
-  ${isPremium ? `
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">AI-synlighet</div>
-    ${geoTotal > 0 ? `
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="background:#faf7ff;border:1px solid #e4d8fb;border-radius:14px;padding:22px">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td valign="top">
-            <div style="font-size:42px;font-weight:800;color:#1a1a2e;line-height:1;letter-spacing:-1px">${geoScore}<span style="font-size:20px;color:#9591a8;font-weight:700">/100</span></div>
-            <div style="font-size:13px;color:#6b6880;font-weight:600;margin-top:6px">AI-synlighet denne uken</div>
-          </td>
-          <td valign="top" align="right">${geoTrendHtml}</td>
-        </tr></table>
-        <div style="font-size:13px;color:#6b6880;line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid #ece4fb">
-          Nevnt i <strong style="color:#1a1a2e">${geoMentioned} av ${geoTotal}</strong> AI-svar. Vi stilte ChatGPT, Gemini og Perplexity bransjespørsmål en kunde ville brukt${geoMentioned > 0 ? ' — og du dukket opp.' : '. Vi jobber med å få deg inn i svarene.'}
-        </div>
-      </td></tr>
-    </table>
-    ` : `
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="width:3px;background:#7c3aed;border-radius:2px" valign="top">&nbsp;</td>
-        <td style="padding-left:16px;padding-bottom:16px">
-          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">Nevner ChatGPT deg?</div>
-          <div style="font-size:13px;color:#6b6880;line-height:1.6">Stadig flere kunder spør AI-assistenter om anbefalinger istedenfor Google. Vi sjekker ukentlig om ChatGPT, Gemini og Perplexity nevner bedriften din.</div>
-        </td>
-      </tr>
-    </table>
-    `}
-    <a href="https://siktseo.com/portal" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:#7c3aed;text-decoration:none">Se AI-synlighetsrapport</a>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  ` : ''}
-
-  ${gscClicks > 0 ? `
-  <!-- ROI: hva arbeidet er verdt -->
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">Hva dette er verdt</div>
-    <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="background:#f3fbf6;border:1px solid #cdeed9;border-radius:14px;padding:22px">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td valign="top">
-            <div style="font-size:34px;font-weight:800;color:#137a47;line-height:1;letter-spacing:-0.5px">~${estValue.toLocaleString('nb-NO')} kr<span style="font-size:16px;color:#6b9e82;font-weight:700">/mnd</span></div>
-            <div style="font-size:13px;color:#5a7e6a;font-weight:600;margin-top:6px">Estimert verdi av Google-trafikken din</div>
-          </td>
-          ${clicksDeltaPct !== null ? `<td valign="top" align="right"><span style="display:inline-block;background:${clicksDeltaPct >= 0 ? '#e7f7ee' : '#fdeeee'};color:${clicksDeltaPct >= 0 ? '#137a47' : '#b42318'};font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">${clicksDeltaPct >= 0 ? '&#9650; +' : '&#9660; '}${clicksDeltaPct}% klikk vs forrige mnd</span></td>` : ''}
-        </tr></table>
-        <div style="font-size:13px;color:#5a7e6a;line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid #d8efe0">
-          <strong style="color:#137a47">${gscClicks.toLocaleString('nb-NO')}</strong> klikk fra <strong style="color:#137a47">${gscImpressions.toLocaleString('nb-NO')}</strong> visninger i Google siste 28 dager. Verdien er hva tilsvarende annonseklikk ville kostet (~${CLICK_VALUE_NOK} kr/klikk).
-        </div>
-      </td></tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-  ` : ''}
-
-  <!-- SIDEN DU STARTET -->
-  <tr><td style="padding-top:32px">
-    <div style="font-size:11px;font-weight:700;color:#9591a8;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">Siden du startet med Sikt</div>
-    <table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="width:25%;padding-right:8px">
-        <div style="text-align:center;background:#ffffff;border-radius:12px;padding:16px 8px;border:1px solid #e2e0ea">
-          <div style="font-size:22px;font-weight:800;color:#7c3aed;letter-spacing:-0.5px">${totalFixes}</div>
-          <div style="font-size:11px;color:#9591a8;font-weight:600;margin-top:4px;line-height:1.4">ting fikset</div>
-        </div>
-      </td>
-      <td style="width:25%;padding-right:8px">
-        <div style="text-align:center;background:#ffffff;border-radius:12px;padding:16px 8px;border:1px solid #e2e0ea">
-          <div style="font-size:22px;font-weight:800;color:#7c3aed;letter-spacing:-0.5px">${totalFindings}</div>
-          <div style="font-size:11px;color:#9591a8;font-weight:600;margin-top:4px;line-height:1.4">funn oppdaget</div>
-        </div>
-      </td>
-      <td style="width:25%;padding-right:8px">
-        <div style="text-align:center;background:#ffffff;border-radius:12px;padding:16px 8px;border:1px solid #e2e0ea">
-          <div style="font-size:22px;font-weight:800;color:#7c3aed;letter-spacing:-0.5px">${totalFixes + totalFindings}</div>
-          <div style="font-size:11px;color:#9591a8;font-weight:600;margin-top:4px;line-height:1.4">totalt utført</div>
-        </div>
-      </td>
-      <td style="width:25%">
-        <div style="text-align:center;background:#ffffff;border-radius:12px;padding:16px 8px;border:1px solid #e2e0ea">
-          <div style="font-size:22px;font-weight:800;color:#7c3aed;letter-spacing:-0.5px">${weeksActive}</div>
-          <div style="font-size:11px;color:#9591a8;font-weight:600;margin-top:4px;line-height:1.4">uker aktiv</div>
-        </div>
-      </td>
-    </tr></table>
-  </td></tr>
-  <tr><td style="padding-top:32px;border-bottom:1px solid #e2e0ea"></td></tr>
-
-  <!-- SIGN OFF -->
-  <tr><td style="padding-top:36px">
-    <div style="font-size:15px;color:#6b6880;line-height:1.8">Ha en god uke.<br>
-    <span style="color:#1a1a2e;font-weight:600">Vi sees neste mandag.</span></div>
-  </td></tr>
-
-  <!-- CTA -->
-  <tr><td style="padding-top:24px;padding-bottom:0">
-    <a href="https://siktseo.com/portal" style="display:inline-block;background:#7c3aed;color:#fff;font-weight:700;font-size:14px;padding:13px 26px;border-radius:9px;text-decoration:none">Åpne dashboardet</a>
-  </td></tr>
-
-  <!-- FOOTER -->
-  <tr><td style="padding:40px 0 48px;border-top:1px solid #e2e0ea;margin-top:40px">
-    <div style="font-size:11px;color:#b8b5c8;line-height:1.9">
-      Sikt · ${escapeHtml(plan)} · ${websiteUrl ? escapeHtml(websiteUrl) : ''}<br>
-      <a href="https://siktseo.com/portal" style="color:#b8b5c8;text-decoration:none">Administrer varsler</a> · <a href="https://siktseo.com/portal" style="color:#b8b5c8;text-decoration:none">Avslutt abonnement</a>
-    </div>
-  </td></tr>
-
-</table>
-</td></tr>
-</table>
-</body>
-</html>`
+  return renderEmail({
+    preheader,
+    brand: 'sikt',
+    kicker: `Uke ${weekNum} · ${dateStr}`,
+    heading: headlineHtml,
+    intro: (firstName ? `Hei ${escapeHtml(firstName)}. ` : '') + sublineHtml,
+    blocks,
+    signoff: 'Ha en god uke — vi sees neste mandag.',
+    cta: { label: 'Åpne dashbordet', url: PORTAL_URL },
+    footer: `Sikt · ${escapeHtml(plan)}${websiteUrl ? ` · ${escapeHtml(websiteUrl)}` : ''} &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Administrer varsler</a> &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Avslutt abonnement</a>`,
+  })
 }
 
 function escapeHtml(str: string): string {

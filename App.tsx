@@ -5,6 +5,7 @@ import { Pricing } from './src/shared/Pricing';
 import { Navbar } from './src/shared/Navbar';
 import { Footer } from './src/shared/Footer';
 import { PrivacyPage, TermsPage } from './src/shared/Legal';
+import { buildStripeCheckoutUrl } from './src/shared/stripeLinks';
 
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -2059,7 +2060,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || websiteUrlStatus === 'invalid'}
             className="w-full py-5 bg-violet-700 text-white rounded-xl font-bold text-lg transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl disabled:opacity-50 enabled:hover:bg-violet-600 active:enabled:scale-[0.98]"
           >
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
@@ -3371,16 +3372,13 @@ const velgPakke = async (pakkeNavn) => {
     /* ignore — hint for UI, ikke tilgang */
   }
 
-  // Send brukeren til riktig betalingsside (Stripe/Vipps)
-  // DU MÅ BYTTE UT LENKENE UNDER MED DINE EGNE
-  if (pakkeNavn === "Basic Pakke") {
-    window.location.href = 'https://buy.stripe.com/DIN_BASIC_LINK';
-  }
-  else if (pakkeNavn === "Standard Pakke") {
-    window.location.href = 'https://buy.stripe.com/DIN_STANDARD_LINK';
-  }
-  else if (pakkeNavn === "Premium Pakke") {
-    window.location.href = 'https://buy.stripe.com/DIN_PREMIUM_LINK';
+  // Send brukeren til riktig betalingsside. Lenkene leses fra miljøvariabler
+  // (VITE_STRIPE_*_LINK) via stripeLinks — aldri hardkodet her.
+  const url = buildStripeCheckoutUrl(pakkeNavn);
+  if (url) {
+    window.location.href = url;
+  } else {
+    toastError(`Fant ingen betalingslenke for «${pakkeNavn}». Sjekk at VITE_STRIPE_*_LINK er satt.`);
   }
 };
 
@@ -4632,20 +4630,20 @@ function App() {
 
 
       const planNavn = plan.toUpperCase();
-      let stripeBaseUrl = "";
 
-      if (planNavn.includes('PREMIUM')) stripeBaseUrl = 'https://buy.stripe.com/test_5kQfZievo3gaeFL84Ads402';
-      else if (planNavn.includes('STANDARD')) stripeBaseUrl = 'https://buy.stripe.com/test_4gMcN63QKbMG55b1Gcds401';
-      else if (planNavn.includes('BASIC')) stripeBaseUrl = 'https://buy.stripe.com/test_eVq5kE870g2WeFL84Ads400';
+      // Lenkene leses fra miljøvariabler (VITE_STRIPE_*_LINK). client_reference_id
+      // settes av helperen — webhooken bruker den til å koble betalingen mot riktig
+      // bruker. Uten den står kunden fast etter betaling.
+      const checkoutUrl = buildStripeCheckoutUrl(planNavn, {
+        email: currentUser.email || '',
+        userId: currentUser.id,
+      });
 
-      if (!stripeBaseUrl) {
-        toastError(`Fant ingen betalingslenke for denne pakken: ${plan}`);
+      if (!checkoutUrl) {
+        toastError(`Fant ingen betalingslenke for denne pakken: ${plan}. Sjekk at VITE_STRIPE_*_LINK er satt.`);
         return;
       }
 
-      // VIKTIG: client_reference_id må med — webhook bruker dette til å koble
-      // betalingen mot riktig bruker. Uten dette står kunden fast etter betaling.
-      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(currentUser.email || '')}&client_reference_id=${encodeURIComponent(currentUser.id)}`;
       window.location.href = checkoutUrl;
 
     } catch (err: any) {

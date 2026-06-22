@@ -1,5 +1,8 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { companyInfo, legalEntityLabel } from './companyInfo';
+
+const SUPPORT_EMAIL = companyInfo.supportEmail;
 
 const LegalPage = ({ title, lastUpdated, onBack, children }: {
   title: string;
@@ -33,8 +36,8 @@ const LegalPage = ({ title, lastUpdated, onBack, children }: {
       <div className="mt-16 pt-10 border-t border-[#EBEBE6] text-sm text-[#808080]">
         <p className="mb-2">
           Har du spørsmål? Kontakt oss på{" "}
-          <a href="mailto:siktseo@gmail.com" className="text-[#1A1A1A] font-bold hover:underline">
-            siktseo@gmail.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[#1A1A1A] font-bold hover:underline">
+            {SUPPORT_EMAIL}
           </a>
         </p>
       </div>
@@ -70,13 +73,13 @@ const LegalPage = ({ title, lastUpdated, onBack, children }: {
 const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
   <LegalPage title="Personvern" lastUpdated="20. april 2026" onBack={onBack}>
     <p>
-      Sikt Technologies AS ("vi", "oss", "Sikt") respekterer personvernet ditt. Denne erklæringen forklarer på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har.
+      {legalEntityLabel} ("vi", "oss", "Sikt") respekterer personvernet ditt. Denne erklæringen forklarer på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har.
     </p>
 
     <h2>1. Hvem er behandlingsansvarlig?</h2>
     <p>
-      Sikt Technologies AS er behandlingsansvarlig for personopplysningene vi samler inn om deg.
-      Kontakt: <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a>
+      {legalEntityLabel} er behandlingsansvarlig for personopplysningene vi samler inn om deg.
+      Kontakt: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
     </p>
 
     <h2>2. Hvilke opplysninger samler vi inn?</h2>
@@ -91,7 +94,7 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
     <h3>Opplysninger vi henter automatisk</h3>
     <ul>
       <li><strong>Google Search Console-data:</strong> hvis du kobler til kontoen din, henter vi søkestatistikk om nettsiden din (søkeord, klikk, visninger).</li>
-      <li><strong>Google Analytics-data:</strong> trafikk- og besøkendedata fra din egen nettside (ikke fra siktseo.no).</li>
+      <li><strong>Google Analytics-data:</strong> trafikk- og besøkendedata fra din egen nettside (ikke fra siktseo.com).</li>
       <li><strong>Teknisk data:</strong> IP-adresse, nettleser, og tidspunkt for besøk — brukes til sikkerhet og feilsøking.</li>
     </ul>
 
@@ -127,7 +130,7 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
       <li>Klage til <a href="https://www.datatilsynet.no" target="_blank" rel="noopener">Datatilsynet</a> hvis du mener vi behandler data feil.</li>
     </ul>
     <p>
-      Send oss en e-post på <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a> så ordner vi det innen 5 dager.
+      Send oss en e-post på <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> så ordner vi det innen 5 dager.
     </p>
 
     <h2>7. Sikkerhet</h2>
@@ -151,12 +154,12 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
 const TermsPage = ({ onBack }: { onBack: () => void }) => (
   <LegalPage title="Vilkår for bruk" lastUpdated="20. april 2026" onBack={onBack}>
     <p>
-      Disse vilkårene gjelder mellom deg som kunde ("du") og Sikt Technologies AS ("Sikt", "vi"). Ved å registrere deg og betale for tjenesten, godtar du vilkårene.
+      Disse vilkårene gjelder mellom deg som kunde ("du") og {legalEntityLabel} ("Sikt", "vi"). Ved å registrere deg og betale for tjenesten, godtar du vilkårene.
     </p>
 
     <h2>1. Tjenesten</h2>
     <p>
-      Sikt leverer SEO-analyser, AI-drevne anbefalinger og rapporter for din nettside. Tjenesten leveres som et abonnement med tre pakker: Basic, Standard og Premium. Innholdet i hver pakke er beskrevet på <a href="/">siktseo.no</a> og kan endres med 30 dagers forhåndsvarsel.
+      Sikt leverer SEO-analyser, AI-drevne anbefalinger og rapporter for din nettside. Tjenesten leveres som et abonnement med tre pakker: Basic, Standard og Premium. Innholdet i hver pakke er beskrevet på <a href="/">siktseo.com</a> og kan endres med 30 dagers forhåndsvarsel.
     </p>
 
     <h2>2. Konto og ansvar</h2>
@@ -169,7 +172,7 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
 
     <h2>3. Priser og betaling</h2>
     <ul>
-      <li>Alle priser er oppgitt i norske kroner (NOK) og eksklusive MVA.</li>
+      <li>Alle priser er oppgitt i norske kroner (NOK). Merverdiavgift (MVA) kommer i tillegg først når Sikt blir mva-registrert; du varsles før det eventuelt skjer.</li>
       <li>Betaling skjer månedlig via Stripe. Kort belastes automatisk den samme datoen hver måned.</li>
       <li>De tre første månedene gis med nedtrappende introrabatt: 50 % første måned, 30 % andre måned, 15 % tredje måned. Fra fjerde måned betales full pris.</li>
       <li>Vi kan justere priser med 30 dagers varsel. Du kan alltid si opp før en prisjustering trer i kraft.</li>
@@ -203,12 +206,12 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
 
     <h2>8. Tvisteløsning og lovvalg</h2>
     <p>
-      Disse vilkårene er underlagt norsk lov. Hvis vi ikke klarer å løse en uenighet minnelig, skal saken avgjøres av Oslo tingrett som verneting.
+      Disse vilkårene er underlagt norsk lov. Hvis vi ikke klarer å løse en uenighet minnelig, avgjøres saken ved {companyInfo.venue} som verneting.
     </p>
 
     <h2>9. Kontakt</h2>
     <p>
-      Spørsmål om vilkårene? Send en e-post til <a href="mailto:siktseo@gmail.com">siktseo@gmail.com</a>.
+      Spørsmål om vilkårene? Send en e-post til <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
     </p>
   </LegalPage>
 );

@@ -8,8 +8,9 @@ import { SectionHeading } from '../components/marketing/SectionHeading';
 import { Badge } from '../components/marketing/Badge';
 import { PillButton } from '../components/marketing/PillButton';
 import { GlassCard } from '../components/marketing/GlassCard';
+import { companyInfo } from '../shared/companyInfo';
 
-const SUPPORT_EMAIL = 'siktseo@gmail.com';
+const SUPPORT_EMAIL = companyInfo.supportEmail;
 
 const inputCls =
   'w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-[#F5F5F0] text-[#1A1A1A] font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400 transition-[border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]';
@@ -20,18 +21,45 @@ const perks = [
   { icon: ShieldCheck, title: 'Helt uforpliktende', body: 'Ingen bindingstid, ingen press. Bare et godt svar på plain norsk.' },
 ];
 
+type SubmitStatus = 'idle' | 'sending' | 'sent' | 'error';
+
 export default function KontaktPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
+  const [hp, setHp] = useState(''); // honeypot — skjult for ekte brukere
+  const [status, setStatus] = useState<SubmitStatus>('idle');
+  const sent = status === 'sent';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Faller tilbake til e-postklienten hvis backend ikke er tilgjengelig,
+  // slik at en henvendelse aldri går tapt.
+  const openMailto = () => {
     const subject = `Henvendelse fra ${name || 'nettsiden'}`;
     const body = `Navn: ${name}\nE-post: ${email}\n\n${message}`;
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (status === 'sending') return;
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message, hp }),
+      });
+      if (res.ok) {
+        setStatus('sent');
+        return;
+      }
+      // 503 = e-posttjeneste ikke satt opp ennå → bruk mailto i stedet.
+      openMailto();
+      setStatus('sent');
+    } catch {
+      openMailto();
+      setStatus('error');
+    }
   };
 
   return (
@@ -99,6 +127,17 @@ export default function KontaktPage() {
                   <Badge tone="violet" icon={<Sparkles size={12} />}>Skriv til oss</Badge>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Honeypot — skjult for ekte brukere, fanger bots */}
+                  <input
+                    type="text"
+                    value={hp}
+                    onChange={(e) => setHp(e.target.value)}
+                    name="company_website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="absolute -left-[9999px] h-0 w-0 opacity-0"
+                  />
                   <input
                     type="text"
                     value={name}
@@ -123,11 +162,13 @@ export default function KontaktPage() {
                     rows={5}
                     className={`${inputCls} resize-none`}
                   />
-                  <PillButton type="submit" variant="dark" className="w-full">
+                  <PillButton type="submit" variant="dark" className="w-full" disabled={status === 'sending' || sent}>
                     {sent ? (
                       <>
-                        <Check size={20} /> Åpner e-posten din …
+                        <Check size={20} /> Takk! Vi har mottatt meldingen
                       </>
+                    ) : status === 'sending' ? (
+                      <>Sender …</>
                     ) : (
                       <>
                         Send melding
@@ -135,6 +176,9 @@ export default function KontaktPage() {
                       </>
                     )}
                   </PillButton>
+                  {sent && (
+                    <p className="text-sm text-[#808080] font-medium text-center">Vi svarer som regel innen én arbeidsdag.</p>
+                  )}
                 </form>
               </div>
             </GlassCard>

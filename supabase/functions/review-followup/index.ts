@@ -6,6 +6,7 @@
 // 2026-06-15_reviews.sql.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { renderEmail } from '../_shared/email.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -25,31 +26,14 @@ function escapeHtml(s: string): string {
 function buildFollowup(opts: { customerName: string; businessName: string; buttonUrl: string }) {
   const first = (opts.customerName || '').trim().split(/\s+/)[0] || 'hei';
   const biz = opts.businessName || 'oss';
-  const html = `<!doctype html><html lang="no"><body style="margin:0;padding:0;background:#F6F5F1">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F5F1;padding:32px 0">
-    <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FFFFFF;border:1px solid #E9E4DA;border-radius:16px;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-        <tr><td>
-          <p style="margin:0;font-size:15px;line-height:1.65;color:#1A1A1A">
-            Hei ${escapeHtml(first)}, en liten påminnelse 🙂 Hvis du hadde en god opplevelse med
-            <strong>${escapeHtml(biz)}</strong>, setter vi stor pris på noen ord på Google. Det tar under ett minutt.
-          </p>
-          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px">
-            <tr><td style="border-radius:11px;background:#1A1A1A">
-              <a href="${escapeHtml(opts.buttonUrl)}" target="_blank"
-                 style="display:inline-block;padding:13px 26px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:11px">
-                ⭐ Gi en vurdering på Google
-              </a>
-            </td></tr>
-          </table>
-          <p style="margin:22px 0 0;font-size:12px;color:#8A8578">Dette er den eneste påminnelsen vi sender.</p>
-        </td></tr>
-      </table>
-      <p style="margin:18px 0 0;font-size:11px;color:#B3AD9F;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-        Sendt på vegne av ${escapeHtml(biz)} · drevet av Sikt
-      </p>
-    </td></tr>
-  </table></body></html>`;
+  const html = renderEmail({
+    preheader: `En liten påminnelse fra ${biz} — noen ord på Google tar under ett minutt.`,
+    brand: 'none', // white-label
+    intro: `Hei ${escapeHtml(first)}, en liten påminnelse. Hadde du en god opplevelse med <strong style="color:#1A1A1A">${escapeHtml(biz)}</strong>, setter vi stor pris på noen ord på Google. Det tar under ett minutt.`,
+    cta: { label: 'Gi en vurdering på Google', url: opts.buttonUrl },
+    signoff: 'Dette er den eneste påminnelsen vi sender.',
+    footer: `Sendt på vegne av ${escapeHtml(biz)} &nbsp;·&nbsp; drevet av Sikt`,
+  });
   return { subject: `En liten påminnelse fra ${biz}`, html };
 }
 

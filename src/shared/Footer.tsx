@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Linkedin, Twitter } from 'lucide-react';
+import { companyInfo, copyrightLine } from './companyInfo';
 
 const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
   <footer className="bg-[#1A1A1A] text-white py-16 sm:py-20 border-t border-slate-900 overflow-hidden relative text-center">
@@ -14,10 +15,13 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
           <p className="text-[#808080] font-medium max-w-sm leading-relaxed mb-8 mx-auto md:mx-0 text-sm">
             Mange bedrifter gjetter på hvordan de blir synlige på Google. Vi bruker AI til å gi deg en konkret oppskrift på å nå toppen, slik at du får trafikken og veksten du fortjener.
           </p>
-          <div className="flex items-center justify-center md:justify-start gap-3 text-[#808080] transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">
+          <a href={`mailto:${companyInfo.supportEmail}`} className="inline-flex items-center justify-center md:justify-start gap-3 text-[#808080] transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-white">
             <Mail size={16} className="text-[#1A1A1A]" />
-            <span className="font-bold text-xs">siktseo@gmail.com</span>
-          </div>
+            <span className="font-bold text-xs">{companyInfo.supportEmail}</span>
+          </a>
+          {companyInfo.address && (
+            <p className="mt-3 text-[#808080] font-bold text-xs">{companyInfo.address}</p>
+          )}
         </div>
         <div className="text-center md:text-left">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-[#808080] mb-6 sm:mb-8">Selskap</h4>
@@ -38,7 +42,7 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
         </div>
       </div>
       <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#808080] text-center">
-        <p>© 2026 SIKT TECHNOLOGIES AS. NORSK DESIGN.</p>
+        <p>{copyrightLine}. NORSK DESIGN.</p>
         <div className="flex gap-6 sm:gap-10">
           <Link
             to="/personvern"

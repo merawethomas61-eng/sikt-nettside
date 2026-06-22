@@ -34,6 +34,7 @@ import { JourneyTimeline } from '../../JourneyTimeline';
 import { PORTAL, chartPalette, chartTooltipStyle, formatChartDate, scoreColor } from '../portalTheme';
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from '../shared/Buttons';
+import { buildStripeCheckoutUrl } from '../shared/stripeLinks';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -4746,17 +4747,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     try {
       const fallbackPlan: 'Standard' | 'Premium' = currentLevel <= 1 ? 'Standard' : 'Premium';
       const selectedTarget = (targetPlan || fallbackPlan).toUpperCase();
-      const stripeUrls: Record<string, string> = {
-        BASIC: 'https://buy.stripe.com/test_eVq5kE870g2WeFL84Ads400',
-        STANDARD: 'https://buy.stripe.com/test_4gMcN63QKbMG55b1Gcds401',
-        PREMIUM: 'https://buy.stripe.com/test_5kQfZievo3gaeFL84Ads402',
-      };
-      const stripeBaseUrl = stripeUrls[selectedTarget];
-      if (!stripeBaseUrl) {
-        toastError('Fant ikke riktig planlenke. Prøv igjen.');
+      // Lenkene leses fra miljøvariabler (VITE_STRIPE_*_LINK) via stripeLinks.
+      const checkoutUrl = buildStripeCheckoutUrl(selectedTarget, {
+        email: user?.email || '',
+        userId: user?.id || '',
+      });
+      if (!checkoutUrl) {
+        toastError('Fant ikke riktig planlenke. Sjekk at VITE_STRIPE_*_LINK er satt.');
         return;
       }
-      const checkoutUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(user?.email || '')}&client_reference_id=${encodeURIComponent(user?.id || '')}`;
       window.location.href = checkoutUrl;
     } catch (err) {
       console.error('Error:', err);

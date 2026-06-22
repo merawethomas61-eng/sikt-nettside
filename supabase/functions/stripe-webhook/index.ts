@@ -23,6 +23,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { renderEmail, railNote, escapeHtml } from '../_shared/email.ts';
 
 console.log('Sikt Stripe Webhook v7 (canonical) lastet inn');
 
@@ -31,16 +32,29 @@ console.log('Sikt Stripe Webhook v7 (canonical) lastet inn');
 //   2) line_items[0].price.id  (sett opp i PRICE_TO_PLAN under)
 //   3) total amount  (fallback hvis ingen av delene over finnes)
 //
-// Når dere går live: fyll inn LIVE price-IDene under, så slipper dere amount-mapping.
-const PRICE_TO_PLAN: Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'> = {
-  // 'price_LIVE_basic': 'BASIC',
-  // 'price_LIVE_standard': 'STANDARD',
-  // 'price_LIVE_premium': 'PREMIUM',
-};
+// Når dere går live: sett LIVE price-IDene som secrets (Supabase → Edge Functions →
+// Secrets), så slipper dere den skjøre amount-mappingen lenger ned:
+//   STRIPE_PRICE_BASIC, STRIPE_PRICE_STANDARD, STRIPE_PRICE_PREMIUM
+// Disse leses inn her — ingen kodeendring/redeploy trengs når dere får IDene.
+const PRICE_TO_PLAN: Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'> = Object.fromEntries(
+  (
+    [
+      [Deno.env.get('STRIPE_PRICE_BASIC'), 'BASIC'],
+      [Deno.env.get('STRIPE_PRICE_STANDARD'), 'STANDARD'],
+      [Deno.env.get('STRIPE_PRICE_PREMIUM'), 'PREMIUM'],
+    ] as Array<[string | undefined, 'BASIC' | 'STANDARD' | 'PREMIUM']>
+  ).filter(([id]) => !!id),
+) as Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'>;
 
 const AMOUNT_TO_PLAN: Record<number, 'BASIC' | 'STANDARD' | 'PREMIUM'> = {
   // Beløp i øre. Kun fallback på total-beløpet — foretrukket er metadata.plan
   // eller PRICE_TO_PLAN over. Juster hvis prisene endres.
+  //
+  // ⚠ MVA: beløpene under gjelder UTEN mva (ENK under 50 000 kr-terskelen). Når
+  // foretaket blir mva-registrert og dere legger på 25 %, endres total-beløpet og
+  // denne mappingen treffer ikke lenger. Da MÅ dere bruke PRICE_TO_PLAN (price-IDer)
+  // — eller legge inn de mva-justerte beløpene her.
+  //
   // Introrabatt de tre første månedene: kunden betaler 50 % / 70 % / 85 % av full pris.
   // — Basic (790 kr/mnd)
   39500: 'BASIC',     // mnd 1 (50 %)
@@ -79,18 +93,25 @@ async function sendDunningEmail(
     return;
   }
   const fromEmail = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com';
-  const hilsen = contactName ? `Hei ${contactName},` : 'Hei,';
-  const cta = hostedInvoiceUrl
-    ? `<p style="margin:24px 0"><a href="${hostedInvoiceUrl}" style="background:#1A1A1A;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600">Oppdater betaling</a></p>`
-    : `<p style="margin:24px 0">Logg inn på <a href="https://siktseo.com/portal">dashbordet</a> for å oppdatere betalingskortet ditt.</p>`;
-  const html = `
-    <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A">
-      <p>${hilsen}</p>
-      <p>Vi fikk ikke trukket den siste betalingen for Sikt-abonnementet ditt — som regel et utløpt eller sperret kort.</p>
-      <p>Sikt fortsetter å jobbe i mellomtiden, men for å unngå avbrudd bør du oppdatere kortet snart.</p>
-      ${cta}
-      <p style="color:#8A8578;font-size:13px">Har du allerede ordnet det? Da kan du se bort fra denne e-posten. Spørsmål? Svar på support@siktseo.com.</p>
-    </div>`;
+  const html = renderEmail({
+    preheader: 'Vi fikk ikke trukket den siste betalingen — som oftest et utløpt kort. Oppdater så unngår du avbrudd.',
+    brand: 'sikt',
+    kicker: 'Abonnement',
+    heading: 'Betalingen din gikk ikke gjennom',
+    intro: `${contactName ? `Hei ${escapeHtml(contactName)}, vi` : 'Vi'} fikk ikke trukket den siste betalingen for Sikt-abonnementet ditt — som oftest et utløpt eller sperret kort.`,
+    blocks: [
+      railNote({
+        title: 'Sikt fortsetter å jobbe i mellomtiden',
+        body: 'For å unngå avbrudd bør du oppdatere kortet snart. Det tar under ett minutt.',
+        tone: 'accent',
+      }),
+    ],
+    cta: hostedInvoiceUrl
+      ? { label: 'Oppdater betaling', url: hostedInvoiceUrl }
+      : { label: 'Åpne dashbordet', url: 'https://siktseo.com/portal' },
+    signoff: 'Har du allerede ordnet det? Da kan du se bort fra denne e-posten.',
+    footer: 'Spørsmål? Svar på denne e-posten, eller kontakt support@siktseo.com.',
+  });
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

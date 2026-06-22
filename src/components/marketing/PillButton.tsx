@@ -34,6 +34,7 @@ type PillButtonProps = {
   href?: string;
   onClick?: () => void;
   type?: 'button' | 'submit';
+  disabled?: boolean;
 };
 
 export function PillButton({
@@ -45,8 +46,9 @@ export function PillButton({
   href,
   onClick,
   type = 'button',
+  disabled = false,
 }: PillButtonProps) {
-  const cls = `${base} ${sizes[size]} ${variants[variant]} ${className}`;
+  const cls = `${base} ${sizes[size]} ${variants[variant]} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`;
 
   if (to) {
     return (
@@ -63,7 +65,7 @@ export function PillButton({
     );
   }
   return (
-    <button type={type} onClick={onClick} className={cls}>
+    <button type={type} onClick={onClick} className={cls} disabled={disabled}>
       {children}
     </button>
   );
