@@ -473,7 +473,7 @@ export const CompetitorCardEnhanced: React.FC<CompetitorCardProps> = ({
 
   const isDark = theme !== 'light';
   const c = competitor;
-  const avatarColor = c.avatar_color || '#8b5cf6';
+  const avatarColor = c.avatar_color || '#15795A';
 
   return (
     <div

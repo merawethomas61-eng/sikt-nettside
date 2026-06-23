@@ -292,7 +292,7 @@ const ScrollProgressRing = () => {
           cy="28"
           r={radius}
           fill="none"
-          stroke="#7c3aed"
+          stroke="#15795A"
           strokeWidth="3"
           strokeLinecap="round"
           transform="rotate(-90 28 28)"
@@ -369,7 +369,7 @@ const TechHeroV2 = () => {
     >
       <TechDarkBackground />
       <div className="relative z-10 max-w-3xl mx-auto text-center w-full">
-        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-6 font-display">
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#52A447] mb-6 font-display">
           SIKT-TEKNOLOGIEN
         </p>
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.08] tracking-tight mb-4">
@@ -379,7 +379,7 @@ const TechHeroV2 = () => {
             </span>
           ))}
           <br />
-          <span className="tech-hero-word inline-block font-script font-normal italic text-[#a78bfa] text-3xl sm:text-4xl md:text-5xl mt-2">
+          <span className="tech-hero-word inline-block font-script font-normal italic text-[#52A447] text-3xl sm:text-4xl md:text-5xl mt-2">
             Døgnet rundt.
           </span>
         </h1>
@@ -399,11 +399,11 @@ const TechHeroV2 = () => {
             <div className="text-4xl sm:text-5xl font-extrabold text-white font-display tracking-tight">
               94 <span className="text-lg sm:text-xl font-bold text-[#9ca3af]">/ 100 teknisk score</span>
             </div>
-            <p className="text-sm font-bold text-[#a78bfa] mt-2">+12 denne måneden</p>
+            <p className="text-sm font-bold text-[#52A447] mt-2">+12 denne måneden</p>
           </div>
 
           <div className="mt-4 h-5 flex items-center justify-center gap-2 overflow-hidden">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#a78bfa] shrink-0 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#52A447] shrink-0 animate-pulse" />
             <span
               className="text-xs text-[#6b7280] font-mono transition-[opacity,transform] duration-300"
               style={{
@@ -533,7 +533,7 @@ const TechChapter1Scan = () => {
               <div className="h-16 rounded-lg bg-[#F5F5F0]" />
               <div
                 ref={scanlineRef}
-                className="absolute left-0 right-0 top-0 h-0.5 bg-[#7c3aed] pointer-events-none z-20"
+                className="absolute left-0 right-0 top-0 h-0.5 bg-[#15795A] pointer-events-none z-20"
                 style={{ boxShadow: '0 0 12px rgba(124,58,237,0.5)' }}
               >
                 {/* 24px fading trail beneath the scanline, moves with it */}
@@ -566,7 +566,7 @@ const TechChapter1Scan = () => {
             className="absolute left-1/2 -translate-x-1/2 -bottom-3 flex items-center gap-2 px-3 py-2 rounded-full bg-[#EEEDFE] text-xs font-bold text-[#534AB7] shadow-sm"
             style={{ opacity: reducedMotion ? 1 : 0, transform: reducedMotion ? 'scale(1)' : 'scale(0.9)' }}
           >
-            <Sparkles size={14} className="text-[#7c3aed] shrink-0" />
+            <Sparkles size={14} className="text-[#15795A] shrink-0" />
             AI-løsning klar
           </div>
         </div>
@@ -617,7 +617,7 @@ const TechHorizontalFactors = () => {
       <TechDarkBackground />
       <div className="relative z-10 px-5 py-20 sm:py-28">
         <div className="max-w-6xl mx-auto mb-10 sm:mb-14">
-          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display">DET MASKINEN LESER</p>
+          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#52A447] mb-4 font-display">DET MASKINEN LESER</p>
           <p className="text-lg sm:text-xl text-[#9ca3af] font-medium max-w-xl">
             Et utvalg av faktorene som avgjør om du blir funnet.
           </p>
@@ -639,7 +639,7 @@ const TechHorizontalFactors = () => {
                   className={`${reducedMotion ? 'w-full' : 'w-64'} shrink-0 rounded-2xl bg-[#11161f] border border-[#2a2a2a] p-6`}
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#1c2433] flex items-center justify-center mb-4">
-                    <Icon size={20} className="text-[#a78bfa]" />
+                    <Icon size={20} className="text-[#52A447]" />
                   </div>
                   <h3 className="font-display font-bold text-white text-lg mb-2">{factor.title}</h3>
                   <p className="text-sm text-[#9ca3af] leading-relaxed">{factor.desc}</p>
@@ -746,7 +746,7 @@ const TechChapter2Data = () => {
               <span className="text-right w-16 font-bold tabular-nums text-[#111111]">
                 <span ref={(el) => { counterRefs.current[rowIdx * 3 + 1] = el; }}>{reducedMotion ? row.impressions : 0}</span>
               </span>
-              <span className={`text-right w-10 font-bold tabular-nums flex items-center justify-end gap-0.5 ${row.color === 'green' ? 'text-emerald-600' : 'text-[#7c3aed]'}`}>
+              <span className={`text-right w-10 font-bold tabular-nums flex items-center justify-end gap-0.5 ${row.color === 'green' ? 'text-emerald-600' : 'text-[#15795A]'}`}>
                 <span ref={(el) => { counterRefs.current[rowIdx * 3 + 2] = el; }}>{reducedMotion ? row.position : 0}</span>
                 <ArrowUp size={12} />
               </span>
@@ -804,7 +804,7 @@ const TechChapter3Brain = () => {
     <section ref={sectionRef} className="relative bg-[#0A0A0A] px-5 py-20 sm:py-32 overflow-hidden">
       <TechDarkBackground />
       <div className="relative z-10 max-w-2xl mx-auto">
-        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display text-center">03 — HJERNEN</p>
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#52A447] mb-4 font-display text-center">03 — HJERNEN</p>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white text-center leading-tight tracking-tight mb-5">
           AI som snakker norsk. Ikke fagspråk.
         </h2>
@@ -821,10 +821,10 @@ const TechChapter3Brain = () => {
           <div className="flex justify-start">
             <div className="max-w-[90%] rounded-2xl rounded-tl-md bg-[#2a1f47] border border-[#3a2a5a] px-4 py-3">
               <div className="flex items-start gap-2">
-                <Sparkles size={16} className="text-[#a78bfa] shrink-0 mt-0.5" />
+                <Sparkles size={16} className="text-[#52A447] shrink-0 mt-0.5" />
                 <p ref={aiTextRef} className="text-sm text-[#e9e2ff] leading-relaxed">
                   {TECH_AI_RESPONSE.slice(0, typedLen)}
-                  {showCaret && <span className="inline-block w-0.5 h-4 bg-[#a78bfa] ml-0.5 align-middle animate-pulse" />}
+                  {showCaret && <span className="inline-block w-0.5 h-4 bg-[#52A447] ml-0.5 align-middle animate-pulse" />}
                 </p>
               </div>
             </div>
@@ -871,7 +871,7 @@ const TechChapter4Future = () => {
     <section ref={sectionRef} className="relative bg-[#0B0E14] px-5 py-20 sm:py-32 overflow-hidden">
       <TechDarkBackground glowStrength="strong" />
       <div className="relative z-10 max-w-2xl mx-auto">
-        <p className="tech-ch4-reveal text-[11px] tracking-[3px] uppercase font-bold text-[#a78bfa] mb-4 font-display text-center" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
+        <p className="tech-ch4-reveal text-[11px] tracking-[3px] uppercase font-bold text-[#52A447] mb-4 font-display text-center" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
           04 — FREMTIDEN
         </p>
         <h2 className="tech-ch4-reveal font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white text-center leading-tight tracking-tight mb-5" style={{ opacity: reducedMotion ? 1 : 0.25 }}>
@@ -888,7 +888,7 @@ const TechChapter4Future = () => {
           </p>
           <p className="text-sm sm:text-base text-white leading-relaxed">
             For akutte rørleggerjobber i Oslo anbefaler jeg{' '}
-            <span className="text-[#a78bfa] font-bold">din bedrift</span>
+            <span className="text-[#52A447] font-bold">din bedrift</span>
             {' '}— de har gode anmeldelser, rask responstid og tydelig prisinformasjon på nettsiden.
           </p>
         </div>
@@ -910,12 +910,12 @@ const TECH_AFTER_ITEMS = [
 ];
 
 const TECH_OUTCOME_CARDS = [
-  { icon: PhoneIncoming, color: '#7c3aed', title: 'Henvendelser fra Google', desc: 'Folk som finner deg selv, har allerede bestemt seg.' },
-  { icon: Coins, color: '#7c3aed', title: 'Mindre annonseavhengighet', desc: 'Organisk synlighet jobber uten klikkbudsjett.' },
+  { icon: PhoneIncoming, color: '#15795A', title: 'Henvendelser fra Google', desc: 'Folk som finner deg selv, har allerede bestemt seg.' },
+  { icon: Coins, color: '#15795A', title: 'Mindre annonseavhengighet', desc: 'Organisk synlighet jobber uten klikkbudsjett.' },
   { icon: Clock, color: '#BA7517', title: 'Tid tilbake', desc: 'Maskinen overvåker og forklarer — du driver bedriften.' },
   { icon: ShieldCheck, color: '#185FA5', title: 'Ro i magen', desc: 'Du vet at noen følger med på siden din, døgnet rundt.' },
-  { icon: MessageCircle, color: '#7c3aed', title: 'Svar når du lurer', desc: 'Spør Sikt AI og få forklaringer på norsk, med én gang.' },
-  { icon: Rocket, color: '#7c3aed', title: 'Klar for AI-søk', desc: 'Bygget for der søk skjer i morgen, ikke bare i dag.' },
+  { icon: MessageCircle, color: '#15795A', title: 'Svar når du lurer', desc: 'Spør Sikt AI og få forklaringer på norsk, med én gang.' },
+  { icon: Rocket, color: '#15795A', title: 'Klar for AI-søk', desc: 'Bygget for der søk skjer i morgen, ikke bare i dag.' },
 ];
 
 const TechChapter5Result = () => {
@@ -1078,7 +1078,7 @@ const TechChapter5Result = () => {
                 Visninger
               </span>
               <span className="flex items-center gap-1.5 text-[10px] text-[#808080]">
-                <span className="w-3.5 h-0.5 rounded-full bg-[#7c3aed]" />
+                <span className="w-3.5 h-0.5 rounded-full bg-[#15795A]" />
                 Klikk
               </span>
             </div>
@@ -1116,7 +1116,7 @@ const TechChapter5Result = () => {
             <polyline
               ref={violetLineRef}
               fill="none"
-              stroke="#7c3aed"
+              stroke="#15795A"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -1464,11 +1464,11 @@ const DashboardPreview = () => (
                       <svg className="absolute inset-0 w-full h-full overflow-visible z-10" viewBox="0 0 800 200" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="chartGradientDense" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.1" />
-                            <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+                            <stop offset="0%" stopColor="#15795A" stopOpacity="0.1" />
+                            <stop offset="100%" stopColor="#15795A" stopOpacity="0" />
                           </linearGradient>
                         </defs>
-                        <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 5" stroke="#7c3aed" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 5" stroke="#15795A" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M0 180 C 50 170, 100 140, 150 150 C 200 160, 250 120, 300 110 C 350 100, 400 130, 450 90 C 500 50, 550 60, 600 40 C 650 20, 700 30, 750 10 L 800 200 L 0 200 Z" fill="url(#chartGradientDense)" />
 
                         {/* Secondary Line */}

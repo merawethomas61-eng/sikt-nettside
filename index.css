@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --font-main: 'Inter', sans-serif;
-  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-main: 'Geist', 'DM Sans', sans-serif;
+  --font-display: Georgia, 'Times New Roman', Times, serif;
   /* Public UI motion (explicit easing — avoids weak built-ins) */
   --ease-ui-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-ui-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -19,7 +19,7 @@ html {
 
 body {
   font-family: var(--font-main);
-  background-color: #fcfcfd;
+  background-color: #F2EFE8;
   color: #0f172a;
   line-height: 1.5;
   overflow-x: hidden;
@@ -47,7 +47,7 @@ h4 {
 
 /* Hero Gradient */
 .hero-gradient {
-  background: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+  background: radial-gradient(circle at 50% 0%, rgba(21, 121, 90, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
 }
 
 /* Premium Cards */
@@ -69,10 +69,10 @@ h4 {
 @media (hover: hover) and (pointer: fine) {
   .premium-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(124, 58, 237, 0.15);
+    border-color: rgba(21, 121, 90, 0.15);
     box-shadow:
       0 20px 40px -10px rgba(0, 0, 0, 0.03),
-      0 0 30px -5px rgba(124, 58, 237, 0.05);
+      0 0 30px -5px rgba(21, 121, 90, 0.05);
     z-index: 10;
     background: rgba(255, 255, 255, 0.9);
   }
@@ -117,7 +117,7 @@ h4 {
 
 /* Background Pattern */
 .grid-pattern {
-  background-image: radial-gradient(rgba(124, 58, 237, 0.15) 0.5px, transparent 0.5px);
+  background-image: radial-gradient(rgba(21, 121, 90, 0.15) 0.5px, transparent 0.5px);
   background-size: 32px 32px;
 }
 
@@ -149,7 +149,7 @@ h4 {
 }
 
 .animate-subtext-dynamic {
-  background: linear-gradient(90deg, #0f172a, #6366f1, #a855f7, #0f172a);
+  background: linear-gradient(90deg, #0f172a, #2E9E6B, #52A447, #0f172a);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -413,8 +413,8 @@ h4 {
 }
 .blog-prose p { color: #4b4b4b; }
 .blog-prose strong { color: #1A1A1A; font-weight: 700; }
-.blog-prose a { color: #6d28d9; font-weight: 600; text-decoration: underline; text-decoration-color: #ddd6fe; }
-.blog-prose a:hover { text-decoration-color: #6d28d9; }
+.blog-prose a { color: #15795A; font-weight: 600; text-decoration: underline; text-decoration-color: #D6EEDF; }
+.blog-prose a:hover { text-decoration-color: #15795A; }
 .blog-prose ul, .blog-prose ol { padding-left: 1.4rem; color: #4b4b4b; }
 .blog-prose ul { list-style: disc; }
 .blog-prose ol { list-style: decimal; }

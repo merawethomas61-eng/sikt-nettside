@@ -31,7 +31,7 @@ import { DetailedHealthCheck } from '../components/DetailedHealthCheck';
 import { CodeIntegrationStep } from '../../CodeIntegrationStep';
 import { ActivationChecklist } from '../../ActivationChecklist';
 import { JourneyTimeline } from '../../JourneyTimeline';
-import { SERIF, SectionTitle } from '../portalEditorial';
+import { SERIF, SectionTitle, Note } from '../portalEditorial';
 import { PORTAL, chartPalette, chartTooltipStyle, formatChartDate, scoreColor } from '../portalTheme';
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from '../shared/Buttons';
@@ -512,17 +512,11 @@ function kpTimeAgo(dateStr: string): string {
 
 // ─── GEO / AI-SYNLIGHET PAGE ────────────────────────────────────────────────
 const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
+  // Ett kildested: alias til PORTAL (ingen duplisert hex).
   const G = {
-    bg:     '#F2EFE8',
-    card:   '#FFFFFF',
-    ink:    '#1A1A1A',
-    green:  '#15795A',
-    muted:  '#8A8578',
-    border: '#E9E4DA',
-    sub:    '#5C574C',
-    faint:  '#B3AD9F',
-    hair:   '#EFEBE2',
-    subtle: '#FAF8F3',
+    bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
+    muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
+    hair: PORTAL.hair, subtle: PORTAL.subtle,
   } as const;
   const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
   const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -605,18 +599,16 @@ const GeoPage: React.FC<{ onNotify: () => void }> = ({ onNotify }) => {
         </div>
 
         {/* Ærlig note: manuelt inntil videre */}
-        <p style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 18, fontSize: 12, color: G.muted, lineHeight: 1.5 }}>
-          <AlertTriangle size={14} style={{ color: '#9A6700', flexShrink: 0, marginTop: 1 }} />
-          Du må sjekke manuelt foreløpig. Automatisk sporing er på vei — se under.
-        </p>
+        <Note tone="neutral" className="mt-[18px] flex items-start gap-2">
+          <AlertTriangle size={14} style={{ color: '#9A6700', flexShrink: 0, marginTop: 2 }} />
+          <span>Du må sjekke manuelt foreløpig. Automatisk sporing er på vei — se under.</span>
+        </Note>
       </div>
 
       {/* ── PÅ VEI / VEIKART (mindre, nederst) ──────────────────────── */}
       <div id="geo-veikartet">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: G.muted, margin: 0 }}>
-            På vei
-          </p>
+          <SectionTitle size="sm">På vei</SectionTitle>
           <span style={{ fontSize: 11, fontWeight: 500, color: G.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <Lock size={11} /> Kommer senere
           </span>
@@ -843,11 +835,12 @@ const ReviewsPage: React.FC<{
   hasStandardOrHigher: boolean;
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, companyName, hasStandardOrHigher, onUpgrade }) => {
+  // Ett kildested: alias til PORTAL (ingen duplisert hex).
   const C = {
-    card: '#FFFFFF', ink: '#1A1A1A', sub: '#5C574C', muted: '#8A8578',
-    faint: '#B3AD9F', border: '#E9E4DA', hair: '#EFEBE2', subtle: '#FAF8F3',
-    green: '#15795A', greenBg: '#E8F1EB', amber: '#9A6700', amberBg: '#F6EEDD',
-    red: '#B4231F',
+    card: PORTAL.card, ink: PORTAL.ink, sub: PORTAL.sub, muted: PORTAL.muted,
+    faint: PORTAL.faint, border: PORTAL.border, hair: PORTAL.hair, subtle: PORTAL.subtle,
+    green: PORTAL.success, greenBg: PORTAL.successBg, amber: PORTAL.warn, amberBg: PORTAL.warnBg,
+    red: PORTAL.danger,
   } as const;
   const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
   const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -1314,7 +1307,7 @@ const ReviewsPage: React.FC<{
 
       {/* ── Be om anmeldelse ── */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink }}>Be om en anmeldelse</h2>
+        <SectionTitle>Be om en anmeldelse</SectionTitle>
         <p style={{ margin: '8px 0 18px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 560 }}>
           Etter en jobb: legg inn kunden, så sender Sikt en vennlig e-post med ett trykk til Google. Flere ekte anmeldelser løfter både kartpakken og hvor mange som ringer.
         </p>
@@ -1471,7 +1464,7 @@ const ReviewsPage: React.FC<{
       {/* ── Vis stjernene på nettsiden din (widget + schema) ── */}
       {canShowOnSite && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
-          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink }}>Vis stjernene på nettsiden din</h2>
+          <SectionTitle>Vis stjernene på nettsiden din</SectionTitle>
           <p style={{ margin: '8px 0 18px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 600 }}>
             Bygget fra dine <strong style={{ color: C.ink }}>ekte Google-tall</strong> ({google!.rating!.toFixed(1)} ★ · {google!.count} anmeldelser). Schema-koden lar Google vise gullstjerner under siden din i søk; widgeten viser dem rett på siden.
           </p>
@@ -1532,17 +1525,11 @@ const KonkurrenterPage: React.FC<{
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
   // Colour tokens — «warm-neutral Linear»-systemet (samme som resten av dashbordet)
+  // Ett kildested: alias til PORTAL (ingen duplisert hex).
   const C = {
-    bg:     '#F2EFE8',
-    card:   '#FFFFFF',
-    ink:    '#1A1A1A',
-    green:  '#15795A',
-    muted:  '#8A8578',
-    border: '#E9E4DA',
-    sub:    '#5C574C',
-    faint:  '#B3AD9F',
-    hair:   '#EFEBE2',
-    subtle: '#FAF8F3',
+    bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
+    muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
+    hair: PORTAL.hair, subtle: PORTAL.subtle,
   } as const;
 
   // Custom easing (Emil: never use default CSS easings)
@@ -2049,7 +2036,7 @@ const KonkurrenterPage: React.FC<{
           {/* OPPORTUNITIES */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em', color: C.ink, margin: 0 }}>Søkeord du kan ta</h2>
+              <SectionTitle>Søkeord du kan ta</SectionTitle>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, color: C.muted }}>
                   {opportunities.length} totalt · {easyCount} lette · {highValueCount} høy verdi
@@ -2162,7 +2149,7 @@ const KonkurrenterPage: React.FC<{
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: C.ink, margin: 0 }}>Endringer hos konkurrentene</h3>
+              <SectionTitle size="sm">Endringer hos konkurrentene</SectionTitle>
               {unreadCount > 0 && (
                 <span style={{ background: C.ink, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px', fontVariantNumeric: 'tabular-nums' }}>{unreadCount}</span>
               )}
@@ -7791,23 +7778,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* SYNLIGHET — sub-faner: PageSpeed, Innhold, Lenker.              */}
         {/* =============================================================== */}
         {activeTab === 'visibility' && (() => {
-          const palette = {
-            bg: '#F2EFE8',
-            card: '#FFFFFF',
-            ink: '#1A1A1A',
-            sub: '#5C574C',
-            muted: '#8A8578',
-            faint: '#B3AD9F',
-            border: '#E9E4DA',
-            hair: '#EFEBE2',
-            subtle: '#FAF8F3',
-            success: '#15795A',
-            successBg: '#E8F1EB',
-            warn: '#9A6700',
-            warnBg: '#F6EEDD',
-            danger: '#B4231F',
-            dangerBg: '#FBECEB',
-          };
+          // Ett kildested: bruk PORTAL direkte (ikke duplisert hex). Se portalTheme.ts.
+          const palette = PORTAL;
           const latestRun = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1] : null;
           const latestLabel = latestRun
             ? new Date(latestRun.at).toLocaleString('nb-NO', {
@@ -7872,7 +7844,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]" style={{ color: palette.ink }}>
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: palette.ink }}>Synlighet</h1>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: palette.ink, fontFamily: SERIF }}>Synlighet</h1>
                   <p className="text-base mt-3" style={{ color: palette.muted }}>Hvor godt nettsiden din virker for Google og besøkende — på ett blikk.</p>
                 </div>
                 {hasAnyData && (
@@ -7889,14 +7861,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 )}
               </header>
 
-              <div className={`${tabFadeInClass} space-y-6`}>
+              <div className={`${tabFadeInClass} space-y-8`}>
                 {!hasAnyData ? (
-                  <section className="rounded-[16px] p-8 sm:p-12 text-center" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                    <div className="grid h-12 w-12 mx-auto place-items-center rounded-full" style={{ background: palette.subtle }}>
-                      <Activity size={20} style={{ color: palette.ink }} />
+                  <section className="rounded-[16px] p-8 sm:p-12 text-center" style={{ background: palette.insetBg, border: `1px solid ${palette.insetBorder}` }}>
+                    <div className="grid h-12 w-12 mx-auto place-items-center rounded-full" style={{ background: palette.card, border: `1px solid ${palette.insetBorder}` }}>
+                      <Activity size={20} style={{ color: palette.insetInk }} />
                     </div>
-                    <p className="mt-4 text-[17px] font-semibold tracking-[-0.01em]" style={{ color: palette.ink }}>Kjør din første synlighets-sjekk</p>
-                    <p className="mt-2 text-sm leading-relaxed max-w-md mx-auto" style={{ color: palette.muted }}>
+                    <p className="mt-4 text-[17px] font-semibold tracking-[-0.01em]" style={{ color: palette.insetInk }}>Kjør din første synlighets-sjekk</p>
+                    <p className="mt-2 text-sm leading-relaxed max-w-md mx-auto" style={{ color: palette.insetInk, opacity: 0.82 }}>
                       Sikt måler hvor raskt siden laster, om innholdet er i orden, og om sidene henger sammen. Det tar rundt 30 sekunder.
                     </p>
                     <button
@@ -7914,7 +7886,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <>
                     {/* ── SAMMENDRAG: én score + tre pilarer ───────────────── */}
                     <section className="rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(26,24,18,0.03),0_18px_40px_-28px_rgba(26,24,18,0.22)]" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
-                      <div className="grid gap-7 md:grid-cols-[auto_1fr] md:gap-10 md:items-center">
+                      <div className="grid gap-7 md:grid-cols-[auto_1px_1fr] md:gap-10 md:items-center">
                         <div className="shrink-0 md:w-[260px]">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: palette.muted }}>Synlighetsscore</p>
                           <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
@@ -7930,6 +7902,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             Sist oppdatert {latestLabel}
                           </p>
                         </div>
+
+                        <div className="hidden md:block md:self-stretch" style={{ width: 1, background: palette.border }} aria-hidden />
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           {pillars.map((p) => (
@@ -7972,15 +7946,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       <div className="space-y-8">
                         {/* ── FART ──────────────────────────────────────── */}
                         <section>
-                          <div className="flex items-baseline justify-between gap-3 mb-3">
-                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Fart</h2>
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <SectionTitle size="sm">Fart</SectionTitle>
                             <span className="text-xs" style={{ color: palette.muted }}>Siste måling: {latestLabel} · målt på mobil</span>
                           </div>
 
                           {!analysisResults ? (
-                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                            <Note tone="neutral">
                               Trykk «Oppdater» øverst, så måler vi farten på ca. 30 sekunder.
-                            </div>
+                            </Note>
                           ) : (
                             <div className="space-y-4">
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -8056,7 +8030,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                             setActiveTab('workshop');
                                             setExpandedWorkshopProblem(`ps-${o.title}`);
                                           }}
-                                          className="w-full rounded-[10px] px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors"
+                                          className="w-full rounded-[10px] px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors hover:bg-[#FAF8F3]"
                                           style={{ border: `1px solid ${palette.border}` }}
                                         >
                                           <span className="inline-flex items-start gap-2 min-w-0">
@@ -8105,26 +8079,26 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* ── INNHOLD ───────────────────────────────────── */}
                         <section>
-                          <div className="flex items-baseline justify-between gap-3 mb-3">
-                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Innhold</h2>
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <SectionTitle size="sm">Innhold</SectionTitle>
                             <span className="text-xs" style={{ color: contentCriticalCount > 0 ? palette.danger : palette.muted }}>
                               {contentPages.length} sider · {contentCriticalCount} kritiske
                             </span>
                           </div>
 
                           {contentPages.length === 0 ? (
-                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                            <Note tone="neutral">
                               Trykk «Oppdater» øverst, så går vi gjennom sidene for tittel, beskrivelse, overskrifter og alt-tekster.
-                            </div>
+                            </Note>
                           ) : (
                             <div className="rounded-[14px] overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
                               <div className="overflow-x-auto">
                                 <table className="w-full min-w-[680px]">
                                   <thead>
-                                    <tr style={{ background: palette.bg, color: palette.muted }}>
-                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Side</th>
-                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Adresse</th>
-                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Funn</th>
+                                    <tr style={{ borderBottom: `1px solid ${palette.border}` }}>
+                                      <th className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Side</th>
+                                      <th className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Adresse</th>
+                                      <th className="text-right text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Funn</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -8132,10 +8106,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       const issues = (p.issues || []).length;
                                       const critical = p?.status === 'Kritisk' || issues >= 3;
                                       return (
-                                        <tr key={i} style={{ borderTop: `1px solid ${palette.hair}` }}>
-                                          <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                          <td className="px-4 py-3 text-sm font-mono" style={{ color: palette.muted }}>{p.url}</td>
-                                          <td className="px-4 py-3 text-right">
+                                        <tr key={i} className="transition-colors hover:bg-[#FAF8F3]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
+                                          <td className="px-4 py-3.5 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                          <td className="px-4 py-3.5 text-[13px] font-mono" style={{ color: palette.muted }}>{p.url}</td>
+                                          <td className="px-4 py-3.5 text-right">
                                             <span
                                               className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold"
                                               style={{
@@ -8158,27 +8132,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* ── LENKER ────────────────────────────────────── */}
                         <section>
-                          <div className="flex items-baseline justify-between gap-3 mb-3">
-                            <h2 className="text-[15px] font-semibold" style={{ color: palette.ink }}>Lenker</h2>
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <SectionTitle size="sm">Lenker</SectionTitle>
                             <span className="text-xs" style={{ color: linksIsolatedCount > 0 ? palette.warn : palette.muted }}>
                               {linkPages.length} sider · {linksIsolatedCount} isolert
                             </span>
                           </div>
 
                           {linkPages.length === 0 ? (
-                            <div className="rounded-[14px] p-7 text-sm" style={{ background: palette.card, border: `1px solid ${palette.border}`, color: palette.muted }}>
+                            <Note tone="neutral">
                               Trykk «Oppdater» øverst, så kartlegger vi hvordan sidene lenker til hverandre.
-                            </div>
+                            </Note>
                           ) : (
                             <div className="rounded-[14px] overflow-hidden" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
                               <div className="overflow-x-auto">
                                 <table className="w-full min-w-[680px]">
                                   <thead>
-                                    <tr style={{ background: palette.bg, color: palette.muted }}>
-                                      <th className="text-left text-xs font-semibold px-4 py-2.5">Side</th>
-                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Lenker inn</th>
-                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Lenker ut</th>
-                                      <th className="text-right text-xs font-semibold px-4 py-2.5">Status</th>
+                                    <tr style={{ borderBottom: `1px solid ${palette.border}` }}>
+                                      <th className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Side</th>
+                                      <th className="text-right text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Lenker inn</th>
+                                      <th className="text-right text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Lenker ut</th>
+                                      <th className="text-right text-[11px] font-semibold uppercase tracking-[0.06em] px-4 py-3" style={{ color: palette.muted }}>Status</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -8189,11 +8163,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
                                       const tone = tonePill(statusTone);
                                       return (
-                                        <tr key={i} style={{ borderTop: `1px solid ${palette.hair}` }}>
-                                          <td className="px-4 py-3 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
-                                          <td className="px-4 py-3 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
-                                          <td className="px-4 py-3 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
-                                          <td className="px-4 py-3 text-right">
+                                        <tr key={i} className="transition-colors hover:bg-[#FAF8F3]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
+                                          <td className="px-4 py-3.5 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
+                                          <td className="px-4 py-3.5 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
+                                          <td className="px-4 py-3.5 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
+                                          <td className="px-4 py-3.5 text-right">
                                             <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>
                                               {statusText}
                                             </span>
@@ -8223,7 +8197,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Søkeord</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Søkeord</h1>
                 <p className="text-base mt-3" style={{ color: '#8A8578' }}>
                   Ordene folk finner deg på i Google — og hvordan du ligger an.
                 </p>
@@ -8776,7 +8750,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Konkurrenter</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Konkurrenter</h1>
                 <p className={`text-base mt-3 ${textDim}`}>Følg konkurrentene dine og oppdag åpne muligheter.</p>
               </div>
             </header>
@@ -8799,7 +8773,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>AI-synlighet</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>AI-synlighet</h1>
                 <p className="text-base mt-3" style={{ color: '#8A8578' }}>Om bedriften din nevnes når kunder spør ChatGPT, Gemini og Perplexity.</p>
               </div>
             </header>
@@ -8872,7 +8846,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Anmeldelser</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Anmeldelser</h1>
                 <p className="text-base mt-3" style={{ color: '#8A8578' }}>Få flere fornøyde kunder til å si det offentlig — det løfter både Google og telefonen.</p>
               </div>
             </header>
@@ -8906,17 +8880,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               changeId: todo.changeId,
               changeData: todo.changeData,
             }));
+          // Ett kildested: alias til PORTAL (ingen duplisert hex).
           const W = {
-            bg: '#F2EFE8',
-            card: '#FFFFFF',
-            ink: '#1A1A1A',
-            green: '#15795A',
-            muted: '#8A8578',
-            border: '#E9E4DA',
-            sub: '#5C574C',
-            faint: '#B3AD9F',
-            hair: '#EFEBE2',
-            subtle: '#FAF8F3',
+            bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
+            muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
+            hair: PORTAL.hair, subtle: PORTAL.subtle,
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const pressDown = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -9009,7 +8977,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Verksted</h1>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Verksted</h1>
                   <p className="text-base mt-3" style={{ color: '#8A8578' }}>Ting du kan fikse på nettsiden — med AI-hjelp.</p>
                 </div>
               </header>
@@ -10594,13 +10562,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             { key: 'alert', label: `Varsler ${counts.alert}` },
           ];
 
+          // Forén til PORTAL (var avvikende: #52A447/#808080/#EBEBE6 → handbook-farger).
           const L = {
-            bg:     '#F5F5F0',
-            card:   '#FFFFFF',
-            ink:    '#1A1A1A',
-            green:  '#52A447',
-            muted:  '#808080',
-            border: '#EBEBE6',
+            bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
+            muted: PORTAL.muted, border: PORTAL.border,
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const catColor = (c: string) =>
@@ -10667,7 +10632,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div key={activeTab} className="space-y-6">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className={`text-3xl sm:text-4xl font-semibold tracking-tight ${textMain}`}>Sikt-loggen</h1>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Sikt-loggen</h1>
                   <p className={`text-base mt-3 ${textDim}`}>Historikk over funn, forslag, fikser og varsler.</p>
                 </div>
               </header>
