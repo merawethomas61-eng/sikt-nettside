@@ -18,12 +18,19 @@ import {
     fetchExternalWithOptionalRetry429,
     isSerpApiRateLimitedResponse,
 } from './_lib/external-rate-limit.js';
+import { renderEmail, sectionHead, winList, railNote, escapeHtml } from './_lib/email.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SERP_API_KEY = process.env.SERP_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
+
+// --- Varsel-e-post (Resend; samme oppsett som weekly-reports / contact) ---
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM_EMAIL = process.env.FROM_EMAIL || 'rapport@siktseo.com';
+const UPTIME_MAX = 25;            // maks kunder per kjøring (Hobby 60s-timeout)
+const UPTIME_TIMEOUT_MS = 8000;   // ping-timeout per side
 
 // --- Auto-fiks-motor (slått sammen hit for å holde oss under Hobby-grensen på 12 functions) ---
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -778,14 +785,14 @@ async function runOpportunities(req, res) {
 
     const { data: clients, error } = await supabase
         .from('clients')
-        .select('user_id, company_name, package_name')
+        .select('user_id, company_name, package_name, email, contact_person, website_url, notification_preferences')
         .not('package_name', 'is', null);
     if (error) {
         Sentry.captureException(error);
         return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
     }
 
-    const summary = { customers: 0, nearMiss: 0, decay: 0, snapshots: 0, skipped: 0, errors: 0, dryRun };
+    const summary = { customers: 0, nearMiss: 0, decay: 0, snapshots: 0, rankEmails: 0, skipped: 0, errors: 0, dryRun };
     const dedupSince = new Date(Date.now() - OPP_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const decayDedupSince = new Date(Date.now() - OPP_DECAY_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
     // Forrige snapshot: 4–10 dager gammelt (ukentlig kjøring med slack)
@@ -934,6 +941,39 @@ async function runOpportunities(req, res) {
             });
             if (actErr) { summary.errors += 1; console.warn('[opp] decay insert feilet:', actErr.message); }
             else summary.decay += 1;
+        }
+
+        // --- Rangeringsvarsel: søkeord som krysset inn/ut av side 1 (topp 10) ---
+        // Naturlig dedup: «kryssing» krever at forrige snapshot lå på motsatt
+        // side av topp 10, så et stabilt søkeord trigger ikke uke etter uke.
+        const crossings = [];
+        for (const k of kws) {
+            const prev = prevByKeyword.get(k.keyword);
+            if (typeof k.position !== 'number' || typeof prev !== 'number') continue;
+            const enteredTop10 = prev > 10 && k.position <= 10;
+            const leftTop10 = prev <= 10 && k.position > 10;
+            if (enteredTop10 || leftTop10) {
+                crossings.push({
+                    keyword: k.keyword,
+                    from: Math.round(prev),
+                    to: Math.round(k.position),
+                    tone: enteredTop10 ? 'up' : 'down',
+                    flag: enteredTop10 ? 'inn på side 1' : 'ut av side 1',
+                });
+            }
+        }
+        // rankChanges er opt-in (av som standard): send kun når kunden eksplisitt har
+        // skrudd den på. Ukerapport + kritiske varsler er motsatt (opt-out, !== false).
+        if (!dryRun && crossings.length > 0 && client.email &&
+            client.notification_preferences?.rankChanges === true) {
+            const ok = await sendSiktEmail({
+                to: client.email,
+                subject: crossings.some((c) => c.tone === 'up')
+                    ? 'Du beveget deg på Google denne uken'
+                    : 'Rangeringsendring på Google',
+                html: buildRankEmail(client, crossings),
+            });
+            if (ok) summary.rankEmails += 1; else summary.errors += 1;
         }
     }
 
@@ -1664,6 +1704,138 @@ async function runOptimize(req, res) {
     return res.status(200).json(summary);
 }
 
+// =====================================================================
+// VARSEL-E-POST: oppetids-varsel (job=uptime) + rangeringsvarsel (i
+// runOpportunities). Sender via Resend, bygges med Node-tvillingen
+// api/_lib/email.js. Begge gated på clients.notification_preferences.
+// =====================================================================
+async function sendSiktEmail({ to, subject, html }) {
+    if (!RESEND_API_KEY || !to) return false;
+    try {
+        const resp = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: `Sikt <${FROM_EMAIL}>`, to: [to], subject, html }),
+        });
+        if (!resp.ok) { console.warn('[email] Resend feilet:', resp.status); return false; }
+        return true;
+    } catch (err) { console.warn('[email] Resend kastet:', err?.message); return false; }
+}
+
+function notifFirstName(client) {
+    return (client.contact_person || '').trim().split(/\s+/)[0] || '';
+}
+
+function buildRankEmail(client, crossings) {
+    const hei = notifFirstName(client) ? `Hei ${escapeHtml(notifFirstName(client))}, ` : '';
+    const anyUp = crossings.some((c) => c.tone === 'up');
+    return renderEmail({
+        preheader: 'Søkeord krysset inn eller ut av side 1 denne uken.',
+        brand: 'sikt',
+        kicker: 'Rangeringsendring',
+        heading: anyUp ? 'Du beveget deg på Google' : 'Bevegelse på Google',
+        intro: `${hei}her er søkeordene som krysset inn eller ut av side 1 (topp 10) siden forrige uke.`,
+        blocks: [sectionHead('Inn og ut av side 1') + winList(crossings)],
+        cta: { label: 'Se alle søkeord', url: 'https://siktseo.com/portal' },
+        footer: 'Sikt · rangeringsvarsel · skru av i Innstillinger → Varsler.',
+    });
+}
+
+function buildDownEmail(client, url) {
+    const hei = notifFirstName(client) ? `Hei ${escapeHtml(notifFirstName(client))}, ` : '';
+    const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    return renderEmail({
+        preheader: `Vi får ikke kontakt med ${url}. Siden kan være nede.`,
+        brand: 'sikt',
+        kicker: 'Kritisk varsel',
+        heading: 'Nettsiden din svarer ikke',
+        intro: `${hei}vi fikk ikke kontakt med <strong style="color:#1A1A1A">${escapeHtml(url)}</strong> da vi sjekket nå nettopp. Det kan bety at siden er nede for besøkende.`,
+        blocks: [railNote({ title: 'Hva du bør gjøre', body: 'Sjekk om du får åpnet siden selv. Er den nede, kontakt webhotellet ditt — vi varsler deg igjen så snart den svarer.', tone: 'danger' })],
+        cta: { label: 'Åpne siden', url: href },
+        signoff: 'Vi følger med og sier fra når den er oppe igjen.',
+        footer: 'Sikt · kritisk varsel · skru av i Innstillinger → Varsler.',
+    });
+}
+
+function buildRecoveredEmail(client, url) {
+    const hei = notifFirstName(client) ? `Hei ${escapeHtml(notifFirstName(client))}, ` : '';
+    return renderEmail({
+        preheader: `${url} svarer igjen.`,
+        brand: 'sikt',
+        kicker: 'Varsel',
+        heading: 'Nettsiden din er oppe igjen',
+        intro: `${hei}<strong style="color:#1A1A1A">${escapeHtml(url)}</strong> svarer normalt igjen. Alt ser bra ut.`,
+        cta: { label: 'Åpne dashbordet', url: 'https://siktseo.com/portal' },
+        footer: 'Sikt · varsel · skru av i Innstillinger → Varsler.',
+    });
+}
+
+async function pingSite(url) {
+    const target = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), UPTIME_TIMEOUT_MS);
+    try {
+        const resp = await fetch(target, {
+            method: 'GET', redirect: 'follow', signal: controller.signal,
+            headers: { 'User-Agent': 'SiktUptime/1.0 (+https://siktseo.com)' },
+        });
+        return resp.status < 500; // 2xx/3xx/4xx = serveren svarer; 5xx = nede
+    } catch {
+        return false; // timeout / DNS / nettverksfeil = nede
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function runUptime(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, email, company_name, contact_person, website_url, notification_preferences')
+        .not('package_name', 'is', null)
+        .not('website_url', 'is', null);
+    if (error) { Sentry.captureException(error); return res.status(500).json({ error: 'Kunne ikke hente kunder.' }); }
+
+    const summary = { checked: 0, down: 0, recovered: 0, emails: 0, errors: 0 };
+    let processed = 0;
+    for (const client of clients || []) {
+        if (processed >= UPTIME_MAX) break;
+        const url = (client.website_url || '').trim();
+        if (!url) continue;
+        processed += 1;
+        summary.checked += 1;
+
+        const isUp = await pingSite(url);
+        const { data: statusRow } = await supabase
+            .from('site_status').select('is_up').eq('user_id', client.user_id).maybeSingle();
+        const prevUp = statusRow ? statusRow.is_up : true; // første gang antas oppe → varsle kun ekte overgang
+        const nowIso = new Date().toISOString();
+
+        const patch = { user_id: client.user_id, url, is_up: isUp, last_status_at: nowIso };
+        if (!isUp && prevUp) patch.last_down_email_at = nowIso;
+        const { error: upErr } = await supabase.from('site_status').upsert(patch, { onConflict: 'user_id' });
+        if (upErr) { summary.errors += 1; console.warn('[uptime] upsert feilet:', upErr.message); }
+
+        const wantsCritical = client.notification_preferences?.criticalAlerts !== false;
+        if (!client.email || !wantsCritical) continue;
+
+        if (!isUp && prevUp) {
+            summary.down += 1;
+            const ok = await sendSiktEmail({ to: client.email, subject: 'Nettsiden din svarer ikke', html: buildDownEmail(client, url) });
+            if (ok) summary.emails += 1; else summary.errors += 1;
+        } else if (isUp && !prevUp) {
+            summary.recovered += 1;
+            const ok = await sendSiktEmail({ to: client.email, subject: 'Nettsiden din er oppe igjen', html: buildRecoveredEmail(client, url) });
+            if (ok) summary.emails += 1; else summary.errors += 1;
+        }
+    }
+    console.log('[uptime] ferdig:', JSON.stringify(summary));
+    return res.status(200).json(summary);
+}
+
 export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: aksepter både Bearer-secret og x-cron-secret ---
     const authHeader = req.headers.authorization;
@@ -1691,6 +1863,11 @@ export default withSentry(async function handler(req, res) {
     // Dispatch: månedlig Google Business-profil-sjekk
     if (req.query?.job === 'gbp') {
         return await runGbp(req, res);
+    }
+
+    // Dispatch: oppetids-sjekk (kritiske varsler — nettsiden nede)
+    if (req.query?.job === 'uptime') {
+        return await runUptime(req, res);
     }
 
     // Dispatch: optimaliserings-motor (Standard+: near-miss, forfall, schema, alt)

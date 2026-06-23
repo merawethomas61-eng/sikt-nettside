@@ -31,6 +31,7 @@ import { DetailedHealthCheck } from '../components/DetailedHealthCheck';
 import { CodeIntegrationStep } from '../../CodeIntegrationStep';
 import { ActivationChecklist } from '../../ActivationChecklist';
 import { JourneyTimeline } from '../../JourneyTimeline';
+import { SERIF, SectionTitle } from '../portalEditorial';
 import { PORTAL, chartPalette, chartTooltipStyle, formatChartDate, scoreColor } from '../portalTheme';
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from '../shared/Buttons';
@@ -1563,6 +1564,7 @@ const KonkurrenterPage: React.FC<{
   const [addLoading,        setAddLoading]        = useState(false);
   const [addError,          setAddError]          = useState<string | null>(null);
   const [scanningId,        setScanningId]        = useState<string | null>(null);
+  const [scanAllProgress,   setScanAllProgress]   = useState<{ done: number; total: number } | null>(null);
   const [selectedComp,      setSelectedComp]      = useState<Competitor | null>(null);
   const [compRankings,      setCompRankings]      = useState<CompetitorKeywordRanking[]>([]);
   const [rankingsLoading,   setRankingsLoading]   = useState(false);
@@ -1672,6 +1674,38 @@ const KonkurrenterPage: React.FC<{
     } finally {
       setScanningId(null);
     }
+  };
+
+  // --- Skann alle konkurrenter (sekvensielt for å unngå timeout/rate-limit) ---
+  const handleScanAll = async () => {
+    if (scanAllProgress || scanningId || competitors.length === 0) return;
+    const token = await getAccessTokenForApi();
+    if (!token) {
+      toastError('Sesjon utløpt — logg inn på nytt for å skanne.');
+      return;
+    }
+    const list = [...competitors];
+    setScanAllProgress({ done: 0, total: list.length });
+    let ok = 0;
+    let rateLimited = false;
+    for (let i = 0; i < list.length; i++) {
+      try {
+        const res = await fetch('/api/scan-competitor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ competitor_id: list[i].id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (isApiRateLimited(res.status, data)) { rateLimited = true; break; }
+        if (res.ok) ok += 1;
+      } catch { /* hopp over og fortsett med neste */ }
+      setScanAllProgress({ done: i + 1, total: list.length });
+    }
+    setScanAllProgress(null);
+    await refetch();
+    if (rateLimited) toastWarning('Skanningen ble pauset av rate-grense. Prøv resten om litt.');
+    else if (ok === list.length) toastSuccess(`Skannet ${ok} ${ok === 1 ? 'konkurrent' : 'konkurrenter'}.`);
+    else toastWarning(`Skannet ${ok} av ${list.length} — noen feilet. Prøv på nytt.`);
   };
 
   // --- Last detaljer for valgt konkurrent ---
@@ -1803,11 +1837,25 @@ const KonkurrenterPage: React.FC<{
           {lastScannedGlobal ? ` · sist skannet ${formatScanDate(lastScannedGlobal)}` : ''}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {scanningId && (
+          {scanningId && !scanAllProgress && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: C.green }}>
               <span style={{ width: 7, height: 7, background: C.green, borderRadius: '50%', display: 'inline-block' }} />
               Skanner aktiv
             </span>
+          )}
+          {competitors.length > 0 && (
+            <button
+              onClick={handleScanAll}
+              disabled={!!scanAllProgress || !!scanningId}
+              style={{ background: C.bg, color: C.ink, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: (scanAllProgress || scanningId) ? 'not-allowed' : 'pointer', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 6, opacity: (scanAllProgress || scanningId) ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+              onMouseDown={e => { if (!scanAllProgress && !scanningId) pressDown(e); }} onMouseUp={pressReset} onMouseLeave={pressReset}
+            >
+              {scanAllProgress ? (
+                <><Loader2 size={14} className="animate-spin" /> Skanner {scanAllProgress.done}/{scanAllProgress.total}</>
+              ) : (
+                <><RefreshCw size={14} /> Skann alle</>
+              )}
+            </button>
           )}
           <button
             onClick={() => { if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; } setShowAddModal(true); }}
@@ -5186,7 +5234,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             return null; // Hopper over dette ordet hvis serveren feiler
           }
 
-          let position = 101;
+          let position = 301; // sentinel: «utenfor topp 300»
           let url = '-';
           let extractedCompetitors: any[] = [];
           let resultType = 'Tekst';
@@ -5200,6 +5248,31 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             extractedCompetitors = data.organic_results.slice(0, 5).map((r: any) => ({
               position: r.position, title: r.title, url: r.link, snippet: r.snippet
             }));
+
+            // Lazy paginering: kun hvis IKKE funnet i topp 100 og det finnes flere sider.
+            // Henter side 2 (101–200) så side 3 (201–300), stopper straks domenet finnes.
+            // Søkeord i topp 100 koster fortsatt bare ett oppslag.
+            if (!found && data.organic_results.length >= 100) {
+              for (const startAt of [100, 200]) {
+                try {
+                  const moreRes = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${rankToken}` },
+                    body: JSON.stringify({ keyword, location, start: startAt }),
+                  });
+                  const moreData = await moreRes.json().catch(() => ({}));
+                  if (!moreRes.ok || moreData.error || isApiRateLimited(moreRes.status, moreData)) break;
+                  const more = Array.isArray(moreData.organic_results) ? moreData.organic_results : [];
+                  const moreFound = more.find((r: any) => r.link && linkMatchesDomain(r.link));
+                  if (moreFound) {
+                    position = moreFound.position;
+                    url = moreFound.link;
+                    break;
+                  }
+                  if (more.length < 100) break; // ingen flere sider å hente
+                } catch { break; }
+              }
+            }
           }
 
           // Sjekk hva slags resultater Google viser
@@ -5835,6 +5908,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }).catch(() => { /* ignore */ });
   }, [user?.id, isMockUser]);
 
+  // ── Varsel-preferanser: hydrer fra DB så bryterne overlever reload ──
+  useEffect(() => {
+    if (!user?.id || isMockUser) {
+      try {
+        const raw = localStorage.getItem('sikt_notif_prefs');
+        if (raw) setNotifPrefs((p) => ({ ...p, ...JSON.parse(raw) }));
+      } catch { /* ignore */ }
+      return;
+    }
+    supabaseRest<{ notification_preferences: Record<string, boolean> | null }[]>(
+      `clients?user_id=eq.${user.id}&select=notification_preferences&limit=1`,
+    ).then((rows) => {
+      const prefs = Array.isArray(rows) ? rows[0]?.notification_preferences : null;
+      if (prefs && typeof prefs === 'object') setNotifPrefs((p) => ({ ...p, ...prefs }));
+    }).catch(() => { /* behold defaults ved feil */ });
+  }, [user?.id, isMockUser]);
+
   // Merk: opptelling av analyse-kvoten skjer nå server-side i scan-pagespeed
   // (kan ikke omgås). Frontend leser status fra svaret (usage) + ved innlasting.
 
@@ -6249,8 +6339,25 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     return () => window.removeEventListener('keydown', onKey);
   }, [showWpWizard, showDisconnectConfirm, wpConnecting, wixConnecting, isDisconnecting]);
 
-  const toggleNotif = (key: keyof typeof notifPrefs) =>
-    setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleNotif = (key: keyof typeof notifPrefs) => {
+    const prev = notifPrefs;
+    const next = { ...prev, [key]: !prev[key] };
+    setNotifPrefs(next); // optimistisk — UI svarer umiddelbart
+    if (isMockUser) {
+      try { localStorage.setItem('sikt_notif_prefs', JSON.stringify(next)); } catch { /* ignore */ }
+      return;
+    }
+    if (!user?.id) return;
+    // Lagre i clients.notification_preferences (samme update-own-RLS som plan-bytte).
+    supabaseRest(`clients?user_id=eq.${user.id}`, {
+      method: 'PATCH',
+      body: { notification_preferences: next },
+      headers: { Prefer: 'return=minimal' },
+    }).catch((err: any) => {
+      setNotifPrefs(prev); // revert ved feil
+      toastError('Kunne ikke lagre varselvalget: ' + (err?.message || 'ukjent feil'));
+    });
+  };
 
   // ===================================================================
   // TODOS — aggregert "i dag"-liste fra alle kilder, sortert etter impact.
@@ -6584,7 +6691,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
       try {
         let pageData: WordPressFetchResponse;
-        if (hostConnectionRef.current?.platform === 'wix') {
+        // Rådgiver-plattformer (AI-bygd, Webflow, Wix, Squarespace, Ghost, annet) har ingen
+        // skrive-API → bruk innholdsskann-data, ikke WordPress-fetch (som ville feilet med
+        // «WordPress er ikke tilkoblet»). Kun WordPress/Shopify-full går mot wordpress-fetch.
+        const hostPlatform = hostConnectionRef.current?.platform;
+        const hostIsAdvisoryConn =
+          hostConnectionRef.current?.connectionMode === 'advisory' ||
+          (!!hostPlatform && !FULL_PLATFORMS[hostPlatform]);
+        if (hostIsAdvisoryConn) {
           const advisoryPageData = buildAdvisoryPageDataFromContentScan(
             todo.pageUrl,
             contentPagesRef.current,
@@ -6834,7 +6948,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <span style={{ width: 30, height: 30, borderRadius: 9, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>S</span>
-              <span style={{ fontWeight: 600, fontSize: 17, color: '#1A1A1A', letterSpacing: '-0.01em' }}>Sikt</span>
             </button>
           </div>
 
@@ -6954,7 +7067,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <span style={{ width: 26, height: 26, borderRadius: 8, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>S</span>
-              <span style={{ fontWeight: 600, fontSize: 15, color: '#1A1A1A' }}>Sikt</span>
             </button>
             <button
               onClick={() => setUserFooterMenuOpen(v => !v)}
@@ -7016,33 +7128,31 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* =============================================================== */}
         {activeTab === 'home' && (
           <div key={activeTab} className="space-y-6">
-            <header className="flex items-end justify-between flex-wrap gap-3 font-['Geist','DM_Sans',sans-serif]">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] text-[#1A1A1A] font-['Geist',sans-serif]">Dashboard</h1>
-                <p className="text-base mt-3 text-[#8A8578]">Slik står det til med {domainLabel || 'nettsiden din'}.</p>
-                {analysisLimit !== Infinity && (
-                  <p className="text-xs mt-1.5 text-[#8A8578] tabular-nums">
-                    {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
-                    {analysesRemaining === 0 && currentLevel < 3 && (
-                      <button
-                        type="button"
-                        onClick={() => handleUpgrade()}
-                        className="ml-2 font-semibold text-[#15795A] underline"
-                      >
-                        Oppgrader
-                      </button>
-                    )}
-                  </p>
-                )}
-              </div>
+            <header className="font-['Geist','DM_Sans',sans-serif]">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[#1A1A1A]" style={{ fontFamily: SERIF }}>Dashboard</h1>
+              <p className="text-base mt-3 max-w-[58ch] text-[#8A8578]" style={{ lineHeight: 1.6 }}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+              {analysisLimit !== Infinity && (
+                <p className="text-xs mt-1.5 text-[#8A8578] tabular-nums">
+                  {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
+                  {analysesRemaining === 0 && currentLevel < 3 && (
+                    <button
+                      type="button"
+                      onClick={() => handleUpgrade()}
+                      className="ml-2 font-semibold text-[#15795A] underline"
+                    >
+                      Oppgrader
+                    </button>
+                  )}
+                </p>
+              )}
+              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid #E9E4DA' }} />
             </header>
 
             {/* Godkjenningskø: synlige fikser Sikt har klargjort, venter på ditt ja */}
             {fixQueue.length > 0 && (
-              <div className="rounded-[16px] border border-[#E9E4DA] bg-white p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+              <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles size={16} className="text-[#15795A] shrink-0" />
-                  <h2 className="text-lg font-semibold tracking-[-0.01em] text-[#1A1A1A]">Venter på din godkjenning</h2>
+                  <SectionTitle>Venter på din godkjenning</SectionTitle>
                   <span className="ml-auto text-[11px] font-semibold text-[#15795A] bg-[#E8F1EB] px-2 py-0.5 rounded-full tabular-nums">{fixQueue.length}</span>
                 </div>
                 <p className="text-sm text-[#8A8578] mb-4">Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
@@ -8321,7 +8431,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                   <div className="flex items-center gap-1 shrink-0 tabular-nums">
                                     {kw.position !== null && (() => {
                                       const p = kw.position as number;
-                                      const label = kw.source === 'gsc' ? p.toFixed(1) : p >= 101 ? '100+' : `#${p}`;
+                                      const label = kw.source === 'gsc' ? p.toFixed(1) : p >= 301 ? '300+' : `#${p}`;
                                       const c = p <= 3 ? '#15795A' : p <= 10 ? '#3F7D33' : p <= 20 ? '#9A6700' : '#8A8578';
                                       const bg = p <= 3 ? '#E8F1EB' : p <= 10 ? '#EEF4E9' : p <= 20 ? '#F6EEDD' : '#F2EFE8';
                                       return (
@@ -8431,12 +8541,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* Stat cards */}
                         {(() => {
-                          const overHundred = selected.source === 'tracked' && selected.position != null && (selected.position as number) >= 101;
+                          const overCap = selected.source === 'tracked' && selected.position != null && (selected.position as number) >= 301;
                           const posLabel = selected.position == null
                             ? '—'
                             : selected.source === 'gsc'
                               ? (selected.position as number).toFixed(1)
-                              : overHundred ? '100+' : `#${selected.position}`;
+                              : overCap ? '300+' : `#${selected.position}`;
                           const fmtCompact = (n: number) =>
                             n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1).replace('.', ',')} mill`
                               : n >= 10_000 ? `${Math.round(n / 1000)} k`
@@ -8451,7 +8561,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 { label: 'Andel som klikker', value: selected.ctr != null ? `${((selected.ctr as number) * 100).toFixed(1)} %` : '—' },
                               ]
                               : [
-                                { label: 'Plassering på Google', value: posLabel, delta: selected.change, hint: overHundred ? 'Ikke i topp 100' : undefined },
+                                { label: 'Plassering på Google', value: posLabel, delta: selected.change, hint: overCap ? 'Ikke i topp 300' : undefined },
                                 { label: 'Konkurranse', value: selected.competition != null ? fmtCompact(selected.competition as number) : '—', hint: selected.competition != null ? 'treff i Google' : undefined },
                                 { label: 'Vanskelighetsgrad', value: selected.kd != null ? `${selected.kd}` : '—', hint: selected.kd != null ? 'av 100' : undefined },
                                 { label: 'Søkeintensjon', value: (selected.intent as string) || '—' },
@@ -8538,7 +8648,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
                                   </a>
                                   <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
-                                    {selected.position == null ? '—' : (selected.position as number) >= 101 ? '100+' : `#${selected.position}`}
+                                    {selected.position == null ? '—' : (selected.position as number) >= 301 ? '300+' : `#${selected.position}`}
                                   </span>
                                 </div>
                               </div>
@@ -11033,7 +11143,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {/* INNSTILLINGER — KONFIGURASJON                                  */}
         {/* =============================================================== */}
         {activeTab === 'settings' && (() => {
-          const settingsMono = "'Geist','DM Sans',sans-serif";
+          const settingsSans = PORTAL.sans;
+          const settingsMono = settingsSans;
+          // Redaksjonell serif-display (samme uttrykk som e-postene — docs/design-principles.md)
+          const settingsSerif = PORTAL.serif;
+          // Handbook-uttrykk — alle verdier hentes fra PORTAL (src/portalTheme.ts), ett kildested.
+          const C = {
+            ink: PORTAL.ink, muted: PORTAL.muted, faint: PORTAL.faint, hair: PORTAL.border,
+            green: PORTAL.success, insetBg: PORTAL.insetBg, insetBorder: PORTAL.insetBorder,
+            danger: PORTAL.danger, dangerBg: PORTAL.dangerBg, dangerBorder: 'rgba(180,35,31,0.25)',
+          };
           const settingsDomain = domainLabel || 'ingen-nettside';
           const profileDisplayFields = [
             { label: 'Bedrift', value: clientData?.companyName || 'Ikke oppgitt' },
@@ -11062,33 +11181,50 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const sectionCountTheme = 2;
           const planCost = planPrices[activePlanKey];
 
-          const sectionShell = "rounded-[16px] border border-[#E9E4DA] bg-[#FFFFFF] overflow-hidden";
-          const sectionSummary = "list-none px-4 sm:px-6 py-4 cursor-pointer";
-          const rowShell = "flex items-start justify-between gap-4 py-3 border-t border-[#EFEBE2]";
+          const sectionShell = "rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] overflow-hidden";
+          const sectionSummary = "list-none px-5 sm:px-6 py-4 cursor-pointer";
+          const rowShell = "flex items-start justify-between gap-4 py-3.5 border-t border-[#E9E4DA]";
+          // Tonet inset = «aksent-lampen»: gir dybde til en nøkkel-merknad uten å rope (lag-på-lag-lys).
+          const Note = ({ tone = 'neutral', children }: { tone?: 'neutral' | 'green' | 'danger'; children: React.ReactNode }) => {
+            const s = tone === 'green'
+              ? { background: C.insetBg, border: `1px solid ${C.insetBorder}`, color: '#2F5C45' }
+              : tone === 'danger'
+                ? { background: C.dangerBg, border: `1px solid ${C.dangerBorder}`, color: C.danger }
+                : { background: '#FAF8F3', border: `1px solid ${C.hair}`, color: C.muted };
+            return <div className="rounded-[11px] px-4 py-3 text-sm" style={{ ...s, lineHeight: 1.6 }}>{children}</div>;
+          };
+          // Seksjons-tittel med liten aksent-strek (gjentar e-postenes sectionHead-motiv).
+          const SectionTitle = ({ children, truncate = false }: { children: React.ReactNode; truncate?: boolean }) => (
+            <span className="inline-flex items-center gap-2.5 min-w-0">
+              <span aria-hidden style={{ width: 18, height: 2, background: C.green, borderRadius: 2, flexShrink: 0 }} />
+              <span className={`text-base sm:text-lg font-semibold ${truncate ? 'truncate' : ''}`} style={{ color: C.ink, fontFamily: settingsSans }}>{children}</span>
+            </span>
+          );
 
           return (
             <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
-              <header className="flex items-end justify-between flex-wrap gap-3">
-                <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] font-['Geist',sans-serif]" style={{ color: '#1A1A1A' }}>Innstillinger</h1>
-                  <p className="text-base mt-3" style={{ color: '#8A8578' }}>Bedrift, tilkobling, abonnement og varsler.</p>
-                </div>
+              <header>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: C.ink, fontFamily: settingsSerif }}>Innstillinger</h1>
+                <p className="text-base mt-3 max-w-[58ch]" style={{ color: C.muted, lineHeight: 1.6 }}>Bedrift, tilkobling, abonnement og varsler — samlet på ett sted.</p>
+                <div aria-hidden className="mt-7" style={{ borderTop: `1px solid ${C.hair}` }} />
               </header>
-              <div className={`${tabFadeInClass} space-y-6`}>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Plan</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: '#1A1A1A' }}>{planNames[activePlanKey]}</p>
-                </div>
-                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Pris per måned</p>
-                  <p className="text-xl font-semibold mt-2 tabular-nums" style={{ color: '#1A1A1A' }}>{planCost}</p>
-                </div>
-                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>Nettside-kobling</p>
-                  <p className="text-xl font-semibold mt-2" style={{ color: hostIsFullyConnected || hostIsAdvisory ? '#15795A' : '#1A1A1A' }}>
-                    {hostIsAdvisory ? platformLabel(hostConnection?.platform) : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet'}
-                  </p>
+              <div className={`${tabFadeInClass} space-y-8`}>
+              {/* +S statement-rad: ett kort, tre celler delt av hårstrek (speiler e-postens statRow). */}
+              <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] px-5 py-6 sm:px-8 sm:py-7">
+                <div className="grid grid-cols-1 sm:grid-cols-3">
+                  {[
+                    { label: 'Plan', value: planNames[activePlanKey], color: C.ink, focal: false },
+                    { label: 'Pris per måned', value: planCost, color: C.ink, focal: true },
+                    { label: 'Nettside-kobling', value: hostIsAdvisory ? platformLabel(hostConnection?.platform) : hostIsFullyConnected ? 'WordPress' : hostWasLightOnly ? 'Koble på nytt' : 'Ikke koblet', color: (hostIsFullyConnected || hostIsAdvisory) ? C.green : C.ink, focal: false },
+                  ].map((cell) => (
+                    <div
+                      key={cell.label}
+                      className="py-4 first:pt-0 last:pb-0 border-t border-[#E9E4DA] first:border-t-0 sm:py-0 sm:border-t-0 sm:px-6 first:sm:pl-0 last:sm:pr-0 sm:border-l sm:border-[#E9E4DA] first:sm:border-l-0"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: C.faint }}>{cell.label}</p>
+                      <p className="mt-2.5 tabular-nums" style={{ color: cell.color, fontFamily: settingsSerif, fontWeight: 700, letterSpacing: '-0.6px', fontSize: cell.focal ? '34px' : '24px', lineHeight: 1.05 }}>{cell.value}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -11096,7 +11232,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <summary className={sectionSummary}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Bedrift og nettside</p>
+                      <SectionTitle truncate>Bedrift og nettside</SectionTitle>
                     </div>
                     <button
                       type="button"
@@ -11116,8 +11252,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <dl>
                       {profileDisplayFields.map((row) => (
                         <div key={row.label} className={rowShell}>
-                          <dt className="text-sm" style={{ color: '#808080' }}>{row.label}</dt>
-                          <dd className="text-sm text-right max-w-[70%] break-words" style={{ color: '#1A1A1A', fontFamily: settingsMono }}>{row.value}</dd>
+                          <dt className="text-sm" style={{ color: C.muted }}>{row.label}</dt>
+                          <dd className="text-sm text-right max-w-[70%] break-words" style={{ color: C.ink, fontFamily: settingsMono }}>{row.value}</dd>
                         </div>
                       ))}
                     </dl>
@@ -11204,7 +11340,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 <details className={sectionShell} open>
                   <summary className={sectionSummary}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <p className="text-base sm:text-lg font-semibold truncate" style={{ color: '#1A1A1A' }}>Nettside-kobling</p>
+                      <SectionTitle truncate>Nettside-kobling</SectionTitle>
                     </div>
                   </summary>
                   <div className="px-4 sm:px-6 pb-5 space-y-4">
@@ -11302,13 +11438,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         )}
                       </div>
                     </div>
-                    <p className="text-sm" style={{ color: '#808080' }}>
+                    <Note tone="green">
                       WordPress får ekte auto-fiks. Shopify er på vei. Andre plattformer får ferdige forslag du limer inn — uansett hva du bruker.
-                    </p>
+                    </Note>
                     {!hostIsFullyConnected && !hostIsAdvisory && (
-                      <p className="text-sm" style={{ color: '#808080' }}>
+                      <Note tone="neutral">
                         Ikke koblet til. Sikt viser fortsatt funn og forslag, men du må kopiere fiksene inn selv.
-                      </p>
+                      </Note>
                     )}
                   </div>
                 </details>
@@ -11317,7 +11453,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Abonnement</p>
+                    <SectionTitle>Abonnement</SectionTitle>
                   </div>
                 </summary>
                 <div className="px-4 sm:px-6 pb-5">
@@ -11367,23 +11503,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Varsler</p>
+                    <SectionTitle>Varsler</SectionTitle>
                   </div>
                 </summary>
-                <div className="px-4 sm:px-6 pb-5">
-                  <ul>
+                <div className="px-5 sm:px-6 pb-6">
+                  <p className="text-sm" style={{ color: C.muted, lineHeight: 1.6 }}>Vi sender bare det du velger — og du kan endre det når som helst.</p>
+                  <ul className="mt-1">
                     {notifRows.map((item) => (
                       <li key={item.id} className={rowShell}>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{item.label}</p>
-                          <p className="text-xs mt-0.5" style={{ color: '#808080' }}>{item.desc}</p>
+                        <div className="min-w-0 pr-2">
+                          <p className="text-sm font-medium" style={{ color: C.ink }}>{item.label}</p>
+                          <p className="text-xs mt-1" style={{ color: C.muted, lineHeight: 1.6 }}>{item.desc}</p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <button
                             type="button"
                             onClick={() => toggleNotif(item.id)}
                             className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
-                            style={{ background: notifPrefs[item.id] ? '#15795A' : '#E9E4DA', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                            style={{ background: notifPrefs[item.id] ? C.green : C.hair, transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                           >
                             <span
                               className="inline-block h-4 w-4 rounded-full bg-white"
@@ -11400,7 +11537,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
-                    <p className="text-base sm:text-lg font-semibold" style={{ color: '#1A1A1A' }}>Utseende</p>
+                    <SectionTitle>Utseende</SectionTitle>
                   </div>
                 </summary>
                 <div className="px-4 sm:px-6 pb-5">
@@ -11433,9 +11570,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </div>
               </details>
 
-              <div className="rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] p-5 sm:p-6">
+              <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3 mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Vanlige spørsmål</h3>
+                  <SectionTitle>Vanlige spørsmål</SectionTitle>
                   <button
                     type="button"
                     onClick={() => setShowFaqModal(true)}
@@ -11448,17 +11585,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     Åpne
                   </button>
                 </div>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <p className="text-sm" style={{ color: C.muted, lineHeight: 1.6 }}>
                   Felles svar om analyseintervall, GSC-forsinkelse, GEO-status og Technical Score.
                 </p>
               </div>
 
               <div
-                className="rounded-[16px] border p-5 sm:p-6"
-                style={{ borderColor: 'rgba(180,35,31,0.30)', background: 'rgba(180,35,31,0.04)' }}
+                className="rounded-[14px] border p-5 sm:p-6"
+                style={{ borderColor: C.dangerBorder, background: C.dangerBg }}
               >
-                <h3 className="text-lg font-semibold" style={{ color: '#B4231F' }}>Slett konto</h3>
-                <p className="text-sm mt-2 mb-4" style={{ color: '#8A8578', lineHeight: 1.55 }}>
+                <h3 className="text-lg font-semibold" style={{ color: C.danger }}>Slett konto</h3>
+                <p className="text-sm mt-2 mb-4" style={{ color: C.muted, lineHeight: 1.6 }}>
                   Dette sletter kontoen din og alle data permanent. Handlingen kan ikke angres.
                 </p>
                 <button
@@ -11471,7 +11608,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                   className="rounded-full px-4 py-2 text-sm font-semibold text-white"
-                  style={{ background: '#B4231F', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                  style={{ background: C.danger, transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                 >
                   Slett konto
                 </button>

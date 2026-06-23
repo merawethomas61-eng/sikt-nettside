@@ -33,6 +33,7 @@ type Client = {
   contact_person: string | null
   package_name: string
   website_url: string | null
+  notification_preferences: Record<string, boolean> | null
 }
 
 type Opportunity = {
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
   // Hent alle betalende kunder med e-post
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
-    .select('user_id, email, company_name, contact_person, package_name, website_url')
+    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences')
     .not('package_name', 'is', null)
     .not('email', 'is', null)
 
@@ -72,6 +73,8 @@ Deno.serve(async (req) => {
 
   for (const client of clients as Client[]) {
     if (!client.email || !client.package_name) continue
+    // Respekter varsel-preferansen: hopp over hvis kunden har slått av ukerapporten.
+    if (client.notification_preferences?.weeklyReport === false) continue
 
     const plan = client.package_name // "Basic Pakke", "Standard Pakke", "Premium Pakke"
     const isStandardOrAbove = plan === 'Standard Pakke' || plan === 'Premium Pakke'

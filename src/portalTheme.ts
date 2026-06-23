@@ -26,6 +26,13 @@ export const PORTAL = {
   warnBg: '#F6EEDD',
   danger: '#B4231F',
   dangerBg: '#FBECEB',
+  // Tonet innfelt («aksent-lampe») — myk grønn dybde for merknader / tomtilstander
+  insetBg: '#F3FBF6',
+  insetBorder: '#D6EEDF',
+  insetInk: '#2F5C45',
+  // Typografi — ett sted for font-stakkene portalen bruker
+  serif: "Georgia,'Times New Roman',Times,serif",
+  sans: "'Geist','DM Sans',sans-serif",
 } as const;
 
 // Farger spesifikt for Recharts — holder akser/grid/tooltip rolige og lar

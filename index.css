@@ -11,6 +11,12 @@
   --dur-ui: 200ms;
 }
 
+html {
+  /* Reserver alltid plass til vertikal scrollbar, så sentrert innhold (portal-headeren)
+     ikke forskyves horisontalt når faner med ulik høyde dukker opp/forsvinner. */
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: var(--font-main);
   background-color: #fcfcfd;

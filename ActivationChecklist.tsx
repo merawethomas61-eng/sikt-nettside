@@ -1,5 +1,6 @@
 import React from 'react';
 import { Zap, CheckCircle2, ArrowRight, Globe, Activity, Search, Wrench, X } from 'lucide-react';
+import { SectionTitle } from './src/portalEditorial';
 
 export type ActivationChecklistProps = {
   theme: 'light' | 'dark';
@@ -95,12 +96,16 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
       )}
 
       <div className="flex items-start justify-between gap-3 mb-1 pr-8">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[#1A1A1A] text-white">
-            <Zap size={15} />
-          </span>
-          <h2 className={`text-[15px] font-bold tracking-[-0.01em] ${titleCls}`}>Aktiver Sikt</h2>
-        </div>
+        {isLight ? (
+          <SectionTitle>Aktiver Sikt</SectionTitle>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[#1A1A1A] text-white">
+              <Zap size={15} />
+            </span>
+            <h2 className={`text-[15px] font-bold tracking-[-0.01em] ${titleCls}`}>Aktiver Sikt</h2>
+          </div>
+        )}
         <span className={`text-[12px] font-semibold ${mutedCls} whitespace-nowrap`}>{doneCount} av {steps.length} fullført</span>
       </div>
 
@@ -117,7 +122,7 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
       <div className="flex flex-col gap-2.5">
         {steps.map((s, i) => {
           const rowCls = s.done
-            ? (isLight ? 'border-[#EFEBE2] bg-[#FAF8F3]' : 'border-white/5 bg-white/[0.03]')
+            ? (isLight ? 'border-[#E9E4DA] bg-[#FAF8F3]' : 'border-white/5 bg-white/[0.03]')
             : s.accent
               ? (isLight ? 'border-[#CDE4D6] bg-[#F1F7F3]' : 'border-violet-500/30 bg-violet-500/10')
               : (isLight ? 'border-[#E9E4DA] bg-white' : 'border-white/10 bg-transparent');

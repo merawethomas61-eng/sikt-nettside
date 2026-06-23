@@ -1,4 +1,5 @@
 import { withSentry, Sentry } from './_lib/sentry.js';
+import { renderEmail, note } from './_lib/email.js';
 
 // =====================================================================
 // /api/contact — tar imot meldinger fra kontaktskjemaet og sender e-post
@@ -71,26 +72,22 @@ export default withSentry(async function handler(req, res) {
   const esc = (s) =>
     String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // Intern e-post. Dette er en Vercel/Node-funksjon og kan IKKE importere
-  // Deno-malen i supabase/functions/_shared/email.ts (annen runtime). Vi
-  // speiler derfor designsystemet (docs/design-principles.md) inline her.
-  const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-  const SERIF = "Georgia,'Times New Roman',Times,serif";
-  const html = `<!DOCTYPE html><html lang="no"><head><meta charset="UTF-8"><meta name="color-scheme" content="light"></head>
-  <body style="margin:0;padding:0;background:#F1EFE8">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1EFE8" style="background:#F1EFE8;padding:40px 21px"><tr><td align="center">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#FFFFFF;border:1px solid #E7E2D8;border-radius:16px;padding:36px;box-shadow:0 18px 40px -20px rgba(26,26,26,0.12)">
-      <tr><td>
-        <div style="font-family:${SANS};font-size:13px;font-weight:700;color:#1A1A1A;letter-spacing:2px">SIKT</div>
-        <div style="border-top:1px solid #E7E2D8;margin:16px 0 24px;font-size:0;line-height:0">&nbsp;</div>
-        <div style="font-family:${SERIF};font-size:26px;font-weight:700;color:#1A1A1A;letter-spacing:-0.4px;margin-bottom:6px">Ny henvendelse</div>
-        <div style="font-family:${SANS};font-size:14px;color:#8A857A;margin-bottom:24px">Fra kontaktskjemaet på siktseo.com</div>
-        <div style="font-family:${SANS};font-size:15px;font-weight:600;color:#1A1A1A">${esc(cleanName)}</div>
-        <div style="font-family:${SANS};font-size:14px;margin-top:2px;margin-bottom:20px"><a href="mailto:${esc(cleanEmail)}" style="color:#6D28D9;text-decoration:underline">${esc(cleanEmail)}</a></div>
-        <div style="border-top:1px solid #E7E2D8;padding-top:20px;font-family:${SANS};font-size:15px;line-height:1.7;color:#1A1A1A;white-space:pre-wrap">${esc(cleanMessage)}</div>
-      </td></tr>
-    </table>
-  </td></tr></table></body></html>`;
+  // Intern e-post via Node-tvillingen api/_lib/email.js (samme designsystem
+  // som de øvrige e-postene — docs/design-principles.md).
+  const html = renderEmail({
+    preheader: `Ny henvendelse fra ${cleanName}.`,
+    brand: 'sikt',
+    kicker: 'Kontaktskjema',
+    heading: 'Ny henvendelse',
+    intro: 'Fra kontaktskjemaet på siktseo.com.',
+    blocks: [
+      note(
+        `<strong style="color:#1A1A1A">${esc(cleanName)}</strong> &nbsp;·&nbsp; ` +
+        `<a href="mailto:${esc(cleanEmail)}" style="color:#6D28D9;text-decoration:underline">${esc(cleanEmail)}</a>` +
+        `<br><br>${esc(cleanMessage).replace(/\n/g, '<br>')}`,
+      ),
+    ],
+  });
 
   try {
     const resp = await fetch('https://api.resend.com/emails', {

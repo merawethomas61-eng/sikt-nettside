@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Check,
+  ChevronRight,
   Globe,
   Lightbulb,
   Loader2,
@@ -17,6 +18,7 @@ import {
   YAxis,
 } from 'recharts';
 import { formatChartDate, chartTooltipStyle } from './src/portalTheme';
+import { SectionTitle } from './src/portalEditorial';
 
 type PortalTab =
   | 'home'
@@ -78,6 +80,30 @@ const mediumPriorityAudits = new Set([
   'image-alt',
   'document-title',
 ]);
+
+// Lighthouse-mulighetene lagres med engelske titler (PSI svarer på engelsk, og
+// opportunity-objektet i ClientPortal bærer kun `title`/`savings` — ingen slug-id).
+// Vi oversetter derfor de faste opportunity-titlene; ukjente faller tilbake til engelsk.
+const auditTitleNo: Record<string, string> = {
+  'Eliminate render-blocking resources': 'Eliminer blokkerende ressurser',
+  'Reduce unused JavaScript': 'Fjern ubrukt JavaScript',
+  'Reduce unused CSS': 'Fjern ubrukte CSS-regler',
+  'Properly size images': 'Tilpass bildestørrelser',
+  'Efficiently encode images': 'Koding av bilder effektivt',
+  'Serve images in next-gen formats': 'Bruk moderne bildeformater',
+  'Defer offscreen images': 'Utsett lasting av bilder utenfor skjermen',
+  'Reduce initial server response time': 'Reduser serverens responstid',
+  'Minify JavaScript': 'Minifiser JavaScript',
+  'Minify CSS': 'Minifiser CSS',
+  'Enable text compression': 'Aktiver tekstkomprimering',
+  'Avoid enormous network payloads': 'Unngå enorme nettverksbelastninger',
+  'Avoid an excessive DOM size': 'Unngå for stor DOM-størrelse',
+  'Preconnect to required origins': 'Forhåndskoble til viktige kilder',
+  'Remove duplicate modules in JavaScript bundles': 'Fjern duplisert JavaScript',
+  'Avoid serving legacy JavaScript to modern browsers': 'Fjern utdatert JavaScript',
+  'Use video formats for animated content': 'Bruk video for animert innhold',
+  'Largest Contentful Paint image was lazily loaded': 'LCP-bildet lastes for sent',
+};
 
 const relativeTime = (iso?: string) => {
   if (!iso) return 'ikke analysert ennå';
@@ -217,14 +243,17 @@ const extractAuditTasks = (
   if (!Array.isArray(opportunities)) return [];
   return opportunities.slice(0, 4).map((audit: any, i: number) => {
     const id = audit.id || audit.title || `task-${i}`;
+    const savings = typeof audit.savings === 'string' && audit.savings
+      ? audit.savings.replace(/^Potential savings of\s*/i, 'Sparer ~')
+      : undefined;
     return {
       id,
-      title: audit.title || id,
-      displayValue: audit.savings || audit.displayValue,
+      title: auditTitleNo[audit.title] || audit.title || id,
+      displayValue: savings,
       priority: highPriorityAudits.has(id)
         ? ('høy' as const)
         : ('middels' as const),
-      category: mediumPriorityAudits.has(id) ? 'Teknisk' : 'PageSpeed',
+      category: mediumPriorityAudits.has(id) ? 'Teknisk' : 'Fart',
     };
   });
 };
@@ -318,7 +347,7 @@ const ScoreCard = ({
         : 'Ikke målt ennå';
 
   return (
-  <div className="score-card rounded-[14px] border border-[#E9E4DA] bg-white p-5">
+  <div className="score-card rounded-[14px] border border-[#E9E4DA] bg-white p-6">
     <div className="flex items-center justify-between gap-2">
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
         {label}
@@ -329,7 +358,7 @@ const ScoreCard = ({
     <div className="mb-3 mt-5">
       {score != null ? (
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
+          <span className="text-[34px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
             {score}
           </span>
           <span className="text-base font-normal text-[#B3AD9F]">/100</span>
@@ -537,7 +566,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
-    <div className="flex w-full flex-col gap-6 font-['Geist','DM_Sans',sans-serif] text-[#1A1A1A]">
+    <div className="flex w-full flex-col gap-8 font-['Geist','DM_Sans',sans-serif] text-[#1A1A1A]">
       {/* Emil Kowalski: stagger entry + custom easing CSS */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes dashFadeIn {
@@ -753,7 +782,9 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </section>
 
       {/* ── Four metric cards ───────────────────────────────────────── */}
-      <section className="dash-stagger dash-stagger-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className="dash-stagger dash-stagger-3 flex flex-col gap-4">
+        <SectionTitle>Målinger</SectionTitle>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <ScoreCard
           label="Teknisk"
           score={technicalScore}
@@ -774,7 +805,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         />
 
         {/* Search Console */}
-        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5">
+        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-6">
           <div className="flex items-start justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-[#8A8578]">
               Search
@@ -796,7 +827,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               <p className="mt-4 text-[11px] font-medium text-[#B3AD9F]">
                 Klikk · 28d
               </p>
-              <p className="mt-2 text-[40px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
+              <p className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
                 {formatNumber(clicks)}
               </p>
               <p className="mt-2 text-xs text-[#8A8578] tabular-nums">
@@ -820,7 +851,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* GEO — AI-synlighet */}
-        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5">
+        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-6">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
               GEO — AI-synlighet
@@ -838,7 +869,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {geo && geo.total > 0 ? (
             <>
-              <p className="mt-5 text-[28px] font-semibold leading-none text-[#1A1A1A] tabular-nums">
+              <p className="mt-5 text-[30px] font-semibold leading-none text-[#1A1A1A] tabular-nums">
                 {geo.mentioned}<span className="text-[#B3AD9F]">/{geo.total}</span>
               </p>
               <p className="mt-1.5 text-[13px] font-medium text-[#5C574C]">
@@ -868,17 +899,16 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             </p>
           )}
         </div>
+        </div>
       </section>
 
       {/* ── Bottom grid: tasks + events ─────────────────────────────── */}
-      <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
         {/* Prioriterte oppgaver */}
-        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-5">
+        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
-                Prioriterte oppgaver
-              </h2>
+              <SectionTitle size="sm">Prioriterte oppgaver</SectionTitle>
               <span className="rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-0.5 text-[11px] font-medium text-[#8A8578] tabular-nums">
                 {tasks.length} totalt
               </span>
@@ -889,8 +919,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
 
           {!analysisResults && !realRankings.length ? (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
-              <p className="text-sm font-medium leading-relaxed text-[#5C574C]">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-[12px] border border-[#D6EEDF] bg-[#F3FBF6] p-8 text-center">
+              <p className="text-sm font-medium leading-relaxed text-[#2F5C45]">
                 Etter første analyse finner og prioriterer Sikt ting du bør fikse — de dukker opp her.
               </p>
               <button
@@ -902,53 +932,54 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               </button>
             </div>
           ) : tasks.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
-              <p className="text-sm font-medium text-[#5C574C]">
+            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#D6EEDF] bg-[#F3FBF6] p-8 text-center">
+              <p className="text-sm font-medium text-[#2F5C45]">
                 Alt ser bra ut.
               </p>
             </div>
           ) : (
             <>
-              <div className="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {tasks.slice(0, 4).map((t) => (
-                  <button
+              <ul className="flex flex-col">
+                {tasks.slice(0, 5).map((t, i) => (
+                  <li
                     key={t.id}
-                    type="button"
-                    onClick={() => onNavigate('visibility')}
-                    className="task-card rounded-[12px] border border-[#E9E4DA] bg-white p-4 text-left"
+                    className={i > 0 ? 'border-t border-[#E9E4DA]' : ''}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('visibility')}
+                      className="task-row group flex w-full items-center gap-3 py-3 text-left"
+                    >
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        className={`h-2 w-2 shrink-0 rounded-full ${
+                          t.priority === 'høy' ? 'bg-[#C08A2E]' : 'bg-[#2E9E6B]'
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold leading-snug text-[#1A1A1A]">
+                          {t.title}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-[#8A8578]">
+                          {[t.category, t.displayValue].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           t.priority === 'høy'
                             ? 'bg-[#F6EEDD] text-[#9A6700]'
                             : 'bg-[#E8F1EB] text-[#15795A]'
                         }`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            t.priority === 'høy'
-                              ? 'bg-[#C08A2E]'
-                              : 'bg-[#2E9E6B]'
-                          }`}
-                        />
                         {t.priority}
                       </span>
-                      <span className="text-[10px] font-medium text-[#B3AD9F]">
-                        {t.category}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-[13px] font-semibold leading-snug text-[#1A1A1A]">
-                      {t.title}
-                    </p>
-                    {t.displayValue && (
-                      <p className="mt-1 text-[11px] text-[#8A8578]">
-                        {t.displayValue}
-                      </p>
-                    )}
-                  </button>
+                      <ChevronRight
+                        size={14}
+                        className="shrink-0 text-[#C9C3B6] transition-transform group-hover:translate-x-0.5"
+                      />
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
               {tasks.length > 0 && (
                 <button
                   type="button"
@@ -963,10 +994,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* Siste hendelser */}
-        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-5">
-          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
-            Siste hendelser
-          </h2>
+        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+          <div className="mb-4">
+            <SectionTitle size="sm">Siste hendelser</SectionTitle>
+          </div>
 
           {logs.length === 0 ? (
             <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
@@ -984,7 +1015,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   <li
                     key={log.id || `${log.action}-${i}`}
                     className={`flex gap-3 py-3 ${
-                      i > 0 ? 'border-t border-[#EFEBE2]' : ''
+                      i > 0 ? 'border-t border-[#E9E4DA]' : ''
                     }`}
                   >
                     <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F2EFE8]">

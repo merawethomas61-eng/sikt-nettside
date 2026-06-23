@@ -22,6 +22,7 @@ import {
   Trash2, ChevronRight, Eye, RefreshCw, Loader2, Bell, Check,
   Settings, ChevronDown
 } from 'lucide-react';
+import { SectionTitle, Note } from './src/portalEditorial';
 
 /* ─── Custom easing (Emil: never use default CSS easings) ─── */
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
@@ -178,18 +179,22 @@ export const DashboardCompetitorWidget: React.FC<DashboardWidgetProps> = ({ user
   const textPrimary = isDark ? 'text-slate-200' : 'text-[#1A1A1A]';
   const textMuted = isDark ? 'text-slate-400' : 'text-[#5C574C]';
   const textLabel = isDark ? 'text-slate-500' : 'text-[#8A8578]';
-  const border = isDark ? 'border-white/5' : 'border-[#EFEBE2]';
+  const border = isDark ? 'border-white/5' : 'border-[#E9E4DA]';
   const hoverBg = isDark ? 'hover:bg-white/5' : 'hover:bg-[#FAF8F3]';
 
   if (loading) return null; // Ikke vis noe mens vi laster (Emil: unngå layout shift)
 
   return (
-    <div className="font-['Geist','DM_Sans',sans-serif]">
+    <div className={`font-['Geist','DM_Sans',sans-serif] ${isDark ? '' : 'rounded-[14px] border border-[#E9E4DA] bg-white p-6'}`}>
       <div className={`flex items-center justify-between mb-4 pb-4 border-b ${border}`}>
         <div className="flex items-center gap-2">
-          <p className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${textLabel}`}>
-            Konkurrentovervåking
-          </p>
+          {isDark ? (
+            <p className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${textLabel}`}>
+              Konkurrentovervåking
+            </p>
+          ) : (
+            <SectionTitle size="sm">Konkurrentovervåking</SectionTitle>
+          )}
           {unreadCount > 0 && (
             <span
               className="inline-flex items-center justify-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-[#1A1A1A] rounded-full tabular-nums"
@@ -211,9 +216,13 @@ export const DashboardCompetitorWidget: React.FC<DashboardWidgetProps> = ({ user
       </div>
 
       {changes.length === 0 ? (
-        <p className={`text-sm ${textMuted}`}>
-          Ingen endringer enda. Varsler dukker opp her etter neste skann.
-        </p>
+        isDark ? (
+          <p className={`text-sm ${textMuted}`}>
+            Ingen endringer enda. Varsler dukker opp her etter neste skann.
+          </p>
+        ) : (
+          <Note tone="neutral">Ingen endringer enda. Varsler dukker opp her etter neste skann.</Note>
+        )
       ) : (
         <div className="space-y-1">
           {changes.slice(0, 4).map((change, i) => {

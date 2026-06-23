@@ -107,11 +107,11 @@ export function statement(opts: {
  * Seier-liste: søkeord som klatret, som en redaksjonell hårstrek-liste
  * (skillelinjer mellom rader) — ikke et farget kort.
  */
-export function winList(items: Array<{ keyword: string; from: number | string; to: number | string; flag?: string }>): string {
+export function winList(items: Array<{ keyword: string; from: number | string; to: number | string; flag?: string; tone?: 'up' | 'down' }>): string {
   return items.map((w, i) => `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:${i === 0 ? '0' : '1px solid ' + C.hairline}"><tr>
       <td style="padding:${S.sm}px 0;font-family:${SANS};font-size:15px;font-weight:500;color:${C.ink}">${escapeHtml(w.keyword)}</td>
-      <td align="right" style="padding:${S.sm}px 0;white-space:nowrap;font-family:${SANS};font-size:14px;font-weight:600;color:${C.green}">${escapeHtml(w.from)} &rarr; ${escapeHtml(w.to)}${w.flag ? `<span style="color:${C.muted};font-weight:500"> · ${escapeHtml(w.flag)}</span>` : ''}</td>
+      <td align="right" style="padding:${S.sm}px 0;white-space:nowrap;font-family:${SANS};font-size:14px;font-weight:600;color:${w.tone === 'down' ? C.danger : C.green}">${escapeHtml(w.from)} &rarr; ${escapeHtml(w.to)}${w.flag ? `<span style="color:${C.muted};font-weight:500"> · ${escapeHtml(w.flag)}</span>` : ''}</td>
     </tr></table>`).join('');
 }
 

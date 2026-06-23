@@ -54,11 +54,15 @@ export default withSentry(async function handler(request, response) {
     }
     // --- ID-KORT SJEKK SLUTT ---
 
-    const { keyword, location } = request.body;
+    const { keyword, location, start } = request.body;
 
     if (!keyword || !location) {
         return response.status(400).json({ error: 'Mangler søkeord eller sted' });
     }
+
+    // Valgfri paginering: start=100 → resultat 101–200, start=200 → 201–300.
+    // Kalles kun «ved behov» fra klienten (når søkeordet ikke finnes i topp 100).
+    const startNum = Number.isFinite(Number(start)) ? Math.max(0, Math.min(200, Math.floor(Number(start)))) : 0;
 
     const apiKey = process.env.SERP_API_KEY;
 
@@ -67,7 +71,8 @@ export default withSentry(async function handler(request, response) {
     }
 
     try {
-        const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ", Norway")}&num=100&device=desktop&api_key=${apiKey}`;
+        const startParam = startNum > 0 ? `&start=${startNum}` : '';
+        const targetUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(keyword)}&google_domain=google.no&gl=no&hl=no&location=${encodeURIComponent(location + ", Norway")}&num=100${startParam}&device=desktop&api_key=${apiKey}`;
 
         const res = await fetchExternalWithOptionalRetry429(targetUrl);
         if (res.status === 429) {
