@@ -6285,12 +6285,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     }
     setIsDisconnecting(true);
     try {
-      const res = await fetch('/api/wordpress-disconnect', {
+      const res = await fetch('/api/wordpress-connect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
+        body: JSON.stringify({ action: 'disconnect' }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

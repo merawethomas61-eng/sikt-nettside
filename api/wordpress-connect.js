@@ -302,6 +302,48 @@ export default withSentry(async function handler(req, res) {
 
   const body = parseJsonBody(req);
 
+  // --- Frakoble-gren: nullstill tokens + sett connection_mode='skipped'.
+  //     Slått sammen hit fra tidligere /api/wordpress-disconnect for å holde oss
+  //     under Vercel Hobby sin 12-funksjoners-grense. Kalles med { action: 'disconnect' }.
+  if (body.action === 'disconnect') {
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const now = new Date().toISOString();
+      const { data: existing, error: fetchErr } = await supabase
+        .from('client_hosts')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (fetchErr) {
+        Sentry.captureException(fetchErr);
+        return res.status(500).json({ error: 'Kunne ikke frakoble.' });
+      }
+      if (!existing) {
+        return res.status(200).json({ ok: true, wasConnected: false });
+      }
+      const { error: writeErr } = await supabase
+        .from('client_hosts')
+        .update({
+          connection_mode: 'skipped',
+          access_token_encrypted: null,
+          refresh_token_encrypted: null,
+          token_expires_at: null,
+          last_changed_at: now,
+          updated_at: now,
+        })
+        .eq('user_id', user.id);
+      if (writeErr) {
+        Sentry.captureException(writeErr);
+        return res.status(500).json({ error: 'Kunne ikke frakoble.' });
+      }
+      return res.status(200).json({ ok: true, wasConnected: true });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) Sentry.captureException(err);
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt' });
+    }
+  }
+
   // --- Shopify-gren: token-basert tilkobling (custom app Admin API) ---
   if (body.platform === 'shopify') {
     try {
