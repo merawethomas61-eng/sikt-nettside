@@ -768,6 +768,20 @@ function escapeHtmlClient(s: string): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/** Menneskelig forklaring på hvorfor en kunde er rød/gul (admin-helse, punkt 3B). */
+function healthReason(r: any): string {
+  const DAY = 24 * 60 * 60 * 1000;
+  const sub = (r?.subscription_status ?? '').toLowerCase();
+  if (sub === 'past_due') return 'Betaling feilet (past_due) — i ferd med å falle av';
+  if (sub === 'canceled' || sub === 'unpaid') return `Abonnement: ${sub}`;
+  if (!r?.last_active_at) {
+    const d = r?.created_at ? Math.floor((Date.now() - new Date(r.created_at).getTime()) / DAY) : null;
+    return d !== null ? `Betalte, men har aldri vært aktiv (${d} d siden signup)` : 'Betalte, men har aldri vært aktiv';
+  }
+  const d = r?.last_seen_at ? Math.floor((Date.now() - new Date(r.last_seen_at).getTime()) / DAY) : null;
+  return d !== null ? `Stille i ${d} dager` : 'Stille en stund';
+}
+
 /** Review/AggregateRating JSON-LD fra EKTE Google-tall (matcher widgeten på siden). */
 function buildReviewJsonLd(opts: { businessName: string; rating: number; count: number; url: string | null; reviews: GoogleReview[] }): string {
   const data: any = {
@@ -3543,8 +3557,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // VIKTIG: Vi har SLETTET [clientData, setClientData] herfra fordi den kommer fra props!
   const [formData, setFormData] = useState<any>({});
   // Den redesignede portalen har 8 faner i en sidebar. Verksted er egen fane (ikke drawer).
-  type PortalTab = 'home' | 'visibility' | 'keywords' | 'competitors' | 'geo' | 'workshop' | 'reviews' | 'log' | 'settings';
+  type PortalTab = 'home' | 'visibility' | 'keywords' | 'competitors' | 'geo' | 'workshop' | 'reviews' | 'log' | 'settings' | 'health';
   const [activeTab, setActiveTab] = useState<PortalTab>('home');
+  // Eier-only «Kundehelse»-fane (punkt 3B). Allowlist; ekte gating skjer i edge-fn.
+  const isFounder = ['siktseo@gmail.com'].includes((user?.email || '').toLowerCase());
+  const [healthData, setHealthData] = useState<{ rows: any[]; summary: Record<string, number> } | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthError, setHealthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [clientData, setClientData] = useState<any>(startData);
   const isMobile = useIsMobile(); // responsiv stabling i inline-style-faner (Verksted/Innstillinger)
@@ -4597,6 +4616,36 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     { id: 'workshop', label: 'Verksted', icon: Wrench },
     { id: 'reviews', label: 'Anmeldelser', icon: Star },
   ];
+  // Kundehelse er kun for eier — skjult fra vanlige kunder.
+  if (isFounder) navItems.push({ id: 'health', label: 'Kundehelse', icon: Gauge });
+
+  // Last client_health når eier åpner fanen (via admin-health edge-fn).
+  useEffect(() => {
+    if (!isFounder || activeTab !== 'health') return;
+    let cancelled = false;
+    (async () => {
+      setHealthLoading(true); setHealthError(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-health`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (res.ok && json?.ok) setHealthData({ rows: json.rows ?? [], summary: json.summary ?? {} });
+        else setHealthError(json?.error || `Feil (${res.status})`);
+      } catch (e: any) {
+        if (!cancelled) setHealthError(String(e?.message || e));
+      } finally {
+        if (!cancelled) setHealthLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isFounder, activeTab]);
 
   // 2. DATA FETCHING (Profil)
   useEffect(() => {
@@ -7136,6 +7185,29 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               <div aria-hidden className="mt-6" style={{ borderTop: '1px solid #E9E4DA' }} />
             </header>
 
+            {/* Punkt 2: forventnings-note for nye kunder (≤6 uker) — SEO tar uker, ikke dager. */}
+            {(() => {
+              const acts = Array.isArray(siktActions) ? siktActions : [];
+              const earliest = acts.length
+                ? acts.reduce((min: number, a: any) => Math.min(min, new Date(a.created_at).getTime()), Date.now())
+                : Date.now();
+              const weeks = Math.max(1, Math.round((Date.now() - earliest) / (7 * 24 * 60 * 60 * 1000)));
+              if (weeks > 6) return null;
+              const fixes = acts.filter((a: any) => a.category === 'fix').length;
+              const finds = acts.filter((a: any) => a.category === 'finding').length;
+              return (
+                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FAF8F3] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif] flex gap-4">
+                  <div aria-hidden className="mt-0.5 shrink-0"><Clock size={18} className="text-[#6D28D9]" /></div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#1A1A1A] mb-1">Hva du kan forvente de første ukene</h3>
+                    <p className="text-sm text-[#5C574C] leading-relaxed">
+                      Resultater i Google tar typisk <strong className="text-[#1A1A1A]">4–12 uker</strong> — du er i uke {weeks}. Mens vi venter bygger Sikt grunnmuren: så langt <strong className="text-[#1A1A1A]">{fixes} {fixes === 1 ? 'fiks' : 'fikser'}</strong> og <strong className="text-[#1A1A1A]">{finds} funn</strong>. Følg de ledende tegnene (fikser gjort, feil løst) her — ikke bare rangeringene.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Godkjenningskø: synlige fikser Sikt har klargjort, venter på ditt ja */}
             {fixQueue.length > 0 && (
               <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
@@ -7229,6 +7301,55 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 />
               </div>
             </div>
+          </div>
+        )}
+        {isFounder && activeTab === 'health' && (
+          <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
+            <header>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[#1A1A1A]" style={{ fontFamily: SERIF }}>Kundehelse</h1>
+              <p className="text-base mt-3 max-w-[58ch] text-[#8A8578]" style={{ lineHeight: 1.6 }}>Hvem er i ferd med å falle av — og hvorfor. Kun synlig for deg.</p>
+              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid #E9E4DA' }} />
+            </header>
+
+            {healthLoading && <div className="text-sm text-[#8A8578]">Laster …</div>}
+            {healthError && <div className="text-sm text-[#A33A2A]">Kunne ikke laste: {healthError}</div>}
+
+            {healthData && (
+              <>
+                <div className="flex gap-3 flex-wrap">
+                  {([['red','🔴','Røde'],['yellow','🟡','Gule'],['green','🟢','Grønne']] as const).map(([k, dot, label]) => (
+                    <div key={k} className="rounded-[12px] border border-[#E9E4DA] bg-white px-4 py-3 min-w-[96px]">
+                      <div className="text-2xl font-bold text-[#1A1A1A] tabular-nums" style={{ fontFamily: SERIF }}>{healthData.summary[k] ?? 0}</div>
+                      <div className="text-xs text-[#8A8578] mt-0.5">{dot} {label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-[14px] border border-[#E9E4DA] bg-white overflow-hidden">
+                  {healthData.rows.length === 0 ? (
+                    <div className="p-6 text-sm text-[#8A8578]">Ingen kunder ennå.</div>
+                  ) : (
+                    <div className="divide-y divide-[#E9E4DA]">
+                      {healthData.rows.map((r: any) => {
+                        const dot = r.health === 'red' ? '🔴' : r.health === 'yellow' ? '🟡' : '🟢';
+                        return (
+                          <div key={r.user_id} className="flex items-center gap-3 p-4 flex-wrap">
+                            <span className="text-base shrink-0">{dot}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-[#1A1A1A] truncate">{r.email || '(ukjent)'} <span className="font-normal text-[#8A8578]">· {r.package_name || '—'}</span></div>
+                              <div className="text-xs text-[#8A8578] mt-0.5">{healthReason(r)}</div>
+                            </div>
+                            {r.email && (
+                              <a href={`mailto:${r.email}?subject=${encodeURIComponent('Hei fra Sikt')}`} className="text-xs font-semibold text-[#15795A] underline whitespace-nowrap shrink-0">Nå ut</a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
         {false && activeTab === 'home' && (

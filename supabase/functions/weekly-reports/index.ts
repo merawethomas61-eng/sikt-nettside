@@ -9,6 +9,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com'
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
+// Eier-adresse for helse-digesten (punkt 3A). Settes som env i prod.
+const FOUNDER_EMAIL = Deno.env.get('FOUNDER_EMAIL') ?? 'siktseo@gmail.com'
 
 // Estimert verdi per organisk klikk (NOK) — konservativt anslag for hva et
 // tilsvarende Google Ads-klikk ville kostet. Brukes til ROI-linjen i kvitteringen.
@@ -34,6 +36,11 @@ type Client = {
   package_name: string
   website_url: string | null
   notification_preferences: Record<string, boolean> | null
+  // Churn-felt (punkt 3C): styrer gjenoppvekkings-e-posten.
+  subscription_status: string | null
+  last_active_at: string | null
+  last_reengagement_at: string | null
+  created_at: string | null
 }
 
 type Opportunity = {
@@ -42,6 +49,16 @@ type Opportunity = {
   estimated_traffic: number | null
   difficulty: string | number | null
   search_volume: number | null
+}
+
+type HealthRow = {
+  email: string | null
+  package_name: string | null
+  subscription_status: string | null
+  health: string
+  last_seen_at: string | null
+  last_active_at: string | null
+  created_at: string | null
 }
 
 Deno.serve(async (req) => {
@@ -56,7 +73,7 @@ Deno.serve(async (req) => {
   // Hent alle betalende kunder med e-post
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
-    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences')
+    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences, subscription_status, last_active_at, last_reengagement_at, created_at')
     .not('package_name', 'is', null)
     .not('email', 'is', null)
 
@@ -70,6 +87,8 @@ Deno.serve(async (req) => {
 
   let sentCount = 0
   let errorCount = 0
+  let reengagedCount = 0
+  const reengagedUserIds: string[] = []
 
   for (const client of clients as Client[]) {
     if (!client.email || !client.package_name) continue
@@ -206,6 +225,54 @@ Deno.serve(async (req) => {
       ? Math.round(((gscClicks - priorClicks) / priorClicks) * 100)
       : null
 
+    // ---------------------------------------------------------------
+    // Punkt 3C: auto gjenoppvekkings-e-post.
+    // Sendes I STEDET FOR den vanlige rapporten til en BETALENDE kunde
+    // som var aktiv før, men har vært stille ≥14 dager — så vi unngår
+    // dobbel e-post samme dag. Konservative guards beskytter test-/
+    // aldri-aktiverte kontoer (last_active_at = null → aldri trigget).
+    // ---------------------------------------------------------------
+    const DAY = 24 * 60 * 60 * 1000
+    const subStatus = (client.subscription_status ?? '').toLowerCase()
+    const isPayingActive = subStatus === 'active' || subStatus === 'past_due' || subStatus === 'trialing'
+    const lastActiveMs = client.last_active_at ? new Date(client.last_active_at).getTime() : null
+    const quietDays = lastActiveMs ? Math.floor((Date.now() - lastActiveMs) / DAY) : null
+    const reengagedRecently = client.last_reengagement_at
+      ? (Date.now() - new Date(client.last_reengagement_at).getTime()) < 21 * DAY
+      : false
+    const shouldReengage =
+      isPayingActive &&
+      lastActiveMs !== null &&     // utelukker aldri-aktiverte (test-)kontoer
+      quietDays !== null && quietDays >= 14 &&
+      !reengagedRecently
+
+    if (shouldReengage) {
+      const reHtml = buildReengagementHtml({
+        firstName, companyName, websiteUrl, plan,
+        quietDays: quietDays as number,
+        openSuggestions, totalFixes, topOpportunity,
+      })
+      const reResult = await sendEmail({
+        to: client.email,
+        subject: firstName
+          ? `${firstName}, siden din jobber videre — men savner deg`
+          : 'Sikt jobber videre for deg — men savner deg',
+        html: reHtml,
+      })
+      if (reResult.ok) {
+        reengagedCount++
+        reengagedUserIds.push(client.user_id)
+        // Stemple så vi ikke maser igjen før om ≥21 dager.
+        await supabase.from('clients')
+          .update({ last_reengagement_at: new Date().toISOString() })
+          .eq('user_id', client.user_id)
+      } else {
+        errorCount++
+        console.error(`Feil ved gjenoppvekking til ${client.email}:`, await reResult.text())
+      }
+      continue // hopp over standard-rapporten denne uka for denne kunden
+    }
+
     const html = buildEmailHtml({
       companyName,
       firstName,
@@ -251,9 +318,40 @@ Deno.serve(async (req) => {
     }
   }
 
-  console.log(`✅ Ukesrapport sendt: ${sentCount} ok, ${errorCount} feil`)
+  // -----------------------------------------------------------------
+  // Punkt 3A: ukentlig eier-digest. Leser client_health-viewet (røde +
+  // gule betalende kunder) og sender ÉN e-post til eier med hvem som er
+  // i ferd med å falle av + hvorfor + hva å gjøre. Sendes kun når det
+  // faktisk finnes risiko-kunder (ingen nyheter = ingen e-post).
+  // -----------------------------------------------------------------
+  let digestSent = false
+  try {
+    const { data: healthRows } = await supabase
+      .from('client_health')
+      .select('email, package_name, subscription_status, health, last_seen_at, last_active_at, created_at')
+      .in('health', ['red', 'yellow'])
+      .not('package_name', 'is', null)
+      .neq('email', FOUNDER_EMAIL)
+
+    const atRisk = (healthRows ?? []) as HealthRow[]
+    if (atRisk.length > 0) {
+      const digestHtml = buildFounderDigestHtml(atRisk, reengagedCount)
+      const reds = atRisk.filter(r => r.health === 'red').length
+      const digestResult = await sendEmail({
+        to: FOUNDER_EMAIL,
+        subject: `Sikt · ${atRisk.length} kunde${atRisk.length === 1 ? '' : 'r'} trenger oppmerksomhet (${reds} røde)`,
+        html: digestHtml,
+      })
+      digestSent = digestResult.ok
+      if (!digestResult.ok) console.error('Feil ved sending av eier-digest:', await digestResult.text())
+    }
+  } catch (e) {
+    console.error('Feil ved bygging av eier-digest:', e)
+  }
+
+  console.log(`✅ Ukesrapport: ${sentCount} sendt, ${reengagedCount} gjenoppvekket, ${errorCount} feil, digest=${digestSent}`)
   return new Response(
-    JSON.stringify({ sent: sentCount, errors: errorCount }),
+    JSON.stringify({ sent: sentCount, reengaged: reengagedCount, reengagedUserIds, errors: errorCount, digestSent }),
     { headers: { 'Content-Type': 'application/json' } }
   )
 })
@@ -411,6 +509,18 @@ function buildEmailHtml(opts: {
   // mulighet, arbeid, konkurrenter, AI-synlighet og til slutt livstidstall.
   const blocks: string[] = []
 
+  // Punkt 2: sett forventninger eksplisitt for nye kunder (≤6 uker).
+  // SEO flytter seg på ukers horisont, ikke dagers — si det rett ut, og
+  // led med ledende indikatorer (arbeid gjort) så kunden ikke sier opp
+  // mens hen venter på at rangeringene skal røre seg.
+  if (weeksActive <= 6) {
+    blocks.push(railNote({
+      title: 'Hva du kan forvente',
+      body: `Resultater i Google kommer sjelden over natten — det tar typisk 4–12 uker før rangeringene flytter seg merkbart. Du er i uke ${weeksActive}. Mens vi venter bygger vi grunnmuren: så langt har Sikt gjort ${totalFixes} ${totalFixes === 1 ? 'fiks' : 'fikser'} og funnet ${totalFindings} ${totalFindings === 1 ? 'forbedring' : 'forbedringer'} på siden din. Det er dette arbeidet som flytter tallene senere.`,
+      tone: 'accent',
+    }))
+  }
+
   if (wins.length > 0) {
     blocks.push(sectionHead('Seire denne uken') + winList(wins.map(w => ({
       keyword: w.keyword,
@@ -482,6 +592,103 @@ function buildEmailHtml(opts: {
     signoff: 'Ha en god uke — vi sees neste mandag.',
     cta: { label: 'Åpne dashbordet', url: PORTAL_URL },
     footer: `Sikt · ${escapeHtml(plan)}${websiteUrl ? ` · ${escapeHtml(websiteUrl)}` : ''} &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Administrer varsler</a> &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Avslutt abonnement</a>`,
+  })
+}
+
+// =====================================================================
+// Punkt 3C — gjenoppvekkings-e-post (sendes til stille, betalende kunde)
+// =====================================================================
+function buildReengagementHtml(opts: {
+  firstName: string | null
+  companyName: string
+  websiteUrl: string
+  plan: string
+  quietDays: number
+  openSuggestions: number
+  totalFixes: number
+  topOpportunity: Opportunity | null
+}): string {
+  const { firstName, websiteUrl, plan, quietDays, openSuggestions, totalFixes, topOpportunity } = opts
+  const ink = TOKENS.color.ink
+  const blocks: string[] = []
+
+  if (openSuggestions > 0) {
+    blocks.push(railNote({
+      title: `${openSuggestions} forslag venter på deg`,
+      body: 'Hvert ett er ferdig skrevet av Sikt og klart til å limes inn. De tar minutter — og hver av dem er en mulighet til å klatre på Google.',
+      tone: 'accent',
+    }))
+  }
+  if (topOpportunity) {
+    const traffic = typeof topOpportunity.estimated_traffic === 'number' && topOpportunity.estimated_traffic > 0
+      ? ` Tar du den, kan det bety ~${topOpportunity.estimated_traffic} flere besøk i måneden.` : ''
+    blocks.push(sectionHead('Ukens mulighet')
+      + `<div style="font-family:${TOKENS.serif};font-size:20px;font-weight:700;color:${ink};letter-spacing:-0.3px;margin-bottom:6px">${escapeHtml(topOpportunity.keyword)}</div>`
+      + paragraph(`En konkurrent rangerer på dette søkeordet — det gjør ikke du ennå.${escapeHtml(traffic)}`))
+  }
+  if (totalFixes > 0) {
+    blocks.push(note(`Sikt har allerede gjort <strong style="color:${ink}">${totalFixes} ${totalFixes === 1 ? 'fiks' : 'fikser'}</strong> for deg i bakgrunnen. Vi fortsetter uansett — men du henter mest verdi når du er innom og tar tak i det vi finner.`))
+  }
+
+  return renderEmail({
+    preheader: `Det venter ${openSuggestions > 0 ? `${openSuggestions} forslag` : 'nye muligheter'} i Sikt — du har ikke vært innom på ${quietDays} dager.`,
+    brand: 'sikt',
+    kicker: 'Vi savner deg',
+    heading: `Det er ${quietDays} dager siden sist du var innom.`,
+    intro: (firstName ? `Hei ${escapeHtml(firstName)}. ` : '') + 'Sikt jobber videre i bakgrunnen — men de beste resultatene kommer når du er med. Her er hva som venter på deg akkurat nå.',
+    blocks,
+    signoff: 'Vi er her når du er klar.',
+    cta: { label: 'Åpne dashbordet', url: PORTAL_URL },
+    footer: `Sikt · ${escapeHtml(plan)}${websiteUrl ? ` · ${escapeHtml(websiteUrl)}` : ''} &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Administrer varsler</a>`,
+  })
+}
+
+// =====================================================================
+// Punkt 3A — ukentlig eier-digest (intern, kun til FOUNDER_EMAIL)
+// =====================================================================
+function buildFounderDigestHtml(rows: HealthRow[], reengagedCount: number): string {
+  const ink = TOKENS.color.ink
+  const DAY = 24 * 60 * 60 * 1000
+  const reds = rows.filter(r => r.health === 'red')
+  const yellows = rows.filter(r => r.health === 'yellow')
+
+  const reasonFor = (r: HealthRow): string => {
+    const sub = (r.subscription_status ?? '').toLowerCase()
+    if (sub === 'past_due') return 'Betaling feilet (past_due) — i ferd med å falle av'
+    if (sub === 'canceled' || sub === 'unpaid') return `Abonnement: ${sub}`
+    if (!r.last_active_at) {
+      const days = r.created_at ? Math.floor((Date.now() - new Date(r.created_at).getTime()) / DAY) : null
+      return days !== null ? `Betalte, men har aldri vært aktiv (${days} dager siden signup)` : 'Betalte, men har aldri vært aktiv'
+    }
+    const days = r.last_seen_at ? Math.floor((Date.now() - new Date(r.last_seen_at).getTime()) / DAY) : null
+    return days !== null ? `Stille i ${days} dager` : 'Stille en stund'
+  }
+
+  const rowHtml = (r: HealthRow): string => {
+    const dot = r.health === 'red' ? '🔴' : '🟡'
+    const who = r.email ?? '(ukjent e-post)'
+    const mailto = r.email ? `mailto:${r.email}?subject=${encodeURIComponent('Hei fra Sikt')}` : '#'
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${TOKENS.color.hairline}"><tr><td style="padding:13px 0">
+      <div style="font-family:${TOKENS.sans};font-size:15px;font-weight:600;color:${ink}">${dot} ${escapeHtml(who)}<span style="font-weight:500;color:${TOKENS.color.muted}"> · ${escapeHtml(r.package_name ?? '')}</span></div>
+      <div style="font-family:${TOKENS.sans};font-size:13px;color:${TOKENS.color.muted};line-height:1.6;margin-top:2px">${escapeHtml(reasonFor(r))} — <a href="${mailto}" style="color:${TOKENS.color.accent};text-decoration:underline;font-weight:600">nå ut</a></div>
+    </td></tr></table>`
+  }
+
+  const blocks: string[] = []
+  if (reds.length > 0) blocks.push(sectionHead(`Røde — handle nå (${reds.length})`) + reds.map(rowHtml).join(''))
+  if (yellows.length > 0) blocks.push(sectionHead(`Gule — følg med (${yellows.length})`) + yellows.map(rowHtml).join(''))
+  blocks.push(note(`Sikt sendte automatisk ${reengagedCount} gjenoppvekkings-e-post${reengagedCount === 1 ? '' : 'er'} denne uken. En kort, personlig melding fra deg redder flest abonnement.`))
+
+  return renderEmail({
+    preheader: `${rows.length} kunder trenger oppmerksomhet (${reds.length} røde).`,
+    brand: 'sikt',
+    kicker: new Date().toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' }),
+    heading: `${rows.length} ${rows.length === 1 ? 'kunde trenger' : 'kunder trenger'} oppmerksomhet.`,
+    intro: 'Din ukentlige churn-oversikt fra Sikt. Røde er i ferd med å falle av — nå ut til dem først.',
+    blocks,
+    signoff: 'Ett kontaktpunkt i uka redder abonnement.',
+    cta: { label: 'Åpne admin-helse', url: PORTAL_URL },
+    footer: 'Sikt · intern eier-rapport',
   })
 }
 

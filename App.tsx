@@ -9,7 +9,6 @@ import { buildStripeCheckoutUrl } from './src/shared/stripeLinks';
 
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { supabase } from './supabaseClient';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
@@ -27,6 +26,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// --- LAZY SUPABASE ---
+// Supabase-SDK-en (~206 KB) trengs kun ved innlogging/auth, ikke for å rendre
+// forsiden. Vi importerer den derfor dynamisk slik at supabase-chunken IKKE blir
+// en statisk avhengighet av App-chunken (og dermed holdes ute av forsidens
+// første lastebølge). Klienten memoiseres så den kun opprettes én gang.
+let _supabasePromise: Promise<typeof import('./supabaseClient')['supabase']> | null = null;
+const getSupabase = () => (_supabasePromise ??= import('./supabaseClient').then((m) => m.supabase));
 
 
 // --- GLOBALE KONSTANTER ---
@@ -104,12 +111,8 @@ const InfoHint = ({ text }: { text: string }) => (
 
 // --- GLOBAL SMART LOGIN FUNKSJON (Oppdatert) ---
 export const handleLogin = async () => {
-  if (!supabase) {
-    toastError("Supabase mangler oppsett i supabaseClient.ts");
-    return;
-  }
-
   try {
+    const supabase = await getSupabase();
     // 1. SJEKK OM BRUKER ALLEREDE ER INNE
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -1860,6 +1863,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     if (!aktivBruker) {
       console.warn("[Onboarding] User-prop mangler, prøver supabase.auth.getUser()");
       try {
+        const supabase = await getSupabase();
         const { data: { user: fetchedUser } } = await supabase.auth.getUser();
         aktivBruker = fetchedUser;
       } catch (err) {
@@ -3909,6 +3913,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
     try {
       const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
+      const supabase = await getSupabase();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -3938,6 +3943,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
     setMagicLinkLoading(true);
     try {
       const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const supabase = await getSupabase();
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: {
@@ -4475,6 +4481,9 @@ function App() {
 
       if (!isMounted) return;
 
+      // Last supabase-SDK-en lazy (holdt ute av forsidens kritiske bane).
+      const supabase = await getSupabase();
+      if (!isMounted) return;
 
       const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!isMounted) return;
@@ -4528,10 +4537,25 @@ function App() {
       subscription = data.subscription;
     };
 
-    init();
+    // Utsett auth-bootstrap til etter første paint slik at marketing-helten/LCP
+    // rendres før supabase-SDK-en lastes. requestIdleCallback når nettleseren er
+    // ledig, med setTimeout-fallback (Safari) og 2s timeout som sikkerhetsnett.
+    const ric: typeof requestIdleCallback | undefined =
+      typeof window !== 'undefined' ? (window as any).requestIdleCallback : undefined;
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+    if (ric) {
+      idleHandle = ric(() => { init(); }, { timeout: 2000 });
+    } else {
+      timeoutHandle = setTimeout(() => { init(); }, 0);
+    }
 
     return () => {
       isMounted = false;
+      if (idleHandle !== null && typeof (window as any).cancelIdleCallback === 'function') {
+        (window as any).cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) clearTimeout(timeoutHandle);
       if (subscription) subscription.unsubscribe();
     };
   }, []);
@@ -4551,6 +4575,7 @@ function App() {
         let formattedUrl = String(client.website_url).trim();
         if (!formattedUrl.startsWith('http')) formattedUrl = 'https://' + formattedUrl;
 
+        const supabase = await getSupabase();
         const { data: { session } } = await supabase.auth.getSession();
         toastInfo('Vi kjører en første analyse av nettsiden din i bakgrunnen...');
         // Marker som «underveis» så portalens auto-scan venter på dette resultatet
@@ -4686,6 +4711,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
+      const supabase = await getSupabase();
       await supabase.auth.signOut();
 
       Object.keys(localStorage).forEach((key) => {

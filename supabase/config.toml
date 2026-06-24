@@ -51,3 +51,9 @@ verify_jwt = false
 [functions.resend-webhook]
 enabled = true
 verify_jwt = false
+
+# admin-health: eier-only helse-oversikt, kalt fra nettleseren → false så CORS-
+# preflight (OPTIONS) slipper gjennom; JWT + eier-sjekk gjøres i koden.
+[functions.admin-health]
+enabled = true
+verify_jwt = false
