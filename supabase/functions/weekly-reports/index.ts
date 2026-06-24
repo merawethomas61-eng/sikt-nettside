@@ -28,6 +28,26 @@ type SiktAction = {
   status?: string | null
 }
 
+type ReportSections = {
+  results?: boolean
+  opportunity?: boolean
+  work?: boolean
+  competitors?: boolean
+  aiVisibility?: boolean
+  lifetime?: boolean
+}
+
+type NotifPrefs = {
+  weeklyReport?: boolean
+  criticalAlerts?: boolean
+  rankChanges?: boolean
+  // Kunde-styrt rapport-timeplan:
+  reportFrequency?: string   // 'off'|'weekly'|'biweekly'|'monthly'|'twice_week'|'thrice_week'
+  reportHour?: number        // 6–22, Oslo lokal time
+  reportAnchorDay?: number   // ISO ukedag 1=man … 7=søn
+  reportSections?: ReportSections
+}
+
 type Client = {
   user_id: string
   email: string
@@ -35,12 +55,14 @@ type Client = {
   contact_person: string | null
   package_name: string
   website_url: string | null
-  notification_preferences: Record<string, boolean> | null
+  notification_preferences: NotifPrefs | null
   // Churn-felt (punkt 3C): styrer gjenoppvekkings-e-posten.
   subscription_status: string | null
   last_active_at: string | null
   last_reengagement_at: string | null
   created_at: string | null
+  // Kunde-styrt rapport-timeplan: dedup + datavindu + kadens.
+  last_report_sent_at: string | null
 }
 
 type Opportunity = {
@@ -61,6 +83,73 @@ type HealthRow = {
   created_at: string | null
 }
 
+// =====================================================================
+// Kunde-styrt timeplan — dispatcheren kjøres hver time (pg_cron i UTC) og
+// avgjør per kunde om de er «due» nå i NORSK tid (Europe/Oslo, DST-trygt).
+// =====================================================================
+const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function osloNowParts(): { hour: number; weekday: number; dayOfMonth: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Oslo', hour: '2-digit', hour12: false, weekday: 'short', day: '2-digit',
+  }).formatToParts(new Date())
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? ''
+  const wk: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }
+  let hour = parseInt(get('hour'), 10)
+  if (hour === 24) hour = 0 // noen runtimes rendrer midnatt som 24
+  return { hour, weekday: wk[get('weekday')] ?? 1, dayOfMonth: parseInt(get('day'), 10) || 1 }
+}
+
+function clampHour(h: unknown): number {
+  const n = typeof h === 'number' && isFinite(h) ? Math.round(h) : 8
+  return Math.min(22, Math.max(6, n))
+}
+function clampDay(d: unknown): number {
+  const n = typeof d === 'number' && isFinite(d) ? Math.round(d) : 1
+  return Math.min(7, Math.max(1, n))
+}
+
+/** ISO-ukedager (1–7) en kunde skal få e-post på — jevnt fordelt fra anchor. */
+function reportWeekdays(frequency: string, anchor: number): number[] {
+  const wrap = (d: number) => ((d - 1) % 7 + 7) % 7 + 1
+  if (frequency === 'twice_week') return [anchor, wrap(anchor + 3)]      // f.eks. man + tor
+  if (frequency === 'thrice_week') return [anchor, wrap(anchor + 2), wrap(anchor + 4)] // man+ons+fre
+  return [anchor]
+}
+
+/** Er kunden due for rapport NÅ (gitt Oslo-tid + siste sendt)? */
+function isReportDue(
+  prefs: NotifPrefs | null,
+  lastSentIso: string | null,
+  oslo: { hour: number; weekday: number; dayOfMonth: number },
+): boolean {
+  const frequency = prefs?.reportFrequency ?? (prefs?.weeklyReport === false ? 'off' : 'weekly')
+  if (frequency === 'off') return false
+  if (oslo.hour !== clampHour(prefs?.reportHour)) return false
+
+  const anchor = clampDay(prefs?.reportAnchorDay)
+  const lastMs = lastSentIso ? new Date(lastSentIso).getTime() : null
+  // Dedup: aldri to ganger innen 20 t (hindrer dobbel-fyring samme time/dag).
+  if (lastMs !== null && (Date.now() - lastMs) < 20 * HOUR_MS) return false
+
+  switch (frequency) {
+    case 'weekly':
+      return oslo.weekday === anchor
+    case 'twice_week':
+    case 'thrice_week':
+      return reportWeekdays(frequency, anchor).includes(oslo.weekday)
+    case 'biweekly':
+      return oslo.weekday === anchor && (lastMs === null || (Date.now() - lastMs) >= 13 * DAY_MS)
+    case 'monthly':
+      // Første anchor-ukedag i måneden; 20-dagers guard hindrer to ganger samme måned.
+      return oslo.weekday === anchor && oslo.dayOfMonth <= 7 &&
+        (lastMs === null || (Date.now() - lastMs) >= 20 * DAY_MS)
+    default:
+      return false
+  }
+}
+
 Deno.serve(async (req) => {
   // Krev secret token i custom header så kun pg_cron kan kalle denne
   const cronSecret = req.headers.get('x-cron-secret')
@@ -73,7 +162,7 @@ Deno.serve(async (req) => {
   // Hent alle betalende kunder med e-post
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
-    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences, subscription_status, last_active_at, last_reengagement_at, created_at')
+    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences, subscription_status, last_active_at, last_reengagement_at, created_at, last_report_sent_at')
     .not('package_name', 'is', null)
     .not('email', 'is', null)
 
@@ -84,6 +173,7 @@ Deno.serve(async (req) => {
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const oslo = osloNowParts() // norsk tid NÅ — styrer hvem som er due
 
   let sentCount = 0
   let errorCount = 0
@@ -92,8 +182,32 @@ Deno.serve(async (req) => {
 
   for (const client of clients as Client[]) {
     if (!client.email || !client.package_name) continue
-    // Respekter varsel-preferansen: hopp over hvis kunden har slått av ukerapporten.
-    if (client.notification_preferences?.weeklyReport === false) continue
+    // Kunde-styrt timeplan: send kun når kunden er «due» i norsk tid
+    // (frekvens + ukedag + klokkeslett). Erstatter den gamle på/av-sjekken.
+    if (!isReportDue(client.notification_preferences, client.last_report_sent_at, oslo)) continue
+
+    // Datavindu = siden forrige rapport (faller tilbake til 7 d), maks 31 d.
+    // Hindrer at innholdet gjentas når kunden får e-post flere ganger i uka.
+    const lastSentMs = client.last_report_sent_at ? new Date(client.last_report_sent_at).getTime() : null
+    const periodMs = lastSentMs
+      ? Math.min(31 * DAY_MS, Math.max(DAY_MS, Date.now() - lastSentMs))
+      : 7 * DAY_MS
+    const periodStart = new Date(Date.now() - periodMs).toISOString()
+    const periodDays = Math.round(periodMs / DAY_MS)
+    const periodLabel = (periodDays >= 6 && periodDays <= 8) ? 'denne uken'
+      : periodDays <= 1 ? 'siden i går'
+      : `de siste ${periodDays} dagene`
+
+    // Hvilke seksjoner kunden vil ha (manglende nøkkel = på).
+    const secPrefs = client.notification_preferences?.reportSections
+    const sections = {
+      results: secPrefs?.results !== false,
+      opportunity: secPrefs?.opportunity !== false,
+      work: secPrefs?.work !== false,
+      competitors: secPrefs?.competitors !== false,
+      aiVisibility: secPrefs?.aiVisibility !== false,
+      lifetime: secPrefs?.lifetime !== false,
+    }
 
     const plan = client.package_name // "Basic Pakke", "Standard Pakke", "Premium Pakke"
     const isStandardOrAbove = plan === 'Standard Pakke' || plan === 'Premium Pakke'
@@ -104,7 +218,7 @@ Deno.serve(async (req) => {
       .from('sikt_actions')
       .select('action_type, category, title, details, page_url, created_at, status')
       .eq('user_id', client.user_id)
-      .gte('created_at', oneWeekAgo)
+      .gte('created_at', periodStart)
       .order('created_at', { ascending: false })
 
     const weekActions = (actions ?? []) as SiktAction[]
@@ -262,9 +376,11 @@ Deno.serve(async (req) => {
       if (reResult.ok) {
         reengagedCount++
         reengagedUserIds.push(client.user_id)
-        // Stemple så vi ikke maser igjen før om ≥21 dager.
+        // Stemple så vi ikke maser igjen før om ≥21 dager. Sett også
+        // last_report_sent_at så timeplan-dedup/datavindu forblir konsistent.
+        const nowIso = new Date().toISOString()
         await supabase.from('clients')
-          .update({ last_reengagement_at: new Date().toISOString() })
+          .update({ last_reengagement_at: nowIso, last_report_sent_at: nowIso })
           .eq('user_id', client.user_id)
       } else {
         errorCount++
@@ -300,9 +416,11 @@ Deno.serve(async (req) => {
       estValue,
       canAutoFix,
       wins,
+      periodLabel,
+      sections,
     })
 
-    const subject = buildSubject({ fixes, findings, plan, topOpportunity })
+    const subject = buildSubject({ fixes, findings, plan, topOpportunity, periodLabel })
 
     const result = await sendEmail({
       to: client.email,
@@ -312,6 +430,9 @@ Deno.serve(async (req) => {
 
     if (result.ok) {
       sentCount++
+      await supabase.from('clients')
+        .update({ last_report_sent_at: new Date().toISOString() })
+        .eq('user_id', client.user_id)
     } else {
       errorCount++
       console.error(`Feil ved sending til ${client.email}:`, await result.text())
@@ -324,8 +445,10 @@ Deno.serve(async (req) => {
   // i ferd med å falle av + hvorfor + hva å gjøre. Sendes kun når det
   // faktisk finnes risiko-kunder (ingen nyheter = ingen e-post).
   // -----------------------------------------------------------------
+  // Fast ukentlig kadens uavhengig av kunde-tidene: kun mandag 08:00 norsk tid.
+  // Den time-baserte cronen treffer denne grenen nøyaktig én gang per uke.
   let digestSent = false
-  try {
+  if (oslo.weekday === 1 && oslo.hour === 8) try {
     const { data: healthRows } = await supabase
       .from('client_health')
       .select('email, package_name, subscription_status, health, last_seen_at, last_active_at, created_at')
@@ -372,13 +495,13 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
   })
 }
 
-function buildSubject({ fixes, findings, plan, topOpportunity }: { fixes: SiktAction[]; findings: SiktAction[]; plan: string; topOpportunity: Opportunity | null }): string {
-  if (fixes.length > 0) return `Sikt fikset ${fixes.length} ting for deg denne uken`
-  if (findings.length > 0) return `Sikt fant ${findings.length} ting du bør se på denne uken`
-  // Stille uke på arbeid → led med vekst, aldri en tom «rapport»
+function buildSubject({ fixes, findings, plan, topOpportunity, periodLabel }: { fixes: SiktAction[]; findings: SiktAction[]; plan: string; topOpportunity: Opportunity | null; periodLabel: string }): string {
+  if (fixes.length > 0) return `Sikt fikset ${fixes.length} ting for deg ${periodLabel}`
+  if (findings.length > 0) return `Sikt fant ${findings.length} ting du bør se på ${periodLabel}`
+  // Stille periode på arbeid → led med vekst, aldri en tom «rapport»
   if (topOpportunity) return `Ukens mulighet: ${topOpportunity.keyword}`
-  if (plan === 'Premium Pakke') return `Din ukentlige SEO og AI-rapport fra Sikt`
-  return `Din ukentlige rapport fra Sikt`
+  if (plan === 'Premium Pakke') return `Din SEO- og AI-rapport fra Sikt`
+  return `Din rapport fra Sikt`
 }
 
 // =====================================================================
@@ -476,10 +599,14 @@ function buildEmailHtml(opts: {
   estValue: number
   canAutoFix: boolean
   wins: { keyword: string; position: number; prev: number }[]
+  periodLabel: string
+  sections: { results: boolean; opportunity: boolean; work: boolean; competitors: boolean; aiVisibility: boolean; lifetime: boolean }
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins, periodLabel, sections } = opts
   const ink = TOKENS.color.ink
   const accent = TOKENS.color.accent
+  // Periode-etikett i overskrift (stor forbokstav): «Denne uken» / «De siste 4 dagene».
+  const Period = periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1)
 
   const now = new Date()
   const weekNum = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)
@@ -492,16 +619,16 @@ function buildEmailHtml(opts: {
   let headlineHtml: string
   let sublineHtml: string
   if (fixes.length > 0) {
-    headlineHtml = `${italic('Denne uken')} fikset vi ${fixes.length} ting for deg.`
+    headlineHtml = `${italic(Period)} fikset vi ${fixes.length} ting for deg.`
     sublineHtml = `Alt skjedde automatisk${websiteUrl ? ` på <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ''}, uten at du trengte å løfte en finger.`
   } else if (findFindCount > 0) {
-    headlineHtml = `${italic('Denne uken')} fant vi ${findFindCount} ting du bør se på.`
+    headlineHtml = `${italic(Period)} fant vi ${findFindCount} ting du bør se på.`
     sublineHtml = `Vi gikk gjennom${websiteUrl ? ` <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ' nettstedet ditt'} og fant nye forbedringer du kan ta tak i.`
   } else if (topOpportunity) {
-    headlineHtml = `${italic('Denne uken')} jaktet vi vekst for deg.`
+    headlineHtml = `${italic(Period)} jaktet vi vekst for deg.`
     sublineHtml = `Ingen nye feil dukket opp — grunnmuren er i god form. Så vi brukte uken på å finne neste mulighet til å klatre.`
   } else {
-    headlineHtml = `${italic('Denne uken')} holdt vi vakt for deg.`
+    headlineHtml = `${italic(Period)} holdt vi vakt for deg.`
     sublineHtml = `Ingen nye feil, ingen drop${websiteUrl ? ` på <strong style="color:${ink}">${escapeHtml(websiteUrl)}</strong>` : ''}. Vi overvåket siden og konkurrentene dine døgnet rundt, så du slapp.`
   }
 
@@ -521,8 +648,8 @@ function buildEmailHtml(opts: {
     }))
   }
 
-  if (wins.length > 0) {
-    blocks.push(sectionHead('Seire denne uken') + winList(wins.map(w => ({
+  if (sections.results && wins.length > 0) {
+    blocks.push(sectionHead(`Seire ${periodLabel}`) + winList(wins.map(w => ({
       keyword: w.keyword,
       from: w.prev,
       to: w.position,
@@ -530,7 +657,7 @@ function buildEmailHtml(opts: {
     }))))
   }
 
-  if (gscClicks > 0) {
+  if (sections.results && gscClicks > 0) {
     blocks.push(sectionHead('Hva dette er verdt') + statement({
       value: `~${estValue.toLocaleString('nb-NO')} kr`,
       label: 'Estimert verdi per måned',
@@ -539,18 +666,18 @@ function buildEmailHtml(opts: {
     }))
   }
 
-  const opp = opportunityBlock(topOpportunity, canAutoFix, !isStandardOrAbove, totalFixes > 0)
+  const opp = sections.opportunity ? opportunityBlock(topOpportunity, canAutoFix, !isStandardOrAbove, totalFixes > 0) : ''
   if (opp) blocks.push(opp)
 
   const explanationOf = (a: SiktAction): string | undefined => {
     const ex = a.details && (a.details as Record<string, string>).explanation
     return ex ? ex : (a.page_url ?? undefined)
   }
-  if (fixes.length > 0) blocks.push(sectionHead('Fikset av Sikt') + defList(fixes.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
-  if (findings.length > 0) blocks.push(sectionHead('Vi fant også') + defList(findings.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
-  if (suggestions.length > 0) blocks.push(sectionHead('AI-forslag') + defList(suggestions.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
+  if (sections.work && fixes.length > 0) blocks.push(sectionHead('Fikset av Sikt') + defList(fixes.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
+  if (sections.work && findings.length > 0) blocks.push(sectionHead('Vi fant også') + defList(findings.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
+  if (sections.work && suggestions.length > 0) blocks.push(sectionHead('AI-forslag') + defList(suggestions.slice(0, 5).map(a => ({ title: a.title, body: explanationOf(a) }))))
 
-  if (doneThisWeek > 0 || openSuggestions > 0) {
+  if (sections.work && (doneThisWeek > 0 || openSuggestions > 0)) {
     blocks.push(note(
       `${doneThisWeek > 0 ? `<strong style="color:${ink}">Du tok unna ${doneThisWeek} forslag denne uken.</strong> ` : ''}` +
       `${openSuggestions > 0
@@ -559,28 +686,28 @@ function buildEmailHtml(opts: {
     ))
   }
 
-  if (isStandardOrAbove) {
+  if (sections.competitors && isStandardOrAbove) {
     blocks.push(sectionHead('Konkurrentene dine') + railNote({
       title: 'Vi holder øye mens du jobber',
       body: 'Publiserer en konkurrent noe nytt, endrer priser eller klatrer på Google, får du beskjed. Du slipper å følge med selv.',
     }))
   }
 
-  if (isPremium) blocks.push(geoBlock(geoScore, geoPrevScore, geoMentioned, geoTotal))
+  if (sections.aiVisibility && isPremium) blocks.push(geoBlock(geoScore, geoPrevScore, geoMentioned, geoTotal))
 
-  blocks.push(sectionHead('Siden du startet med Sikt') + statRow([
+  if (sections.lifetime) blocks.push(sectionHead('Siden du startet med Sikt') + statRow([
     { value: totalFixes, label: 'ting fikset' },
     { value: totalFindings, label: 'funn oppdaget' },
     { value: weeksActive, label: weeksActive === 1 ? 'uke aktiv' : 'uker aktiv' },
   ]))
 
   const preheader = gscClicks > 0
-    ? `Trafikken din er verdt ~${estValue.toLocaleString('nb-NO')} kr i måneden. Her er uken som var.`
+    ? `Trafikken din er verdt ~${estValue.toLocaleString('nb-NO')} kr i måneden. Her er perioden som var.`
     : wins.length > 0
-      ? `Du klatret på ${wins.length} søkeord denne uken.`
+      ? `Du klatret på ${wins.length} søkeord ${periodLabel}.`
       : topOpportunity
         ? `Ukens mulighet: ${topOpportunity.keyword}.`
-        : 'Her er din ukentlige rapport fra Sikt.'
+        : 'Her er rapporten din fra Sikt.'
 
   return renderEmail({
     preheader,
@@ -589,7 +716,7 @@ function buildEmailHtml(opts: {
     heading: headlineHtml,
     intro: (firstName ? `Hei ${escapeHtml(firstName)}. ` : '') + sublineHtml,
     blocks,
-    signoff: 'Ha en god uke — vi sees neste mandag.',
+    signoff: 'Vi holder vakt videre — snakkes snart.',
     cta: { label: 'Åpne dashbordet', url: PORTAL_URL },
     footer: `Sikt · ${escapeHtml(plan)}${websiteUrl ? ` · ${escapeHtml(websiteUrl)}` : ''} &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Administrer varsler</a> &nbsp;·&nbsp; <a href="${PORTAL_URL}" style="color:${TOKENS.color.faint};text-decoration:underline">Avslutt abonnement</a>`,
   })

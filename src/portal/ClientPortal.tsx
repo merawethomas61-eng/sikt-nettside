@@ -3640,7 +3640,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [planChangeTarget, setPlanChangeTarget] = useState<{ key: string; name: string; price: string; type: 'upgrade' | 'downgrade' } | null>(null);
   const [switchingPlan, setSwitchingPlan] = useState(false);
-  const [notifPrefs, setNotifPrefs] = useState({ weeklyReport: true, criticalAlerts: true, rankChanges: false });
+  const [notifPrefs, setNotifPrefs] = useState({
+    weeklyReport: true, criticalAlerts: true, rankChanges: false,
+    // Kunde-styrt rapport-e-post (frekvens / klokkeslett / innhold):
+    reportFrequency: 'weekly' as string, // 'off'|'weekly'|'biweekly'|'monthly'|'twice_week'|'thrice_week'
+    reportHour: 8,                        // 6–22, norsk tid
+    reportAnchorDay: 1,                   // ISO ukedag 1=man … 7=søn
+    reportSections: {
+      results: true, opportunity: true, work: true,
+      competitors: true, aiVisibility: true, lifetime: true,
+    },
+  });
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState('');
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
@@ -5949,15 +5959,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     if (!user?.id || isMockUser) {
       try {
         const raw = localStorage.getItem('sikt_notif_prefs');
-        if (raw) setNotifPrefs((p) => ({ ...p, ...JSON.parse(raw) }));
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          // Dyp-merge reportSections så et delsett ikke nuller ut resten.
+          setNotifPrefs((p) => ({ ...p, ...parsed, reportSections: { ...p.reportSections, ...(parsed?.reportSections ?? {}) } }));
+        }
       } catch { /* ignore */ }
       return;
     }
-    supabaseRest<{ notification_preferences: Record<string, boolean> | null }[]>(
+    supabaseRest<{ notification_preferences: Record<string, any> | null }[]>(
       `clients?user_id=eq.${user.id}&select=notification_preferences&limit=1`,
     ).then((rows) => {
       const prefs = Array.isArray(rows) ? rows[0]?.notification_preferences : null;
-      if (prefs && typeof prefs === 'object') setNotifPrefs((p) => ({ ...p, ...prefs }));
+      if (prefs && typeof prefs === 'object') {
+        setNotifPrefs((p) => ({ ...p, ...prefs, reportSections: { ...p.reportSections, ...((prefs as any).reportSections ?? {}) } }));
+      }
     }).catch(() => { /* behold defaults ved feil */ });
   }, [user?.id, isMockUser]);
 
@@ -6376,9 +6392,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
     return () => window.removeEventListener('keydown', onKey);
   }, [showWpWizard, showDisconnectConfirm, wpConnecting, wixConnecting, isDisconnecting]);
 
-  const toggleNotif = (key: keyof typeof notifPrefs) => {
+  // Generell lagrer for varsel-preferanser: optimistisk, PATCH, revert ved feil.
+  const patchNotifPrefs = (partial: Partial<typeof notifPrefs>) => {
     const prev = notifPrefs;
-    const next = { ...prev, [key]: !prev[key] };
+    const next = { ...prev, ...partial };
     setNotifPrefs(next); // optimistisk — UI svarer umiddelbart
     if (isMockUser) {
       try { localStorage.setItem('sikt_notif_prefs', JSON.stringify(next)); } catch { /* ignore */ }
@@ -6394,6 +6411,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
       setNotifPrefs(prev); // revert ved feil
       toastError('Kunne ikke lagre varselvalget: ' + (err?.message || 'ukjent feil'));
     });
+  };
+
+  const toggleNotif = (key: 'weeklyReport' | 'criticalAlerts' | 'rankChanges') => {
+    patchNotifPrefs({ [key]: !notifPrefs[key] });
+  };
+
+  const toggleSection = (key: keyof typeof notifPrefs.reportSections) => {
+    patchNotifPrefs({ reportSections: { ...notifPrefs.reportSections, [key]: !notifPrefs.reportSections[key] } });
   };
 
   // ===================================================================
@@ -11257,8 +11282,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             { key: 'phone', label: 'Telefon', placeholder: '+47 ...' },
             { key: 'industry', label: 'Bransje', placeholder: 'F.eks. rørlegger' },
           ] as const;
+          // «Ukentlig/Månedlig rapport» er flyttet til den nye Rapport-e-post-blokken
+          // (frekvens + klokkeslett + innhold). Her igjen kun de rene av/på-varslene.
           const notifRows = [
-            { id: 'weeklyReport' as const, label: hasStandardOrHigher ? 'Ukentlig rapport' : 'Månedlig rapport', desc: 'Sammendrag av fikser, funn og rangeringer.' },
             { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
             { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
           ];
@@ -11595,6 +11621,113 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 </summary>
                 <div className="px-5 sm:px-6 pb-6">
                   <p className="text-sm" style={{ color: C.muted, lineHeight: 1.6 }}>Vi sender bare det du velger — og du kan endre det når som helst.</p>
+
+                  {/* Kunde-styrt rapport-e-post: frekvens, dag, klokkeslett, innhold. */}
+                  <div className="mt-4 rounded-[12px] border border-[#E9E4DA] p-4 sm:p-5">
+                    <p className="text-sm font-semibold" style={{ color: C.ink }}>Rapport-e-post</p>
+                    <p className="text-xs mt-1" style={{ color: C.muted, lineHeight: 1.6 }}>Hvor ofte, når og hva e-posten skal inneholde. Tidspunkt er norsk tid.</p>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <label className="block">
+                        <span className="block text-xs mb-1.5" style={{ color: C.muted }}>Hvor ofte</span>
+                        <select
+                          value={notifPrefs.reportFrequency}
+                          onChange={(e) => { const f = e.target.value; patchNotifPrefs({ reportFrequency: f, weeklyReport: f !== 'off' }); }}
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                          style={{ color: C.ink }}
+                        >
+                          <option value="off">Av</option>
+                          <option value="thrice_week">3 ganger i uken</option>
+                          <option value="twice_week">2 ganger i uken</option>
+                          <option value="weekly">Ukentlig</option>
+                          <option value="biweekly">Annenhver uke</option>
+                          <option value="monthly">Månedlig</option>
+                        </select>
+                      </label>
+
+                      {notifPrefs.reportFrequency !== 'off' && (
+                        <label className="block">
+                          <span className="block text-xs mb-1.5" style={{ color: C.muted }}>Dag</span>
+                          <select
+                            value={notifPrefs.reportAnchorDay}
+                            onChange={(e) => patchNotifPrefs({ reportAnchorDay: Number(e.target.value) })}
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                            style={{ color: C.ink }}
+                          >
+                            {[[1,'Mandag'],[2,'Tirsdag'],[3,'Onsdag'],[4,'Torsdag'],[5,'Fredag'],[6,'Lørdag'],[7,'Søndag']].map(([v,l]) => (
+                              <option key={v as number} value={v as number}>{l}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+
+                      {notifPrefs.reportFrequency !== 'off' && (
+                        <label className="block">
+                          <span className="block text-xs mb-1.5" style={{ color: C.muted }}>Klokkeslett</span>
+                          <select
+                            value={notifPrefs.reportHour}
+                            onChange={(e) => patchNotifPrefs({ reportHour: Number(e.target.value) })}
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                            style={{ color: C.ink }}
+                          >
+                            {Array.from({ length: 17 }, (_, i) => 6 + i).map((h) => (
+                              <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </div>
+
+                    {notifPrefs.reportFrequency !== 'off' && (() => {
+                      const names = ['', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
+                      const wrap = (d: number) => ((d - 1) % 7 + 7) % 7 + 1;
+                      const a = notifPrefs.reportAnchorDay;
+                      const f = notifPrefs.reportFrequency;
+                      const hint = f === 'twice_week' ? `Sendes ${names[a]} og ${names[wrap(a + 3)]}.`
+                        : f === 'thrice_week' ? `Sendes ${names[a]}, ${names[wrap(a + 2)]} og ${names[wrap(a + 4)]}.`
+                        : f === 'monthly' ? `Sendes første ${names[a]} i måneden.`
+                        : f === 'biweekly' ? `Sendes annenhver ${names[a]}.`
+                        : `Sendes hver ${names[a]}.`;
+                      return <p className="text-xs mt-2" style={{ color: C.faint }}>{hint}</p>;
+                    })()}
+
+                    {notifPrefs.reportFrequency !== 'off' && (
+                      <div className="mt-4 pt-4 border-t border-[#E9E4DA]">
+                        <p className="text-sm font-semibold" style={{ color: C.ink }}>Hva rapporten inneholder</p>
+                        <ul className="mt-1">
+                          {([
+                            ['results', 'Resultater', 'Seire og hva trafikken er verdt.', true],
+                            ['opportunity', 'Ukens mulighet', 'Neste søkeord å ta.', true],
+                            ['work', 'Arbeid', 'Fikser, funn og AI-forslag.', true],
+                            ['competitors', 'Konkurrenter', 'Hva konkurrentene gjør.', hasStandardOrHigher],
+                            ['aiVisibility', 'AI-synlighet', 'Nevner ChatGPT deg?', currentLevel >= 3],
+                            ['lifetime', 'Livstidstall', 'Totalt siden du startet.', true],
+                          ] as const).filter(([, , , show]) => show).map(([id, label, desc]) => {
+                            const on = notifPrefs.reportSections[id as keyof typeof notifPrefs.reportSections];
+                            return (
+                              <li key={id} className={rowShell}>
+                                <div className="min-w-0 pr-2">
+                                  <p className="text-sm font-medium" style={{ color: C.ink }}>{label}</p>
+                                  <p className="text-xs mt-1" style={{ color: C.muted, lineHeight: 1.6 }}>{desc}</p>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSection(id as keyof typeof notifPrefs.reportSections)}
+                                    className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
+                                    style={{ background: on ? C.green : C.hair, transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                                  >
+                                    <span className="inline-block h-4 w-4 rounded-full bg-white" style={{ transform: on ? 'translateX(24px)' : 'translateX(4px)', transition: 'transform 160ms cubic-bezier(0.23,1,0.32,1)' }} />
+                                  </button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
                   <ul className="mt-1">
                     {notifRows.map((item) => (
                       <li key={item.id} className={rowShell}>
