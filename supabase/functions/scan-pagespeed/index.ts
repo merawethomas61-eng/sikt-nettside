@@ -223,6 +223,11 @@ Deno.serve(async (req) => {
         url: publicUrl,
         mobile_score: scores.performance,
         desktop_score: scoreOf(d.lighthouseResult?.categories?.performance),
+        // Berikelse for personlig outreach (outreach_drafts-motoren leser herfra).
+        scores,
+        issue_count: issueCount,
+        top_issues: topIssues,
+        page_facts: pageFacts,
       });
     } catch (err) {
       console.error('[scan-pagespeed] audit_leads insert feilet:', err);
