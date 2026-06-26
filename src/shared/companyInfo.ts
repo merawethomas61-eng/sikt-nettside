@@ -23,7 +23,12 @@ export const companyInfo = {
   legalName: 'Sikt',
   entityType: 'ENK' as 'ENK' | 'AS',
 
-  // TODO: fyll inn etter registrering. Vises kun når satt.
+  // TODO: fyll inn etter ENK-registrering. Tomt = skjules i UI.
+  //   Eksempel på utfylt (bytt mot dine ekte verdier):
+  //     legalName: 'Sikt SEO Etternavn',   // ENK MÅ inneholde innehavers etternavn
+  //     orgNr:     '912 345 678',           // 9 sifre fra Enhetsregisteret
+  //     address:   'Gateadresse 1, 0123 Oslo',
+  //     venue:     'Oslo tingrett',         // tingretten der foretaket hører hjemme
   orgNr: '',
   address: '',
 

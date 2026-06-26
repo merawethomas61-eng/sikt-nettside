@@ -1574,17 +1574,17 @@ const PainPointData = () => (
           </h2>
           <div className="mt-10 sm:mt-12 space-y-8 sm:space-y-10">
             <div className="flex gap-4 sm:gap-6 items-start">
-              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-rose-500 shrink-0">90%</div>
+              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-rose-500 shrink-0">9/10</div>
               <div>
-                <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">får 0 trafikk.</h4>
-                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">De fleste bedrifter kaster bort penger på en digital fasade ingen ser.</p>
+                <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">får nær null trafikk.</h4>
+                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">De fleste nettsider er en digital fasade nesten ingen finner via Google.</p>
               </div>
             </div>
             <div className="flex gap-4 sm:gap-6 items-start">
-              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] shrink-0">95%</div>
+              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] shrink-0">Side 1</div>
               <div>
-                <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">går til toppen.</h4>
-                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">Usynlighet koster bedrifter tapt omsetning hver eneste dag.</p>
+                <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">er alt som teller.</h4>
+                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">Nesten ingen blar til side 2 på Google — er du ikke der oppe, mister du kunden.</p>
               </div>
             </div>
           </div>
@@ -2379,7 +2379,7 @@ const GeoFaq = () => {
     },
     {
       q: "Hva er kostnaden ved å ikke ha en plan?",
-      a: "For en bedrift i Norge betyr usynlighet at 95% av potensielle kunder ender hos en konkurrent. Dette koster ofte titusenvis hver eneste måned."
+      a: "Når bedriften din ikke er synlig på Google, ender mange potensielle kunder hos en konkurrent i stedet. Over tid kan det koste deg en god del omsetning."
     }
   ];
 
@@ -2911,7 +2911,17 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
 // sosialt bevis undergraver nettopp tilliten denne seksjonen skal bygge.
 // Når arrayet får oppføringer, flipper seksjonen automatisk til sitat-grid.
 type Testimonial = { quote: string; name: string; role: string; rating?: number };
-const TESTIMONIALS: Testimonial[] = [];
+// PASTE-KLAR: fjern kommentar-tegnene på ÉN blokk og bytt verdiene med en ekte
+// uttalelse. Krev kundens samtykke før du publiserer navn/rolle. Tomt array =
+// seksjonen viser den ærlige «vi er nye»-tilstanden automatisk.
+const TESTIMONIALS: Testimonial[] = [
+  // {
+  //   quote: 'Sikt fant feil ingen andre hadde sett — og fikset dem uten at jeg løftet en finger.',
+  //   name: 'Ola Nordmann',
+  //   role: 'Daglig leder, Eksempel AS',
+  //   rating: 5, // valgfritt, 1–5
+  // },
+];
 
 const SocialProofSection = () => {
   const hasTestimonials = TESTIMONIALS.length > 0;
@@ -3014,7 +3024,31 @@ type CaseStudy = {
   };
   quote?: string;
 };
-const CASES: CaseStudy[] = [];
+// PASTE-KLAR: fjern kommentar-tegnene og fyll inn ÉT ekte case (krever kundens
+// samtykke). snippet.* hentes fra sikt_changes (old_value → new_value).
+// outcome.* hentes fra keyword_snapshots / Google Search Console etter ~4 uker —
+// utelat hele `outcome` til de tallene faktisk er inne. Tomt array = seksjonen skjules.
+const CASES: CaseStudy[] = [
+  // {
+  //   domain: 'eksempelbedrift.no',
+  //   consent: true,
+  //   snippet: {
+  //     url: 'https://eksempelbedrift.no/tjenester',
+  //     changedLabel: 'Meta-beskrivelse',
+  //     beforeTitle: 'Tjenester',
+  //     afterTitle: 'Rørlegger i Oslo — rask hjelp samme dag | Eksempelbedrift',
+  //     beforeDescription: '',
+  //     afterDescription: 'Trenger du rørlegger i Oslo? Vi rykker ut samme dag — ring for gratis befaring.',
+  //   },
+  //   outcome: {
+  //     keyword: 'rørlegger oslo',
+  //     posBefore: 14, posAfter: 6,
+  //     clicksBefore: 3, clicksAfter: 21,
+  //     period: '4 uker',
+  //   },
+  //   quote: 'Vi merket flere henvendelser allerede etter en måned.', // valgfritt
+  // },
+];
 
 const CaseStudySection = () => {
   const cases = CASES.filter((c) => c.consent);
@@ -3223,7 +3257,7 @@ const FAQSection = () => {
     },
     {
       question: "Hva skjer hvis det ikke fungerer?",
-      answer: "Ingen bindingstid. Du kan si opp når som helst. Men vi har aldri hatt en kunde som ikke har sett forbedring i løpet av tre måneder — fordi første måned handler om å fikse åpenbare ting mange har oversett: treg side, ødelagte lenker, manglende tekst. Det er alltid noe å hente."
+      answer: "Ingen bindingstid — du kan si opp når som helst. Og det er nesten alltid noe å hente: den første måneden handler om å fikse åpenbare ting mange har oversett — treg side, ødelagte lenker, manglende tekst. Ser du ikke verdi, sier du opp uten kostnad."
     },
     {
       question: "Hva er det med ChatGPT? Må jeg bry meg om det?",
