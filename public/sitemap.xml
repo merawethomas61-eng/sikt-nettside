@@ -2,49 +2,49 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://siktseo.com/</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://siktseo.com/funksjoner</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://siktseo.com/priser</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://siktseo.com/blogg</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siktseo.com/om-oss</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://siktseo.com/kontakt</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://siktseo.com/personvern</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://siktseo.com/vilkar</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -67,14 +67,32 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://siktseo.com/blogg/google-bedriftsprofil-guide</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://siktseo.com/blogg/hva-er-geo</loc>
     <lastmod>2026-06-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://siktseo.com/blogg/hvorfor-dukker-ikke-bedriften-opp-pa-google</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://siktseo.com/blogg/lokal-seo-smabedrift</loc>
     <lastmod>2026-06-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://siktseo.com/blogg/meta-tittel-og-beskrivelse</loc>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
