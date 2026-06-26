@@ -212,9 +212,34 @@ const orgLd = {
   url: BASE,
   email: 'siktseo@gmail.com',
   description: 'Moderne norsk SEO-verktøy med AI-drevet optimalisering og plain-norsk rapportering.',
+  slogan: 'Moderne SEO for norske bedrifter',
   areaServed: 'NO',
   inLanguage: 'nb-NO',
+  // Topiske assosiasjoner hjelper Google og AI-svarmotorer å forstå hva Sikt er
+  // ekspert på → større sjanse for å bli sitert riktig i AI-søk (kjernemålet).
+  knowsAbout: [
+    'Søkemotoroptimalisering',
+    'Generative Engine Optimization (GEO)',
+    'AI-synlighet',
+    'Lokal SEO',
+    'Teknisk SEO',
+  ],
 };
+
+// Priser-FAQ — ÉN kilde, brukt både i FAQPage-schema og i den synlige statiske
+// body-en under (Google krever at markup matcher synlig tekst). Speiler de fire
+// FAQ-ene i src/pages/PriserPage.tsx som React rendrer ved last.
+const priserFaqs = [
+  { q: 'Er det bindingstid?', a: 'Nei. Du kan si opp når som helst, og betaler bare for inneværende måned. Ingen oppsigelsestid, ingen gebyrer.' },
+  { q: 'Hva skjer etter de tre rabatterte månedene?', a: 'Da går du over til ordinær pris for planen din — 790, 1 690 eller 4 990 kr/mnd. Du vet prisen på forhånd, så ingenting kommer som en overraskelse.' },
+  { q: 'Kan jeg bytte plan senere?', a: 'Ja. Du kan oppgradere eller nedgradere når du vil, og endringen gjelder fra neste faktura.' },
+  { q: 'Hva om jeg ikke ser resultater?', a: 'SEO tar tid, men du ser nøyaktig hva Sikt gjør hver uke — på plain norsk. Er du ikke fornøyd, sier du opp uten binding.' },
+];
+const faqPageLd = (faqs) => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+});
 
 const MARKETING = [
   {
@@ -293,6 +318,7 @@ const MARKETING = [
           { '@type': 'Offer', name: 'Premium', price: '4990', priceCurrency: 'NOK' },
         ],
       },
+      faqPageLd(priserFaqs),
       breadcrumbLd([['Hjem', `${BASE}/`], ['Priser', `${BASE}/priser`]]),
     ],
     body: pageBody({
@@ -304,6 +330,8 @@ const MARKETING = [
           items: ['Basic — 790 kr/mnd', 'Standard — 1690 kr/mnd', 'Premium — 4990 kr/mnd'],
         },
         { h2: 'Null binding', p: 'Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du betaler per måned og kan si opp, oppgradere eller nedgradere når du vil.' },
+        // Synlig FAQ — matcher FAQPage-schemaet over (samme spørsmål/svar).
+        ...priserFaqs.map((f) => ({ h2: f.q, p: f.a })),
       ],
       links: NAV_LINKS,
     }),

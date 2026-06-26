@@ -85,7 +85,7 @@ export default function PriserPage() {
     navigate(`/?plan=${encodeURIComponent(plan)}`);
   };
 
-  const jsonLd = {
+  const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: 'Sikt — SEO og AI-synlighet',
@@ -97,6 +97,20 @@ export default function PriserPage() {
       { '@type': 'Offer', name: 'Premium', price: '4990', priceCurrency: 'NOK' },
     ],
   };
+
+  // FAQPage bygges fra SAMME `faqs`-array som rendres synlig under — Google
+  // krever at markup matcher det brukeren faktisk ser på siden.
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+
+  const jsonLd = [productJsonLd, faqJsonLd];
 
   return (
     <PageShell>
