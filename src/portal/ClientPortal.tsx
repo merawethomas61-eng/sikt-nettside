@@ -8102,7 +8102,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         <section>
                           <div className="flex items-center justify-between gap-3 mb-3">
                             <SectionTitle size="sm">Fart</SectionTitle>
-                            <span className="text-xs" style={{ color: palette.muted }}>Siste måling: {latestLabel} · målt på mobil</span>
+                            <span className="text-xs" style={{ color: palette.muted }}>Siste måling: {latestLabel}</span>
                           </div>
 
                           {!analysisResults ? (
@@ -8136,7 +8136,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               <div className="rounded-[14px] p-4 space-y-3" style={{ background: palette.card, border: `1px solid ${palette.border}` }}>
                                 <div className="flex items-center justify-between gap-2">
                                   <p className="text-sm font-semibold" style={{ color: palette.ink }}>Delkarakterer</p>
-                                  <span className="text-xs" style={{ color: palette.muted }}>0–100 · målt på mobil</span>
+                                  <span className="text-xs" style={{ color: palette.muted }}>0–100</span>
                                 </div>
                                 {[
                                   { label: 'Fart', value: Math.round(perfMobile ?? 0) },

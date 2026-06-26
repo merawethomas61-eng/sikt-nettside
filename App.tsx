@@ -2371,11 +2371,11 @@ const GeoFaq = () => {
   const faqs = [
     {
       q: "Hvor lang tid tar det før AI gir resultater?",
-      a: "Med vår AI-prosess identifiserer vi kritiske tekniske feil på timer. De fleste kunder ser en signifikant økning i rangering innen 30-60 dager."
+      a: "Vi identifiserer kritiske tekniske feil på timer. Synlige forbedringer på det tekniske kommer gjerne første uke; flere besøkende merkes vanligvis etter 2–3 måneder, og topposisjoner tar 6–12 måneder. Du får ærlige tall underveis så du ser at det går riktig vei."
     },
     {
-      q: "Hvorfor er Sikt overlegen byråer i 2026?",
-      a: "Byråer bruker ofte utdaterte verktøy. Vår AI utfører sanntidsanalyser og konkurrentovervåkning 24/7 for å forutsi algoritme-endringer."
+      q: "Hvorfor velge Sikt fremfor et vanlig byrå?",
+      a: "Mange byråer sender deg månedsrapporter fulle av grafer du ikke forstår. Sikt overvåker konkurrenter og teknisk SEO løpende, og forteller deg på vanlig norsk hva vi har gjort og hva som faktisk virker — uten byråpriser og uten bindingstid."
     },
     {
       q: "Hva er kostnaden ved å ikke ha en plan?",
