@@ -60,16 +60,16 @@ const DashboardView = ({ user, onBack }: { user: any, onBack: () => void }) => {
   const REPORT_URL = "https://lookerstudio.google.com/embed/reporting/b20556ef-7296-4ce3-b391-2d6acb70dc13/page/4flmF?rm=minimal";
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] flex flex-col h-screen">
-      <div className="bg-white border-b border-[#EBEBE6] px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
+    <div className="min-h-screen bg-[color:var(--navbg)] flex flex-col h-screen">
+      <div className="bg-[color:var(--surface)] border-b border-[color:var(--hair)] px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-xl">{user?.email?.charAt(0).toUpperCase()}</div>
-          <div><h2 className="font-bold text-[#1A1A1A]">Ditt SEO Dashboard</h2><p className="text-xs text-[#808080]">Live data fra Google</p></div>
+          <div className="w-10 h-10 bg-[color:var(--btn-bg)] rounded-lg flex items-center justify-center text-white font-bold text-xl">{user?.email?.charAt(0).toUpperCase()}</div>
+          <div><h2 className="font-bold text-[color:var(--ink)]">Ditt SEO Dashboard</h2><p className="text-xs text-[color:var(--muted)]">Live data fra Google</p></div>
         </div>
-        <button onClick={onBack} className="text-sm font-bold text-[#808080] hover:text-[#1A1A1A]">Tilbake</button>
+        <button onClick={onBack} className="text-sm font-bold text-[color:var(--muted)] hover:text-[color:var(--ink)]">Tilbake</button>
       </div>
-      <div className="flex-grow relative bg-white w-full h-full overflow-hidden">
-        {loading && <div className="absolute inset-0 flex items-center justify-center bg-[#F5F5F0] z-10 text-[#808080]">Henter ferske tall...</div>}
+      <div className="flex-grow relative bg-[color:var(--surface)] w-full h-full overflow-hidden">
+        {loading && <div className="absolute inset-0 flex items-center justify-center bg-[color:var(--navbg)] z-10 text-[color:var(--muted)]">Henter ferske tall...</div>}
         <iframe src={REPORT_URL} className="w-full h-full border-0" frameBorder="0" allowFullScreen onLoad={() => setLoading(false)} title="SEO Rapport" />
       </div>
     </div>
@@ -90,7 +90,7 @@ type PortalTheme = 'light' | 'dark';
 
 const portalCardClass = (theme: PortalTheme) =>
   theme === 'light'
-    ? 'bg-white border border-slate-200 rounded-2xl'
+    ? 'bg-[color:var(--surface)] border border-slate-200 rounded-2xl'
     : 'bg-slate-900 border border-white/10 rounded-2xl';
 
 const portalTextMainClass = (theme: PortalTheme) =>
@@ -142,7 +142,7 @@ const CardHeader: React.FC<{
         amber: 'bg-amber-500/15 text-amber-300',
         rose: 'bg-rose-500/15 text-rose-300',
         sky: 'bg-sky-500/15 text-sky-300',
-        slate: 'bg-white/10 text-slate-300',
+        slate: 'bg-[color:var(--surface)]/10 text-slate-300',
       };
   return (
     <header className="flex items-start justify-between gap-4 mb-5">
@@ -287,7 +287,7 @@ const KpiTile: React.FC<{
   };
   const c = accentColors[accent];
   return (
-    <div className={`rounded-xl border ${isLight ? 'bg-white' : 'bg-slate-900/40'} ${c.ring} p-4 flex flex-col gap-2 min-w-0`}>
+    <div className={`rounded-xl border ${isLight ? 'bg-[color:var(--surface)]' : 'bg-slate-900/40'} ${c.ring} p-4 flex flex-col gap-2 min-w-0`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {icon && (
@@ -1211,7 +1211,7 @@ const ReviewsPage: React.FC<{
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: "'Geist','DM Sans',sans-serif" }}>
 
       {loadError && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 16px', background: '#FBECEB', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 13, color: C.red }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 16px', background: 'var(--dangerbg)', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 13, color: C.red }}>
           <span>{loadError}</span>
           <button onClick={loadData} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
         </div>
@@ -1441,7 +1441,7 @@ const ReviewsPage: React.FC<{
             <Loader2 size={15} className="animate-spin" /> Henter anmeldelser fra Google …
           </div>
         ) : googleError ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 14px', background: '#FBECEB', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 12.5, color: C.red }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderRadius: 10, padding: '12px 14px', background: 'var(--dangerbg)', border: `1px solid rgba(180,35,31,0.20)`, fontSize: 12.5, color: C.red }}>
             <span>{googleError}</span>
             <button onClick={() => loadGoogle(true)} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
           </div>
@@ -1521,7 +1521,7 @@ const ReviewsPage: React.FC<{
             aria-pressed={settings.private_feedback_enabled}
             style={{ position: 'relative', width: 42, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0, background: settings.private_feedback_enabled ? C.green : C.border, transition: `background 180ms ${EASE}` }}
           >
-            <span style={{ position: 'absolute', top: 3, left: settings.private_feedback_enabled ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: `left 180ms ${EASE}` }} />
+            <span style={{ position: 'absolute', top: 3, left: settings.private_feedback_enabled ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--surface)', transition: `left 180ms ${EASE}` }} />
           </button>
         </div>
       )}
@@ -1892,7 +1892,7 @@ const KonkurrenterPage: React.FC<{
           )}
 
           {error && (
-            <div style={{ background: '#fff0f0', border: '1px solid #ffd0d0', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#c0392b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'var(--dangerbg)', border: '1px solid #ffd0d0', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--danger)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
               <span>{error}</span>
               <button onClick={refetch} style={{ fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}>Prøv igjen</button>
             </div>
@@ -2224,7 +2224,7 @@ const KonkurrenterPage: React.FC<{
               onFocus={e => (e.currentTarget.style.borderColor = C.ink)}
               onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
             />
-            {addError && <p style={{ fontSize: 12, color: '#c0392b', margin: '0 0 12px' }}>{addError}</p>}
+            {addError && <p style={{ fontSize: 12, color: 'var(--danger)', margin: '0 0 12px' }}>{addError}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button
                 onClick={handleAddCompetitor} disabled={addLoading || !addDomain.trim()}
@@ -2771,7 +2771,7 @@ const ChangelogPanel = ({
                     disabled={busy || otherBusy}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700,
-                      color: colors.ink, background: '#FFFFFF', border: `1px solid ${colors.border}`,
+                      color: colors.ink, background: 'var(--surface)', border: `1px solid ${colors.border}`,
                       borderRadius: 999, padding: '7px 14px', cursor: busy || otherBusy ? 'default' : 'pointer',
                       opacity: otherBusy ? 0.5 : 1, whiteSpace: 'nowrap',
                     }}
@@ -2875,7 +2875,7 @@ function SnippetPreviewVariantToggle({
         border: `1px solid ${borderColor}`,
         borderRadius: 9,
         overflow: 'hidden',
-        background: '#FFFFFF',
+        background: 'var(--surface)',
       }}
     >
       {options.map((option) => {
@@ -2980,21 +2980,21 @@ function ContentFixValueCard({
     margin: '0 0 6px',
     fontSize: 12,
     fontWeight: 700,
-    color: '#808080',
+    color: 'var(--muted)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.08em',
   };
-  const bodyStyle = { margin: 0, color: '#1A1A1A', fontSize: 13, lineHeight: 1.6 };
+  const bodyStyle = { margin: 0, color: 'var(--ink)', fontSize: 13, lineHeight: 1.6 };
   return (
     <div
       style={{
-        background: '#F5F5F0',
+        background: 'var(--navbg)',
         border: `1px solid ${borderColor}`,
         borderRadius: 12,
         padding: '18px 20px',
       }}
     >
-      <p style={{ margin: '0 0 16px', color: '#1A1A1A', fontSize: 15, fontWeight: 700 }}>{copy.title}</p>
+      <p style={{ margin: '0 0 16px', color: 'var(--ink)', fontSize: 15, fontWeight: 700 }}>{copy.title}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <p style={sectionTitleStyle}>Hva det er</p>
@@ -3006,7 +3006,7 @@ function ContentFixValueCard({
         </div>
         <div>
           <p style={sectionTitleStyle}>Sikt anbefaler</p>
-          <ul style={{ margin: 0, paddingLeft: 18, color: '#1A1A1A', fontSize: 13, lineHeight: 1.6 }}>
+          <ul style={{ margin: 0, paddingLeft: 18, color: 'var(--ink)', fontSize: 13, lineHeight: 1.6 }}>
             {copy.recommendations.map((item) => (
               <li key={item} style={{ marginBottom: 4 }}>{item}</li>
             ))}
@@ -3026,7 +3026,7 @@ function getContentFixCharLimit(fieldType: ContentFixFieldType): number | null {
 function getContentFixCharCounter(count: number, fieldType: ContentFixFieldType) {
   const max = getContentFixCharLimit(fieldType);
   if (max == null) {
-    return { color: '#808080', label: `${count} tegn`, overMax: false };
+    return { color: 'var(--muted)', label: `${count} tegn`, overMax: false };
   }
   const ratio = count / max;
   let color = '#52A447';
@@ -3069,7 +3069,7 @@ function ContentFixPreviewSection({
   const beforeH1 = decodeHtmlEntities(pageData.page.title || '(Tom)');
 
   const previewCardStyle = (accent?: 'green') => ({
-    background: '#FFFFFF',
+    background: 'var(--surface)',
     border: `1px solid ${borderColor}`,
     borderTop: accent === 'green' ? `3px solid ${green}` : undefined,
     borderRadius: 12,
@@ -3133,13 +3133,13 @@ function ContentFixPreviewSection({
         <div className="ws-content-diff-grid">
           <div style={previewCardStyle()}>
             <p style={labelStyle}>Før</p>
-            <div style={{ background: '#F5F5F0', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
+            <div style={{ background: 'var(--navbg)', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
               <h1 style={{ margin: 0, color: ink, fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>{beforeH1}</h1>
             </div>
           </div>
           <div style={previewCardStyle('green')}>
             <p style={{ ...labelStyle, color: green }}>Etter</p>
-            <div style={{ background: '#F5F5F0', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
+            <div style={{ background: 'var(--navbg)', borderRadius: 8, padding: '16px 18px', boxShadow: '0 1px 4px rgba(26,26,26,0.04)' }}>
               <h1 style={{ margin: 0, color: ink, fontSize: 28, fontWeight: 700, lineHeight: 1.2 }}>
                 {editedSuggestion.trim() || '(Tom)'}
               </h1>
@@ -3249,7 +3249,7 @@ const ContentPageContextQuestionnaire: React.FC<{
   const chipStyle = (selected: boolean): React.CSSProperties => ({
     border: `1px solid ${selected ? '#52A447' : '#EBEBE6'}`,
     background: selected ? 'rgba(82,164,71,0.1)' : '#FFFFFF',
-    color: '#1A1A1A',
+    color: 'var(--ink)',
     borderRadius: 999,
     padding: '10px 16px',
     fontSize: 14,
@@ -3277,9 +3277,9 @@ const ContentPageContextQuestionnaire: React.FC<{
     marginTop: 4,
     padding: '10px 12px',
     borderRadius: 10,
-    border: '1px solid #EBEBE6',
-    background: '#F5F5F0',
-    color: '#1A1A1A',
+    border: '1px solid var(--hair)',
+    background: 'var(--navbg)',
+    color: 'var(--ink)',
     fontSize: 13,
     outline: 'none',
   };
@@ -3287,8 +3287,8 @@ const ContentPageContextQuestionnaire: React.FC<{
   return (
     <div
       style={{
-        background: '#FFFFFF',
-        border: '1px solid #EBEBE6',
+        background: 'var(--surface)',
+        border: '1px solid var(--hair)',
         borderRadius: 16,
         padding: '24px 22px',
         display: 'flex',
@@ -3297,13 +3297,13 @@ const ContentPageContextQuestionnaire: React.FC<{
       }}
     >
       <div>
-        <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#808080' }}>
+        <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
           Før vi lager forslag
         </p>
-        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#1A1A1A', lineHeight: 1.3 }}>
+        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3 }}>
           Hjelp Sikt å forstå siden din
         </h3>
-        <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.55, color: '#808080' }}>
+        <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.55, color: 'var(--muted)' }}>
           {questions.length === 1
             ? 'Et kort svar gir et mer relevant innholdsforslag. Svarene lagres for denne siden.'
             : `${questions.length} korte svar gir et mer relevant innholdsforslag. Svarene lagres for denne siden.`}
@@ -3317,10 +3317,10 @@ const ContentPageContextQuestionnaire: React.FC<{
 
         return (
           <div key={`${q.question}-${index}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>
               {q.question}
               {q.optional ? (
-                <span style={{ fontWeight: 500, color: '#808080' }}> (valgfritt)</span>
+                <span style={{ fontWeight: 500, color: 'var(--muted)' }}> (valgfritt)</span>
               ) : null}
             </p>
             {q.options.length > 0 && (
@@ -3421,7 +3421,7 @@ const ContentPageContextQuestionnaire: React.FC<{
             padding: 0,
             fontSize: 13,
             fontWeight: 600,
-            color: '#808080',
+            color: 'var(--muted)',
             cursor: 'pointer',
             textDecoration: 'underline',
             textUnderlineOffset: 3,
@@ -3513,7 +3513,7 @@ function getContentFixCurrentValue(
 // --- HOVEDKOMPONENT: CLIENT PORTAL ---
 // Her tar vi imot ALLE verktøyene fra App (theme, setView, selectedPlan osv.)
 // Vi døper om 'clientData' til 'startData' midlertidig her oppe:
-const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, setView, selectedPlan, onSelectPlan }: any) => {
+const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref, setTheme, setView, selectedPlan, onSelectPlan }: any) => {
   const getStableMetrics = (keyword: string) => {
     let hash = 0;
     for (let i = 0; i < keyword.length; i++) {
@@ -5806,18 +5806,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // ===================================================================
   const themed: PortalTheme = theme === 'light' ? 'light' : 'dark';
   const isLight = themed === 'light';
-  const rootBg = isLight ? 'bg-[#F6F5F1] text-[#1A1A1A]' : 'bg-slate-950 text-slate-100';
+  const rootBg = isLight ? 'bg-[color:var(--subtle)] text-[color:var(--ink)]' : 'bg-slate-950 text-slate-100';
   const textMain = portalTextMainClass(themed);
   const textDim = portalTextDimClass(themed);
   const textLabel = portalTextLabelClass(themed);
   const divider = portalDividerClass(themed);
   const subtleBg = portalSubtleBgClass(themed);
-  const navBg = isLight ? 'bg-white/90' : 'bg-slate-950/90';
+  const navBg = isLight ? 'bg-[color:var(--surface)]/90' : 'bg-slate-950/90';
   const navBorder = divider;
 
   const navBtnClass = (active: boolean) =>
     active
-      ? `px-4 py-2 rounded-lg text-sm font-medium ${isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`
+      ? `px-4 py-2 rounded-lg text-sm font-medium ${isLight ? 'bg-slate-900 text-white' : 'bg-[color:var(--surface)] text-slate-900'}`
       : `px-4 py-2 rounded-lg text-sm font-medium ${textDim} hover:${textMain} transition-colors`;
 
   // ===================================================================
@@ -6969,12 +6969,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   // bryter React Rules of Hooks naar `loading` flipper fra true -> false.
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-[#F6F5F1]' : 'bg-slate-950'} font-['Geist','DM_Sans',sans-serif]`}>
-        <div className={`rounded-[16px] border ${isLight ? 'border-[#E9E4DA] bg-white' : `${divider} bg-slate-900/60`} px-6 py-5 flex items-center gap-3`}>
-          <Loader2 size={18} className={`${isLight ? 'text-[#1A1A1A]' : 'text-violet-600'} animate-spin`} />
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-[color:var(--subtle)]' : 'bg-slate-950'} font-['Geist','DM_Sans',sans-serif]`}>
+        <div className={`rounded-[16px] border ${isLight ? 'border-[color:var(--hair)] bg-[color:var(--surface)]' : `${divider} bg-slate-900/60`} px-6 py-5 flex items-center gap-3`}>
+          <Loader2 size={18} className={`${isLight ? 'text-[color:var(--ink)]' : 'text-violet-600'} animate-spin`} />
           <div>
-            <p className={`text-sm font-medium ${isLight ? 'text-[#1A1A1A]' : textMain}`}>Laster portalen</p>
-            <p className={`text-xs ${isLight ? 'text-[#8A8578]' : textDim}`}>Henter profil, score og siste aktivitet.</p>
+            <p className={`text-sm font-medium ${isLight ? 'text-[color:var(--ink)]' : textMain}`}>Laster portalen</p>
+            <p className={`text-xs ${isLight ? 'text-[color:var(--muted)]' : textDim}`}>Henter profil, score og siste aktivitet.</p>
           </div>
         </div>
       </div>
@@ -6995,10 +6995,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
   const tabFadeInClass = 'animate-in fade-in slide-in-from-bottom-2 duration-150 ease-out motion-reduce:slide-in-from-bottom-0';
 
   return (
-    <div className={`min-h-screen ${rootBg} antialiased`}>
+    <div className={`sikt-portal min-h-screen ${rootBg} antialiased`} data-theme={themed}>
+      {/* Tema-tokens: lys = dagens eksakte verdier (uendret), mørk = override.
+          Hardkodede farger peker på var(--token) → hele portalen flipper med data-theme. */}
+      <style>{`
+.sikt-portal{--ink:#1A1A1A;--sub:#5C574C;--muted:#8A8578;--faint:#B3AD9F;--hair:#E9E4DA;--surface:#FFFFFF;--subtle:#FAF8F3;--green:#15795A;--navbg:#F5F5F0;--inset:#E8F1EB;--insetbd:#D6EEDF;--inset-ink:#2F5C45;--danger:#B4231F;--dangerbg:#FBECEB;--btn-bg:#1A1A1A;}
+.sikt-portal[data-theme="dark"]{--ink:#E8E6E1;--sub:#B8B3A8;--muted:#9A958B;--faint:#6F6A60;--hair:rgba(255,255,255,0.10);--surface:#16181D;--subtle:#1E2127;--green:#3DA77B;--navbg:#121317;--inset:rgba(61,167,123,0.12);--insetbd:rgba(61,167,123,0.28);--inset-ink:#8FD3B0;--danger:#E0796B;--dangerbg:rgba(224,121,107,0.14);--btn-bg:#33373F;}
+.sikt-portal[data-theme="dark"] input::placeholder,.sikt-portal[data-theme="dark"] textarea::placeholder{color:var(--faint);opacity:1;}
+`}</style>
 
       {/* ===== NY: STICKY HORISONTAL TOPP-NAV ===== */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: '#F5F5F0', borderBottom: '1px solid #EBEBE6' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--navbg)', borderBottom: '1px solid var(--hair)' }}>
         {/* Desktop nav */}
         <div style={{ maxWidth: 1320, margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 24 }}
              className="hidden sm:flex">
@@ -7009,13 +7016,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               onClick={() => setActiveTab('home')}
               style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
-              <span style={{ width: 30, height: 30, borderRadius: 9, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>S</span>
+              <span style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--btn-bg)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>S</span>
             </button>
           </div>
 
           {/* MIDT: sentrert pill-meny */}
           <nav style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 999, padding: 5 }}>
               {navItems.map(item => {
                 const Icon = item.icon;
                 const active = activeTab === item.id;
@@ -7063,7 +7070,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             {currentLevel < 3 && (
               <button
                 onClick={() => handleUpgrade()}
-                style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: 8, transition: 'opacity 160ms' }}
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: 8, transition: 'opacity 160ms' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.65'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
               >
@@ -7075,23 +7082,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 onClick={() => setUserFooterMenuOpen(v => !v)}
                 aria-haspopup="menu"
                 aria-expanded={userFooterMenuOpen}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: '5px 10px 5px 5px', cursor: 'pointer', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 999, padding: '5px 10px 5px 5px', cursor: 'pointer', transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF'; }}
               >
-                <span style={{ width: 28, height: 28, borderRadius: 999, background: '#1A1A1A', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{footerInitials}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
-                <ChevronsUpDown size={14} style={{ color: '#808080' }} />
+                <span style={{ width: 28, height: 28, borderRadius: 999, background: 'var(--btn-bg)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{footerInitials}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+                <ChevronsUpDown size={14} style={{ color: 'var(--muted)' }} />
               </button>
               {userFooterMenuOpen && (
                 <div
                   role="menu"
-                  style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 180, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
+                  style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 180, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
                 >
                   <button
                     role="menuitem"
                     onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
@@ -7100,7 +7107,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <button
                     role="menuitem"
                     onClick={() => { setActiveTab('log'); setUserFooterMenuOpen(false); }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F0'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
@@ -7109,7 +7116,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <button
                     role="menuitem"
                     onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--danger)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff0f0'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
@@ -7123,35 +7130,35 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
         {/* MOBIL (< sm): kompakt rad + scrollbart fane-bånd */}
         <div className="sm:hidden">
-          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EBEBE6' }}>
+          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--hair)' }}>
             <button
               onClick={() => setActiveTab('home')}
               style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
-              <span style={{ width: 26, height: 26, borderRadius: 8, background: '#1A1A1A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>S</span>
+              <span style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--btn-bg)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>S</span>
             </button>
             <button
               onClick={() => setUserFooterMenuOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 999, padding: '4px 8px 4px 4px', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 999, padding: '4px 8px 4px 4px', cursor: 'pointer' }}
             >
-              <span style={{ width: 24, height: 24, borderRadius: 999, background: '#1A1A1A', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{footerInitials}</span>
-              <ChevronsUpDown size={12} style={{ color: '#808080' }} />
+              <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--btn-bg)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{footerInitials}</span>
+              <ChevronsUpDown size={12} style={{ color: 'var(--muted)' }} />
             </button>
             {userFooterMenuOpen && (
               <div
                 role="menu"
-                style={{ position: 'absolute', right: 16, top: 'calc(100% - 4px)', minWidth: 160, background: '#FFFFFF', border: '1px solid #EBEBE6', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
+                style={{ position: 'absolute', right: 16, top: 'calc(100% - 4px)', minWidth: 160, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
               >
                 <button role="menuitem" onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   <Settings size={15} /> Innstillinger
                 </button>
                 <button role="menuitem" onClick={() => { setActiveTab('log'); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#1A1A1A', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   <ClipboardCheck size={15} /> Sikt-logg
                 </button>
                 <button role="menuitem" onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: '#b4231f', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--danger)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   <LogOut size={15} /> Logg ut
                 </button>
               </div>
@@ -7191,23 +7198,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {activeTab === 'home' && (
           <div key={activeTab} className="space-y-6">
             <header className="font-['Geist','DM_Sans',sans-serif]">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[#1A1A1A]" style={{ fontFamily: SERIF }}>Dashboard</h1>
-              <p className="text-base mt-3 max-w-[58ch] text-[#8A8578]" style={{ lineHeight: 1.6 }}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>Dashboard</h1>
+              <p className="text-base mt-3 max-w-[58ch] text-[color:var(--muted)]" style={{ lineHeight: 1.6 }}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
               {analysisLimit !== Infinity && (
-                <p className="text-xs mt-1.5 text-[#8A8578] tabular-nums">
+                <p className="text-xs mt-1.5 text-[color:var(--muted)] tabular-nums">
                   {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
                   {analysesRemaining === 0 && currentLevel < 3 && (
                     <button
                       type="button"
                       onClick={() => handleUpgrade()}
-                      className="ml-2 font-semibold text-[#15795A] underline"
+                      className="ml-2 font-semibold text-[color:var(--green)] underline"
                     >
                       Oppgrader
                     </button>
                   )}
                 </p>
               )}
-              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid #E9E4DA' }} />
+              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid var(--hair)' }} />
             </header>
 
             {/* Punkt 2: forventnings-note for nye kunder (≤6 uker) — SEO tar uker, ikke dager. */}
@@ -7221,12 +7228,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               const fixes = acts.filter((a: any) => a.category === 'fix').length;
               const finds = acts.filter((a: any) => a.category === 'finding').length;
               return (
-                <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FAF8F3] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif] flex gap-4">
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--subtle)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif] flex gap-4">
                   <div aria-hidden className="mt-0.5 shrink-0"><Clock size={18} className="text-[#6D28D9]" /></div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#1A1A1A] mb-1">Hva du kan forvente de første ukene</h3>
-                    <p className="text-sm text-[#5C574C] leading-relaxed">
-                      Resultater i Google tar typisk <strong className="text-[#1A1A1A]">4–12 uker</strong> — du er i uke {weeks}. Mens vi venter bygger Sikt grunnmuren: så langt <strong className="text-[#1A1A1A]">{fixes} {fixes === 1 ? 'fiks' : 'fikser'}</strong> og <strong className="text-[#1A1A1A]">{finds} funn</strong>. Følg de ledende tegnene (fikser gjort, feil løst) her — ikke bare rangeringene.
+                    <h3 className="text-sm font-semibold text-[color:var(--ink)] mb-1">Hva du kan forvente de første ukene</h3>
+                    <p className="text-sm text-[color:var(--ink)] leading-relaxed">
+                      Resultater i Google tar typisk <strong className="text-[color:var(--ink)]">4–12 uker</strong> — du er i uke {weeks}. Mens vi venter bygger Sikt grunnmuren: så langt <strong className="text-[color:var(--ink)]">{fixes} {fixes === 1 ? 'fiks' : 'fikser'}</strong> og <strong className="text-[color:var(--ink)]">{finds} funn</strong>. Følg de ledende tegnene (fikser gjort, feil løst) her — ikke bare rangeringene.
                     </p>
                   </div>
                 </div>
@@ -7235,30 +7242,30 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {/* Godkjenningskø: synlige fikser Sikt har klargjort, venter på ditt ja */}
             {fixQueue.length > 0 && (
-              <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
                 <div className="flex items-center gap-2 mb-1">
                   <SectionTitle>Venter på din godkjenning</SectionTitle>
-                  <span className="ml-auto text-[11px] font-semibold text-[#15795A] bg-[#E8F1EB] px-2 py-0.5 rounded-full tabular-nums">{fixQueue.length}</span>
+                  <span className="ml-auto text-[11px] font-semibold text-[color:var(--green)] bg-[color:var(--inset)] px-2 py-0.5 rounded-full tabular-nums">{fixQueue.length}</span>
                 </div>
-                <p className="text-sm text-[#8A8578] mb-4">Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
+                <p className="text-sm text-[color:var(--muted)] mb-4">Sikt har klargjort disse synlige endringene. Godkjenn for å publisere dem rett til siden din.</p>
                 <div className="space-y-3">
                   {fixQueue.map((item) => {
                     const label = item.field === 'h1' ? 'Overskrift (H1)' : item.field === 'content' ? 'Sideinnhold' : item.field;
                     const busy = queueBusyId === item.id;
                     return (
-                      <div key={item.id} className="rounded-[12px] border border-[#E9E4DA] p-4">
+                      <div key={item.id} className="rounded-[12px] border border-[color:var(--hair)] p-4">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#5C574C] bg-[#F2EFE8] px-2 py-0.5 rounded">{label}</span>
-                          <span className="text-xs text-[#8A8578] truncate max-w-full">{item.page_url}</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[color:var(--ink)] bg-[color:var(--subtle)] px-2 py-0.5 rounded">{label}</span>
+                          <span className="text-xs text-[color:var(--muted)] truncate max-w-full">{item.page_url}</span>
                         </div>
-                        <p className="text-sm font-semibold text-[#1A1A1A] mb-1">{item.suggested_value}</p>
-                        {item.explanation && <p className="text-xs text-[#8A8578] mb-3 leading-relaxed">{item.explanation}</p>}
+                        <p className="text-sm font-semibold text-[color:var(--ink)] mb-1">{item.suggested_value}</p>
+                        {item.explanation && <p className="text-xs text-[color:var(--muted)] mb-3 leading-relaxed">{item.explanation}</p>}
                         <div className="flex gap-2">
                           <button
                             type="button"
                             disabled={busy}
                             onClick={() => approveQueuedFix(item)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[#1A1A1A] text-white text-xs font-semibold ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#2A2722]"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[color:var(--btn-bg)] text-white text-xs font-semibold ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#2A2722]"
                           >
                             {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                             Godkjenn og publiser
@@ -7267,7 +7274,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             type="button"
                             disabled={busy}
                             onClick={() => rejectQueuedFix(item)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] border border-[#E9E4DA] text-[#5C574C] text-xs font-semibold ui-motion disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] border border-[color:var(--hair)] text-[color:var(--ink)] text-xs font-semibold ui-motion disabled:opacity-60"
                           >
                             <X size={13} /> Avvis
                           </button>
@@ -7331,41 +7338,41 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
         {isFounder && activeTab === 'health' && (
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[#1A1A1A]" style={{ fontFamily: SERIF }}>Kundehelse</h1>
-              <p className="text-base mt-3 max-w-[58ch] text-[#8A8578]" style={{ lineHeight: 1.6 }}>Hvem er i ferd med å falle av — og hvorfor. Kun synlig for deg.</p>
-              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid #E9E4DA' }} />
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>Kundehelse</h1>
+              <p className="text-base mt-3 max-w-[58ch] text-[color:var(--muted)]" style={{ lineHeight: 1.6 }}>Hvem er i ferd med å falle av — og hvorfor. Kun synlig for deg.</p>
+              <div aria-hidden className="mt-6" style={{ borderTop: '1px solid var(--hair)' }} />
             </header>
 
-            {healthLoading && <div className="text-sm text-[#8A8578]">Laster …</div>}
-            {healthError && <div className="text-sm text-[#A33A2A]">Kunne ikke laste: {healthError}</div>}
+            {healthLoading && <div className="text-sm text-[color:var(--muted)]">Laster …</div>}
+            {healthError && <div className="text-sm text-[color:var(--danger)]">Kunne ikke laste: {healthError}</div>}
 
             {healthData && (
               <>
                 <div className="flex gap-3 flex-wrap">
                   {([['red','🔴','Røde'],['yellow','🟡','Gule'],['green','🟢','Grønne']] as const).map(([k, dot, label]) => (
-                    <div key={k} className="rounded-[12px] border border-[#E9E4DA] bg-white px-4 py-3 min-w-[96px]">
-                      <div className="text-2xl font-bold text-[#1A1A1A] tabular-nums" style={{ fontFamily: SERIF }}>{healthData.summary[k] ?? 0}</div>
-                      <div className="text-xs text-[#8A8578] mt-0.5">{dot} {label}</div>
+                    <div key={k} className="rounded-[12px] border border-[color:var(--hair)] bg-[color:var(--surface)] px-4 py-3 min-w-[96px]">
+                      <div className="text-2xl font-bold text-[color:var(--ink)] tabular-nums" style={{ fontFamily: SERIF }}>{healthData.summary[k] ?? 0}</div>
+                      <div className="text-xs text-[color:var(--muted)] mt-0.5">{dot} {label}</div>
                     </div>
                   ))}
                 </div>
 
-                <div className="rounded-[14px] border border-[#E9E4DA] bg-white overflow-hidden">
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] overflow-hidden">
                   {healthData.rows.length === 0 ? (
-                    <div className="p-6 text-sm text-[#8A8578]">Ingen kunder ennå.</div>
+                    <div className="p-6 text-sm text-[color:var(--muted)]">Ingen kunder ennå.</div>
                   ) : (
-                    <div className="divide-y divide-[#E9E4DA]">
+                    <div className="divide-y divide-[color:var(--hair)]">
                       {healthData.rows.map((r: any) => {
                         const dot = r.health === 'red' ? '🔴' : r.health === 'yellow' ? '🟡' : '🟢';
                         return (
                           <div key={r.user_id} className="flex items-center gap-3 p-4 flex-wrap">
                             <span className="text-base shrink-0">{dot}</span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold text-[#1A1A1A] truncate">{r.email || '(ukjent)'} <span className="font-normal text-[#8A8578]">· {r.package_name || '—'}</span></div>
-                              <div className="text-xs text-[#8A8578] mt-0.5">{healthReason(r)}</div>
+                              <div className="text-sm font-semibold text-[color:var(--ink)] truncate">{r.email || '(ukjent)'} <span className="font-normal text-[color:var(--muted)]">· {r.package_name || '—'}</span></div>
+                              <div className="text-xs text-[color:var(--muted)] mt-0.5">{healthReason(r)}</div>
                             </div>
                             {r.email && (
-                              <a href={`mailto:${r.email}?subject=${encodeURIComponent('Hei fra Sikt')}`} className="text-xs font-semibold text-[#15795A] underline whitespace-nowrap shrink-0">Nå ut</a>
+                              <a href={`mailto:${r.email}?subject=${encodeURIComponent('Hei fra Sikt')}`} className="text-xs font-semibold text-[color:var(--green)] underline whitespace-nowrap shrink-0">Nå ut</a>
                             )}
                           </div>
                         );
@@ -7609,7 +7616,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 : textLabel;
 
               return (
-                <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-white' : 'bg-slate-900/40'} px-5 py-5 sm:px-6`}>
+                <div className={`rounded-2xl border ${divider} ${isLight ? 'bg-[color:var(--surface)]' : 'bg-slate-900/40'} px-5 py-5 sm:px-6`}>
                   {/* Header rad */}
                   <div className="flex items-center justify-between gap-3 mb-5">
                     <div>
@@ -7624,7 +7631,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           onClick={() => setOverviewPeriod(p)}
                           className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
                             overviewPeriod === p
-                              ? (isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-900')
+                              ? (isLight ? 'bg-slate-900 text-white' : 'bg-[color:var(--surface)] text-slate-900')
                               : `${textDim} hover:${textMain}`
                           }`}
                         >
@@ -7894,7 +7901,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               ) : (
                 <ol className="relative pl-6">
                   {/* Vertikal tidslinje-strek */}
-                  <span className={`absolute top-2 bottom-2 left-[7px] w-px ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} aria-hidden />
+                  <span className={`absolute top-2 bottom-2 left-[7px] w-px ${isLight ? 'bg-slate-200' : 'bg-[color:var(--surface)]/10'}`} aria-hidden />
                   {homeFeedActions.map((a: any) => {
                     const meta = categoryMeta(a.category);
                     const ts = new Date(a.created_at);
@@ -8177,7 +8184,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                             setActiveTab('workshop');
                                             setExpandedWorkshopProblem(`ps-${o.title}`);
                                           }}
-                                          className="w-full rounded-[10px] px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors hover:bg-[#FAF8F3]"
+                                          className="w-full rounded-[10px] px-3 py-2.5 text-left flex items-center justify-between gap-2 transition-colors hover:bg-[color:var(--subtle)]"
                                           style={{ border: `1px solid ${palette.border}` }}
                                         >
                                           <span className="inline-flex items-start gap-2 min-w-0">
@@ -8253,7 +8260,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       const issues = (p.issues || []).length;
                                       const critical = p?.status === 'Kritisk' || issues >= 3;
                                       return (
-                                        <tr key={i} className="transition-colors hover:bg-[#FAF8F3]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
+                                        <tr key={i} className="transition-colors hover:bg-[color:var(--subtle)]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
                                           <td className="px-4 py-3.5 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
                                           <td className="px-4 py-3.5 text-[13px] font-mono" style={{ color: palette.muted }}>{p.url}</td>
                                           <td className="px-4 py-3.5 text-right">
@@ -8310,7 +8317,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
                                       const tone = tonePill(statusTone);
                                       return (
-                                        <tr key={i} className="transition-colors hover:bg-[#FAF8F3]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
+                                        <tr key={i} className="transition-colors hover:bg-[color:var(--subtle)]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
                                           <td className="px-4 py-3.5 text-sm font-medium" style={{ color: palette.ink }}>{p.title || p.url}</td>
                                           <td className="px-4 py-3.5 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.inlinks ?? 0}</td>
                                           <td className="px-4 py-3.5 text-sm text-right tabular-nums" style={{ color: palette.ink }}>{p.outlinks ?? 0}</td>
@@ -8344,8 +8351,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Søkeord</h1>
-                <p className="text-base mt-3" style={{ color: '#8A8578' }}>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>Søkeord</h1>
+                <p className="text-base mt-3" style={{ color: 'var(--muted)' }}>
                   Ordene folk finner deg på i Google — og hvordan du ligger an.
                 </p>
               </div>
@@ -8354,7 +8361,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onClick={handleCheckRankings}
                   disabled={rankingLoading}
                   className="inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97] disabled:opacity-60"
-                  style={{ background: '#1A1A1A', color: '#fff' }}
+                  style={{ background: 'var(--btn-bg)', color: '#fff' }}
                 >
                   <Search size={14} className={rankingLoading ? 'animate-pulse' : ''} />
                   {rankingLoading ? 'Sjekker…' : 'Sjekk plassering nå'}
@@ -8365,9 +8372,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {/* GSC connection banner */}
             {!gscConnected && (
-              <div className="rounded-[14px] p-4 flex items-center gap-4 justify-between flex-wrap" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
+              <div className="rounded-[14px] p-4 flex items-center gap-4 justify-between flex-wrap" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: '#F2EFE8' }}>
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: 'var(--subtle)' }}>
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -8376,15 +8383,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Følg dine egne søkeord nå — uten Google-tilkobling</p>
-                    <p className="text-xs" style={{ color: '#8A8578' }}>Legg dem til nedenfor, så måler vi Google-plasseringen din med en gang. Koble til Google (valgfritt) for å få flere søkeord foreslått automatisk.</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Følg dine egne søkeord nå — uten Google-tilkobling</p>
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>Legg dem til nedenfor, så måler vi Google-plasseringen din med en gang. Koble til Google (valgfritt) for å få flere søkeord foreslått automatisk.</p>
                   </div>
                 </div>
                 {!showGscPreCheck ? (
                   <button
                     onClick={() => setShowGscPreCheck(true)}
                     className="shrink-0 inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-[10px] transition-transform active:scale-[0.97]"
-                    style={{ background: '#1A1A1A', color: '#fff' }}
+                    style={{ background: 'var(--btn-bg)', color: '#fff' }}
                   >
                     Koble til (valgfritt)
                   </button>
@@ -8414,10 +8421,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               return (
                 <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {items.map((it) => (
-                    <div key={it.label} className="rounded-[14px] p-4" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>{it.label}</p>
+                    <div key={it.label} className="rounded-[14px] p-4" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>{it.label}</p>
                       <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color: '#1A1A1A' }}>{it.value}</span>
+                        <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color: 'var(--ink)' }}>{it.value}</span>
                         {it.trend != null && it.trend !== 0 && (
                           <span className="text-xs font-semibold tabular-nums" style={{ color: it.trend > 0 ? '#15795A' : '#B4231F' }}>
                             {it.trend > 0 ? '▲' : '▼'}{Math.abs(it.trend).toFixed(1)}
@@ -8491,14 +8498,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <div className="flex flex-col gap-3 shrink-0 w-full lg:w-[280px]">
                     {/* Search */}
                     <div className="relative">
-                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#8A8578' }} />
+                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--muted)' }} />
                       <input
                         type="text"
                         value={kwSearch}
                         onChange={e => setKwSearch(e.target.value)}
                         placeholder={`Søk i ${combinedList.length} søkeord…`}
-                        className="w-full rounded-[10px] pl-8 pr-3 py-2 text-sm outline-none focus:border-[#1A1A1A] transition-colors"
-                        style={{ background: '#FFFFFF', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
+                        className="w-full rounded-[10px] pl-8 pr-3 py-2 text-sm outline-none focus:border-[color:var(--ink)] transition-colors"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--hair)', color: 'var(--ink)' }}
                       />
                     </div>
 
@@ -8520,9 +8527,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </div>
 
                     {/* Keyword list */}
-                    <div className="flex-1 overflow-y-auto rounded-[14px]" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA', maxHeight: 420 }}>
+                    <div className="flex-1 overflow-y-auto rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--hair)', maxHeight: 420 }}>
                       {filtered.length === 0 ? (
-                        <div className="p-6 text-center text-sm" style={{ color: '#8A8578' }}>
+                        <div className="p-6 text-center text-sm" style={{ color: 'var(--muted)' }}>
                           {kwSearch
                             ? 'Ingen treff på søket — prøv et annet ord'
                             : gscConnected
@@ -8542,13 +8549,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 className="px-3 py-2.5 cursor-pointer"
                                 style={{
                                   background: isSelected ? '#FAF8F3' : 'transparent',
-                                  borderBottom: i < filtered.length - 1 ? '1px solid #EFEBE2' : 'none',
+                                  borderBottom: i < filtered.length - 1 ? '1px solid var(--hair)' : 'none',
                                   borderLeft: isSelected ? '3px solid #1A1A1A' : '3px solid transparent',
                                   transition: 'background 150ms ease-out',
                                 }}
                               >
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="text-sm font-medium truncate" style={{ color: '#1A1A1A' }}>{kw.keyword}</p>
+                                  <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{kw.keyword}</p>
                                   <div className="flex items-center gap-1 shrink-0 tabular-nums">
                                     {kw.position !== null && (() => {
                                       const p = kw.position as number;
@@ -8559,19 +8566,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                         <span className="rounded-md px-1.5 py-0.5 text-xs font-semibold" style={{ color: c, background: bg }}>{label}</span>
                                       );
                                     })()}
-                                    {posUp && <span className="text-[11px] font-semibold" style={{ color: '#15795A' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
-                                    {posDown && <span className="text-[11px] font-semibold" style={{ color: '#B4231F' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {posUp && <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>▲{Math.abs(kw.change as number).toFixed(1)}</span>}
+                                    {posDown && <span className="text-[11px] font-semibold" style={{ color: 'var(--danger)' }}>▼{Math.abs(kw.change as number).toFixed(1)}</span>}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span
                                     className="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                                    style={{ background: '#F2EFE8', color: '#8A8578' }}
+                                    style={{ background: 'var(--subtle)', color: 'var(--muted)' }}
                                   >
                                     {kw.source === 'gsc' ? 'Google' : 'Egen'}
                                   </span>
                                   {kw.location && (
-                                    <span className="text-[10px] truncate" style={{ color: '#8A8578' }}>{kw.location}</span>
+                                    <span className="text-[10px] truncate" style={{ color: 'var(--muted)' }}>{kw.location}</span>
                                   )}
                                 </div>
                               </li>
@@ -8582,8 +8589,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     </div>
 
                     {/* Add keyword */}
-                    <div className="rounded-[14px] p-3" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
-                      <p className="text-xs font-semibold mb-2" style={{ color: '#1A1A1A' }}>Legg til søkeord</p>
+                    <div className="rounded-[14px] p-3" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: 'var(--ink)' }}>Legg til søkeord</p>
                       {canAddMoreKeywords ? (
                         <div className="flex flex-col gap-2">
                           <input
@@ -8593,7 +8600,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             onKeyDown={e => e.key === 'Enter' && handleAddKeyword()}
                             placeholder="f.eks. rørlegger oslo"
                             className="w-full rounded-[10px] px-3 py-2 text-xs outline-none"
-                            style={{ background: '#FAF8F3', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
+                            style={{ background: 'var(--subtle)', border: '1px solid var(--hair)', color: 'var(--ink)' }}
                           />
                           <div className="flex gap-2">
                             <input
@@ -8602,24 +8609,24 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onChange={e => setLocationInput(e.target.value)}
                               placeholder="Sted"
                               className="flex-1 rounded-[10px] px-3 py-2 text-xs outline-none min-w-0"
-                              style={{ background: '#FAF8F3', border: '1px solid #E9E4DA', color: '#1A1A1A' }}
+                              style={{ background: 'var(--subtle)', border: '1px solid var(--hair)', color: 'var(--ink)' }}
                             />
                             <button
                               onClick={handleAddKeyword}
                               className="px-3 py-2 rounded-[10px] text-xs font-semibold transition-transform active:scale-[0.97] shrink-0 flex items-center justify-center"
-                              style={{ background: '#1A1A1A', color: '#fff' }}
+                              style={{ background: 'var(--btn-bg)', color: '#fff' }}
                             >
                               <Plus size={13} />
                             </button>
                           </div>
-                          <p className="text-[10px]" style={{ color: '#8A8578' }}>
+                          <p className="text-[10px]" style={{ color: 'var(--muted)' }}>
                             {keywordsToTrack.length}/{keywordLimit} søkeord brukt
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs" style={{ color: '#8A8578' }}>
+                        <p className="text-xs" style={{ color: 'var(--muted)' }}>
                           Grensen på {keywordLimit} søkeord er nådd.{' '}
-                          <button onClick={() => handleUpgrade()} className="underline font-medium" style={{ color: '#1A1A1A' }}>
+                          <button onClick={() => handleUpgrade()} className="underline font-medium" style={{ color: 'var(--ink)' }}>
                             Oppgrader
                           </button>
                         </p>
@@ -8628,12 +8635,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
 
                   {/* RIGHT: detail panel */}
-                  <div className="flex-1 min-w-0 rounded-[14px] overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
+                  <div className="flex-1 min-w-0 rounded-[14px] overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
                     {!selected ? (
                       <div className="h-full flex flex-col items-center justify-center p-12 text-center" style={{ minHeight: 400 }}>
                         <BarChart3 size={36} style={{ color: '#D8D2C5', marginBottom: 12 }} />
-                        <p className="text-sm font-semibold mb-1" style={{ color: '#1A1A1A' }}>Velg et søkeord</p>
-                        <p className="text-xs max-w-xs" style={{ color: '#8A8578' }}>
+                        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--ink)' }}>Velg et søkeord</p>
+                        <p className="text-xs max-w-xs" style={{ color: 'var(--muted)' }}>
                           Klikk på et søkeord i listen for å se plassering, graf og hva som har skjedd.
                         </p>
                       </div>
@@ -8642,8 +8649,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         {/* Header */}
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h2 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>{selected.keyword}</h2>
-                            <p className="text-xs mt-0.5" style={{ color: '#8A8578' }}>
+                            <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{selected.keyword}</h2>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
                               {selected.source === 'gsc'
                                 ? `Fra Google · ${gscKeywords.length} søkeord hentet`
                                 : `${selected.location} · Egen sporing${selected.history.length > 0 ? ` · ${selected.history.length} målinger` : ''}`}
@@ -8653,7 +8660,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             <button
                               onClick={() => { handleRemoveKeyword(selected.keyword, selected.location!); setSelectedKwId(null); }}
                               className="text-xs transition-colors shrink-0 hover:underline"
-                              style={{ color: '#8A8578' }}
+                              style={{ color: 'var(--muted)' }}
                             >
                               Fjern
                             </button>
@@ -8692,16 +8699,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               {stats.map(stat => {
                                 const positive = (stat.delta ?? 0) > 0;
                                 return (
-                                  <div key={stat.label} className="rounded-[12px] p-3.5" style={{ background: '#FAF8F3', border: '1px solid #EFEBE2' }}>
-                                    <p className="text-[11px] font-medium mb-1.5 leading-snug" style={{ color: '#8A8578' }}>{stat.label}</p>
-                                    <p className="text-[26px] font-semibold leading-none tabular-nums truncate" style={{ color: '#1A1A1A' }}>{stat.value}</p>
+                                  <div key={stat.label} className="rounded-[12px] p-3.5" style={{ background: 'var(--subtle)', border: '1px solid var(--hair)' }}>
+                                    <p className="text-[11px] font-medium mb-1.5 leading-snug" style={{ color: 'var(--muted)' }}>{stat.label}</p>
+                                    <p className="text-[26px] font-semibold leading-none tabular-nums truncate" style={{ color: 'var(--ink)' }}>{stat.value}</p>
                                     {stat.delta != null && stat.delta !== 0 && (
                                       <p className="text-xs font-semibold mt-1.5 tabular-nums" style={{ color: positive ? '#15795A' : '#B4231F' }}>
                                         {positive ? '▲' : '▼'}{Math.abs(stat.delta as number).toFixed(1)}
                                       </p>
                                     )}
                                     {stat.hint && (stat.delta == null || stat.delta === 0) && (
-                                      <p className="text-[10px] mt-1.5" style={{ color: '#B3AD9F' }}>{stat.hint}</p>
+                                      <p className="text-[10px] mt-1.5" style={{ color: 'var(--faint)' }}>{stat.hint}</p>
                                     )}
                                   </div>
                                 );
@@ -8711,14 +8718,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         })()}
 
                         {selected.source === 'gsc' && selected.clicks == null && (
-                          <p className="-mt-2 text-xs" style={{ color: '#8A8578' }}>Klikk, visninger og andel kommer 1–2 uker etter at Google er koblet til.</p>
+                          <p className="-mt-2 text-xs" style={{ color: 'var(--muted)' }}>Klikk, visninger og andel kommer 1–2 uker etter at Google er koblet til.</p>
                         )}
 
                         {/* Position chart */}
                         {chartData.length > 0 ? (
                           <div>
                             <div className="flex items-center justify-between mb-3">
-                              <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Plassering over tid</p>
+                              <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Plassering over tid</p>
                               <div className="flex gap-1">
                                 {(['28d', '90d', '12mnd'] as const).map(r => (
                                   <button
@@ -8742,21 +8749,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             </div>
                           </div>
                         ) : selected.source === 'tracked' ? (
-                          <div className="rounded-[12px] p-5 text-center" style={{ background: '#FAF8F3' }}>
-                            <p className="text-xs" style={{ color: '#8A8578' }}>Kjør «Sjekk plassering nå» for å se historikk her.</p>
+                          <div className="rounded-[12px] p-5 text-center" style={{ background: 'var(--subtle)' }}>
+                            <p className="text-xs" style={{ color: 'var(--muted)' }}>Kjør «Sjekk plassering nå» for å se historikk her.</p>
                           </div>
                         ) : null}
 
                         {/* Bottom: landing pages + event log */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Landing pages */}
-                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
-                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hvilken side vises i Google</p>
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid var(--hair)' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>Hvilken side vises i Google</p>
                             {selected.source === 'tracked' && selected.url ? (
                               <div>
-                                <div className="grid grid-cols-[1fr_auto] gap-x-3 pb-1.5 mb-1.5" style={{ borderBottom: '1px solid #EFEBE2' }}>
-                                  <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Side</p>
-                                  <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Plass</p>
+                                <div className="grid grid-cols-[1fr_auto] gap-x-3 pb-1.5 mb-1.5" style={{ borderBottom: '1px solid var(--hair)' }}>
+                                  <p className="text-[11px] font-semibold" style={{ color: 'var(--muted)' }}>Side</p>
+                                  <p className="text-[11px] font-semibold" style={{ color: 'var(--muted)' }}>Plass</p>
                                 </div>
                                 <div className="grid grid-cols-[1fr_auto] gap-x-3 items-center py-1.5">
                                   <a
@@ -8764,17 +8771,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-xs truncate hover:underline"
-                                    style={{ color: '#15795A' }}
+                                    style={{ color: 'var(--green)' }}
                                   >
                                     {(selected.url as string).replace(/^https?:\/\/[^/]+/, '') || '/'}
                                   </a>
-                                  <span className="text-xs font-semibold tabular-nums text-right" style={{ color: '#1A1A1A' }}>
+                                  <span className="text-xs font-semibold tabular-nums text-right" style={{ color: 'var(--ink)' }}>
                                     {selected.position == null ? '—' : (selected.position as number) >= 301 ? '300+' : `#${selected.position}`}
                                   </span>
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-xs" style={{ color: '#8A8578' }}>
+                              <p className="text-xs" style={{ color: 'var(--muted)' }}>
                                 {selected.source === 'gsc'
                                   ? 'Vises ikke via Google-koblingen ennå.'
                                   : 'Kjør «Sjekk plassering nå» for å finne siden.'}
@@ -8783,8 +8790,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </div>
 
                           {/* Event log */}
-                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
-                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hva har skjedd</p>
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid var(--hair)' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>Hva har skjedd</p>
                             {(() => {
                               const events: Array<{ text: string; sub?: string }> = [];
                               if (selected.source === 'tracked') {
@@ -8812,7 +8819,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 events.push({ text: 'Hentet fra Google', sub: '' });
                               }
                               if (!events.length) {
-                                return <p className="text-xs" style={{ color: '#8A8578' }}>Sikt jobber i bakgrunnen — det første dukker opp her etter neste sjekk.</p>;
+                                return <p className="text-xs" style={{ color: 'var(--muted)' }}>Sikt jobber i bakgrunnen — det første dukker opp her etter neste sjekk.</p>;
                               }
                               return (
                                 <ul className="space-y-2.5">
@@ -8820,8 +8827,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                     <li key={i} className="flex items-start gap-2">
                                       <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: '#15795A' }} />
                                       <div>
-                                        <p className="text-xs" style={{ color: '#1A1A1A' }}>{ev.text}</p>
-                                        {ev.sub && <p className="text-[10px] mt-0.5" style={{ color: '#8A8578' }}>{ev.sub}</p>}
+                                        <p className="text-xs" style={{ color: 'var(--ink)' }}>{ev.text}</p>
+                                        {ev.sub && <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted)' }}>{ev.sub}</p>}
                                       </div>
                                     </li>
                                   ))}
@@ -8833,22 +8840,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {/* Topp-resultater i Google (SERP-konkurrenter) */}
                         {selected.source === 'tracked' && selected.competitors && selected.competitors.length > 0 && (
-                          <div className="rounded-[12px] p-4" style={{ border: '1px solid #E9E4DA' }}>
-                            <p className="text-sm font-semibold mb-3" style={{ color: '#1A1A1A' }}>Hvem ligger øverst i Google</p>
-                            <div className="grid grid-cols-[auto_1fr] gap-x-3 pb-1.5 mb-1" style={{ borderBottom: '1px solid #EFEBE2' }}>
-                              <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Plass</p>
-                              <p className="text-[11px] font-semibold" style={{ color: '#8A8578' }}>Resultat</p>
+                          <div className="rounded-[12px] p-4" style={{ border: '1px solid var(--hair)' }}>
+                            <p className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>Hvem ligger øverst i Google</p>
+                            <div className="grid grid-cols-[auto_1fr] gap-x-3 pb-1.5 mb-1" style={{ borderBottom: '1px solid var(--hair)' }}>
+                              <p className="text-[11px] font-semibold" style={{ color: 'var(--muted)' }}>Plass</p>
+                              <p className="text-[11px] font-semibold" style={{ color: 'var(--muted)' }}>Resultat</p>
                             </div>
                             <ul>
                               {selected.competitors.slice(0, 5).map((c: any, i: number) => {
                                 const host = (() => { try { return new URL(c.url).hostname.replace(/^www\./, ''); } catch { return c.url; } })();
                                 const count = Math.min(5, selected.competitors!.length);
                                 return (
-                                  <li key={i} className="grid grid-cols-[auto_1fr] gap-x-3 items-start py-2" style={{ borderBottom: i < count - 1 ? '1px solid #EFEBE2' : 'none' }}>
-                                    <span className="text-xs font-semibold tabular-nums mt-0.5" style={{ color: '#1A1A1A' }}>#{c.position}</span>
+                                  <li key={i} className="grid grid-cols-[auto_1fr] gap-x-3 items-start py-2" style={{ borderBottom: i < count - 1 ? '1px solid var(--hair)' : 'none' }}>
+                                    <span className="text-xs font-semibold tabular-nums mt-0.5" style={{ color: 'var(--ink)' }}>#{c.position}</span>
                                     <div className="min-w-0">
-                                      <a href={c.url} target="_blank" rel="noreferrer" className="text-xs font-medium truncate block hover:underline" style={{ color: '#1A1A1A' }}>{c.title || host}</a>
-                                      <span className="text-[10px] truncate block" style={{ color: '#8A8578' }}>{host}</span>
+                                      <a href={c.url} target="_blank" rel="noreferrer" className="text-xs font-medium truncate block hover:underline" style={{ color: 'var(--ink)' }}>{c.title || host}</a>
+                                      <span className="text-[10px] truncate block" style={{ color: 'var(--muted)' }}>{host}</span>
                                     </div>
                                   </li>
                                 );
@@ -8865,17 +8872,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {/* Position distribution */}
             {realRankings.length > 0 && (
-              <div className="rounded-[14px] p-5" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
-                <p className="text-sm font-semibold mb-1" style={{ color: '#1A1A1A' }}>Hvor du ligger på Google</p>
-                <p className="text-xs mb-4" style={{ color: '#8A8578' }}>Antall søkeord i hvert plasserings-sjikt.</p>
+              <div className="rounded-[14px] p-5" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+                <p className="text-sm font-semibold mb-1" style={{ color: 'var(--ink)' }}>Hvor du ligger på Google</p>
+                <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>Antall søkeord i hvert plasserings-sjikt.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                   {positionBuckets.map((b) => (
-                    <div key={b.name} className="rounded-[12px] p-3" style={{ background: '#FAF8F3' }}>
+                    <div key={b.name} className="rounded-[12px] p-3" style={{ background: 'var(--subtle)' }}>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: b.fill }} />
-                        <p className="text-xs" style={{ color: '#8A8578' }}>{b.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--muted)' }}>{b.name}</p>
                       </div>
-                      <p className="text-2xl font-semibold tabular-nums" style={{ color: '#1A1A1A' }}>{b.value}</p>
+                      <p className="text-2xl font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{b.value}</p>
                     </div>
                   ))}
                 </div>
@@ -8897,7 +8904,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Konkurrenter</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>Konkurrenter</h1>
                 <p className={`text-base mt-3 ${textDim}`}>Følg konkurrentene dine og oppdag åpne muligheter.</p>
               </div>
             </header>
@@ -8920,47 +8927,47 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>AI-synlighet</h1>
-                <p className="text-base mt-3" style={{ color: '#8A8578' }}>Om bedriften din nevnes når kunder spør ChatGPT, Gemini og Perplexity.</p>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>AI-synlighet</h1>
+                <p className="text-base mt-3" style={{ color: 'var(--muted)' }}>Om bedriften din nevnes når kunder spør ChatGPT, Gemini og Perplexity.</p>
               </div>
             </header>
             <div className={`${tabFadeInClass} space-y-6`}>
               {hasPremium && (geoState?.geo_score != null || geoFaqs.length > 0) && (
-                <div className="rounded-[16px] p-5 sm:p-6" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA' }}>
+                <div className="rounded-[16px] p-5 sm:p-6" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
                   {geoState?.geo_score != null && (
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>AI-synlighet (GEO-score)</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>AI-synlighet (GEO-score)</p>
                         <div className="flex items-baseline gap-1.5 mt-1.5">
-                          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color: '#1A1A1A' }}>{Number(geoState.geo_score)}</span>
-                          <span className="text-base" style={{ color: '#B3AD9F' }}>/100</span>
+                          <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color: 'var(--ink)' }}>{Number(geoState.geo_score)}</span>
+                          <span className="text-base" style={{ color: 'var(--faint)' }}>/100</span>
                         </div>
                       </div>
-                      <div className="text-[12px] space-y-1 text-right" style={{ color: '#5C574C' }}>
-                        <p>{geoState.llms_published_at ? '✓ AI-fil publisert' : '— AI-fil ikke publisert ennå'} <span style={{ color: '#B3AD9F' }}>(llms.txt)</span></p>
-                        <p>{geoState.schema_published_at ? '✓ FAQ for AI publisert' : '— FAQ for AI ikke publisert ennå'} <span style={{ color: '#B3AD9F' }}>(FAQ-schema)</span></p>
+                      <div className="text-[12px] space-y-1 text-right" style={{ color: 'var(--ink)' }}>
+                        <p>{geoState.llms_published_at ? '✓ AI-fil publisert' : '— AI-fil ikke publisert ennå'} <span style={{ color: 'var(--faint)' }}>(llms.txt)</span></p>
+                        <p>{geoState.schema_published_at ? '✓ FAQ for AI publisert' : '— FAQ for AI ikke publisert ennå'} <span style={{ color: 'var(--faint)' }}>(FAQ-schema)</span></p>
                       </div>
                     </div>
                   )}
 
                   {geoFaqs.length > 0 && (
-                    <div className={geoState?.geo_score != null ? 'mt-5 pt-5 border-t' : ''} style={geoState?.geo_score != null ? { borderColor: '#EFEBE2' } : undefined}>
-                      <p className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>Godkjenn svar Sikt foreslår</p>
-                      <p className="text-[12px] mt-1 mb-4 leading-relaxed" style={{ color: '#8A8578' }}>
+                    <div className={geoState?.geo_score != null ? 'mt-5 pt-5 border-t' : ''} style={geoState?.geo_score != null ? { borderColor: 'var(--hair)' } : undefined}>
+                      <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Godkjenn svar Sikt foreslår</p>
+                      <p className="text-[12px] mt-1 mb-4 leading-relaxed" style={{ color: 'var(--muted)' }}>
                         For spørsmål der AI-ene ikke nevnte deg. Godkjente svar legges i filene som hjelper ChatGPT, Gemini og Perplexity å sitere deg.
                       </p>
                       <div className="space-y-3">
                         {geoFaqs.map((f) => (
-                          <div key={f.id} className="rounded-[12px] border p-4" style={{ borderColor: '#E9E4DA', background: '#FAF8F3' }}>
-                            <p className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>{f.question}</p>
-                            <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: '#5C574C' }}>{f.answer}</p>
+                          <div key={f.id} className="rounded-[12px] border p-4" style={{ borderColor: 'var(--hair)', background: 'var(--subtle)' }}>
+                            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{f.question}</p>
+                            <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink)' }}>{f.answer}</p>
                             <div className="flex items-center gap-3 mt-3">
                               <button
                                 type="button"
                                 disabled={geoFaqBusyId === f.id}
                                 onClick={() => resolveGeoFaq(f.id, true)}
                                 className="inline-flex items-center gap-1.5 rounded-[10px] text-white px-3.5 py-2 text-[12px] font-semibold disabled:opacity-50 transition-colors"
-                                style={{ background: '#1A1A1A' }}
+                                style={{ background: 'var(--btn-bg)' }}
                               >
                                 <CheckCircle2 size={13} /> Godkjenn og publiser
                               </button>
@@ -8969,7 +8976,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                 disabled={geoFaqBusyId === f.id}
                                 onClick={() => resolveGeoFaq(f.id, false)}
                                 className="text-[12px] font-semibold disabled:opacity-50"
-                                style={{ color: '#8A8578' }}
+                                style={{ color: 'var(--muted)' }}
                               >
                                 Avvis
                               </button>
@@ -8993,8 +9000,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
             <header className="flex items-end justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Anmeldelser</h1>
-                <p className="text-base mt-3" style={{ color: '#8A8578' }}>Få flere fornøyde kunder til å si det offentlig — det løfter både Google og telefonen.</p>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>Anmeldelser</h1>
+                <p className="text-base mt-3" style={{ color: 'var(--muted)' }}>Få flere fornøyde kunder til å si det offentlig — det løfter både Google og telefonen.</p>
               </div>
             </header>
             <div className={`${tabFadeInClass}`}>
@@ -9124,8 +9131,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div key={activeTab} className="space-y-6 font-['Geist','DM_Sans',sans-serif]">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Verksted</h1>
-                  <p className="text-base mt-3" style={{ color: '#8A8578' }}>Ting du kan fikse på nettsiden — med AI-hjelp.</p>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>Verksted</h1>
+                  <p className="text-base mt-3" style={{ color: 'var(--muted)' }}>Ting du kan fikse på nettsiden — med AI-hjelp.</p>
                 </div>
               </header>
               <div className={`${tabFadeInClass} space-y-6`}>
@@ -9331,7 +9338,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseDown={pressDown}
                               onMouseUp={pressReset}
                               onMouseLeave={pressReset}
-                              style={{ background: '#fff', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              style={{ background: 'var(--surface)', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                             >
                               Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
                             </button>
@@ -9548,7 +9555,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                                 {rollbackState === 'error' && rollbackError && (
                                   <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
+                                    <p style={{ margin: 0, color: 'var(--danger)', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
                                   </div>
                                 )}
 
@@ -9673,7 +9680,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                         {contentFixLoading === 'error' && (
                           <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
-                            <p style={{ margin: 0, color: '#8B2E2E', fontSize: 14, lineHeight: 1.5 }}>{contentFixActive.error || 'Noe gikk galt.'}</p>
+                            <p style={{ margin: 0, color: 'var(--danger)', fontSize: 14, lineHeight: 1.5 }}>{contentFixActive.error || 'Noe gikk galt.'}</p>
                             <button
                               type="button"
                               onClick={() => {
@@ -9794,7 +9801,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                                       padding: '10px 12px',
                                       border: `1px solid ${W.border}`,
                                       borderRadius: 10,
-                                      background: '#fff',
+                                      background: 'var(--surface)',
                                       color: W.ink,
                                       fontSize: 14,
                                       lineHeight: 1.65,
@@ -10085,13 +10092,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
                                 {pushState === 'error' && pushError && (
                                   <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{pushError}</p>
+                                    <p style={{ margin: 0, color: 'var(--danger)', fontSize: 13, lineHeight: 1.5 }}>{pushError}</p>
                                   </div>
                                 )}
 
                                 {rollbackState === 'error' && rollbackError && (
                                   <div style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-                                    <p style={{ margin: 0, color: '#8B2E2E', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
+                                    <p style={{ margin: 0, color: 'var(--danger)', fontSize: 13, lineHeight: 1.5 }}>{rollbackError}</p>
                                   </div>
                                 )}
 
@@ -10486,14 +10493,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                             const serp = extractSerpPreview(aiSolution, formData.websiteUrl || clientData?.websiteUrl || '');
                             if (!serp) return null;
                             return (
-                              <div style={{ background: '#fff', border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
+                              <div style={{ background: 'var(--surface)', border: `1px solid ${W.border}`, borderRadius: 14, overflow: 'hidden' }}>
                                 <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
                                   <SearchIcon size={12} style={{ color: W.muted }} />
                                   <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Slik ser du ut på Google</span>
                                 </div>
                                 <div style={{ padding: '14px 16px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                    <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#F0F0EB', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: W.muted }}>
+                                    <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--subtle)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: W.muted }}>
                                       {(serp.host || 's')[0].toUpperCase()}
                                     </span>
                                     <span style={{ fontSize: 12, color: '#202124' }}>{serp.host || 'dinside.no'}</span>
@@ -10643,7 +10650,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseDown={pressDown}
                               onMouseUp={pressReset}
                               onMouseLeave={pressReset}
-                              style={{ background: '#fff', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              style={{ background: 'var(--surface)', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                             >
                               Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
                             </button>
@@ -10779,7 +10786,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             <div key={activeTab} className="space-y-6">
               <header className="flex items-end justify-between flex-wrap gap-3">
                 <div>
-                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: '#1A1A1A', fontFamily: SERIF }}>Sikt-loggen</h1>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>Sikt-loggen</h1>
                   <p className={`text-base mt-3 ${textDim}`}>Historikk over funn, forslag, fikser og varsler.</p>
                 </div>
               </header>
@@ -11260,10 +11267,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           // Redaksjonell serif-display (samme uttrykk som e-postene — docs/design-principles.md)
           const settingsSerif = PORTAL.serif;
           // Handbook-uttrykk — alle verdier hentes fra PORTAL (src/portalTheme.ts), ett kildested.
+          // Tema-bevisst via CSS-variabler (lys=dagens verdier, mørk=override på .sikt-portal).
           const C = {
-            ink: PORTAL.ink, muted: PORTAL.muted, faint: PORTAL.faint, hair: PORTAL.border,
-            green: PORTAL.success, insetBg: PORTAL.insetBg, insetBorder: PORTAL.insetBorder,
-            danger: PORTAL.danger, dangerBg: PORTAL.dangerBg, dangerBorder: 'rgba(180,35,31,0.25)',
+            ink: 'var(--ink)', muted: 'var(--muted)', faint: 'var(--faint)', hair: 'var(--hair)',
+            green: 'var(--green)', insetBg: 'var(--inset)', insetBorder: 'var(--insetbd)',
+            danger: 'var(--danger)', dangerBg: 'var(--dangerbg)', dangerBorder: 'var(--insetbd)',
           };
           const settingsDomain = domainLabel || 'ingen-nettside';
           const profileDisplayFields = [
@@ -11294,16 +11302,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           const sectionCountTheme = 2;
           const planCost = planPrices[activePlanKey];
 
-          const sectionShell = "rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] overflow-hidden";
+          const sectionShell = "rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] overflow-hidden";
           const sectionSummary = "list-none px-5 sm:px-6 py-4 cursor-pointer";
-          const rowShell = "flex items-start justify-between gap-4 py-3.5 border-t border-[#E9E4DA]";
+          const rowShell = "flex items-start justify-between gap-4 py-3.5 border-t border-[color:var(--hair)]";
           // Tonet inset = «aksent-lampen»: gir dybde til en nøkkel-merknad uten å rope (lag-på-lag-lys).
           const Note = ({ tone = 'neutral', children }: { tone?: 'neutral' | 'green' | 'danger'; children: React.ReactNode }) => {
             const s = tone === 'green'
               ? { background: C.insetBg, border: `1px solid ${C.insetBorder}`, color: '#2F5C45' }
               : tone === 'danger'
                 ? { background: C.dangerBg, border: `1px solid ${C.dangerBorder}`, color: C.danger }
-                : { background: '#FAF8F3', border: `1px solid ${C.hair}`, color: C.muted };
+                : { background: 'var(--subtle)', border: `1px solid ${C.hair}`, color: C.muted };
             return <div className="rounded-[11px] px-4 py-3 text-sm" style={{ ...s, lineHeight: 1.6 }}>{children}</div>;
           };
           // Seksjons-tittel med liten aksent-strek (gjentar e-postenes sectionHead-motiv).
@@ -11323,7 +11331,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </header>
               <div className={`${tabFadeInClass} space-y-8`}>
               {/* +S statement-rad: ett kort, tre celler delt av hårstrek (speiler e-postens statRow). */}
-              <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] px-5 py-6 sm:px-8 sm:py-7">
+              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] px-5 py-6 sm:px-8 sm:py-7">
                 <div className="grid grid-cols-1 sm:grid-cols-3">
                   {[
                     { label: 'Plan', value: planNames[activePlanKey], color: C.ink, focal: false },
@@ -11332,7 +11340,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   ].map((cell) => (
                     <div
                       key={cell.label}
-                      className="py-4 first:pt-0 last:pb-0 border-t border-[#E9E4DA] first:border-t-0 sm:py-0 sm:border-t-0 sm:px-6 first:sm:pl-0 last:sm:pr-0 sm:border-l sm:border-[#E9E4DA] first:sm:border-l-0"
+                      className="py-4 first:pt-0 last:pb-0 border-t border-[color:var(--hair)] first:border-t-0 sm:py-0 sm:border-t-0 sm:px-6 first:sm:pl-0 last:sm:pr-0 sm:border-l sm:border-[color:var(--hair)] first:sm:border-l-0"
                     >
                       <p className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: C.faint }}>{cell.label}</p>
                       <p className="mt-2.5 tabular-nums" style={{ color: cell.color, fontFamily: settingsSerif, fontWeight: 700, letterSpacing: '-0.6px', fontSize: cell.focal ? '34px' : '24px', lineHeight: 1.05 }}>{cell.value}</p>
@@ -11354,7 +11362,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                       className="text-[13px] font-medium px-3 py-1.5 rounded-full"
-                      style={{ color: '#1A1A1A', border: '1px solid #E9E4DA', background: '#FFFFFF', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      style={{ color: 'var(--ink)', border: '1px solid var(--hair)', background: 'var(--surface)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                     >
                       {editingSection === 'profile' ? 'Ferdig' : 'Rediger'}
                     </button>
@@ -11374,22 +11382,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     <div className="space-y-4 pt-1">
                       {profileEditFields.map((f) => (
                         <div key={f.key}>
-                          <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>{f.label}</label>
+                          <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>{f.label}</label>
                           <input
                             type="text"
                             value={formData[f.key] ?? ''}
                             onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
                             placeholder={f.placeholder}
-                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                            style={{ color: '#1A1A1A' }}
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                            style={{ color: 'var(--ink)' }}
                           />
                         </div>
                       ))}
                       <div>
-                        <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>
+                        <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>
                           Nettside
                           {urlLocked && (
-                            <span className="ml-2 text-[11px] font-medium px-2 py-0.5 rounded-full border border-[#E9E4DA]" style={{ color: '#8A8578' }}>
+                            <span className="ml-2 text-[11px] font-medium px-2 py-0.5 rounded-full border border-[color:var(--hair)]" style={{ color: 'var(--muted)' }}>
                               låst i {urlDaysLeft} dager
                             </span>
                           )}
@@ -11400,22 +11408,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                           placeholder="https://minbedrift.no"
                           disabled={urlLocked}
-                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                          style={{ color: '#1A1A1A' }}
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                          style={{ color: 'var(--ink)' }}
                         />
-                        <p className="text-xs mt-1.5" style={{ color: '#808080' }}>
+                        <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
                           Du kan endre nettadressen én gang per uke. Etter lagring er den låst i 7 dager.
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Målgruppe</label>
+                        <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Målgruppe</label>
                         <textarea
                           value={formData.targetAudience ?? ''}
                           onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
                           placeholder="Hvem vil du nå?"
                           rows={3}
-                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none resize-none"
-                          style={{ color: '#1A1A1A' }}
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none resize-none"
+                          style={{ color: 'var(--ink)' }}
                         />
                       </div>
                       <div className="flex justify-end gap-2 pt-1">
@@ -11425,8 +11433,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                           onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                          className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
-                          style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                          className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)]"
+                          style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                         >
                           Avbryt
                         </button>
@@ -11437,7 +11445,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                           onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                          className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white inline-flex items-center gap-2 disabled:opacity-70"
+                          className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white inline-flex items-center gap-2 disabled:opacity-70"
                           style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                         >
                           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -11458,18 +11466,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </summary>
                   <div className="px-4 sm:px-6 pb-5 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]">
+                      <div className="rounded-xl border border-[color:var(--hair)] bg-[color:var(--surface)] p-4 flex flex-col min-h-[140px]">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress</p>
+                          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>WordPress</p>
                           {hostIsFullyConnected && (
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#15795A', background: '#E8F1EB' }}>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: 'var(--green)', background: 'var(--inset)' }}>
                               tilkoblet
                             </span>
                           )}
                         </div>
                         {hostIsFullyConnected ? (
                           <>
-                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: '#808080' }}>
+                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: 'var(--muted)' }}>
                               Tilkoblet: {hostConnection?.adminUrl || '—'} som {hostConnection?.notes || '—'}
                             </p>
                             <button
@@ -11479,14 +11487,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               className="mt-4 text-sm text-left"
-                              style={{ color: '#808080', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                              style={{ color: 'var(--muted)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
                               Koble fra
                             </button>
                           </>
                         ) : (
                           <>
-                            <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                            <p className="text-sm mt-3 flex-1" style={{ color: 'var(--muted)' }}>
                               {hostWasLightOnly
                                 ? 'Tidligere registrert uten skrivetilgang. Koble til på nytt med Application Password.'
                                 : 'Koble til for at Sikt kan gjøre endringer direkte på siden din.'}
@@ -11497,7 +11505,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                               style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
                               {hostWasLightOnly ? 'Koble til WordPress (på nytt)' : 'Koble til'}
@@ -11505,18 +11513,18 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           </>
                         )}
                       </div>
-                      <div className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4 flex flex-col min-h-[140px]">
+                      <div className="rounded-xl border border-[color:var(--hair)] bg-[color:var(--surface)] p-4 flex flex-col min-h-[140px]">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Andre plattformer</p>
+                          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Andre plattformer</p>
                           {hostIsAdvisory && (
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: '#15795A', background: '#E8F1EB' }}>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full shrink-0" style={{ color: 'var(--green)', background: 'var(--inset)' }}>
                               tilkoblet
                             </span>
                           )}
                         </div>
                         {hostIsAdvisory ? (
                           <>
-                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: '#808080' }}>
+                            <p className="text-sm mt-3 flex-1 break-words" style={{ color: 'var(--muted)' }}>
                               Rådgiver-modus ({platformLabel(hostConnection?.platform)}): {hostConnection?.adminUrl || '—'}. Du kopierer Sikt-forslag inn selv.
                             </p>
                             <button
@@ -11526,14 +11534,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               className="mt-4 text-sm text-left"
-                              style={{ color: '#808080', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                              style={{ color: 'var(--muted)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
                               Koble fra
                             </button>
                           </>
                         ) : (
                           <>
-                            <p className="text-sm mt-3 flex-1" style={{ color: '#808080' }}>
+                            <p className="text-sm mt-3 flex-1" style={{ color: 'var(--muted)' }}>
                               Shopify, Wix, Squarespace, Webflow, Ghost m.fl. Sikt lager ferdige forslag du limer inn selv.
                             </p>
                             <button
@@ -11542,7 +11550,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                              className="mt-4 rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                               style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
                               Velg plattform
@@ -11576,11 +11584,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       const order: Record<string, number> = { BASIC: 1, STANDARD: 2, PREMIUM: 3 };
                       const type: 'upgrade' | 'downgrade' = order[key] > order[activePlanKey] ? 'upgrade' : 'downgrade';
                       return (
-                        <div key={key} className="rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] p-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.08em]" style={{ color: '#8A8578' }}>{planNames[key]}</p>
-                          <p className="text-xl font-semibold mt-2 tabular-nums" style={{ color: '#1A1A1A' }}>{planPrices[key]}<span className="text-xs font-normal ml-1" style={{ color: '#8A8578' }}>/mnd</span></p>
+                        <div key={key} className="rounded-xl border border-[color:var(--hair)] bg-[color:var(--surface)] p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>{planNames[key]}</p>
+                          <p className="text-xl font-semibold mt-2 tabular-nums" style={{ color: 'var(--ink)' }}>{planPrices[key]}<span className="text-xs font-normal ml-1" style={{ color: 'var(--muted)' }}>/mnd</span></p>
                           {isCurrent ? (
-                            <p className="mt-3 text-xs font-semibold" style={{ color: '#15795A' }}>Aktiv</p>
+                            <p className="mt-3 text-xs font-semibold" style={{ color: 'var(--green)' }}>Aktiv</p>
                           ) : (
                             <button
                               type="button"
@@ -11589,7 +11597,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                               onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                               className="mt-3 text-sm"
-                              style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                              style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                             >
                               {type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'}
                             </button>
@@ -11598,12 +11606,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       );
                     })}
                   </div>
-                  <div className="mt-4 pt-4 border-t border-[#EFEBE2]">
+                  <div className="mt-4 pt-4 border-t border-[color:var(--hair)]">
                     <button
                       type="button"
                       onClick={openCancelModal}
                       className="text-sm font-medium"
-                      style={{ color: '#8A8578', transition: 'color 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      style={{ color: 'var(--muted)', transition: 'color 160ms cubic-bezier(0.23,1,0.32,1)' }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#B4231F'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#8A8578'; }}
                     >
@@ -11623,7 +11631,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   <p className="text-sm" style={{ color: C.muted, lineHeight: 1.6 }}>Vi sender bare det du velger — og du kan endre det når som helst.</p>
 
                   {/* Kunde-styrt rapport-e-post: frekvens, dag, klokkeslett, innhold. */}
-                  <div className="mt-4 rounded-[12px] border border-[#E9E4DA] p-4 sm:p-5">
+                  <div className="mt-4 rounded-[12px] border border-[color:var(--hair)] p-4 sm:p-5">
                     <p className="text-sm font-semibold" style={{ color: C.ink }}>Rapport-e-post</p>
                     <p className="text-xs mt-1" style={{ color: C.muted, lineHeight: 1.6 }}>Hvor ofte, når og hva e-posten skal inneholde. Tidspunkt er norsk tid.</p>
 
@@ -11633,7 +11641,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         <select
                           value={notifPrefs.reportFrequency}
                           onChange={(e) => { const f = e.target.value; patchNotifPrefs({ reportFrequency: f, weeklyReport: f !== 'off' }); }}
-                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
                           style={{ color: C.ink }}
                         >
                           <option value="off">Av</option>
@@ -11651,7 +11659,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           <select
                             value={notifPrefs.reportAnchorDay}
                             onChange={(e) => patchNotifPrefs({ reportAnchorDay: Number(e.target.value) })}
-                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
                             style={{ color: C.ink }}
                           >
                             {[[1,'Mandag'],[2,'Tirsdag'],[3,'Onsdag'],[4,'Torsdag'],[5,'Fredag'],[6,'Lørdag'],[7,'Søndag']].map(([v,l]) => (
@@ -11667,7 +11675,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                           <select
                             value={notifPrefs.reportHour}
                             onChange={(e) => patchNotifPrefs({ reportHour: Number(e.target.value) })}
-                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-white focus:outline-none"
+                            className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
                             style={{ color: C.ink }}
                           >
                             {Array.from({ length: 17 }, (_, i) => 6 + i).map((h) => (
@@ -11692,7 +11700,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     })()}
 
                     {notifPrefs.reportFrequency !== 'off' && (
-                      <div className="mt-4 pt-4 border-t border-[#E9E4DA]">
+                      <div className="mt-4 pt-4 border-t border-[color:var(--hair)]">
                         <p className="text-sm font-semibold" style={{ color: C.ink }}>Hva rapporten inneholder</p>
                         <ul className="mt-1">
                           {([
@@ -11761,36 +11769,39 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   </div>
                 </summary>
                 <div className="px-4 sm:px-6 pb-5">
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setTheme('light')}
-                      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
-                      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                      className="px-5 py-4 rounded-[12px] border text-sm font-medium inline-flex items-center justify-center gap-2"
-                      style={{
-                        borderColor: '#1A1A1A',
-                        background: '#1A1A1A',
-                        color: '#FFFFFF',
-                        transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)',
-                      }}
-                    >
-                      <Sun size={16} /> Lys
-                    </button>
-                    <div
-                      aria-disabled="true"
-                      title="Mørk modus kommer senere"
-                      className="px-5 py-4 rounded-[12px] border text-sm font-medium inline-flex items-center justify-center gap-2"
-                      style={{ borderColor: '#E9E4DA', background: '#FAF8F3', color: '#B3AD9F', cursor: 'not-allowed' }}
-                    >
-                      <Moon size={16} /> Mørk — kommer
-                    </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      ['light', 'Lys', Sun],
+                      ['dark', 'Mørk', Moon],
+                      ['system', 'System', Monitor],
+                    ] as const).map(([val, label, Icon]) => {
+                      const active = (themePref ?? 'system') === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setTheme(val)}
+                          onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
+                          onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                          className="px-3 py-4 rounded-[12px] border text-sm font-medium inline-flex items-center justify-center gap-2"
+                          style={{
+                            borderColor: active ? 'var(--ink)' : 'var(--hair)',
+                            background: active ? 'var(--ink)' : 'var(--surface)',
+                            color: active ? 'var(--surface)' : 'var(--ink)',
+                            transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)',
+                          }}
+                        >
+                          <Icon size={16} /> {label}
+                        </button>
+                      );
+                    })}
                   </div>
+                  <p className="text-xs mt-3" style={{ color: 'var(--muted)' }}>«System» følger enhetens lyse/mørke innstilling automatisk.</p>
                 </div>
               </details>
 
-              <div className="rounded-[14px] border border-[#E9E4DA] bg-[#FFFFFF] p-5 sm:p-6">
+              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <SectionTitle>Vanlige spørsmål</SectionTitle>
                   <button
@@ -11800,7 +11811,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     className="text-[13px] font-medium px-3 py-1.5 rounded-full"
-                    style={{ color: '#1A1A1A', border: '1px solid #E9E4DA', background: '#FFFFFF', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                    style={{ color: 'var(--ink)', border: '1px solid var(--hair)', background: 'var(--surface)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), background 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Åpne
                   </button>
@@ -11838,7 +11849,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
           );
         })()}
 
-        <footer className="mt-12 pt-6 border-t border-[#E9E4DA] text-center text-sm font-['Geist','DM_Sans',sans-serif]" style={{ color: '#8A8578' }}>
+        <footer className="mt-12 pt-6 border-t border-[color:var(--hair)] text-center text-sm font-['Geist','DM_Sans',sans-serif]" style={{ color: 'var(--muted)' }}>
           <p className="inline-flex items-center justify-center gap-2 flex-wrap">
             <span>support@siktseo.com</span>
             <span>·</span>
@@ -11854,10 +11865,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               onClick={() => setShowFaqModal(false)}
               className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
-            <div className="relative w-full max-w-2xl rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] p-6 max-h-[80vh] overflow-y-auto">
+            <div className="relative w-full max-w-2xl rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] p-6 max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Vanlige spørsmål</h3>
-                <button type="button" onClick={() => setShowFaqModal(false)} className="p-1.5 rounded-md" style={{ color: '#808080' }}>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Vanlige spørsmål</h3>
+                <button type="button" onClick={() => setShowFaqModal(false)} className="p-1.5 rounded-md" style={{ color: 'var(--muted)' }}>
                   <X size={16} />
                 </button>
               </div>
@@ -11888,9 +11899,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     a: 'Du kan teste synlighet manuelt i AI-søk nå. Automatisk GEO-sporing lanseres i Q3 2026.',
                   },
                 ].map((item, idx) => (
-                  <div key={idx} className="rounded-lg border border-[#EBEBE6] p-4">
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{item.q}</p>
-                    <p className="text-sm mt-1" style={{ color: '#808080' }}>{item.a}</p>
+                  <div key={idx} className="rounded-lg border border-[color:var(--hair)] p-4">
+                    <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.q}</p>
+                    <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{item.a}</p>
                   </div>
                 ))}
               </div>
@@ -11925,13 +11936,13 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             style={{ transition: 'opacity 200ms ease-out' }}
           />
           <div
-            className="relative w-full max-w-lg rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
             style={{ animation: 'wp-wizard-in 220ms cubic-bezier(0.23,1,0.32,1) forwards' }}
             role="dialog"
             aria-modal="true"
           >
             <header className="flex items-center justify-between mb-4">
-              <p className="text-xs uppercase tracking-[0.12em]" style={{ color: '#808080', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
+              <p className="text-xs uppercase tracking-[0.12em]" style={{ color: 'var(--muted)', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>
                 {connectWizardPlatform === null
                   ? 'Velg plattform'
                   : connectWizardPlatform === 'shopify'
@@ -11947,7 +11958,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 onClick={closeWpWizard}
                 disabled={wpConnecting || wixConnecting}
                 className="p-1.5 rounded-md disabled:opacity-40"
-                style={{ color: '#808080', transition: 'opacity 160ms ease-out' }}
+                style={{ color: 'var(--muted)', transition: 'opacity 160ms ease-out' }}
               >
                 <X size={16} />
               </button>
@@ -11955,8 +11966,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {connectWizardPlatform === null && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Hvilken plattform bruker du?</h3>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Hvilken plattform bruker du?</h3>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   WordPress kobles med skrivetilgang så Sikt fikser automatisk. På andre plattformer lager Sikt ferdige forslag du limer inn selv.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -11972,8 +11983,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     className="text-left p-4 rounded-xl border border-violet-300 bg-violet-50/40 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-500"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
                   >
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>WordPress <span className="text-violet-600">· auto-fiks</span></p>
-                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Sikt pusher endringer direkte til siden</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>WordPress <span className="text-violet-600">· auto-fiks</span></p>
+                    <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>Sikt pusher endringer direkte til siden</p>
                   </button>
                   <button
                     type="button"
@@ -11984,8 +11995,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     className="text-left p-4 rounded-xl border border-violet-300 bg-violet-50/40 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-500"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
                   >
-                    <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>Shopify <span className="text-violet-600">· auto-fiks</span></p>
-                    <p className="text-xs mt-2" style={{ color: '#808080' }}>Sikt oppdaterer SEO via Admin API</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Shopify <span className="text-violet-600">· auto-fiks</span></p>
+                    <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>Sikt oppdaterer SEO via Admin API</p>
                   </button>
                   {ADVISORY_PLATFORMS.map((p) => (
                     <button
@@ -11995,11 +12006,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                       onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                      className="text-left p-4 rounded-xl border border-[#EBEBE6] bg-[#FFFFFF] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]"
+                      className="text-left p-4 rounded-xl border border-[color:var(--hair)] bg-[color:var(--surface)] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[color:var(--ink)]"
                       style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), border-color 160ms ease' }}
                     >
-                      <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{p.label}</p>
-                      <p className="text-xs mt-2" style={{ color: '#808080' }}>{p.hint}</p>
+                      <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
+                      <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>{p.hint}</p>
                     </button>
                   ))}
                 </div>
@@ -12010,8 +12021,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
-                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)]"
+                    style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Avbryt
                   </button>
@@ -12021,12 +12032,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {advisoryPlatform && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til {platformLabel(advisoryPlatform)}</h3>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Koble til {platformLabel(advisoryPlatform)}</h3>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   Lim inn nettadressen din (https). Sikt lager ferdige forslag — meta-titler, beskrivelser, FAQ og mer — som du kopierer inn i {platformLabel(advisoryPlatform)}.
                 </p>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Nettside-URL</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Nettside-URL</label>
                   <input
                     type="url"
                     value={wixSiteUrl}
@@ -12038,17 +12049,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       else setWixSiteUrlError(null);
                     }}
                     placeholder="https://dinside.no"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
                   {wixSiteUrlError ? (
-                    <p className="text-xs mt-1.5" style={{ color: '#c0392b' }}>{wixSiteUrlError}</p>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--danger)' }}>{wixSiteUrlError}</p>
                   ) : (
-                    <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Må starte med https://</p>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>Må starte med https://</p>
                   )}
                 </div>
                 {wixConnectError && (
-                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--navbg)', color: 'var(--danger)', border: '1px solid var(--hair)' }}>
                     {wixConnectError}
                   </div>
                 )}
@@ -12060,8 +12071,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { if (wixConnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
-                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] disabled:opacity-50"
+                    style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Tilbake
                   </button>
@@ -12072,7 +12083,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { if (!wixStepValid || wixConnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     {wixConnecting ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -12084,42 +12095,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {connectWizardPlatform === 'shopify' && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til Shopify</h3>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Koble til Shopify</h3>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   Sikt oppdaterer SEO-titler og beskrivelser automatisk via Shopify Admin API. Lag en «custom app» i Shopify og lim inn tokenet — det tar ett minutt.
                 </p>
-                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: 'var(--ink)' }}>
                   <li>I Shopify-admin: Innstillinger → Apper og salgskanaler → <em>Utvikle apper</em>.</li>
                   <li>Klikk «Opprett app», gi den navnet «Sikt».</li>
-                  <li>Under «Konfigurasjon» → Admin API: gi tilgangene <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>write_products</code> og <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>write_content</code>.</li>
-                  <li>Installer appen, og under «API-legitimasjon» kopier <em>Admin API-tilgangstoken</em> (starter med <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>shpat_</code>) — vises kun én gang.</li>
+                  <li>Under «Konfigurasjon» → Admin API: gi tilgangene <code style={{ background: 'var(--navbg)', padding: '1px 5px', borderRadius: 4 }}>write_products</code> og <code style={{ background: 'var(--navbg)', padding: '1px 5px', borderRadius: 4 }}>write_content</code>.</li>
+                  <li>Installer appen, og under «API-legitimasjon» kopier <em>Admin API-tilgangstoken</em> (starter med <code style={{ background: 'var(--navbg)', padding: '1px 5px', borderRadius: 4 }}>shpat_</code>) — vises kun én gang.</li>
                 </ol>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Shopify-adresse (.myshopify.com)</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Shopify-adresse (.myshopify.com)</label>
                   <input
                     type="text"
                     value={shopDomain}
                     onChange={(e) => setShopDomain(e.target.value)}
                     placeholder="minbutikk.myshopify.com"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
-                  <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Finner du i Shopify under Innstillinger → Domener</p>
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>Finner du i Shopify under Innstillinger → Domener</p>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Admin API-tilgangstoken</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Admin API-tilgangstoken</label>
                   <input
                     type="password"
                     value={shopToken}
                     onChange={(e) => setShopToken(e.target.value)}
                     placeholder="shpat_..."
                     autoComplete="new-password"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
                 </div>
                 {shopConnectError && (
-                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--navbg)', color: 'var(--danger)', border: '1px solid var(--hair)' }}>
                     {shopConnectError}
                   </div>
                 )}
@@ -12128,8 +12139,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     type="button"
                     onClick={() => setConnectWizardPlatform(null)}
                     disabled={shopConnecting}
-                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
-                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] disabled:opacity-50"
+                    style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Tilbake
                   </button>
@@ -12137,7 +12148,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     type="button"
                     onClick={connectShopify}
                     disabled={!shopStepValid || shopConnecting}
-                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     {shopConnecting ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -12149,14 +12160,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {connectWizardPlatform === 'wordpress' && wpWizardStep === 1 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Installer Sikt-tillegget</h3>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Installer Sikt-tillegget</h3>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   Sikt fikser siden din via et lite, trygt WordPress-tillegg. Last det ned og installer det først — det tar ett minutt.
                 </p>
                 <a
                   href="/sikt-connector.zip"
                   download
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                   style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   onMouseDown={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(0.97)'; }}
                   onMouseUp={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)'; }}
@@ -12164,27 +12175,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 >
                   <Download size={15} /> Last ned Sikt Connector
                 </a>
-                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: 'var(--ink)' }}>
                   <li>I WordPress-admin: gå til Tillegg → Legg til nytt → Last opp tillegg.</li>
-                  <li>Velg filen <code style={{ background: '#F5F5F0', padding: '1px 5px', borderRadius: 4 }}>sikt-connector.zip</code> du nettopp lastet ned.</li>
+                  <li>Velg filen <code style={{ background: 'var(--navbg)', padding: '1px 5px', borderRadius: 4 }}>sikt-connector.zip</code> du nettopp lastet ned.</li>
                   <li>Klikk &quot;Installer nå&quot;, deretter &quot;Aktiver&quot;.</li>
                 </ol>
-                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#808080' }}>
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--navbg)', color: 'var(--muted)' }}>
                   Allerede installert tidligere? Last ned på nytt og velg «Erstatt» for å få siste versjon — nye funksjoner som schema, alt-tekst og llms.txt krever det.
                 </div>
 
-                <div className="pt-1 border-t" style={{ borderColor: '#EBEBE6' }} />
-                <h3 className="text-lg font-semibold pt-1" style={{ color: '#1A1A1A' }}>Lag et Application Password</h3>
-                <p className="text-sm" style={{ color: '#808080' }}>
+                <div className="pt-1 border-t" style={{ borderColor: 'var(--hair)' }} />
+                <h3 className="text-lg font-semibold pt-1" style={{ color: 'var(--ink)' }}>Lag et Application Password</h3>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   Sikt trenger et eget passord for å gjøre endringer på siden din. Det er trygt, du kan trekke det tilbake når som helst, og det erstatter ikke vanlig innlogging.
                 </p>
-                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: '#1A1A1A' }}>
+                <ol className="text-sm space-y-2 list-decimal list-inside" style={{ color: 'var(--ink)' }}>
                   <li>Gå til Brukere → Profil i WordPress-admin.</li>
                   <li>Bla ned til &quot;Application Passwords&quot;.</li>
                   <li>Skriv &quot;Sikt&quot; som navn, klikk &quot;Add New&quot;.</li>
                   <li>Kopier den 24-tegns koden som vises — den vises kun én gang.</li>
                 </ol>
-                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#F5F5F0', color: '#1A1A1A' }}>
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--navbg)', color: 'var(--ink)' }}>
                   Hvis du ikke ser Application Passwords-seksjonen, kan WordPress-versjonen din være for gammel. Du må ha WordPress 5.6 eller nyere.
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -12194,8 +12205,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
-                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)]"
+                    style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Avbryt
                   </button>
@@ -12205,7 +12216,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Jeg har koden, fortsett →
@@ -12216,9 +12227,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
 
             {connectWizardPlatform === 'wordpress' && wpWizardStep === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold" style={{ color: '#1A1A1A' }}>Koble til WordPress</h3>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>Koble til WordPress</h3>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>WordPress-adresse</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>WordPress-adresse</label>
                   <input
                     type="url"
                     value={wpSiteUrl}
@@ -12230,39 +12241,39 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                       else setWpSiteUrlError(null);
                     }}
                     placeholder="https://dinside.no"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
                   {wpSiteUrlError ? (
-                    <p className="text-xs mt-1.5" style={{ color: '#c0392b' }}>{wpSiteUrlError}</p>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--danger)' }}>{wpSiteUrlError}</p>
                   ) : (
-                    <p className="text-xs mt-1.5" style={{ color: '#808080' }}>Må starte med https://</p>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>Må starte med https://</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Brukernavn</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Brukernavn</label>
                   <input
                     type="text"
                     value={wpUsername}
                     onChange={(e) => setWpUsername(e.target.value)}
                     placeholder="ditt-wp-brukernavn"
                     autoComplete="username"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>Application Password</label>
+                  <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Application Password</label>
                   <input
                     type="password"
                     value={wpAppPassword}
                     onChange={(e) => setWpAppPassword(e.target.value)}
                     placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
                     autoComplete="new-password"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none"
-                    style={{ color: '#1A1A1A' }}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                    style={{ color: 'var(--ink)' }}
                   />
-                  <p className="text-xs mt-1.5" style={{ color: '#808080' }}>
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
                     Lim inn akkurat slik WordPress viste den, med mellomrom
                   </p>
                 </div>
@@ -12273,8 +12284,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF]"
-                    style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)]"
+                    style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Tilbake
                   </button>
@@ -12285,7 +12296,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     onMouseDown={(e) => { if (!wpStep2Valid) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                     onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     Koble til
@@ -12299,16 +12310,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 {wpConnecting && (
                   <div className="flex flex-col items-center py-8 gap-3">
                     <Loader2 size={28} className="animate-spin" style={{ color: '#52A447' }} />
-                    <p className="text-sm text-center" style={{ color: '#808080' }}>
+                    <p className="text-sm text-center" style={{ color: 'var(--muted)' }}>
                       Verifiserer mot WordPress-siden din — dette tar opp til 10 sekunder.
                     </p>
                   </div>
                 )}
                 {!wpConnecting && wpConnectResult && (
                   <div className="space-y-4">
-                    <div className="rounded-xl px-4 py-4" style={{ background: '#F5F5F0' }}>
+                    <div className="rounded-xl px-4 py-4" style={{ background: 'var(--navbg)' }}>
                       <p className="text-lg font-semibold" style={{ color: '#52A447' }}>Tilkoblet ✓</p>
-                      <p className="text-sm mt-2" style={{ color: '#808080' }}>
+                      <p className="text-sm mt-2" style={{ color: 'var(--muted)' }}>
                         {wpConnectResult.site} · {wpConnectResult.wpUser}
                       </p>
                     </div>
@@ -12319,7 +12330,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                         onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                        className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                         style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                       >
                         Ferdig
@@ -12329,7 +12340,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 )}
                 {!wpConnecting && wpConnectError && (
                   <div className="space-y-4">
-                    <div className="rounded-xl px-4 py-4 text-sm" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+                    <div className="rounded-xl px-4 py-4 text-sm" style={{ background: 'var(--navbg)', color: 'var(--danger)', border: '1px solid var(--hair)' }}>
                       {wpConnectError}
                     </div>
                     <div className="flex justify-end">
@@ -12339,7 +12350,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                         onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                        className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                        className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                         style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
                       >
                         Prøv igjen
@@ -12362,22 +12373,22 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             disabled={deletingAccount}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-semibold mb-2" style={{ color: '#8B2E2E' }}>Slett konto permanent?</h3>
-            <p className="text-sm mb-3" style={{ color: '#808080', lineHeight: 1.55 }}>
+          <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--danger)' }}>Slett konto permanent?</h3>
+            <p className="text-sm mb-3" style={{ color: 'var(--muted)', lineHeight: 1.55 }}>
               Dette sletter følgende permanent og kan ikke angres:
             </p>
-            <ul className="text-sm mb-3 space-y-1.5 list-disc pl-5" style={{ color: '#1A1A1A', lineHeight: 1.5 }}>
+            <ul className="text-sm mb-3 space-y-1.5 list-disc pl-5" style={{ color: 'var(--ink)', lineHeight: 1.5 }}>
               <li>WordPress-tilkoblinger</li>
               <li>Skann og analyser</li>
               <li>Konkurrentdata</li>
               <li>Søkeord og rangeringer</li>
               <li>Selve kontoen din</li>
             </ul>
-            <p className="text-sm mb-4 font-semibold" style={{ color: '#8B2E2E', lineHeight: 1.55 }}>
+            <p className="text-sm mb-4 font-semibold" style={{ color: 'var(--danger)', lineHeight: 1.55 }}>
               Sletting kansellerer IKKE abonnementet ditt. Si opp abonnementet separat for å unngå videre trekk.
             </p>
-            <label className="block text-sm mb-1.5" style={{ color: '#808080' }}>
+            <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>
               Skriv SLETT for å bekrefte
             </label>
             <input
@@ -12387,11 +12398,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               autoComplete="off"
               disabled={deletingAccount}
               placeholder="SLETT"
-              className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#EBEBE6] bg-[#FFFFFF] focus:outline-none disabled:opacity-60"
-              style={{ color: '#1A1A1A', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}
+              className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none disabled:opacity-60"
+              style={{ color: 'var(--ink)', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}
             />
             {deleteAccountError && (
-              <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid rgba(192,57,43,0.25)' }}>
+              <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: 'var(--navbg)', color: 'var(--danger)', border: '1px solid rgba(192,57,43,0.25)' }}>
                 {deleteAccountError}
               </div>
             )}
@@ -12403,8 +12414,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 onMouseDown={(e) => { if (deletingAccount) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
-                style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] disabled:opacity-50"
+                style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
               >
                 Avbryt
               </button>
@@ -12435,11 +12446,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             disabled={cancelSubmitting}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-[#E9E4DA] bg-[#FFFFFF] shadow-2xl p-6 max-h-[90vh] overflow-y-auto font-['Geist','DM_Sans',sans-serif]">
+          <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 max-h-[90vh] overflow-y-auto font-['Geist','DM_Sans',sans-serif]">
             {!cancelDone ? (
               <>
-                <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Avslutt abonnement</h3>
-                <p className="text-sm mb-4" style={{ color: '#5C574C', lineHeight: 1.55 }}>
+                <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Avslutt abonnement</h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--ink)', lineHeight: 1.55 }}>
                   Ingen bindingstid — du beholder tilgang ut perioden du har betalt for. Før du går: hva er hovedgrunnen? Det hjelper oss å bli bedre.
                 </p>
                 <div className="space-y-1.5 mb-4">
@@ -12461,7 +12472,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                         onChange={() => { setCancelReason(r.id); setCancelError(null); }}
                         className="accent-[#1A1A1A]"
                       />
-                      <span className="text-sm" style={{ color: '#1A1A1A' }}>{r.label}</span>
+                      <span className="text-sm" style={{ color: 'var(--ink)' }}>{r.label}</span>
                     </label>
                   ))}
                 </div>
@@ -12470,11 +12481,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                   onChange={(e) => setCancelComment(e.target.value)}
                   placeholder="Vil du si mer? (valgfritt)"
                   rows={3}
-                  className="w-full rounded-lg px-3 py-2.5 text-sm border border-[#E9E4DA] bg-[#FFFFFF] focus:outline-none resize-none"
-                  style={{ color: '#1A1A1A' }}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none resize-none"
+                  style={{ color: 'var(--ink)' }}
                 />
                 {cancelError && (
-                  <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: '#FBECEB', color: '#B4231F', border: '1px solid rgba(180,35,31,0.25)' }}>
+                  <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: 'var(--dangerbg)', color: 'var(--danger)', border: '1px solid rgba(180,35,31,0.25)' }}>
                     {cancelError}
                   </div>
                 )}
@@ -12483,8 +12494,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                     type="button"
                     onClick={closeCancelModal}
                     disabled={cancelSubmitting}
-                    className="rounded-full px-4 py-2 text-sm border border-[#E9E4DA] bg-[#FFFFFF] disabled:opacity-50"
-                    style={{ color: '#1A1A1A' }}
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] disabled:opacity-50"
+                    style={{ color: 'var(--ink)' }}
                   >
                     Behold abonnementet
                   </button>
@@ -12502,17 +12513,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
               </>
             ) : (
               <>
-                <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>Takk — vi har registrert det</h3>
-                <p className="text-sm mb-4" style={{ color: '#5C574C', lineHeight: 1.55 }}>
+                <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Takk — vi har registrert det</h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--ink)', lineHeight: 1.55 }}>
                   Vi har lagret tilbakemeldingen din. For å stoppe videre trekk fullfører vi oppsigelsen i betalingsløsningen — skriv til
-                  {' '}<a href="mailto:support@siktseo.com?subject=Avslutt%20abonnement" className="underline" style={{ color: '#1A1A1A' }}>support@siktseo.com</a>{' '}
+                  {' '}<a href="mailto:support@siktseo.com?subject=Avslutt%20abonnement" className="underline" style={{ color: 'var(--ink)' }}>support@siktseo.com</a>{' '}
                   så bekrefter vi med en gang. Du beholder tilgang ut perioden du har betalt for.
                 </p>
                 <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={() => setShowCancelModal(false)}
-                    className="rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                    className="rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white"
                   >
                     Lukk
                   </button>
@@ -12532,23 +12543,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             disabled={isDisconnecting}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-[#EBEBE6] bg-[#FFFFFF] shadow-2xl p-6">
-            <h3 className="text-base font-semibold mb-2" style={{ color: '#1A1A1A' }}>
+          <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6">
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>
               {hostIsAdvisory ? `Koble fra ${platformLabel(hostConnection?.platform)}?` : 'Koble fra WordPress?'}
             </h3>
-            <p className="text-sm" style={{ color: '#808080' }}>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
               {hostIsAdvisory
                 ? 'Sikt husker ikke lenger plattformen din. Du kan koble til på nytt når som helst.'
                 : 'Sikt kan ikke lenger gjøre endringer på siden din. Du kan koble til på nytt når som helst.'}
             </p>
             {!hostIsAdvisory && (
-              <p className="text-sm mt-3 mb-4" style={{ color: '#808080' }}>
+              <p className="text-sm mt-3 mb-4" style={{ color: 'var(--muted)' }}>
                 Tips: Application Password-et i WordPress er fortsatt aktivt etter at du kobler fra her. Hvis du vil fjerne det helt, gå til Brukere → Profil → Application Passwords i WordPress og klikk Revoke.
               </p>
             )}
             {hostIsAdvisory && <div className="mb-4" />}
             {disconnectError && (
-              <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: '#F5F5F0', color: '#c0392b', border: '1px solid #EBEBE6' }}>
+              <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: 'var(--navbg)', color: 'var(--danger)', border: '1px solid var(--hair)' }}>
                 {disconnectError}
               </div>
             )}
@@ -12560,8 +12571,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                className="rounded-full px-4 py-2 text-sm border border-[#EBEBE6] bg-[#FFFFFF] disabled:opacity-50"
-                style={{ color: '#1A1A1A', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                className="rounded-full px-4 py-2 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] disabled:opacity-50"
+                style={{ color: 'var(--ink)', transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
               >
                 Avbryt
               </button>
@@ -12572,7 +12583,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
                 onMouseDown={(e) => { if (isDisconnecting) return; (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                className={`rounded-full px-4 py-2 text-sm border border-[#1A1A1A] bg-[#1A1A1A] text-white inline-flex items-center gap-2${isDisconnecting ? ' opacity-50 cursor-not-allowed' : ''}`}
+                className={`rounded-full px-4 py-2 text-sm border border-[color:var(--ink)] bg-[color:var(--btn-bg)] text-white inline-flex items-center gap-2${isDisconnecting ? ' opacity-50 cursor-not-allowed' : ''}`}
                 style={{ transition: 'transform 140ms cubic-bezier(0.23,1,0.32,1), opacity 160ms cubic-bezier(0.23,1,0.32,1)' }}
               >
                 {isDisconnecting ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -12594,7 +12605,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, setTheme, 
             onClick={() => !switchingPlan && setPlanChangeTarget(null)}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
           />
-          <div className={`relative w-full max-w-md rounded-2xl ${isLight ? 'bg-white' : 'bg-slate-900'} border ${divider} shadow-2xl p-6`}>
+          <div className={`relative w-full max-w-md rounded-2xl ${isLight ? 'bg-[color:var(--surface)]' : 'bg-slate-900'} border ${divider} shadow-2xl p-6`}>
             <h3 className={`text-base font-semibold ${textMain} mb-2`}>
               {planChangeTarget.type === 'upgrade' ? 'Oppgrader' : 'Nedgrader'} til {planChangeTarget.name}?
             </h3>
@@ -12746,11 +12757,11 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
   const canProceed = verified && sameAccount;
 
   return (
-    <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
-      <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2">
+    <div className="w-full max-w-lg bg-[color:var(--surface)] rounded-2xl shadow-xl p-8">
+      <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
         Før du kobler til Google
       </h2>
-      <p className="text-[#808080] mb-6">
+      <p className="text-[color:var(--muted)] mb-6">
         For at Sikt skal kunne hente søkeorddata for nettsiden din, må disse to tingene være på plass:
       </p>
 
@@ -12759,24 +12770,24 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
         {/* Punkt 1 */}
         <div
           onClick={() => setVerified(!verified)}
-          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#EBEBE6] hover:border-[#808080] cursor-pointer transition-colors"
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[color:var(--hair)] hover:border-[color:var(--muted)] cursor-pointer transition-colors"
         >
           <div className="pt-0.5">
             {verified ? (
-              <CheckCircle2 className="w-5 h-5 text-[#1A1A1A]" />
+              <CheckCircle2 className="w-5 h-5 text-[color:var(--ink)]" />
             ) : (
-              <Circle className="w-5 h-5 text-[#808080]" />
+              <Circle className="w-5 h-5 text-[color:var(--muted)]" />
             )}
           </div>
           <div className="flex-1">
-            <p className="font-medium text-[#1A1A1A] mb-1">
+            <p className="font-medium text-[color:var(--ink)] mb-1">
               Jeg har verifisert nettsiden min i Google Search Console
             </p>
             <a
               href="https://support.google.com/webmasters/answer/9008080"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-[#1A1A1A] hover:text-[#1A1A1A] inline-flex items-center gap-1"
+              className="text-sm text-[color:var(--ink)] hover:text-[color:var(--ink)] inline-flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               Har du ikke gjort det ennå? Slik gjør du det
@@ -12788,20 +12799,20 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
         {/* Punkt 2 */}
         <div
           onClick={() => setSameAccount(!sameAccount)}
-          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#EBEBE6] hover:border-[#808080] cursor-pointer transition-colors"
+          className="flex items-start gap-3 p-4 rounded-lg border-2 border-[color:var(--hair)] hover:border-[color:var(--muted)] cursor-pointer transition-colors"
         >
           <div className="pt-0.5">
             {sameAccount ? (
-              <CheckCircle2 className="w-5 h-5 text-[#1A1A1A]" />
+              <CheckCircle2 className="w-5 h-5 text-[color:var(--ink)]" />
             ) : (
-              <Circle className="w-5 h-5 text-[#808080]" />
+              <Circle className="w-5 h-5 text-[color:var(--muted)]" />
             )}
           </div>
           <div className="flex-1">
-            <p className="font-medium text-[#1A1A1A] mb-1">
+            <p className="font-medium text-[color:var(--ink)] mb-1">
               Jeg vil koble til med samme Google-konto som eier nettsiden
             </p>
-            <p className="text-sm text-[#808080]">
+            <p className="text-sm text-[color:var(--muted)]">
               Hvis nettsiden er verifisert med jobbkonto, logg inn med jobbkonto.
             </p>
           </div>
@@ -12816,7 +12827,7 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
           className={`w-full py-3 px-4 rounded-lg font-semibold transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] disabled:active:scale-100 ${
             canProceed
               ? 'bg-[#52A447] hover:bg-violet-600 text-white'
-              : 'bg-[#EBEBE6] text-[#808080] cursor-not-allowed'
+              : 'bg-[color:var(--subtle)] text-[color:var(--muted)] cursor-not-allowed'
           }`}
         >
           {canProceed
@@ -12827,7 +12838,7 @@ const GscPreCheck = ({ onConfirm, onCancel, theme }: {
 
         <button
           onClick={onCancel}
-          className="w-full py-2 text-sm text-[#808080] transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:scale-[0.98]"
+          className="w-full py-2 text-sm text-[color:var(--muted)] transition-[color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[color:var(--ink)] active:scale-[0.98]"
         >
           Hopp over for nå — jeg gjør dette senere
         </button>

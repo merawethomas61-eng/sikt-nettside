@@ -4255,7 +4255,33 @@ function App() {
   }, [isPaymentSuccess]);
 
   // --- TEMA STATE ---
-  const [theme, setTheme] = useState<'dark' | 'light'>('light');
+  // Brukeren velger en PREFERANSE (lys/mørk/system). 'system' følger enhetens
+  // OS-innstilling (prefers-color-scheme) og reagerer live når den endres.
+  // `theme` (resolved) er den faktiske lys/mørk som UI-et bruker.
+  type ThemePref = 'light' | 'dark' | 'system';
+  const [themePref, setThemePref] = useState<ThemePref>(() => {
+    try {
+      const v = localStorage.getItem('sikt_theme');
+      if (v === 'light' || v === 'dark' || v === 'system') return v;
+    } catch { /* ignore */ }
+    return 'system';
+  });
+  const [systemDark, setSystemDark] = useState<boolean>(() =>
+    typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+
+  const theme: 'dark' | 'light' = themePref === 'system' ? (systemDark ? 'dark' : 'light') : themePref;
+  const setTheme = (t: ThemePref) => {
+    setThemePref(t);
+    try { localStorage.setItem('sikt_theme', t); } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -4763,6 +4789,7 @@ function App() {
           user={user}
           onLogout={handleLogout}
           theme={theme}
+          themePref={themePref}
           setTheme={setTheme}
           setView={setView}
           selectedPlan={selectedPlan}

@@ -297,7 +297,7 @@ const PeriodSwitch = ({
     className={`inline-flex gap-0.5 rounded-[9px] p-0.5 ${
       dark
         ? 'border border-white/15 bg-white/[0.06]'
-        : 'border border-[#E9E4DA] bg-[#F2EFE8]'
+        : 'border border-[color:var(--hair)] bg-[color:var(--subtle)]'
     }`}
   >
     {periodOptions.map((o) => (
@@ -311,8 +311,8 @@ const PeriodSwitch = ({
               ? 'bg-white/15 text-white'
               : 'text-white/45 hover:text-white/75'
             : value === o.value
-              ? 'bg-white text-[#1A1A1A] shadow-[0_1px_2px_rgba(26,24,18,0.07)]'
-              : 'text-[#8A8578] hover:text-[#5C574C]'
+              ? 'bg-white text-[color:var(--ink)] shadow-[0_1px_2px_rgba(26,24,18,0.07)]'
+              : 'text-[color:var(--muted)] hover:text-[color:var(--ink)]'
         }`}
       >
         {o.label}
@@ -347,9 +347,9 @@ const ScoreCard = ({
         : 'Ikke målt ennå';
 
   return (
-  <div className="score-card rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+  <div className="score-card rounded-[14px] border border-[color:var(--hair)] bg-white p-6">
     <div className="flex items-center justify-between gap-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">
         {label}
       </p>
       <PeriodSwitch value={period} onChange={setPeriod} />
@@ -358,16 +358,16 @@ const ScoreCard = ({
     <div className="mb-3 mt-5">
       {score != null ? (
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[34px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
+          <span className="text-[34px] font-semibold leading-none tracking-[-0.04em] text-[color:var(--ink)] tabular-nums">
             {score}
           </span>
-          <span className="text-base font-normal text-[#B3AD9F]">/100</span>
+          <span className="text-base font-normal text-[color:var(--faint)]">/100</span>
           {delta != null && delta !== 0 && (
             <span
               className={`ml-2 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
                 delta > 0
-                  ? 'bg-[#E8F1EB] text-[#15795A]'
-                  : 'bg-[#FBECEB] text-[#B4231F]'
+                  ? 'bg-[color:var(--inset)] text-[color:var(--green)]'
+                  : 'bg-[color:var(--dangerbg)] text-[color:var(--danger)]'
               }`}
             >
               {delta > 0 ? '↑' : '↓'}{Math.abs(delta)}
@@ -375,7 +375,7 @@ const ScoreCard = ({
           )}
         </div>
       ) : (
-        <p className="text-[13px] font-medium leading-snug text-[#8A8578]">
+        <p className="text-[13px] font-medium leading-snug text-[color:var(--muted)]">
           {emptyScoreCopy}
         </p>
       )}
@@ -394,7 +394,7 @@ const ScoreCard = ({
             <XAxis dataKey="label" hide />
             <YAxis hide domain={[0, 100]} />
             <Tooltip
-              cursor={{ stroke: '#8A8578', strokeWidth: 1, strokeDasharray: '3 3' }}
+              cursor={{ stroke: 'var(--muted)', strokeWidth: 1, strokeDasharray: '3 3' }}
               contentStyle={chartTooltipStyle}
               formatter={(v: any) => [v, 'Score']}
             />
@@ -410,13 +410,13 @@ const ScoreCard = ({
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-[10px] bg-[#FAF8F3] text-[10px] text-[#B3AD9F]">
+        <div className="flex h-full items-center justify-center rounded-[10px] bg-[color:var(--subtle)] text-[10px] text-[color:var(--faint)]">
           Kjør en analyse for å se data
         </div>
       )}
     </div>
 
-    <p className="mt-2.5 text-[10px] font-medium text-[#B3AD9F]">
+    <p className="mt-2.5 text-[10px] font-medium text-[color:var(--faint)]">
       {data.length > 0 ? `${data.length} målinger · siste ${data.length > 1 ? `${data.length} analyser` : 'analyse'}` : 'Ingen data ennå'}
     </p>
   </div>
@@ -554,9 +554,9 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   if (isAnalyzing && !analysisResults) {
     return (
       <div className="flex min-h-[420px] w-full items-center justify-center font-['Geist','DM_Sans',sans-serif]">
-        <div className="inline-flex items-center gap-3 rounded-[12px] border border-[#E9E4DA] bg-white px-6 py-4">
-          <Loader2 size={18} className="animate-spin text-[#1A1A1A]" />
-          <span className="text-sm text-[#5C574C]">
+        <div className="inline-flex items-center gap-3 rounded-[12px] border border-[color:var(--hair)] bg-white px-6 py-4">
+          <Loader2 size={18} className="animate-spin text-[color:var(--ink)]" />
+          <span className="text-sm text-[color:var(--ink)]">
             Henter dashboard-data…
           </span>
         </div>
@@ -566,7 +566,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
-    <div className="flex w-full flex-col gap-8 font-['Geist','DM_Sans',sans-serif] text-[#1A1A1A]">
+    <div className="flex w-full flex-col gap-8 font-['Geist','DM_Sans',sans-serif] text-[color:var(--ink)]">
       {/* Emil Kowalski: stagger entry + custom easing CSS */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes dashFadeIn {
@@ -648,16 +648,16 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       `}} />
       {/* ── Toolbar: meta + primær handling ─────────────────────────── */}
       <div className="dash-stagger dash-stagger-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[13px] text-[#8A8578] tabular-nums">
+        <p className="text-[13px] text-[color:var(--muted)] tabular-nums">
           Siste analyse:{' '}
-          <span className="font-medium text-[#5C574C]">{formatLastAnalysis(latestAt)}</span>
+          <span className="font-medium text-[color:var(--ink)]">{formatLastAnalysis(latestAt)}</span>
           <span className="mx-1.5 text-[#D8D2C5]">·</span>
           {scoreHistory.length} målinger i historikk
         </p>
         <button
           type="button"
           onClick={onRunAnalysis}
-          className="cta-btn inline-flex shrink-0 items-center gap-2 rounded-[10px] bg-[#1A1A1A] px-4 py-2.5 text-[13px] font-medium text-white"
+          className="cta-btn inline-flex shrink-0 items-center gap-2 rounded-[10px] bg-[color:var(--btn-bg)] px-4 py-2.5 text-[13px] font-medium text-white"
         >
           <RefreshCw size={13} />
           Kjør ny analyse
@@ -665,27 +665,27 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* ── SAMLET SCORE (primært kort) ─────────────────────────────── */}
-      <section className="dash-stagger dash-stagger-2 rounded-[16px] border border-[#E9E4DA] bg-white px-6 py-7 shadow-[0_1px_2px_rgba(26,24,18,0.03),0_18px_40px_-28px_rgba(26,24,18,0.22)]">
+      <section className="dash-stagger dash-stagger-2 rounded-[16px] border border-[color:var(--hair)] bg-white px-6 py-7 shadow-[0_1px_2px_rgba(26,24,18,0.03),0_18px_40px_-28px_rgba(26,24,18,0.22)]">
         <div className="flex min-h-[118px] flex-col gap-6 md:flex-row md:items-center md:gap-0">
           {/* Left: score */}
           <div className="shrink-0 md:w-[min(100%,320px)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8A8578]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
               Samlet score
             </p>
             {combinedScore != null ? (
               <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
-                <span className="text-[76px] font-semibold leading-[0.82] tracking-[-0.055em] text-[#1A1A1A] tabular-nums">
+                <span className="text-[76px] font-semibold leading-[0.82] tracking-[-0.055em] text-[color:var(--ink)] tabular-nums">
                   {combinedScore}
                 </span>
-                <span className="pb-[10px] text-[20px] font-normal text-[#B3AD9F]">
+                <span className="pb-[10px] text-[20px] font-normal text-[color:var(--faint)]">
                   /100
                 </span>
                 {weekDelta != null && weekDelta !== 0 && (
                   <span
                     className={`mb-[14px] inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
                       weekDelta >= 0
-                        ? 'bg-[#E8F1EB] text-[#15795A]'
-                        : 'bg-[#FBECEB] text-[#B4231F]'
+                        ? 'bg-[color:var(--inset)] text-[color:var(--green)]'
+                        : 'bg-[color:var(--dangerbg)] text-[color:var(--danger)]'
                     }`}
                   >
                     <span aria-hidden>{weekDelta >= 0 ? '↑' : '↓'}</span>
@@ -696,15 +696,15 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               </div>
             ) : (
               <div className="mt-3 pr-2">
-                <p className="text-[15px] font-medium leading-relaxed text-[#1A1A1A]">
+                <p className="text-[15px] font-medium leading-relaxed text-[color:var(--ink)]">
                   Kjør din første analyse — teknisk score er klar på ~60 sekunder.
                 </p>
-                <p className="mt-2 text-[12px] leading-relaxed text-[#8A8578]">
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--muted)]">
                   Bruk «Kjør ny analyse» over for å komme i gang.
                 </p>
               </div>
             )}
-            <p className="mt-3 text-[11px] font-medium leading-snug text-[#8A8578]">
+            <p className="mt-3 text-[11px] font-medium leading-snug text-[color:var(--muted)]">
               {combinedScore != null ? (
                 <>
                   Basert på Lighthouse-teknisk · siste kjøring{' '}
@@ -717,14 +717,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
 
           <div
-            className="hidden h-[88px] w-px shrink-0 bg-[#E9E4DA] md:mx-6 md:block md:self-center"
+            className="hidden h-[88px] w-px shrink-0 bg-[color:var(--subtle)] md:mx-6 md:block md:self-center"
             aria-hidden
           />
 
           {/* Right: trend + chart + period (én horisontal rad fra md+) */}
           <div className="flex min-w-0 flex-1 flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-5">
             <div className="w-full min-w-0 md:flex-1">
-              <p className="mb-2.5 text-[12px] font-medium text-[#8A8578]">
+              <p className="mb-2.5 text-[12px] font-medium text-[color:var(--muted)]">
                 Trend siste {allTrendData.length} målinger
               </p>
               <div className="h-[84px] w-full">
@@ -742,7 +742,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                       </defs>
                       <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 9, fill: '#B3AD9F' }}
+                        tick={{ fontSize: 9, fill: 'var(--faint)' }}
                         axisLine={false}
                         tickLine={false}
                         interval="preserveStartEnd"
@@ -751,7 +751,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                       />
                       <YAxis hide domain={[0, 100]} />
                       <Tooltip
-                        cursor={{ stroke: '#8A8578', strokeWidth: 1, strokeDasharray: '3 3' }}
+                        cursor={{ stroke: 'var(--muted)', strokeWidth: 1, strokeDasharray: '3 3' }}
                         contentStyle={chartTooltipStyle}
                         formatter={(v: any) => [v, 'Score']}
                       />
@@ -767,7 +767,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-[13px] text-[#B3AD9F]">
+                  <div className="flex h-full items-center justify-center text-[13px] text-[color:var(--faint)]">
                     Kjør en analyse for å se data
                   </div>
                 )}
@@ -805,14 +805,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         />
 
         {/* Search Console */}
-        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+        <div className="rounded-[14px] border border-[color:var(--hair)] bg-white p-6">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-[#8A8578]">
+            <p className="text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-[color:var(--muted)]">
               Search
               <br />
               Console
             </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#8A8578]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hair)] bg-[color:var(--subtle)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--muted)]">
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
                   gscConnected ? 'bg-[#2E9E6B]' : 'bg-[#CFC9BB]'
@@ -824,17 +824,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {gscConnected ? (
             <>
-              <p className="mt-4 text-[11px] font-medium text-[#B3AD9F]">
+              <p className="mt-4 text-[11px] font-medium text-[color:var(--faint)]">
                 Klikk · 28d
               </p>
-              <p className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums">
+              <p className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.04em] text-[color:var(--ink)] tabular-nums">
                 {formatNumber(clicks)}
               </p>
-              <p className="mt-2 text-xs text-[#8A8578] tabular-nums">
+              <p className="mt-2 text-xs text-[color:var(--muted)] tabular-nums">
                 {formatNumber(impressions)} visninger
               </p>
               {clicks > 0 && (
-                <p className="mt-3 inline-flex items-center rounded-full bg-[#E8F1EB] px-2.5 py-1 text-[11px] font-semibold text-[#15795A] tabular-nums">
+                <p className="mt-3 inline-flex items-center rounded-full bg-[color:var(--inset)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--green)] tabular-nums">
                   ~{formatNumber(clicks * 8)} kr/mnd verdi
                 </p>
               )}
@@ -843,7 +843,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('settings')}
-              className="gsc-btn mt-5 text-[13px] font-medium text-[#5C574C]"
+              className="gsc-btn mt-5 text-[13px] font-medium text-[color:var(--ink)]"
             >
               Koble til GSC →
             </button>
@@ -851,17 +851,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* GEO — AI-synlighet */}
-        <div className="rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+        <div className="rounded-[14px] border border-[color:var(--hair)] bg-white p-6">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8578]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">
               GEO — AI-synlighet
             </p>
             {geo && geo.total > 0 ? (
-              <span className="inline-flex items-center rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#5C574C]">
+              <span className="inline-flex items-center rounded-full border border-[color:var(--hair)] bg-[color:var(--subtle)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--ink)]">
                 Denne uken
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-1 text-[11px] font-medium text-[#B3AD9F]">
+              <span className="inline-flex items-center rounded-full border border-[color:var(--hair)] bg-[color:var(--subtle)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--faint)]">
                 Venter
               </span>
             )}
@@ -869,10 +869,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           {geo && geo.total > 0 ? (
             <>
-              <p className="mt-5 text-[30px] font-semibold leading-none text-[#1A1A1A] tabular-nums">
-                {geo.mentioned}<span className="text-[#B3AD9F]">/{geo.total}</span>
+              <p className="mt-5 text-[30px] font-semibold leading-none text-[color:var(--ink)] tabular-nums">
+                {geo.mentioned}<span className="text-[color:var(--faint)]">/{geo.total}</span>
               </p>
-              <p className="mt-1.5 text-[13px] font-medium text-[#5C574C]">
+              <p className="mt-1.5 text-[13px] font-medium text-[color:var(--ink)]">
                 AI-svar som nevner deg
               </p>
               <div className="mt-4 space-y-1.5">
@@ -884,8 +884,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   const p = geo.byProvider?.[key];
                   return (
                     <div key={key} className="flex items-center justify-between text-[12px]">
-                      <span className="font-medium text-[#5C574C]">{label}</span>
-                      <span className={`tabular-nums ${p && p.mentioned > 0 ? 'font-semibold text-[#15795A]' : 'text-[#B3AD9F]'}`}>
+                      <span className="font-medium text-[color:var(--ink)]">{label}</span>
+                      <span className={`tabular-nums ${p && p.mentioned > 0 ? 'font-semibold text-[color:var(--green)]' : 'text-[color:var(--faint)]'}`}>
                         {p ? `${p.mentioned}/${p.total}` : '—'}
                       </span>
                     </div>
@@ -894,7 +894,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               </div>
             </>
           ) : (
-            <p className="mt-8 text-[13px] font-medium leading-relaxed text-[#5C574C]">
+            <p className="mt-8 text-[13px] font-medium leading-relaxed text-[color:var(--ink)]">
               Sjekker hver uke om ChatGPT, Gemini og Perplexity nevner deg. Første resultat kommer mandag.
             </p>
           )}
@@ -905,35 +905,35 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       {/* ── Bottom grid: tasks + events ─────────────────────────────── */}
       <section className="dash-stagger dash-stagger-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
         {/* Prioriterte oppgaver */}
-        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+        <div className="flex flex-col rounded-[14px] border border-[color:var(--hair)] bg-white p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <SectionTitle size="sm">Prioriterte oppgaver</SectionTitle>
-              <span className="rounded-full border border-[#E9E4DA] bg-[#F2EFE8] px-2.5 py-0.5 text-[11px] font-medium text-[#8A8578] tabular-nums">
+              <span className="rounded-full border border-[color:var(--hair)] bg-[color:var(--subtle)] px-2.5 py-0.5 text-[11px] font-medium text-[color:var(--muted)] tabular-nums">
                 {tasks.length} totalt
               </span>
             </div>
-            <span className="text-[11px] font-medium text-[#B3AD9F]">
+            <span className="text-[11px] font-medium text-[color:var(--faint)]">
               Sortér: prioritet ↓
             </span>
           </div>
 
           {!analysisResults && !realRankings.length ? (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-[12px] border border-[#D6EEDF] bg-[#F3FBF6] p-8 text-center">
-              <p className="text-sm font-medium leading-relaxed text-[#2F5C45]">
+            <div className="flex flex-1 flex-col items-center justify-center rounded-[12px] border border-[color:var(--insetbd)] bg-[color:var(--inset)] p-8 text-center">
+              <p className="text-sm font-medium leading-relaxed text-[color:var(--green)]">
                 Etter første analyse finner og prioriterer Sikt ting du bør fikse — de dukker opp her.
               </p>
               <button
                 type="button"
                 onClick={onRunAnalysis}
-                className="cta-btn mt-4 rounded-[10px] bg-[#1A1A1A] px-4 py-2 text-[13px] font-medium text-white"
+                className="cta-btn mt-4 rounded-[10px] bg-[color:var(--btn-bg)] px-4 py-2 text-[13px] font-medium text-white"
               >
                 Kjør analyse
               </button>
             </div>
           ) : tasks.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#D6EEDF] bg-[#F3FBF6] p-8 text-center">
-              <p className="text-sm font-medium text-[#2F5C45]">
+            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[color:var(--insetbd)] bg-[color:var(--inset)] p-8 text-center">
+              <p className="text-sm font-medium text-[color:var(--green)]">
                 Alt ser bra ut.
               </p>
             </div>
@@ -943,7 +943,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 {tasks.slice(0, 5).map((t, i) => (
                   <li
                     key={t.id}
-                    className={i > 0 ? 'border-t border-[#E9E4DA]' : ''}
+                    className={i > 0 ? 'border-t border-[color:var(--hair)]' : ''}
                   >
                     <button
                       type="button"
@@ -956,10 +956,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                         }`}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold leading-snug text-[#1A1A1A]">
+                        <p className="truncate text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
                           {t.title}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-[#8A8578]">
+                        <p className="mt-0.5 text-[11px] text-[color:var(--muted)]">
                           {[t.category, t.displayValue].filter(Boolean).join(' · ')}
                         </p>
                       </div>
@@ -967,7 +967,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           t.priority === 'høy'
                             ? 'bg-[#F6EEDD] text-[#9A6700]'
-                            : 'bg-[#E8F1EB] text-[#15795A]'
+                            : 'bg-[color:var(--inset)] text-[color:var(--green)]'
                         }`}
                       >
                         {t.priority}
@@ -984,7 +984,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('visibility')}
-                  className="link-btn mt-4 self-start text-[13px] font-medium text-[#8A8578]"
+                  className="link-btn mt-4 self-start text-[13px] font-medium text-[color:var(--muted)]"
                 >
                   Vis alle {tasks.length} →
                 </button>
@@ -994,14 +994,14 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
 
         {/* Siste hendelser */}
-        <div className="flex flex-col rounded-[14px] border border-[#E9E4DA] bg-white p-6">
+        <div className="flex flex-col rounded-[14px] border border-[color:var(--hair)] bg-white p-6">
           <div className="mb-4">
             <SectionTitle size="sm">Siste hendelser</SectionTitle>
           </div>
 
           {logs.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[#E9E4DA] bg-[#FAF8F3] p-8 text-center">
-              <p className="text-sm leading-relaxed text-[#8A8578]">
+            <div className="flex flex-1 items-center justify-center rounded-[12px] border border-[color:var(--hair)] bg-[color:var(--subtle)] p-8 text-center">
+              <p className="text-sm leading-relaxed text-[color:var(--muted)]">
                 Sikt jobber i bakgrunnen — første funn dukker opp her i løpet av kort tid.
               </p>
             </div>
@@ -1015,17 +1015,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                   <li
                     key={log.id || `${log.action}-${i}`}
                     className={`flex gap-3 py-3 ${
-                      i > 0 ? 'border-t border-[#E9E4DA]' : ''
+                      i > 0 ? 'border-t border-[color:var(--hair)]' : ''
                     }`}
                   >
-                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F2EFE8]">
-                      <Icon size={13} className="text-[#8A8578]" />
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[color:var(--subtle)]">
+                      <Icon size={13} className="text-[color:var(--muted)]" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold leading-snug text-[#1A1A1A]">
+                      <p className="text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
                         {readableAction(log)}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[#8A8578] tabular-nums">
+                      <p className="mt-0.5 text-[11px] text-[color:var(--muted)] tabular-nums">
                         {[detail, time].filter(Boolean).join(' · ')}
                       </p>
                     </div>
@@ -1038,7 +1038,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('log')}
-            className="link-btn mt-4 self-start text-[13px] font-medium text-[#8A8578]"
+            className="link-btn mt-4 self-start text-[13px] font-medium text-[color:var(--muted)]"
           >
             Se alle hendelser →
           </button>

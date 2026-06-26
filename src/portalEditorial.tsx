@@ -12,20 +12,23 @@ import { PORTAL } from './portalTheme';
 export const SERIF = PORTAL.serif;
 export const SANS = PORTAL.sans;
 
+// Tema-bevisst: peker på CSS-variabler (definert på .sikt-portal i ClientPortal),
+// med lys fallback = de gamle PORTAL-verdiene. Inne i portalen flipper de med
+// data-theme; utenfor portalen (om noen gjenbruker disse) faller de til lys.
 export const EDITORIAL = {
-  ink: PORTAL.ink,
-  sub: PORTAL.sub,
-  muted: PORTAL.muted,
-  faint: PORTAL.faint,
-  hair: PORTAL.border,
-  green: PORTAL.success,
-  insetBg: PORTAL.insetBg,
-  insetBorder: PORTAL.insetBorder,
-  insetInk: PORTAL.insetInk,
-  danger: PORTAL.danger,
-  dangerBg: PORTAL.dangerBg,
-  dangerBorder: 'rgba(180,35,31,0.25)', // = PORTAL.danger (#B4231F) med 25 % alfa
-  neutralBg: PORTAL.subtle,
+  ink: 'var(--ink, #1A1A1A)',
+  sub: 'var(--sub, #5C574C)',
+  muted: 'var(--muted, #8A8578)',
+  faint: 'var(--faint, #B3AD9F)',
+  hair: 'var(--hair, #E9E4DA)',
+  green: 'var(--green, #15795A)',
+  insetBg: 'var(--inset, #F3FBF6)',
+  insetBorder: 'var(--insetbd, #D6EEDF)',
+  insetInk: 'var(--inset-ink, #2F5C45)',
+  danger: 'var(--danger, #B4231F)',
+  dangerBg: 'var(--dangerbg, #FBECEB)',
+  dangerBorder: 'var(--insetbd, rgba(180,35,31,0.25))',
+  neutralBg: 'var(--subtle, #FAF8F3)',
 } as const;
 
 /** Seksjons-tittel med liten grønn aksent-strek (gjentar e-postenes sectionHead-motiv). */

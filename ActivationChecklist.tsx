@@ -76,11 +76,11 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
   const pct = Math.round((doneCount / steps.length) * 100);
 
   // Tema-tokens (matcher PortalCard / portal*Class i App.tsx)
-  const cardCls = isLight ? 'bg-white border-[#E9E4DA]' : 'bg-slate-900 border-violet-500/30';
-  const titleCls = isLight ? 'text-[#1A1A1A]' : 'text-white';
-  const mutedCls = isLight ? 'text-[#5C574C]' : 'text-slate-400';
-  const trackCls = isLight ? 'bg-[#EFEBE2]' : 'bg-white/10';
-  const closeCls = isLight ? 'text-[#B3AD9F] hover:text-[#5C574C] hover:bg-[#F2EFE8]' : 'text-slate-500 hover:text-slate-200 hover:bg-white/10';
+  const cardCls = isLight ? 'bg-white border-[color:var(--hair)]' : 'bg-slate-900 border-violet-500/30';
+  const titleCls = isLight ? 'text-[color:var(--ink)]' : 'text-white';
+  const mutedCls = isLight ? 'text-[color:var(--ink)]' : 'text-slate-400';
+  const trackCls = isLight ? 'bg-[color:var(--subtle)]' : 'bg-white/10';
+  const closeCls = isLight ? 'text-[color:var(--faint)] hover:text-[color:var(--ink)] hover:bg-[color:var(--subtle)]' : 'text-slate-500 hover:text-slate-200 hover:bg-white/10';
 
   return (
     <div className={`relative rounded-[16px] border ${cardCls} p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]`}>
@@ -100,7 +100,7 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
           <SectionTitle>Aktiver Sikt</SectionTitle>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[#1A1A1A] text-white">
+            <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[color:var(--btn-bg)] text-white">
               <Zap size={15} />
             </span>
             <h2 className={`text-[15px] font-bold tracking-[-0.01em] ${titleCls}`}>Aktiver Sikt</h2>
@@ -122,20 +122,20 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
       <div className="flex flex-col gap-2.5">
         {steps.map((s, i) => {
           const rowCls = s.done
-            ? (isLight ? 'border-[#E9E4DA] bg-[#FAF8F3]' : 'border-white/5 bg-white/[0.03]')
+            ? (isLight ? 'border-[color:var(--hair)] bg-[color:var(--subtle)]' : 'border-white/5 bg-white/[0.03]')
             : s.accent
-              ? (isLight ? 'border-[#CDE4D6] bg-[#F1F7F3]' : 'border-violet-500/30 bg-violet-500/10')
-              : (isLight ? 'border-[#E9E4DA] bg-white' : 'border-white/10 bg-transparent');
+              ? (isLight ? 'border-[color:var(--insetbd)] bg-[color:var(--inset)]' : 'border-violet-500/30 bg-violet-500/10')
+              : (isLight ? 'border-[color:var(--hair)] bg-white' : 'border-white/10 bg-transparent');
           const iconCls = s.done
-            ? (isLight ? 'bg-[#E8F1EB] text-[#15795A]' : 'bg-emerald-500/15 text-emerald-300')
+            ? (isLight ? 'bg-[color:var(--inset)] text-[color:var(--green)]' : 'bg-emerald-500/15 text-emerald-300')
             : s.accent
-              ? (isLight ? 'bg-[#E8F1EB] text-[#15795A]' : 'bg-violet-500/15 text-violet-300')
-              : (isLight ? 'bg-[#F2EFE8] text-[#8A8578]' : 'bg-white/10 text-slate-300');
+              ? (isLight ? 'bg-[color:var(--inset)] text-[color:var(--green)]' : 'bg-violet-500/15 text-violet-300')
+              : (isLight ? 'bg-[color:var(--subtle)] text-[color:var(--muted)]' : 'bg-white/10 text-slate-300');
           const stepTitleCls = s.done
             ? `${mutedCls} line-through`
             : titleCls;
-          const secondaryBtn = isLight ? 'bg-[#1A1A1A] text-white hover:bg-[#2A2722]' : 'bg-white text-slate-900 hover:bg-slate-200';
-          const disabledBtn = isLight ? 'bg-[#F2EFE8] text-[#B3AD9F] cursor-not-allowed' : 'bg-white/10 text-slate-500 cursor-not-allowed';
+          const secondaryBtn = isLight ? 'bg-[color:var(--btn-bg)] text-white hover:bg-[#2A2722]' : 'bg-white text-slate-900 hover:bg-slate-200';
+          const disabledBtn = isLight ? 'bg-[color:var(--subtle)] text-[color:var(--faint)] cursor-not-allowed' : 'bg-white/10 text-slate-500 cursor-not-allowed';
           return (
             <div key={i} className={`flex items-center gap-3 rounded-[12px] border p-3.5 ${rowCls}`}>
               <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${iconCls}`}>
@@ -146,7 +146,7 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
                 {!s.done && <p className={`mt-0.5 text-[12px] leading-snug ${mutedCls}`}>{s.desc}</p>}
               </div>
               {s.done ? (
-                <span className={`shrink-0 text-[12px] font-semibold ${isLight ? 'text-[#15795A]' : 'text-emerald-300'}`}>Ferdig</span>
+                <span className={`shrink-0 text-[12px] font-semibold ${isLight ? 'text-[color:var(--green)]' : 'text-emerald-300'}`}>Ferdig</span>
               ) : (
                 <button
                   type="button"
