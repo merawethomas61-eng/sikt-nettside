@@ -12,7 +12,7 @@ import {
   Layers, Minus, BarChart3, GitMerge, Rocket, Shield, Lightbulb, Monitor, HeartHandshake, Lock, ChevronRight,
   BrainCircuit, Moon, BarChart4, CalendarDays, Award, Unlink, SearchCheck, Database, Server, LogOut, Coffee, Save, XCircle, AlertCircle, Edit2, ChevronsUpDown,
   Settings, Smartphone, ChevronLeft, ArrowUp, ArrowUpCircle, ArrowDownCircle, ShieldAlert, CreditCard, FileEdit, RefreshCw, LifeBuoy, Loader2, Trash2, Briefcase, Download, CheckCircle2, ArrowLeft, CheckCircle, Copy, ExternalLink, Circle,
-  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type, Star, MessageSquare, QrCode
+  ClipboardCheck, Bell, Sparkle, Bot, Microscope, Send, Plus, Info, PhoneIncoming, Coins, Gauge, Type, Star, MessageSquare, QrCode, MoreHorizontal
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -3571,6 +3571,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // Sidebar mobile-state (under 768px viser vi hamburger).
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [userFooterMenuOpen, setUserFooterMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false); // mobil «Mer»-bunnark (kun < sm)
   // Sidebar desktop-collapse: skyver sidebar sammen til kun-ikoner. Persistert.
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -7131,69 +7132,142 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           </div>
         </div>
 
-        {/* MOBIL (< sm): kompakt rad + scrollbart fane-bånd */}
-        <div className="sm:hidden">
-          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--hair)' }}>
-            <button
-              onClick={() => setActiveTab('home')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <span style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--btn-bg)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>S</span>
-            </button>
-            <button
-              onClick={() => setUserFooterMenuOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 999, padding: '4px 8px 4px 4px', cursor: 'pointer' }}
-            >
-              <span style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--btn-bg)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{footerInitials}</span>
-              <ChevronsUpDown size={12} style={{ color: 'var(--muted)' }} />
-            </button>
-            {userFooterMenuOpen && (
-              <div
-                role="menu"
-                style={{ position: 'absolute', right: 16, top: 'calc(100% - 4px)', minWidth: 160, background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12, padding: 6, zIndex: 50, boxShadow: '0 18px 40px -20px rgba(26,26,26,0.25)' }}
-              >
-                <button role="menuitem" onClick={() => { setActiveTab('settings'); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-                  <Settings size={15} /> Innstillinger
-                </button>
-                <button role="menuitem" onClick={() => { setActiveTab('log'); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-                  <ClipboardCheck size={15} /> Sikt-logg
-                </button>
-                <button role="menuitem" onClick={() => { onLogout(); setUserFooterMenuOpen(false); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', fontSize: 13, fontWeight: 600, color: 'var(--danger)', background: 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-                  <LogOut size={15} /> Logg ut
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Horisontalt scrollbart fane-bånd */}
-          <div style={{ overflowX: 'auto', display: 'flex', gap: 4, padding: '8px 12px', scrollbarWidth: 'none' }}>
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const active = activeTab === item.id;
-              let badge: number | null = null;
-              if (item.id === 'workshop' || item.id === 'home') { const c = todos.length; if (c > 0) badge = c; }
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer', border: 'none', flexShrink: 0, background: active ? '#1A1A1A' : '#F5F5F0', color: active ? '#FFFFFF' : '#808080', transition: 'background 160ms, color 160ms' }}
-                >
-                  <Icon size={14} />
-                  <span>{item.label}</span>
-                  {badge !== null && (
-                    <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: active ? 'rgba(255,255,255,0.18)' : '#EBEBE6', color: active ? '#FFFFFF' : '#1A1A1A' }}>{badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        {/* MOBIL (< sm): slank merkevare-topp. All navigasjon ligger i bunnmenyen under. */}
+        <div className="sm:hidden" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--hair)' }}>
+          <button
+            onClick={() => setActiveTab('home')}
+            aria-label="Til Hjem"
+            style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--btn-bg)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>S</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>Sikt</span>
+          </button>
         </div>
       </header>
 
+      {/* ===== MOBIL BUNNMENY + «Mer»-ark (kun < sm) ===== */}
+      {(() => {
+        const PRIMARY: PortalTab[] = ['home', 'visibility', 'workshop', 'reviews'];
+        const primaryItems = PRIMARY
+          .map(id => navItems.find(n => n.id === id))
+          .filter(Boolean) as typeof navItems;
+        const overflowItems = navItems.filter(n => !PRIMARY.includes(n.id));
+        const moreActive = activeTab === 'settings' || activeTab === 'log'
+          || overflowItems.some(n => n.id === activeTab);
+        const tabBadge = (id: PortalTab): number | null =>
+          ((id === 'home' || id === 'workshop') && todos.length > 0 ? todos.length : null);
+
+        return (
+          <>
+            <nav
+              className="sm:hidden"
+              aria-label="Hovedmeny"
+              style={{
+                position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45,
+                display: 'flex', alignItems: 'stretch',
+                background: 'var(--navbg)', borderTop: '1px solid var(--hair)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
+            >
+              {primaryItems.map(item => {
+                const Icon = item.icon;
+                const active = activeTab === item.id;
+                const badge = tabBadge(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
+                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 2px 9px', background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--green)' : 'var(--muted)', transition: 'color 160ms' }}
+                  >
+                    <span style={{ position: 'relative', display: 'inline-flex' }}>
+                      <Icon size={21} strokeWidth={active ? 2.4 : 2} />
+                      {badge !== null && (
+                        <span style={{ position: 'absolute', top: -5, right: -8, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--green)', color: '#fff' }}>{badge}</span>
+                      )}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em' }}>{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setMoreOpen(true)}
+                aria-label="Mer"
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: '8px 2px 9px', background: 'none', border: 'none', cursor: 'pointer', color: (moreActive || moreOpen) ? 'var(--green)' : 'var(--muted)', transition: 'color 160ms' }}
+              >
+                <MoreHorizontal size={21} strokeWidth={(moreActive || moreOpen) ? 2.4 : 2} />
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em' }}>Mer</span>
+              </button>
+            </nav>
+
+            {moreOpen && (
+              <div
+                className="sm:hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Mer"
+                style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+              >
+                <button
+                  aria-label="Lukk"
+                  onClick={() => setMoreOpen(false)}
+                  style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer' }}
+                />
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: 'var(--surface)', borderTop: '1px solid var(--hair)', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: '10px 12px calc(14px + env(safe-area-inset-bottom))', boxShadow: '0 -18px 40px -20px rgba(0,0,0,0.3)' }}>
+                  <div aria-hidden style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--hair)', margin: '4px auto 12px' }} />
+                  {overflowItems.map(item => {
+                    const Icon = item.icon;
+                    const active = activeTab === item.id;
+                    const badge = tabBadge(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        role="menuitem"
+                        onClick={() => { setActiveTab(item.id); setMoreOpen(false); }}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 12px', fontSize: 15, fontWeight: 600, color: active ? 'var(--green)' : 'var(--ink)', background: active ? 'var(--inset)' : 'transparent', border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        <Icon size={19} />
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        {badge !== null && (
+                          <span style={{ minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--green)', color: '#fff' }}>{badge}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <div aria-hidden style={{ height: 1, background: 'var(--hair)', margin: '8px 4px' }} />
+                  <button
+                    role="menuitem"
+                    onClick={() => { setActiveTab('settings'); setMoreOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 12px', fontSize: 15, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <Settings size={19} /> Innstillinger
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { setActiveTab('log'); setMoreOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 12px', fontSize: 15, fontWeight: 600, color: 'var(--ink)', background: 'transparent', border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <ClipboardCheck size={19} /> Sikt-logg
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { onLogout(); setMoreOpen(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 12px', fontSize: 15, fontWeight: 600, color: 'var(--danger)', background: 'transparent', border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <LogOut size={19} /> Logg ut
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
     <main style={{ maxWidth: 1320, margin: '0 auto', width: '100%', overflowX: 'clip' }}
-          className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          className="px-4 sm:px-6 lg:px-8 pt-6 pb-28 sm:py-10">
 
         {/* =============================================================== */}
         {/* HJEM — én skjerm, vertikal feed. Maks én primær handling synlig. */}
