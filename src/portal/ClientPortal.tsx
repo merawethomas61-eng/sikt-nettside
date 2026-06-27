@@ -7007,7 +7007,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       {/* ===== NY: STICKY HORISONTAL TOPP-NAV ===== */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--navbg)', borderBottom: '1px solid var(--hair)' }}>
         {/* Desktop nav */}
-        <div style={{ maxWidth: 1320, margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 24 }}
+        {/* display styres KUN av klassene (hidden / sm:flex). En inline display:flex
+            her ville overstyrt `hidden` → desktop-navet vises da også på mobil og
+            stikker utenfor skjermen i bredden (knekker hele mobil-layouten). */}
+        <div style={{ maxWidth: 1320, margin: '0 auto', padding: '14px 32px', alignItems: 'center', gap: 24 }}
              className="hidden sm:flex">
 
           {/* VENSTRE: logo + nettside-velger */}

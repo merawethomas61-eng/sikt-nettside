@@ -57,3 +57,8 @@ verify_jwt = false
 [functions.admin-health]
 enabled = true
 verify_jwt = false
+
+# outreach-unsubscribe: offentlig avmeldings-lenke i outreach-e-post → MÅ være false.
+[functions.outreach-unsubscribe]
+enabled = true
+verify_jwt = false
