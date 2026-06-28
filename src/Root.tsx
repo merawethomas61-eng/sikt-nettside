@@ -2,8 +2,8 @@
 // rute blir sin egen chunk: marketing-/blogg-sider drar IKKE lenger inn den store
 // App.tsx (med ClientPortal). Forsiden + alle auth-gatede flyter (login, portal,
 // onboarding, success, settings) bor fortsatt i App, som nå er en egen lazy chunk.
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { Suspense, lazy, useLayoutEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from './shared/Navbar';
 import { Footer } from './shared/Footer';
 import { PrivacyPage, TermsPage } from './shared/Legal';
@@ -22,6 +22,21 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 // det ikke blir et hvitt blink, men uten innhold (rask, layout-stabil).
 function RouteFallback() {
   return <div className="min-h-screen bg-[#F5F5F0]" aria-hidden="true" />;
+}
+
+// Nullstiller scroll til toppen ved hvert rute-bytte. React Router v7 med
+// <BrowserRouter> gjenoppretter IKKE scroll automatisk (kun data-routerens
+// <ScrollRestoration> gjør det), så uten dette ble man stående på samme
+// scroll-posisjon når man byttet «fane» (f.eks. forside → /funksjoner).
+// Unntak: når URL-en har en hash (#gratis-analyse, #priser) lar vi anker-
+// scrollingen styre selv. useLayoutEffect kjører før paint → ingen synlig hopp.
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useLayoutEffect(() => {
+    if (hash) return;
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+  return null;
 }
 
 // De juridiske sidene gjenbrukes som ekte URL-er, med Navbar/Footer rundt (samme
@@ -44,6 +59,7 @@ function LegalRoute({ kind }: { kind: 'privacy' | 'terms' }) {
 export default function Root() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/funksjoner" element={<FunksjonerPage />} />

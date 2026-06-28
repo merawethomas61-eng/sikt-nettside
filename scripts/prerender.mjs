@@ -277,6 +277,17 @@ const MARKETING = [
     ogType: 'website',
     jsonLd: [
       { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Funksjoner — slik funker Sikt', url: `${BASE}/funksjoner`, inLanguage: 'nb-NO' },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'SEO og AI-synlighet med Sikt',
+        serviceType: 'Søkemotoroptimalisering',
+        provider: { '@type': 'Organization', name: 'Sikt', url: BASE },
+        areaServed: { '@type': 'Country', name: 'Norge' },
+        description:
+          'Automatisk SEO og AI-synlighet for norske bedrifter — feilretting, ukerapporter på plain norsk og GEO-overvåking av ChatGPT, Gemini og Perplexity.',
+        inLanguage: 'nb-NO',
+      },
       breadcrumbLd([['Hjem', `${BASE}/`], ['Funksjoner', `${BASE}/funksjoner`]]),
     ],
     body: pageBody({
@@ -427,6 +438,14 @@ function postBody(post) {
       post.faq.map((f) => `<h3>${escHtml(f.q)}</h3><p>${escHtml(f.a)}</p>`).join('')
     : '';
   const tags = post.tags.length ? `<p style="color:#808080;font-size:.8rem">${post.tags.map(escHtml).join(' · ')}</p>` : '';
+  // Intern lenking + CTA som crawlere ser (speiler GradientCTA-en React-siden
+  // viser brukerne). Sender lenkekraft fra innholdssidene til «money»-sidene
+  // /funksjoner og /priser, og til gratis-analysen høyt i trakten.
+  const footer =
+    `<hr>` +
+    `<p><strong>Klar til å se hvor du står?</strong> <a href="/#gratis-analyse">Ta en gratis analyse</a> ` +
+    `— eller les mer om <a href="/funksjoner">funksjonene</a> og <a href="/priser">prisene</a>.</p>` +
+    `<nav><p>${NAV_LINKS.map(([t, href]) => `<a href="${escAttr(href)}">${escHtml(t)}</a>`).join(' · ')}</p></nav>`;
   return (
     `<main><article class="blog-prose" style="max-width:46rem;margin:5rem auto 4rem;padding:0 1.25rem">` +
     `<nav style="font-size:.8rem;color:#808080"><a href="/">Hjem</a> / <a href="/blogg">Blogg</a></nav>` +
@@ -436,6 +455,7 @@ function postBody(post) {
     (post.summary ? `<p><strong>Kort svar:</strong> ${escHtml(post.summary)}</p>` : '') +
     post.html +
     faqHtml +
+    footer +
     `</article></main>`
   );
 }

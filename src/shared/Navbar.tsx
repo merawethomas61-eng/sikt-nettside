@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BarChart3, ChevronDown, Settings, CreditCard, LogOut, X, Menu } from 'lucide-react';
+import { track } from '../analytics';
 
 const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAccess }: any) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -17,7 +18,8 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
     { to: '/blogg', label: 'Blogg' },
     { to: '/om-oss', label: 'Om oss' },
   ];
-  const startCta = onLoginTrigger ?? (() => navigate('/priser'));
+  const baseStartCta = onLoginTrigger ?? (() => navigate('/priser'));
+  const startCta = () => { track('cta_click', { location: 'navbar', target: 'start' }); baseStartCta(); };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);

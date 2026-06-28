@@ -10,6 +10,8 @@ import { buildStripeCheckoutUrl } from './src/shared/stripeLinks';
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
+import { track } from './src/analytics';
+import { StickyCta } from './src/components/marketing/StickyCta';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
@@ -1255,7 +1257,7 @@ const TechCTAV2 = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
       </p>
       <button
         type="button"
-        onClick={() => onNavigate('login')}
+        onClick={() => { track('cta_click', { location: 'tech_cta', target: 'login' }); onNavigate('login'); }}
         className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white text-[#111111] text-base font-bold font-display transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:hover:scale-[0.98]"
       >
         Se hva Sikt finner på din side
@@ -1295,12 +1297,22 @@ const Hero = () => {
         </RevealOnScroll>
         <RevealOnScroll direction="scale" delay={400}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#gratis-analyse" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
+            <a href="#gratis-analyse" onClick={() => track('cta_click', { location: 'hero', target: 'free_analysis' })} className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
               Sjekk siden din gratis <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </a>
-            <a href="#priser" className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700">
+            <a href="#priser" onClick={() => track('cta_click', { location: 'hero', target: 'pricing' })} className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700">
               Se priser
             </a>
+          </div>
+        </RevealOnScroll>
+        {/* Sanne trygghetssignaler — kun verifiserbare påstander (ingen falske logoer/anmeldelser) */}
+        <RevealOnScroll direction="up" delay={500}>
+          <div className="mt-7 sm:mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
+            {['Ingen binding', 'Data lagres i EU', 'Plain norsk', 'Gratis å teste'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5">
+                <Check size={15} className="text-[#3F8F38]" /> {t}
+              </span>
+            ))}
           </div>
         </RevealOnScroll>
       </div>
@@ -2682,6 +2694,7 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
     if (!cleanUrl) { setError('Skriv inn nettsiden din.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { setError('Skriv inn en gyldig e-postadresse.'); return; }
     setLoading(true);
+    track('free_analysis_started', { url: cleanUrl });
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
         method: 'POST',
@@ -2692,11 +2705,20 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
         body: JSON.stringify({ url: cleanUrl, email: cleanEmail, mode: 'public' }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data?.error || 'Kunne ikke analysere siden. Prøv igjen.'); return; }
+      if (!res.ok) {
+        setError(data?.error || 'Kunne ikke analysere siden. Prøv igjen.');
+        track('free_analysis_failed', { reason: data?.error || `http_${res.status}` });
+        return;
+      }
       setResult(data);
+      track('free_analysis_completed', {
+        performance: data?.scores?.performance ?? null,
+        seo: data?.scores?.seo ?? null,
+      });
       try { localStorage.setItem('sikt_audit_url', data?.url || cleanUrl); } catch { /* ignore */ }
     } catch {
       setError('Noe gikk galt. Sjekk URL-en og prøv igjen.');
+      track('free_analysis_failed', { reason: 'network' });
     } finally {
       setLoading(false);
     }
@@ -2986,7 +3008,7 @@ const SocialProofSection = () => {
               })}
             </div>
             <div className="text-center mt-8">
-              <a href="#gratis-analyse" className="group inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full text-sm sm:text-base font-black tracking-tight ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">
+              <a href="#gratis-analyse" onClick={() => track('cta_click', { location: 'features_grid', target: 'free_analysis' })} className="group inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full text-sm sm:text-base font-black tracking-tight ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700">
                 Test din egen side gratis
                 <ArrowRight size={18} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
               </a>
@@ -3179,6 +3201,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <FAQSection />
     {/* Final CTA: fanger opp besøkere som scrollet helt ned */}
     <FinalCTASection onSelectPlan={onSelectPlan} />
+    {/* Sticky mobil-CTA: dukker opp etter hero, skjules når gratis-analyse er i view */}
+    <StickyCta />
   </>
 );
 
@@ -4689,6 +4713,8 @@ function App() {
       // Lås døren!
       isProcessingClick.current = true;
 
+      track('plan_selected', { plan });
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('sikt_pending_plan', plan);
       }
@@ -4705,6 +4731,7 @@ function App() {
       const currentUser = hasToken ? user : null;
 
       if (!currentUser) {
+        track('signup_started', { plan });
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (typeof setView === 'function') {
@@ -4729,6 +4756,7 @@ function App() {
         return;
       }
 
+      track('checkout_redirect', { plan });
       window.location.href = checkoutUrl;
 
     } catch (err: any) {

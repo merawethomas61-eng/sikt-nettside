@@ -28,6 +28,10 @@ export function setConsent(c: Consent): void {
 }
 
 let started = false;
+// Beholder posthog-instansen så `track()` slipper å re-importere modulen for
+// hvert event. Null til samtykke er gitt (eller hvis ingen nøkkel er satt).
+let ph: typeof import('posthog-js')['default'] | null = null;
+
 export async function startAnalytics(): Promise<void> {
   if (started || !KEY) return;
   started = true;
@@ -38,4 +42,17 @@ export async function startAnalytics(): Promise<void> {
     autocapture: true,
     persistence: 'localStorage+cookie',
   });
+  ph = posthog;
+}
+
+// Eksplisitt funnel-sporing. Ren no-op uten samtykke/nøkkel (ph er da null), så
+// den kan kalles trygt fra hvor som helst uten å vente på consent eller sjekke
+// selv. Brukes for CTA-klikk, gratis analyse, plan-valg og checkout.
+export function track(event: string, props?: Record<string, unknown>): void {
+  if (!ph) return;
+  try {
+    ph.capture(event, props);
+  } catch {
+    /* aldri la sporing brekke en brukerhandling */
+  }
 }

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Check, Sparkles, ArrowRight, ShieldCheck, CalendarClock } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Seo } from '../components/Seo';
 import { Pricing } from '../shared/Pricing';
+import { track } from '../analytics';
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { Container } from '../components/marketing/Container';
 import { SectionHeading } from '../components/marketing/SectionHeading';
@@ -57,6 +58,45 @@ function BillingMock() {
   );
 }
 
+/* Ærlig forventningsstyring FØR kjøp — SEO tar tid. Setter realistiske
+   forventninger så færre sier opp i skuffelse over at resultater ikke kom over
+   natten (churn-demping). Tonen speiler FAQ-en «SEO tar tid …». */
+const expectationSteps = [
+  { when: 'Dag 1', what: 'Sikt kobler seg på og kjører første analyse. Du ser feilene og mulighetene med en gang.' },
+  { when: 'Uke 1', what: 'De første fiksene pushes — meta-titler, beskrivelser, alt-tekster og tekniske feil. Du får første ukerapport på plain norsk.' },
+  { when: 'Uke 2–6', what: 'Google rekker å lese siden på nytt. De første bevegelsene begynner å vise seg.' },
+  { when: 'Måned 2–3', what: 'Effekten bygger seg opp. SEO tar tid — men du ser nøyaktig hva som er gjort hele veien, uten binding hvis du ombestemmer deg.' },
+];
+
+function ExpectationTimeline() {
+  return (
+    <section className="py-16 sm:py-24">
+      <Container size="md">
+        <RevealOnScroll direction="up">
+          <SectionHeading
+            align="center"
+            badge={<Badge icon={<CalendarClock size={12} />}>Hva du kan forvente</Badge>}
+            title={<>Resultater tar tid. <span className="text-violet-600">Innsyn gjør ikke det.</span></>}
+            intro="SEO er ikke en bryter du skrur på. Her er et ærlig bilde av hva som skjer — uke for uke."
+            className="mb-10 sm:mb-12 text-center"
+          />
+        </RevealOnScroll>
+        <RevealOnScroll direction="up" delay={80}>
+          <ol className="relative border-l border-[#EBEBE6] ml-2 sm:ml-3 space-y-7">
+            {expectationSteps.map((s) => (
+              <li key={s.when} className="relative pl-6 sm:pl-8">
+                <span className="absolute -left-[6px] top-1.5 w-3 h-3 rounded-full bg-violet-600 ring-4 ring-[#F2EFE8]" />
+                <div className="text-[11px] font-black uppercase tracking-widest text-violet-700 mb-1">{s.when}</div>
+                <p className="text-[#1A1A1A] font-medium leading-relaxed">{s.what}</p>
+              </li>
+            ))}
+          </ol>
+        </RevealOnScroll>
+      </Container>
+    </section>
+  );
+}
+
 const faqs = [
   {
     q: 'Er det bindingstid?',
@@ -82,6 +122,9 @@ export default function PriserPage() {
   // Plan-valg går tilbake til hoved-appen, som eier hele checkout-flyten
   // (login → Stripe). Vi sender bare videre hvilken plan kunden valgte.
   const handleSelectPlan = (plan: string) => {
+    // `plan_selected` fyres på forsiden når ?plan= plukkes opp av checkout-flyten,
+    // så her sporer vi bare selve klikket (unngår dobbelttelling).
+    track('cta_click', { location: 'priser_page', target: 'plan', plan });
     navigate(`/?plan=${encodeURIComponent(plan)}`);
   };
 
@@ -163,6 +206,9 @@ export default function PriserPage() {
           </p>
         </RevealOnScroll>
       </Container>
+
+      {/* Ærlig forventningsstyring før kjøp — demper churn fra «så ikke resultater» */}
+      <ExpectationTimeline />
 
       {/* Null binding — konkret trygghet */}
       <section className="py-16 sm:py-24">
