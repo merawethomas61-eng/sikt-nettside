@@ -3263,6 +3263,19 @@ const PainPointsSection = () => (
           </RevealOnScroll>
         ))}
       </div>
+      <RevealOnScroll direction="up" delay={200}>
+        <div className="mt-10 sm:mt-14 flex flex-col items-center gap-3">
+          <a
+            href="#gratis-analyse"
+            onClick={() => track('cta_click', { location: 'painpoints', target: 'free_analysis' })}
+            className="group inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full text-sm sm:text-base font-black tracking-tight ui-motion [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
+          >
+            Sjekk siden din gratis
+            <ArrowRight size={18} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
+          </a>
+          <span className="text-xs sm:text-sm text-[#808080] font-semibold">Gratis · ingen bindingstid</span>
+        </div>
+      </RevealOnScroll>
     </div>
   </section>
 );
