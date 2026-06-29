@@ -11,6 +11,7 @@ import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
 import { track } from './src/analytics';
+import { UsageStat } from './src/shared/trustStats';
 import { StickyCta } from './src/components/marketing/StickyCta';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
@@ -1305,14 +1306,19 @@ const Hero = () => {
             </a>
           </div>
         </RevealOnScroll>
-        {/* Sanne trygghetssignaler — kun verifiserbare påstander (ingen falske logoer/anmeldelser) */}
+        {/* Sanne trygghetssignaler — kun verifiserbare påstander (ingen falske logoer/anmeldelser).
+            UsageStat vises kun når audit-tallet er ekte og stort nok (gated) — ellers usynlig,
+            så raden ser nøyaktig ut som før til da. */}
         <RevealOnScroll direction="up" delay={500}>
-          <div className="mt-7 sm:mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
-            {['Ingen binding', 'Data lagres i EU', 'Plain norsk', 'Gratis å teste'].map((t) => (
-              <span key={t} className="flex items-center gap-1.5">
-                <Check size={15} className="text-[#3F8F38]" /> {t}
-              </span>
-            ))}
+          <div className="mt-7 sm:mt-10 flex flex-col items-center gap-4 sm:gap-5">
+            <UsageStat tone="light" />
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
+              {['Ingen binding', 'Data lagres i EU', 'Plain norsk', 'Gratis å teste'].map((t) => (
+                <span key={t} className="flex items-center gap-1.5">
+                  <Check size={15} className="text-[#3F8F38]" /> {t}
+                </span>
+              ))}
+            </div>
           </div>
         </RevealOnScroll>
       </div>
@@ -2991,6 +2997,15 @@ const SocialProofSection = () => {
           </div>
         ) : (
           <RevealOnScroll direction="up">
+            {/* Ærlig bruks-tall (gated) + alltid-sanne kapabilitets-fakta — sosialt bevis ved null kunder. */}
+            <UsageStat tone="light" className="mb-6 sm:mb-8" />
+            <div className="mb-8 sm:mb-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
+              {['Googles egne data', 'Svar på ~30 sekunder', 'Ingen binding'].map((t) => (
+                <span key={t} className="flex items-center gap-1.5">
+                  <Check size={15} className="text-[#3F8F38]" /> {t}
+                </span>
+              ))}
+            </div>
             <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
               {[
                 { icon: SearchCheck, title: 'Se det selv først', body: 'Kjør en gratis analyse av din egen side og se ekte funn på 30 sekunder — før du betaler en krone.' },
