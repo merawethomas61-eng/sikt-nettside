@@ -2249,17 +2249,17 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         {/* --- OVERSKRIFT --- */}
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-16 md:mb-24">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F5F5F0] backdrop-blur-md border border-[#EBEBE6] text-[#808080] text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/70 text-[10px] sm:text-xs font-bold mb-6 sm:mb-8 uppercase tracking-widest">
               <BrainCircuit size={13} />
               <span>Både Google og AI</span>
             </div>
 
             <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 leading-[1.1] sm:leading-[1.05]">
-              Google er ikke <span className="text-[#1A1A1A]">alene</span> lenger.
+              Google er ikke <span className="text-violet-300">alene</span> lenger.
               <br className="hidden sm:block" />
               <span className="sm:hidden"> </span>Kundene spør også ChatGPT.
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-[#808080] max-w-2xl mx-auto leading-relaxed font-medium px-2">
+            <p className="text-base sm:text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed font-medium px-2">
               For å vinne i dag må du være synlig begge steder. Sikt jobber for begge.
             </p>
           </div>
@@ -2273,47 +2273,47 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 h-full">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#1A1A1A]/70 flex items-center justify-center">
-                    <SearchIcon size={16} className="text-[#808080]" />
+                  <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                    <SearchIcon size={16} className="text-white/60" />
                   </div>
-                  <span className="text-xs uppercase tracking-widest text-[#808080] font-bold">Google</span>
+                  <span className="text-xs uppercase tracking-widest text-white/60 font-bold">Google</span>
                 </div>
-                <span className="text-[9px] uppercase tracking-wider text-[#1A1A1A] font-black bg-[#F5F5F0] px-2 py-0.5 rounded-full border border-[#EBEBE6]">Fortsatt viktig</span>
+                <span className="text-[9px] uppercase tracking-wider text-[#1A1A1A] font-black bg-white px-2 py-0.5 rounded-full">Fortsatt viktig</span>
               </div>
 
               <div className="bg-white/10 rounded-xl p-4 mb-5 border border-white/5">
-                <p className="text-sm text-[#EBEBE6] italic">"Beste SEO-byrå Oslo"</p>
+                <p className="text-sm text-white/80 italic">"Beste SEO-byrå Oslo"</p>
               </div>
 
               {/* Fake søkeresultater */}
               <div className="space-y-3">
                 <div className="flex items-start gap-2 opacity-70">
-                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-[#808080] rounded-full w-3/4"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/40 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-white/40 rounded-full w-3/4"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-50">
-                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-[#808080] rounded-full w-2/3"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/40 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-white/40 rounded-full w-2/3"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-30">
-                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-[#808080] rounded-full w-1/2"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/40 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-white/40 rounded-full w-1/2"></div>
                 </div>
                 <div className="flex items-start gap-2 opacity-20">
-                  <div className="w-1 h-1 rounded-full bg-[#808080] mt-2 shrink-0"></div>
-                  <div className="h-2.5 bg-[#808080] rounded-full w-5/6"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/40 mt-2 shrink-0"></div>
+                  <div className="h-2.5 bg-white/40 rounded-full w-5/6"></div>
                 </div>
               </div>
 
-              <p className="text-xs text-[#808080] mt-6 italic">Sikt løfter deg til topps her. Det er grunnmuren.</p>
+              <p className="text-xs text-white/60 mt-6 italic">Sikt løfter deg til topps her. Det er grunnmuren.</p>
             </div>
           </RevealOnScroll>
 
           {/* AI — Det nye laget */}
           <RevealOnScroll direction="right" delay={200}>
-            <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-[#EBEBE6] rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
+            <div className="relative bg-gradient-to-br from-violet-600/20 to-indigo-600/20 backdrop-blur-md border border-white/15 rounded-3xl p-7 sm:p-9 h-full shadow-2xl shadow-violet-900/30">
               {/* "Nytt"-indikator */}
-              <div className="absolute -top-3 -right-3 bg-[#1A1A1A] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
+              <div className="absolute -top-3 -right-3 bg-white text-[#1A1A1A] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
                 Nytt
               </div>
 
@@ -2324,24 +2324,24 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
                   </div>
                   <span className="text-xs uppercase tracking-widest text-violet-200 font-bold">ChatGPT</span>
                 </div>
-                <span className="text-[9px] uppercase tracking-wider text-violet-200 font-black bg-[#EBEBE6] px-2 py-0.5 rounded-full border border-[#EBEBE6]">I tillegg</span>
+                <span className="text-[9px] uppercase tracking-wider text-violet-200 font-black bg-white/10 px-2 py-0.5 rounded-full border border-white/20">I tillegg</span>
               </div>
 
-              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-[#EBEBE6]">
-                <p className="text-sm text-[#F5F5F0] italic">"Hvilket SEO-byrå bør jeg velge?"</p>
+              <div className="bg-white/10 rounded-xl p-4 mb-5 border border-white/10">
+                <p className="text-sm text-white/90 italic">"Hvilket SEO-byrå bør jeg velge?"</p>
               </div>
 
               {/* AI-svar med én anbefaling */}
               <div className="space-y-3">
-                <div className="bg-white/10 rounded-xl p-4 border border-[#EBEBE6]">
+                <div className="bg-white/10 rounded-xl p-4 border border-white/10">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400 flex items-center justify-center">
                       <Sparkles size={10} className="text-white" />
                     </div>
                     <span className="text-xs text-violet-200 font-bold">ChatGPT</span>
                   </div>
-                  <p className="text-sm text-[#F5F5F0] leading-relaxed">
-                    Jeg vil anbefale <span className="font-bold text-[#808080] bg-[#EBEBE6] px-1.5 rounded">din bedrift</span> — de er kjent for...
+                  <p className="text-sm text-white/90 leading-relaxed">
+                    Jeg vil anbefale <span className="font-bold text-white bg-violet-500/25 px-1.5 rounded">din bedrift</span> — de er kjent for...
                   </p>
                 </div>
               </div>
@@ -2355,9 +2355,9 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
         <RevealOnScroll direction="up" delay={300}>
           <div className="max-w-3xl mx-auto text-center">
             <h3 className="text-2xl sm:text-3xl font-black mb-4 leading-tight">
-              Sikt jobber for <span className="text-[#1A1A1A]">begge deler.</span>
+              Sikt jobber for <span className="text-violet-300">begge deler.</span>
             </h3>
-            <p className="text-[#808080] text-base sm:text-lg mb-10 leading-relaxed">
+            <p className="text-white/70 text-base sm:text-lg mb-10 leading-relaxed">
               Vi løfter deg høyere på Google — og sørger samtidig for at ChatGPT, Gemini og Perplexity anbefaler deg.
               <br className="hidden sm:block" />
               Ingen andre byråer i Norge gjør begge deler — ennå.
@@ -2371,7 +2371,7 @@ const GeoShiftSection = ({ onSelectPlan }: { onSelectPlan: (plan: string) => voi
               <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </button>
 
-            <p className="text-xs text-[#808080] mt-5 uppercase tracking-widest font-bold">
+            <p className="text-xs text-white/50 mt-5 uppercase tracking-widest font-bold">
               Vær synlig der kundene leter — både på Google og i AI
             </p>
           </div>
@@ -3721,12 +3721,6 @@ const TrustSection = () => {
 
   return (
     <section className="py-16 sm:py-20 md:py-24 bg-[#1A1A1A] text-white relative overflow-hidden">
-      {/* Bakgrunnseffekt */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
-        <div className="absolute top-[-50%] left-[-10%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-violet-900 blur-[100px] sm:blur-[120px]"></div>
-        <div className="absolute bottom-[-50%] right-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-indigo-900 blur-[80px] sm:blur-[100px]"></div>
-      </div>
-
       <div className="max-w-6xl mx-auto px-4 sm:px-5 relative z-10 text-center">
 
         <div className="mb-10 sm:mb-16">
@@ -3784,7 +3778,7 @@ const TrustSection = () => {
 
           {/* Punkt 4: Arbeidsmengde (Med Zap i stedet for Coffee for å unngå feil) */}
           <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
-            <div className={`${iconTileClass} text-amber-300`}>
+            <div className={`${iconTileClass} text-violet-300`}>
               <Zap size={22} />
             </div>
             <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Vi gjør jobben</h3>
@@ -3795,9 +3789,8 @@ const TrustSection = () => {
 
           {/* Punkt 5: Fremtiden */}
           <div className="md:col-span-2 bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
-              <div className={`${iconTileClass} text-rose-300 mb-0 sm:mb-0`}>
+              <div className={`${iconTileClass} text-violet-300 mb-0 sm:mb-0`}>
                 <TrendingUp size={22} />
               </div>
               <div className="flex-1 min-w-0">
