@@ -54,7 +54,7 @@ export function StickyCta() {
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-40 md:hidden px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[#F5F5F0] via-[#F5F5F0]/95 to-transparent transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+      className={`fixed inset-x-0 bottom-0 z-40 md:hidden px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[#F2EFE8] via-[#F2EFE8]/95 to-transparent transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
         visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'
       }`}
       aria-hidden={!visible}

@@ -69,7 +69,7 @@ function useActiveHeading(ids: string[]): string {
 
 function TocLinks({ headings, active }: { headings: TocItem[]; active: string }) {
   return (
-    <ul className="space-y-2.5 border-l border-[#EBEBE6] pl-4">
+    <ul className="space-y-2.5 border-l border-[#E9E4DA] pl-4">
       {headings.map((h) => {
         const on = h.id === active;
         return (
@@ -82,7 +82,7 @@ function TocLinks({ headings, active }: { headings: TocItem[]; active: string })
                 scrollToId(h.id);
               }}
               className={`block text-sm leading-snug ui-motion ${
-                on ? 'text-violet-700 font-bold' : 'text-[#808080] font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'
+                on ? 'text-violet-700 font-bold' : 'text-[#5C574C] font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'
               }`}
             >
               {h.text}
@@ -122,7 +122,7 @@ export default function BloggPostPage() {
         <Seo title="Innlegg ikke funnet | Sikt" noindex />
         <Container size="sm" className="py-24 text-center">
           <h1 className="text-3xl font-black tracking-tight text-[#1A1A1A] mb-4">Innlegget finnes ikke</h1>
-          <p className="text-[#808080] font-medium mb-8">Lenken er kanskje gammel, eller innlegget er flyttet.</p>
+          <p className="text-[#5C574C] font-medium mb-8">Lenken er kanskje gammel, eller innlegget er flyttet.</p>
           <div className="flex justify-center">
             <PillButton to="/blogg" variant="dark">
               <ArrowLeft size={18} /> Til bloggen
@@ -202,14 +202,14 @@ export default function BloggPostPage() {
               <ChevronRight size={12} />
               <Link to="/blogg" className="[@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700 transition-[color] duration-200">Blogg</Link>
               <ChevronRight size={12} />
-              <span className="text-[#808080] truncate max-w-[55%]">{post.title}</span>
+              <span className="text-[#5C574C] truncate max-w-[55%]">{post.title}</span>
             </nav>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mb-5">
               <Tags tags={post.tags} />
               <div className="flex items-center gap-3 text-xs font-bold text-[#B3AD9F] uppercase tracking-wider">
                 <span>{formatDateNo(post.date)}</span>
-                <span className="w-1 h-1 rounded-full bg-[#EBEBE6]" />
+                <span className="w-1 h-1 rounded-full bg-[#E9E4DA]" />
                 <span className="flex items-center gap-1.5">
                   <Clock size={12} /> {post.readingMinutes} min lesetid
                 </span>
@@ -219,7 +219,7 @@ export default function BloggPostPage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-[#1A1A1A] leading-[1.1] mb-5 max-w-3xl">
               {post.title}
             </h1>
-            <p className="text-lg text-[#808080] font-medium leading-relaxed max-w-2xl">{post.description}</p>
+            <p className="text-lg text-[#5C574C] font-medium leading-relaxed max-w-2xl">{post.description}</p>
             <p className="mt-5 text-xs font-bold text-[#B3AD9F] uppercase tracking-wider">Av {post.author}</p>
           </RevealOnScroll>
         </Container>
@@ -244,10 +244,10 @@ export default function BloggPostPage() {
 
             {/* Mobil-TOC */}
             {headings.length > 1 && (
-              <details className="lg:hidden mb-8 group bg-white/80 border border-[#EBEBE6] rounded-2xl px-5">
+              <details className="lg:hidden mb-8 group bg-white/80 border border-[#E9E4DA] rounded-2xl px-5">
                 <summary className="flex items-center justify-between gap-3 cursor-pointer list-none py-4 text-[#1A1A1A] font-bold [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><List size={16} className="text-violet-600" /> Innhold</span>
-                  <ChevronRight size={18} className="text-[#808080] transition-transform duration-200 group-open:rotate-90" />
+                  <ChevronRight size={18} className="text-[#5C574C] transition-transform duration-200 group-open:rotate-90" />
                 </summary>
                 <div className="pb-5">
                   <TocLinks headings={headings} active={active} />
@@ -279,20 +279,20 @@ export default function BloggPostPage() {
 
         {/* Relaterte innlegg */}
         {related.length > 0 && (
-          <section className="mt-16 sm:mt-20 pt-10 border-t border-[#EBEBE6]">
+          <section className="mt-16 sm:mt-20 pt-10 border-t border-[#E9E4DA]">
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#1A1A1A] mb-6">Les videre</h2>
             <div className="grid sm:grid-cols-2 gap-5">
               {related.map((r) => (
                 <Link
                   key={r.slug}
                   to={`/blogg/${r.slug}`}
-                  className="group block rounded-[24px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] p-6 ui-motion ui-lift-sm [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl"
+                  className="group block rounded-[24px] bg-white/80 backdrop-blur-sm border border-[#E9E4DA] p-6 ui-motion ui-lift-sm [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl"
                 >
                   <Tags tags={r.tags} />
                   <h3 className="mt-3 text-lg font-extrabold tracking-tight text-[#1A1A1A] leading-snug [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-[color] duration-200">
                     {r.title}
                   </h3>
-                  <p className="mt-2 text-sm text-[#808080] font-medium leading-relaxed line-clamp-2">{r.description}</p>
+                  <p className="mt-2 text-sm text-[#5C574C] font-medium leading-relaxed line-clamp-2">{r.description}</p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-violet-700">
                     Les mer
                     <ArrowRight size={15} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />

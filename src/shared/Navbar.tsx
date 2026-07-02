@@ -30,7 +30,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const getAvatarUrl = (u: any) => u?.user_metadata?.avatar_url || u?.user_metadata?.picture;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 navbar-shell-t ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-[#EBEBE6] py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 navbar-shell-t ${isScrolled || isMobileMenuOpen ? 'bg-white/80 backdrop-blur-md border-b border-[#E9E4DA] py-3 sm:py-4 shadow-sm' : 'bg-transparent py-5 sm:py-8'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
 
         {/* LOGO */}
@@ -46,7 +46,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
           {user && hasAccess && (
             <button
               onClick={() => onNavigate('dashboard')}
-              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'dashboard' ? 'bg-[#EBEBE6] text-[#1A1A1A]' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}
+              className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${currentView === 'dashboard' ? 'bg-[#E9E4DA] text-[#1A1A1A]' : 'text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]'}`}
             >
               <BarChart3 size={18} />
               Dashboard
@@ -57,7 +57,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
             <Link
               key={l.to}
               to={l.to}
-              className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${location.pathname === l.to ? 'text-[#1A1A1A] font-black' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}
+              className={`text-sm font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${location.pathname === l.to ? 'text-[#1A1A1A] font-black' : 'text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}
             >
               {l.label}
             </Link>
@@ -68,35 +68,35 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               {/* Profilbilde-knapp */}
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 focus:outline-none">
                 <img src={getAvatarUrl(user)} className="w-9 h-9 rounded-full border-2 border-white shadow-sm" alt="" />
-                <ChevronDown size={14} className={`text-[#808080] transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-[#5C574C] transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* DROPDOWN MENYEN */}
               {isProfileOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-[#EBEBE6] py-2 animate-in zoom-in-95 duration-200 z-50 origin-top-right">
-                    <div className="px-4 py-3 border-b border-[#EBEBE6] mb-1">
-                      <p className="text-[10px] font-black text-[#808080] uppercase tracking-widest">Innlogget som</p>
+                  <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-[#E9E4DA] py-2 animate-in zoom-in-95 duration-200 z-50 origin-top-right">
+                    <div className="px-4 py-3 border-b border-[#E9E4DA] mb-1">
+                      <p className="text-[10px] font-black text-[#5C574C] uppercase tracking-widest">Innlogget som</p>
                       <p className="text-sm font-bold text-[#1A1A1A] truncate">{user.email}</p>
                     </div>
 
                     {/* Dashboard også i dropdown for enkel tilgang */}
                     {hasAccess && (
-                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
+                      <button onClick={() => { onNavigate('dashboard'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#5C574C] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F2EFE8]/80">
                         <BarChart3 size={16} /> Gå til Dashboard
                       </button>
                     )}
 
-                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
+                    <button onClick={() => { onNavigate('profile'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#5C574C] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F2EFE8]/80">
                       <Settings size={16} /> Innstillinger
                     </button>
 
-                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#808080] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F5F5F0]/80">
+                    <button onClick={() => { onNavigate('billing'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#5C574C] transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] active:bg-[#F2EFE8]/80">
                       <CreditCard size={16} /> Abonnement
                     </button>
 
-                    <div className="my-1 border-b border-[#EBEBE6]"></div>
+                    <div className="my-1 border-b border-[#E9E4DA]"></div>
 
                     <button onClick={() => { onLogout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left [@media(hover:hover)_and_(pointer:fine)]:hover:bg-rose-50 active:bg-rose-50/80">
                       <LogOut size={16} /> Logg ut
@@ -116,9 +116,9 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
 
       {/* MOBIL MENY (Expandable) */}
       {isMobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white border-b border-[#EBEBE6] p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5 duration-200">
+        <div className="absolute top-full left-0 w-full bg-white border-b border-[#E9E4DA] p-6 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-5 duration-200">
           {user && hasAccess && (
-            <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-[#1A1A1A] bg-[#F5F5F0] p-3 rounded-xl">
+            <button onClick={() => { onNavigate('dashboard'); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-bold text-[#1A1A1A] bg-[#F2EFE8] p-3 rounded-xl">
               <BarChart3 size={20} /> Dashboard
             </button>
           )}
@@ -127,7 +127,7 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
               key={l.to}
               to={l.to}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-left font-bold text-[#808080] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]"
+              className="text-left font-bold text-[#5C574C] p-2 rounded-xl transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]"
             >
               {l.label}
             </Link>

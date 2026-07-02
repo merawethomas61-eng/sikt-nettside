@@ -18,9 +18,9 @@ const variants: Record<Variant, string> = {
   dark:
     'bg-[#1A1A1A] text-white shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20',
   white:
-    'bg-white text-[#1A1A1A] border border-[#EBEBE6] shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700',
+    'bg-white text-[#1A1A1A] border border-[#E9E4DA] shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700',
   lightOnDark:
-    'bg-white text-[#1A1A1A] shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]',
+    'bg-white text-[#1A1A1A] shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]',
   ghostOnDark:
     'bg-transparent text-white border border-white/25 [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/50',
 };

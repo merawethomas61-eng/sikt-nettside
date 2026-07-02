@@ -37,7 +37,7 @@ export function SectionHeading({
       <Tag className={`font-black tracking-tight text-[#1A1A1A] ${titleSizes[size]}`}>{title}</Tag>
       {intro && (
         <p
-          className={`mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-[#808080] font-medium leading-relaxed ${center ? 'mx-auto max-w-2xl' : 'max-w-2xl'} ${introClassName}`}
+          className={`mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-[#5C574C] font-medium leading-relaxed ${center ? 'mx-auto max-w-2xl' : 'max-w-2xl'} ${introClassName}`}
         >
           {intro}
         </p>

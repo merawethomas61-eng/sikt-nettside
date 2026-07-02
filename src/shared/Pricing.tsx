@@ -88,7 +88,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         return (
           <li key={j} className="text-[#1A1A1A]">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 w-5 h-5 rounded-full bg-[rgba(63,143,56,0.1)] flex items-center justify-center text-[#3F8F38] shrink-0">
+              <div className="mt-0.5 w-5 h-5 rounded-full bg-[#E8F1EB] flex items-center justify-center text-[#15795A] shrink-0">
                 <Check size={12} strokeWidth={3} />
               </div>
               <span className="text-sm font-medium flex-1">{feat.text}</span>
@@ -98,7 +98,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                   onClick={() => setOpenDetail(isOpen ? null : detailKey)}
                   aria-label={isOpen ? "Skjul detaljer" : "Vis detaljer"}
                   aria-expanded={isOpen}
-                  className={`mt-0.5 shrink-0 transition-colors ${isOpen ? 'text-[#1A1A1A]' : 'text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}
+                  className={`mt-0.5 shrink-0 transition-colors ${isOpen ? 'text-[#1A1A1A]' : 'text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'}`}
                 >
                   <HelpCircle size={14} />
                 </button>
@@ -109,7 +109,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
                 className={`grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${isOpen ? 'grid-rows-[1fr] mt-2' : 'grid-rows-[0fr]'}`}
               >
                 <div className="overflow-hidden ml-8">
-                  <div className="p-3 bg-[#F5F5F0] border border-[#EBEBE6] rounded-lg text-xs text-[#808080] leading-relaxed">
+                  <div className="p-3 bg-[#F2EFE8] border border-[#E9E4DA] rounded-lg text-xs text-[#5C574C] leading-relaxed">
                     {feat.detail}
                   </div>
                 </div>
@@ -139,7 +139,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
             <button
               type="button"
               onClick={() => onSelectPlan(plan.title)}
-              className="mt-3 block text-xs sm:text-sm font-semibold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
+              className="mt-3 block text-xs sm:text-sm font-semibold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
             >
               eller start abonnementet direkte →
             </button>
@@ -150,7 +150,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
             className={
               plan.highlighted
                 ? inkBtn
-                : 'w-full sm:w-auto inline-flex justify-center items-center px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base ui-motion bg-white border border-[#EBEBE6] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]/40'
+                : 'w-full sm:w-auto inline-flex justify-center items-center px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base ui-motion bg-white border border-[#E9E4DA] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]/40'
             }
           >
             Velg {plan.title}
@@ -167,7 +167,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       {/* Historie */}
       <div>
         <div className="flex items-center gap-3 flex-wrap">
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-[#808080]">{plan.title}</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-[#5C574C]">{plan.title}</h3>
           {plan.highlighted && (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[11px] font-black uppercase tracking-wider">
               Mest valgt
@@ -176,10 +176,10 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         </div>
         <div className="mt-3 flex items-baseline gap-1.5">
           <span className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight">{plan.price},-</span>
-          <span className="text-[#808080] font-medium text-sm sm:text-base">/mnd</span>
+          <span className="text-[#5C574C] font-medium text-sm sm:text-base">/mnd</span>
         </div>
         <p className="mt-4 text-[15px] sm:text-base font-bold text-[#1A1A1A] leading-snug">{plan.tagline}</p>
-        <p className="mt-2 text-sm text-[#808080] leading-relaxed">{plan.who}</p>
+        <p className="mt-2 text-sm text-[#5C574C] leading-relaxed">{plan.who}</p>
         <div className="mt-6">{renderCta(plan)}</div>
       </div>
 
@@ -189,15 +189,15 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   );
 
   return (
-    <section id="priser" className="py-16 sm:py-24 md:py-32 bg-[#F5F5F0] relative overflow-hidden">
+    <section id="priser" className="py-16 sm:py-24 md:py-32 bg-[#F2EFE8] relative overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-5 relative z-10">
 
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6">Velg din <span className="text-[#1A1A1A]">vekstplan</span></h2>
-            <p className="text-base sm:text-lg md:text-xl text-[#808080] max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-[#808080] -mt-0.5" /> for å se detaljer.</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6">Velg din <span className="text-violet-600">vekstplan</span></h2>
+            <p className="text-base sm:text-lg md:text-xl text-[#5C574C] max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-[#5C574C] -mt-0.5" /> for å se detaljer.</p>
             <p className="mt-4 inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3F8F38]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#15795A]" />
               Rabattert de 3 første månedene · 50 / 30 / 15 %
             </p>
           </div>
@@ -207,11 +207,11 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
           {plans.map((plan, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 110}>
               {plan.highlighted ? (
-                <div className="relative bg-white rounded-[28px] border border-[#EBEBE6] border-l-2 border-l-violet-400 shadow-[0_30px_60px_-24px_rgba(26,26,26,0.18)] transition-shadow duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_40px_80px_-24px_rgba(26,26,26,0.24)]">
+                <div className="relative bg-white rounded-[28px] border border-[#E9E4DA] border-l-2 border-l-violet-400 shadow-[0_30px_60px_-24px_rgba(26,26,26,0.18)] transition-shadow duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_40px_80px_-24px_rgba(26,26,26,0.24)]">
                   {renderRow(plan, i)}
                 </div>
               ) : (
-                <div className="relative bg-white/70 backdrop-blur-sm rounded-[28px] border border-[#EBEBE6] shadow-[0_12px_32px_-22px_rgba(26,26,26,0.13)] transition-shadow duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_18px_40px_-22px_rgba(26,26,26,0.18)]">
+                <div className="relative bg-white/70 backdrop-blur-sm rounded-[28px] border border-[#E9E4DA] shadow-[0_12px_32px_-22px_rgba(26,26,26,0.13)] transition-shadow duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_18px_40px_-22px_rgba(26,26,26,0.18)]">
                   {renderRow(plan, i)}
                 </div>
               )}

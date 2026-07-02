@@ -13,7 +13,7 @@ import { companyInfo } from '../shared/companyInfo';
 const SUPPORT_EMAIL = companyInfo.supportEmail;
 
 const inputCls =
-  'w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-[#F5F5F0] text-[#1A1A1A] font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400 transition-[border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]';
+  'w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-[#F2EFE8] text-[#1A1A1A] font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400 transition-[border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]';
 
 const perks = [
   { icon: Clock, title: 'Raskt svar', body: 'Vi svarer som regel innen én arbeidsdag.' },
@@ -94,13 +94,13 @@ export default function KontaktPage() {
           <RevealOnScroll direction="left">
             <div className="space-y-4">
               {perks.map((p) => (
-                <div key={p.title} className="flex items-start gap-4 rounded-[24px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] p-5 sm:p-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F5F5F0] flex items-center justify-center text-violet-600 shrink-0">
+                <div key={p.title} className="flex items-start gap-4 rounded-[24px] bg-white/80 backdrop-blur-sm border border-[#E9E4DA] p-5 sm:p-6">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F2EFE8] flex items-center justify-center text-violet-600 shrink-0">
                     <p.icon size={22} />
                   </div>
                   <div>
                     <p className="font-bold text-[#1A1A1A]">{p.title}</p>
-                    <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">{p.body}</p>
+                    <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">{p.body}</p>
                   </div>
                 </div>
               ))}
@@ -177,7 +177,7 @@ export default function KontaktPage() {
                     )}
                   </PillButton>
                   {sent && (
-                    <p className="text-sm text-[#808080] font-medium text-center">Vi svarer som regel innen én arbeidsdag.</p>
+                    <p className="text-sm text-[#5C574C] font-medium text-center">Vi svarer som regel innen én arbeidsdag.</p>
                   )}
                 </form>
               </div>

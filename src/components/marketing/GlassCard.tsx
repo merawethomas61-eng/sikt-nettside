@@ -16,7 +16,7 @@ export function GlassCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] ui-motion ${
+      className={`relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#E9E4DA] ui-motion ${
         lift ? 'ui-lift-sm [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl' : ''
       } ${className}`}
     >

@@ -38,7 +38,7 @@ function PanelHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between h-12 sm:h-14 px-4 sm:px-6 border-b border-[#EBEBE6] bg-white">
+    <div className="flex items-center justify-between h-12 sm:h-14 px-4 sm:px-6 border-b border-[#E9E4DA] bg-white">
       <span className="text-xs sm:text-sm font-bold text-[#1A1A1A] tracking-tight">{title}</span>
       {right}
     </div>
@@ -47,8 +47,8 @@ function PanelHeader({
 
 function LiveChip() {
   return (
-    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(63,143,56,0.09)] border border-[rgba(63,143,56,0.18)]">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#3F8F38] animate-pulse" />
+    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E8F1EB] border border-[#D6EEDF]">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#15795A] animate-pulse" />
       <span className="text-[9px] font-black text-[#1A1A1A] uppercase tracking-wider">Live</span>
     </span>
   );
@@ -72,32 +72,32 @@ function HeroPanel() {
       <div className="p-4 sm:p-6 space-y-4">
         <div className="grid grid-cols-3 gap-3">
           {kpis.map((k) => (
-            <div key={k.l} className="bg-white rounded-xl border border-[#EBEBE6] p-3">
+            <div key={k.l} className="bg-white rounded-xl border border-[#E9E4DA] p-3">
               <div className="flex items-center justify-between gap-1">
-                <span className="text-[9px] sm:text-[10px] text-[#808080] font-bold uppercase tracking-wide truncate">{k.l}</span>
-                <span className="text-[9px] px-1 py-0.5 rounded-md font-bold bg-[rgba(63,143,56,0.09)] text-[#3F8F38] shrink-0">{k.g}</span>
+                <span className="text-[9px] sm:text-[10px] text-[#5C574C] font-bold uppercase tracking-wide truncate">{k.l}</span>
+                <span className="text-[9px] px-1 py-0.5 rounded-md font-bold bg-[#E8F1EB] text-[#15795A] shrink-0">{k.g}</span>
               </div>
               <div className="text-lg sm:text-2xl font-black text-[#1A1A1A] mt-1.5">{k.v}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles size={14} className="text-violet-600" />
-            <span className="text-[11px] font-bold uppercase tracking-wide text-[#808080]">Sikt jobber automatisk</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[#5C574C]">Sikt jobber automatisk</span>
           </div>
           <ul className="space-y-3">
             {feed.map((f) => (
               <li key={f.t} className="flex items-center gap-3">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-[rgba(63,143,56,0.1)] text-[#3F8F38] flex items-center justify-center">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-[#E8F1EB] text-[#15795A] flex items-center justify-center">
                   <Check size={13} strokeWidth={2.5} />
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs sm:text-sm font-semibold text-[#1A1A1A] truncate">{f.t}</div>
                   <div className="text-[10px] text-[#B3AD9F] font-medium">{f.a}</div>
                 </div>
-                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-[#808080] border border-[#EBEBE6] rounded-full px-2 py-0.5">
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-[#5C574C] border border-[#E9E4DA] rounded-full px-2 py-0.5">
                   <Undo2 size={11} /> Angre
                 </span>
               </li>
@@ -123,16 +123,16 @@ function Serp({
 }) {
   const strong = tone === 'strong';
   return (
-    <div className={`rounded-xl bg-white p-3.5 sm:p-4 border ${strong ? 'border-[#3F8F38]/40 shadow-sm' : 'border-[#EBEBE6]'}`}>
+    <div className={`rounded-xl bg-white p-3.5 sm:p-4 border ${strong ? 'border-[#15795A]/40 shadow-sm' : 'border-[#E9E4DA]'}`}>
       <div className="flex items-center gap-2 mb-1.5">
-        <span className="w-5 h-5 rounded-full bg-[#F5F5F0] border border-[#EBEBE6] flex items-center justify-center text-[9px] font-black text-[#808080]">V</span>
+        <span className="w-5 h-5 rounded-full bg-[#F2EFE8] border border-[#E9E4DA] flex items-center justify-center text-[9px] font-black text-[#5C574C]">V</span>
         <div className="leading-tight min-w-0">
           <div className="text-[11px] font-semibold text-[#1A1A1A]">VVS Oslo</div>
-          <div className="text-[10px] text-[#808080] truncate">{url}</div>
+          <div className="text-[10px] text-[#5C574C] truncate">{url}</div>
         </div>
       </div>
-      <h5 className={`text-sm sm:text-[15px] font-bold leading-snug ${strong ? 'text-[#1a0dab]' : 'text-[#808080]'}`}>{title}</h5>
-      <p className="text-xs text-[#808080] leading-relaxed mt-1">{desc}</p>
+      <h5 className={`text-sm sm:text-[15px] font-bold leading-snug ${strong ? 'text-[#1a0dab]' : 'text-[#5C574C]'}`}>{title}</h5>
+      <p className="text-xs text-[#5C574C] leading-relaxed mt-1">{desc}</p>
     </div>
   );
 }
@@ -148,9 +148,9 @@ function FixMock() {
           desc="Velkommen til vår nettside. Vi tilbyr tjenester."
         />
         <div className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-violet-600">
-          <span className="h-px w-6 bg-[#EBEBE6]" />
+          <span className="h-px w-6 bg-[#E9E4DA]" />
           <Wrench size={12} /> Sikt skriver om
-          <span className="h-px w-6 bg-[#EBEBE6]" />
+          <span className="h-px w-6 bg-[#E9E4DA]" />
         </div>
         <Serp
           tone="strong"
@@ -159,10 +159,10 @@ function FixMock() {
           desc="Trenger du rørlegger i Oslo? Vi rykker ut samme dag — fast pris, ingen overraskelser. Ring nå."
         />
         <div className="flex items-center justify-between pt-1">
-          <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#3F8F38]">
+          <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#15795A]">
             <Check size={13} strokeWidth={2.5} /> Pushet live · 09:14
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-[#808080] border border-[#EBEBE6] rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-[#5C574C] border border-[#E9E4DA] rounded-full px-2.5 py-1">
             <Undo2 size={12} /> Angre
           </span>
         </div>
@@ -181,25 +181,25 @@ function ReportMock() {
     <Frame>
       <PanelHeader
         title="Ukerapport"
-        right={<span className="text-[10px] font-bold uppercase tracking-wider text-[#808080] bg-[#F5F5F0] border border-[#EBEBE6] rounded-full px-2.5 py-0.5">Uke 24</span>}
+        right={<span className="text-[10px] font-bold uppercase tracking-wider text-[#5C574C] bg-[#F2EFE8] border border-[#E9E4DA] rounded-full px-2.5 py-0.5">Uke 24</span>}
       />
       <div className="bg-[#FBFBFA] p-4 sm:p-6 space-y-4">
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] p-4">
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] p-4">
           <div className="flex items-end justify-between mb-3">
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-[#808080] font-bold">Synlighet</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#5C574C] font-bold">Synlighet</div>
               <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">
-                89% <span className="text-xs font-bold text-[#3F8F38] align-middle">+4,1%</span>
+                89% <span className="text-xs font-bold text-[#15795A] align-middle">+4,1%</span>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#3F8F38] bg-[rgba(63,143,56,0.09)] border border-[rgba(63,143,56,0.18)] rounded-full px-2 py-0.5">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#15795A] bg-[#E8F1EB] border border-[#D6EEDF] rounded-full px-2 py-0.5">
               <TrendingUp size={12} /> Stigende
             </span>
           </div>
           <svg viewBox="0 0 120 32" preserveAspectRatio="none" className="w-full h-8">
             <polyline
               fill="none"
-              stroke="#3F8F38"
+              stroke="#15795A"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -208,16 +208,16 @@ function ReportMock() {
           </svg>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] p-4 space-y-3.5">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-[#808080]">Gjort denne uka</div>
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] p-4 space-y-3.5">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-[#5C574C]">Gjort denne uka</div>
           {done.map((d) => (
             <div key={d.t} className="flex items-start gap-3">
-              <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-[rgba(63,143,56,0.1)] text-[#3F8F38] flex items-center justify-center">
+              <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-[#E8F1EB] text-[#15795A] flex items-center justify-center">
                 <Check size={12} strokeWidth={2.5} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs sm:text-sm font-semibold text-[#1A1A1A]">{d.t}</div>
-                <div className="text-[11px] text-[#808080] leading-snug">{d.m}</div>
+                <div className="text-[11px] text-[#5C574C] leading-snug">{d.m}</div>
               </div>
             </div>
           ))}
@@ -268,9 +268,9 @@ function RadarMock() {
           {rows.map((r, i) => (
             <li
               key={r.t}
-              className={`flex items-center gap-3 p-3 rounded-xl ${i === 0 ? 'bg-white border border-[#EBEBE6]' : ''}`}
+              className={`flex items-center gap-3 p-3 rounded-xl ${i === 0 ? 'bg-white border border-[#E9E4DA]' : ''}`}
             >
-              <span className="shrink-0 w-8 h-8 rounded-lg bg-[#F5F5F0] border border-[#EBEBE6] text-[#808080] flex items-center justify-center">
+              <span className="shrink-0 w-8 h-8 rounded-lg bg-[#F2EFE8] border border-[#E9E4DA] text-[#5C574C] flex items-center justify-center">
                 <r.icon size={15} />
               </span>
               <div className="flex-1 min-w-0">
@@ -291,12 +291,12 @@ function UndoMock() {
     <Frame>
       <PanelHeader
         title="Endringslogg"
-        right={<span className="text-[10px] font-bold uppercase tracking-wider text-[#808080] bg-[#F5F5F0] border border-[#EBEBE6] rounded-full px-2.5 py-0.5">12 endringer</span>}
+        right={<span className="text-[10px] font-bold uppercase tracking-wider text-[#5C574C] bg-[#F2EFE8] border border-[#E9E4DA] rounded-full px-2.5 py-0.5">12 endringer</span>}
       />
       <div className="bg-[#FBFBFA] p-4 sm:p-6 space-y-3">
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] p-4">
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] uppercase tracking-wide text-[#808080] font-bold">Meta-tittel · /rorlegger-oslo</span>
+            <span className="text-[10px] uppercase tracking-wide text-[#5C574C] font-bold">Meta-tittel · /rorlegger-oslo</span>
             <span className="text-[10px] text-[#B3AD9F] font-medium">I dag 09:14</span>
           </div>
           <div className="space-y-2">
@@ -305,20 +305,20 @@ function UndoMock() {
               <span className="text-xs text-[#B3AD9F] line-through truncate">VVS Oslo – Hjem</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check size={14} strokeWidth={2.5} className="text-[#3F8F38] shrink-0" />
+              <Check size={14} strokeWidth={2.5} className="text-[#15795A] shrink-0" />
               <span className="text-xs font-semibold text-[#1A1A1A] truncate">Rørlegger i Oslo – Døgnvakt | VVS Oslo</span>
             </div>
           </div>
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#EBEBE6]">
-            <span className="text-[10px] text-[#808080] font-medium">Logget med før- og etterverdi</span>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#1A1A1A] border border-[#EBEBE6] rounded-full px-3 py-1">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E9E4DA]">
+            <span className="text-[10px] text-[#5C574C] font-medium">Logget med før- og etterverdi</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#1A1A1A] border border-[#E9E4DA] rounded-full px-3 py-1">
               <Undo2 size={12} /> Angre
             </span>
           </div>
         </div>
         <div className="flex items-center gap-3 px-1">
-          <Check size={14} strokeWidth={2.5} className="text-[#3F8F38] shrink-0" />
-          <span className="text-xs text-[#808080] font-medium">Alt-tekst lagt til på 3 bilder</span>
+          <Check size={14} strokeWidth={2.5} className="text-[#15795A] shrink-0" />
+          <span className="text-xs text-[#5C574C] font-medium">Alt-tekst lagt til på 3 bilder</span>
           <span className="text-[10px] text-[#B3AD9F] ml-auto">I går</span>
         </div>
       </div>
@@ -392,7 +392,7 @@ export default function FunksjonerPage() {
               </span>
             ))}
           </div>
-          <p className="mt-7 text-center text-sm sm:text-base text-[#808080] font-medium max-w-xl mx-auto">
+          <p className="mt-7 text-center text-sm sm:text-base text-[#5C574C] font-medium max-w-xl mx-auto">
             Bygde du siden med AI — Claude, Cursor eller Lovable? Du får en ferdig lim-inn-prompt per problem.
           </p>
         </RevealOnScroll>

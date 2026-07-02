@@ -24,7 +24,7 @@ export function GradientCTA({
   return (
     <section className="relative py-16 sm:py-24 md:py-32 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
       {/* Dekorative glød-effekter */}
-      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#F5F5F0] rounded-full blur-[100px] sm:blur-[120px] pointer-events-none opacity-60"></div>
+      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-white/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none opacity-60"></div>
       <div className="absolute bottom-0 right-1/4 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-indigo-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"

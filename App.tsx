@@ -100,7 +100,7 @@ const ClientPortal = React.lazy(() => import('./src/portal/ClientPortal'));
 // --- TOOLTIP KOMPONENT (Enkle forklaringer) ---
 const InfoHint = ({ text }: { text: string }) => (
   <div className="group relative inline-flex ml-1.5 cursor-help">
-    <div className="text-[#808080] hover:text-white transition-colors opacity-50 hover:opacity-100">
+    <div className="text-[#5C574C] hover:text-white transition-colors opacity-50 hover:opacity-100">
       <HelpCircle size={12} />
     </div>
     {/* Tooltip boks */}
@@ -163,7 +163,7 @@ export const handleLogin = async () => {
 const GlobalDecorations = () => {
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-      <div className="absolute top-[2%] left-[10%] w-[40rem] h-[40rem] bg-[#F5F5F0] rounded-full blur-[160px] animate-mesh"></div>
+      <div className="absolute top-[2%] left-[10%] w-[40rem] h-[40rem] bg-[#F2EFE8] rounded-full blur-[160px] animate-mesh"></div>
       <div className="absolute bottom-[5%] right-[2%] w-[45rem] h-[45rem] bg-indigo-400/10 rounded-full blur-[180px] animate-mesh" style={{ animationDelay: '-12s' }}></div>
       <div className="absolute top-[40%] right-[15%] w-[35rem] h-[35rem] bg-fuchsia-400/5 rounded-full blur-[140px] animate-mesh" style={{ animationDelay: '-6s' }}></div>
       <div className="absolute bottom-[30%] left-[-10%] w-[30rem] h-[30rem] bg-blue-400/5 rounded-full blur-[120px] animate-mesh" style={{ animationDelay: '-18s' }}></div>
@@ -506,37 +506,37 @@ const TechChapter1Scan = () => {
   }, [reducedMotion]);
 
   return (
-    <section ref={sectionRef} className="tech-chapter-1 relative bg-[#F5F5F0]" style={{ minHeight: reducedMotion ? 'auto' : '220vh' }}>
+    <section ref={sectionRef} className="tech-chapter-1 relative bg-[#F2EFE8]" style={{ minHeight: reducedMotion ? 'auto' : '220vh' }}>
       <div ref={pinRef} className="min-h-screen flex flex-col items-center justify-center px-5 py-20">
         <div className="max-w-3xl mx-auto text-center mb-10 sm:mb-14">
-          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display">01 — RØNTGENSYNET</p>
+          <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#5C574C] mb-4 font-display">01 — RØNTGENSYNET</p>
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] leading-tight tracking-tight mb-5">
             Hver linje. Hvert bilde. Hver feil.
           </h2>
-          <p className="text-base sm:text-lg text-[#808080] leading-relaxed max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-[#5C574C] leading-relaxed max-w-2xl mx-auto">
             Sikt leser nettsiden din fra topp til bunn — titler, tekster, lenker, hastighet, mobilvisning og over 200 andre faktorer Google bruker. Mens du scroller, ser du skanningen skje.
           </p>
         </div>
 
         <div className="relative w-full max-w-lg mx-auto">
-          <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden shadow-sm">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#EBEBE6] bg-[#FAFAF8]">
+          <div className="rounded-2xl bg-white border border-[#E9E4DA] overflow-hidden shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E9E4DA] bg-[#FAFAF8]">
               <div className="flex gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#F09595]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#FAC775]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#97C459]" />
               </div>
-              <span className="text-xs text-[#808080] font-mono flex-1 text-center truncate">dinbedrift.no</span>
+              <span className="text-xs text-[#5C574C] font-mono flex-1 text-center truncate">dinbedrift.no</span>
             </div>
             <div ref={mockupBodyRef} className="relative p-5 sm:p-6 space-y-3 min-h-[220px] sm:min-h-[260px]">
               <div ref={blockTitleRef} className="h-4 w-3/4 rounded" style={{ backgroundColor: '#FAEEDA' }} />
-              <div className="h-3 w-full rounded bg-[#F5F5F0]" />
-              <div className="h-3 w-5/6 rounded bg-[#F5F5F0]" />
+              <div className="h-3 w-full rounded bg-[#F2EFE8]" />
+              <div className="h-3 w-5/6 rounded bg-[#F2EFE8]" />
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div ref={blockImg1Ref} className="h-20 rounded-lg" style={{ backgroundColor: '#EEEDFE' }} />
                 <div ref={blockImg2Ref} className="h-20 rounded-lg" style={{ backgroundColor: '#F0F0EB' }} />
               </div>
-              <div className="h-16 rounded-lg bg-[#F5F5F0]" />
+              <div className="h-16 rounded-lg bg-[#F2EFE8]" />
               <div
                 ref={scanlineRef}
                 className="absolute left-0 right-0 top-0 h-0.5 bg-[#15795A] pointer-events-none z-20"
@@ -725,16 +725,16 @@ const TechChapter2Data = () => {
   return (
     <section ref={sectionRef} className="relative bg-white px-5 py-20 sm:py-32">
       <div className="max-w-3xl mx-auto">
-        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display text-center">02 — EKTE DATA</p>
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#5C574C] mb-4 font-display text-center">02 — EKTE DATA</p>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] text-center leading-tight tracking-tight mb-5">
           Koblet rett på Google.
         </h2>
-        <p className="text-base sm:text-lg text-[#808080] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-[#5C574C] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
           Søkeordene kundene dine faktisk skriver — med klikk, visninger og posisjon — rett fra Google Search Console. Du ser nøyaktig hvor du klatrer, uke for uke.
         </p>
 
-        <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-[#EBEBE6] text-[10px] font-bold uppercase tracking-wider text-[#808080]">
+        <div className="rounded-2xl bg-white border border-[#E9E4DA] overflow-hidden">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-[#E9E4DA] text-[10px] font-bold uppercase tracking-wider text-[#5C574C]">
             <span>Søkeord</span>
             <span className="text-right w-14">Klikk</span>
             <span className="text-right w-16">Visn.</span>
@@ -743,7 +743,7 @@ const TechChapter2Data = () => {
           {TECH_KEYWORDS.map((row, rowIdx) => (
             <div
               key={row.keyword}
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 border-b border-[#EBEBE6] last:border-0 items-center text-sm"
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 border-b border-[#E9E4DA] last:border-0 items-center text-sm"
             >
               <span className="font-medium text-[#111111] truncate">{row.keyword}</span>
               <span className="text-right w-14 font-bold tabular-nums text-[#111111]">
@@ -759,7 +759,7 @@ const TechChapter2Data = () => {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#808080] mt-4 text-center">
+        <p className="text-[10px] text-[#5C574C] mt-4 text-center">
           Illustrasjon — dine tall kommer fra din egen Search Console
         </p>
       </div>
@@ -1062,28 +1062,28 @@ const TechChapter5Result = () => {
   }, [reducedMotion]);
 
   return (
-    <section ref={sectionRef} className="relative bg-[#F5F5F0] px-5 pt-20 sm:pt-32 pb-12">
+    <section ref={sectionRef} className="relative bg-[#F2EFE8] px-5 pt-20 sm:pt-32 pb-12">
       <div className="max-w-4xl mx-auto">
-        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#808080] mb-4 font-display text-center">05 — RESULTATET</p>
+        <p className="text-[11px] tracking-[3px] uppercase font-bold text-[#5C574C] mb-4 font-display text-center">05 — RESULTATET</p>
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#111111] text-center leading-tight tracking-tight mb-5">
           Se for deg om seks måneder.
         </h2>
-        <p className="text-base sm:text-lg text-[#808080] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-[#5C574C] text-center leading-relaxed mb-12 max-w-2xl mx-auto">
           Kundene finner deg — ikke konkurrenten. Telefonen ringer fra folk som allerede har bestemt seg. Og du vet nøyaktig hvorfor, fordi tallene står i dashboardet ditt.
         </p>
 
         <div
           className="max-w-xl mx-auto mb-12 rounded-2xl bg-white pt-[22px] px-5 pb-3.5"
-          style={{ border: '0.5px solid #EBEBE6' }}
+          style={{ border: '0.5px solid #E9E4DA' }}
         >
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <span className="text-xs font-medium text-[#1A1A1A]">Synlighet i Google</span>
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-[10px] text-[#808080]">
+              <span className="flex items-center gap-1.5 text-[10px] text-[#5C574C]">
                 <span className="w-3.5 h-0.5 rounded-full bg-[#52A447]" />
                 Visninger
               </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-[#808080]">
+              <span className="flex items-center gap-1.5 text-[10px] text-[#5C574C]">
                 <span className="w-3.5 h-0.5 rounded-full bg-[#15795A]" />
                 Klikk
               </span>
@@ -1094,15 +1094,15 @@ const TechChapter5Result = () => {
             {[20, 60, 100, 140, 170].map((y) => (
               <line key={y} className="tech-ch5-grid" x1="40" y1={y} x2="440" y2={y} stroke="#F0F0EB" strokeWidth="1" />
             ))}
-            <text className="tech-ch5-axis" x="12" y="23" fill="#b0b0aa" fontSize="9">2k</text>
-            <text className="tech-ch5-axis" x="10" y="103" fill="#b0b0aa" fontSize="9">1k</text>
-            <text className="tech-ch5-axis" x="14" y="173" fill="#b0b0aa" fontSize="9">0</text>
-            <text className="tech-ch5-axis" x="34" y="188" fill="#b0b0aa" fontSize="9">Mnd 1</text>
-            <text className="tech-ch5-axis" x="100" y="188" fill="#b0b0aa" fontSize="9">2</text>
-            <text className="tech-ch5-axis" x="166" y="188" fill="#b0b0aa" fontSize="9">3</text>
-            <text className="tech-ch5-axis" x="232" y="188" fill="#b0b0aa" fontSize="9">4</text>
-            <text className="tech-ch5-axis" x="298" y="188" fill="#b0b0aa" fontSize="9">5</text>
-            <text className="tech-ch5-axis" x="424" y="188" fill="#b0b0aa" fontSize="9">Mnd 6</text>
+            <text className="tech-ch5-axis" x="12" y="23" fill="#8A8578" fontSize="9">2k</text>
+            <text className="tech-ch5-axis" x="10" y="103" fill="#8A8578" fontSize="9">1k</text>
+            <text className="tech-ch5-axis" x="14" y="173" fill="#8A8578" fontSize="9">0</text>
+            <text className="tech-ch5-axis" x="34" y="188" fill="#8A8578" fontSize="9">Mnd 1</text>
+            <text className="tech-ch5-axis" x="100" y="188" fill="#8A8578" fontSize="9">2</text>
+            <text className="tech-ch5-axis" x="166" y="188" fill="#8A8578" fontSize="9">3</text>
+            <text className="tech-ch5-axis" x="232" y="188" fill="#8A8578" fontSize="9">4</text>
+            <text className="tech-ch5-axis" x="298" y="188" fill="#8A8578" fontSize="9">5</text>
+            <text className="tech-ch5-axis" x="424" y="188" fill="#8A8578" fontSize="9">Mnd 6</text>
 
             <path
               className="tech-ch5-area"
@@ -1159,7 +1159,7 @@ const TechChapter5Result = () => {
             </g>
           </svg>
 
-          <p className="text-right text-[9px] text-[#b0b0aa] mt-2">
+          <p className="text-right text-[9px] text-[#8A8578] mt-2">
             Illustrasjon av et typisk forløp — resultater varierer
           </p>
         </div>
@@ -1169,14 +1169,14 @@ const TechChapter5Result = () => {
             Hverdagen, før og med Sikt
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="tech-ch5-before rounded-2xl bg-white border border-[#EBEBE6] p-5 sm:p-6">
-              <p className="text-[11px] tracking-wide uppercase text-[#808080] mb-4">Uten</p>
+            <div className="tech-ch5-before rounded-2xl bg-white border border-[#E9E4DA] p-5 sm:p-6">
+              <p className="text-[11px] tracking-wide uppercase text-[#5C574C] mb-4">Uten</p>
               <ul className="space-y-4">
                 {TECH_BEFORE_ITEMS.map((item) => {
                   const Icon = item.icon;
                   return (
                     <li key={item.text} className="flex items-start gap-3">
-                      <Icon size={16} className="shrink-0 mt-0.5 text-[#b0b0aa]" />
+                      <Icon size={16} className="shrink-0 mt-0.5 text-[#8A8578]" />
                       <span className="text-[13px] text-[#5F5E5A] leading-relaxed">{item.text}</span>
                     </li>
                   );
@@ -1210,7 +1210,7 @@ const TechChapter5Result = () => {
             return (
               <div
                 key={card.title}
-                className="tech-ch5-outcome rounded-2xl bg-white border border-[#EBEBE6] p-4 sm:p-5"
+                className="tech-ch5-outcome rounded-2xl bg-white border border-[#E9E4DA] p-4 sm:p-5"
                 style={{ opacity: reducedMotion ? 1 : 0 }}
               >
                 <div
@@ -1220,7 +1220,7 @@ const TechChapter5Result = () => {
                   <Icon size={18} style={{ color: card.color }} />
                 </div>
                 <p className="text-[13px] font-medium text-[#1A1A1A] leading-snug mb-1">{card.title}</p>
-                <p className="text-[11px] text-[#808080] leading-relaxed">{card.desc}</p>
+                <p className="text-[11px] text-[#5C574C] leading-relaxed">{card.desc}</p>
               </div>
             );
           })}
@@ -1275,13 +1275,13 @@ const Hero = () => {
   return (
     <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-28 md:pt-44 md:pb-60 hero-gradient overflow-hidden">
       <div className="absolute top-1/4 -left-12 hidden xl:block animate-float-subtle opacity-20 pointer-events-none">
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#EBEBE6] rotate-12">
-          <SearchIcon size={48} className="text-[#3F8F38]" />
+        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#E9E4DA] rotate-12">
+          <SearchIcon size={48} className="text-[#15795A]" />
         </div>
       </div>
       <div className="absolute bottom-1/4 -right-16 hidden xl:block animate-float-subtle opacity-20 pointer-events-none" style={{ animationDelay: '2s' }}>
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#EBEBE6] -rotate-12">
-          <TrendingUp size={48} className="text-[#3F8F38]" />
+        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#E9E4DA] -rotate-12">
+          <TrendingUp size={48} className="text-[#15795A]" />
         </div>
       </div>
 
@@ -1301,7 +1301,7 @@ const Hero = () => {
             <a href="#gratis-analyse" onClick={() => track('cta_click', { location: 'hero', target: 'free_analysis' })} className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-[#1A1A1A] text-white rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-xl shadow-[rgba(26,26,26,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-500/20">
               Sjekk siden din gratis <ArrowRight size={22} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
             </a>
-            <a href="#priser" onClick={() => track('cta_click', { location: 'hero', target: 'pricing' })} className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700">
+            <a href="#priser" onClick={() => track('cta_click', { location: 'hero', target: 'pricing' })} className="group w-full sm:w-auto px-10 py-4 sm:px-12 sm:py-5 bg-white text-[#1A1A1A] border border-[#E9E4DA] rounded-full text-base sm:text-lg font-black tracking-tight ui-motion ui-lift flex items-center justify-center gap-3 shadow-sm [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700">
               Se priser
             </a>
           </div>
@@ -1312,10 +1312,10 @@ const Hero = () => {
         <RevealOnScroll direction="up" delay={500}>
           <div className="mt-7 sm:mt-10 flex flex-col items-center gap-4 sm:gap-5">
             <UsageStat tone="light" />
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#5C574C]">
               {['Ingen binding', 'Data lagres i EU', 'Plain norsk', 'Gratis å teste'].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
-                  <Check size={15} className="text-[#3F8F38]" /> {t}
+                  <Check size={15} className="text-[#15795A]" /> {t}
                 </span>
               ))}
             </div>
@@ -1343,7 +1343,7 @@ const DashboardPreview = () => (
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-1 h-1 bg-[#808080] rounded-full blur-sm animate-float-particle"
+                className="absolute w-1 h-1 bg-[#5C574C] rounded-full blur-sm animate-float-particle"
                 style={{
                   top: `${Math.random() * 100}%`,
                   left: `${Math.random() * 100}%`,
@@ -1354,44 +1354,44 @@ const DashboardPreview = () => (
             ))}
           </div>
 
-          <div className="bg-white rounded-[20px] sm:rounded-[28px] flex overflow-hidden h-[320px] sm:h-[500px] md:h-[650px] shadow-sm border border-[#EBEBE6]/50 relative z-10">
+          <div className="bg-white rounded-[20px] sm:rounded-[28px] flex overflow-hidden h-[320px] sm:h-[500px] md:h-[650px] shadow-sm border border-[#E9E4DA]/50 relative z-10">
 
             {/* 1. New Sidebar for density */}
-            <div className="hidden sm:flex flex-col w-12 sm:w-16 border-r border-[#EBEBE6] bg-white pt-4 items-center gap-4 shrink-0">
+            <div className="hidden sm:flex flex-col w-12 sm:w-16 border-r border-[#E9E4DA] bg-white pt-4 items-center gap-4 shrink-0">
               <div className="w-8 h-8 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-xs mb-4">S</div>
               {[Home, Activity, Layers, User, Wrench].map((Icon, i) => (
-                <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-[rgba(63,143,56,0.09)] text-[#3F8F38]' : 'text-[#808080] hover:text-[#808080]'}`}>
+                <div key={i} className={`p-2 rounded-lg ${i === 0 ? 'bg-[#E8F1EB] text-[#15795A]' : 'text-[#5C574C] hover:text-[#5C574C]'}`}>
                   <Icon size={18} />
                 </div>
               ))}
             </div>
 
-            <div className="flex-1 flex flex-col bg-[#F5F5F0]/30 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-[#F2EFE8]/30 overflow-hidden">
               {/* Header */}
-              <div className="h-12 md:h-16 border-b border-[#EBEBE6] bg-white flex items-center justify-between px-4 md:px-8 shrink-0">
+              <div className="h-12 md:h-16 border-b border-[#E9E4DA] bg-white flex items-center justify-between px-4 md:px-8 shrink-0">
                 <div className="flex items-center gap-2 sm:gap-4">
                   <div className="sm:hidden w-8 h-8 bg-[#1A1A1A] rounded-lg flex items-center justify-center text-white font-bold text-sm">S</div>
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-[#1A1A1A] tracking-tight">Din oversikt</h3>
-                    <p className="text-[10px] text-[#808080] font-medium hidden sm:block">Oppdatert akkurat nå</p>
+                    <p className="text-[10px] text-[#5C574C] font-medium hidden sm:block">Oppdatert akkurat nå</p>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-[rgba(63,143,56,0.09)] rounded-full border border-[rgba(63,143,56,0.18)]">
-                    <div className="w-1.5 h-1.5 bg-[#808080] rounded-full animate-pulse"></div>
+                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-[#E8F1EB] rounded-full border border-[#D6EEDF]">
+                    <div className="w-1.5 h-1.5 bg-[#5C574C] rounded-full animate-pulse"></div>
                     <span className="text-[9px] font-bold text-[#1A1A1A] uppercase">Alt OK</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden md:flex gap-4 mr-4">
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-[#808080] font-bold uppercase">Siden din</span>
+                      <span className="text-[9px] text-[#5C574C] font-bold uppercase">Siden din</span>
                       <span className="text-xs font-black text-[#1A1A1A]">98.5%</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-[#808080] font-bold uppercase">Ord du ranker på</span>
+                      <span className="text-[9px] text-[#5C574C] font-bold uppercase">Ord du ranker på</span>
                       <span className="text-xs font-black text-[#1A1A1A]">2,341</span>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full border border-[#EBEBE6] bg-white flex items-center justify-center text-[#808080] relative">
+                  <div className="w-8 h-8 rounded-full border border-[#E9E4DA] bg-white flex items-center justify-center text-[#5C574C] relative">
                     <div className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></div>
                     <MessageCircle size={14} />
                   </div>
@@ -1404,18 +1404,18 @@ const DashboardPreview = () => (
                 {/* Row 1: KPI Cards (Dense) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
-                    { l: "Besøkende", v: "124.5k", c: "text-[#3F8F38]", g: "+12%" },
-                    { l: "Synlighet", v: "89.2%", c: "text-[#3F8F38]", g: "+4.1%" },
+                    { l: "Besøkende", v: "124.5k", c: "text-[#15795A]", g: "+12%" },
+                    { l: "Synlighet", v: "89.2%", c: "text-[#15795A]", g: "+4.1%" },
                     { l: "Troverdighet", v: "54", c: "text-amber-600", g: "+1" },
                     { l: "Feil å fikse", v: "0", c: "text-[#1A1A1A]", g: "-2" },
                   ].map((kpi, i) => (
-                    <div key={i} className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm flex flex-col justify-between h-20 sm:h-24">
+                    <div key={i} className="bg-white p-3 rounded-xl border border-[#E9E4DA] shadow-sm flex flex-col justify-between h-20 sm:h-24">
                       <div className="flex justify-between items-start">
-                        <span className="text-[10px] text-[#808080] font-bold uppercase tracking-wide">{kpi.l}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-[rgba(63,143,56,0.09)] text-[#3F8F38]' : 'bg-[#F5F5F0] text-[#808080]'}`}>{kpi.g}</span>
+                        <span className="text-[10px] text-[#5C574C] font-bold uppercase tracking-wide">{kpi.l}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${kpi.g.startsWith('+') ? 'bg-[#E8F1EB] text-[#15795A]' : 'bg-[#F2EFE8] text-[#5C574C]'}`}>{kpi.g}</span>
                       </div>
                       <span className={`text-lg sm:text-2xl font-black ${kpi.c}`}>{kpi.v}</span>
-                      <div className="h-1 w-full bg-[#F5F5F0] rounded-full overflow-hidden">
+                      <div className="h-1 w-full bg-[#F2EFE8] rounded-full overflow-hidden">
                         <div className="h-full bg-current opacity-20 w-2/3"></div>
                       </div>
                     </div>
@@ -1426,16 +1426,16 @@ const DashboardPreview = () => (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
                   {/* Score Card (Detailed) */}
-                  <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-[#EBEBE6] shadow-sm flex flex-col">
+                  <div className="md:col-span-4 bg-white p-4 rounded-2xl border border-[#E9E4DA] shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-bold text-[#1A1A1A] text-xs uppercase tracking-wide">Total score</h4>
-                      <Wrench size={14} className="text-[#808080]" />
+                      <Wrench size={14} className="text-[#5C574C]" />
                     </div>
                     <div className="flex items-center gap-6 mb-6">
                       <div className="relative">
                         <svg className="w-20 h-20 transform -rotate-90">
-                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#F5F5F0]" />
-                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#3F8F38]" strokeDasharray="200" strokeDashoffset="30" />
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#F2EFE8]" />
+                          <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#15795A]" strokeDasharray="200" strokeDashoffset="30" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <span className="text-xl font-black text-[#1A1A1A]">85</span>
@@ -1444,43 +1444,43 @@ const DashboardPreview = () => (
                       <div className="flex flex-col gap-2 flex-1">
                         {["Teknisk", "Innhold", "Lenker"].map((l, i) => (
                           <div key={i} className="flex flex-col gap-1">
-                            <div className="flex justify-between text-[9px] font-bold text-[#808080]">
+                            <div className="flex justify-between text-[9px] font-bold text-[#5C574C]">
                               <span>{l}</span>
                               <span>{90 - i * 5}%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-[#F5F5F0] rounded-full overflow-hidden">
-                              <div className="h-full bg-[#3F8F38] rounded-full" style={{ width: `${90 - i * 5}%` }}></div>
+                            <div className="h-1.5 w-full bg-[#F2EFE8] rounded-full overflow-hidden">
+                              <div className="h-full bg-[#15795A] rounded-full" style={{ width: `${90 - i * 5}%` }}></div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="mt-auto border-t border-[#EBEBE6] pt-3 flex justify-between items-center">
-                      <span className="text-[10px] text-[#808080] font-medium">Neste sjekk om 2t 14m</span>
-                      <button className="text-[10px] font-bold text-[#3F8F38] bg-[rgba(63,143,56,0.09)] px-2 py-1 rounded-md">Sjekk nå</button>
+                    <div className="mt-auto border-t border-[#E9E4DA] pt-3 flex justify-between items-center">
+                      <span className="text-[10px] text-[#5C574C] font-medium">Neste sjekk om 2t 14m</span>
+                      <button className="text-[10px] font-bold text-[#15795A] bg-[#E8F1EB] px-2 py-1 rounded-md">Sjekk nå</button>
                     </div>
                   </div>
 
                   {/* Chart Card (Detailed) */}
-                  <div className="md:col-span-8 bg-white p-4 rounded-2xl border border-[#EBEBE6] shadow-sm flex flex-col relative overflow-hidden">
+                  <div className="md:col-span-8 bg-white p-4 rounded-2xl border border-[#E9E4DA] shadow-sm flex flex-col relative overflow-hidden">
                     <div className="flex justify-between items-center mb-4 z-10">
                       <div>
                         <h4 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wide">Besøkende på siden</h4>
-                        <div className="flex gap-2 text-[9px] text-[#808080] font-medium mt-0.5">
-                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#3F8F38]"></div> Fra Google</span>
-                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#EBEBE6]"></div> Direkte</span>
+                        <div className="flex gap-2 text-[9px] text-[#5C574C] font-medium mt-0.5">
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#15795A]"></div> Fra Google</span>
+                          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#E9E4DA]"></div> Direkte</span>
                         </div>
                       </div>
-                      <div className="flex gap-1 bg-[#F5F5F0] p-1 rounded-lg border border-[#EBEBE6]">
+                      <div className="flex gap-1 bg-[#F2EFE8] p-1 rounded-lg border border-[#E9E4DA]">
                         {["1U", "1M", "3M", "1Å"].map((t, i) => (
-                          <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-[#1A1A1A]' : 'text-[#808080]'}`}>{t}</button>
+                          <button key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded ${i === 1 ? 'bg-white shadow-sm text-[#1A1A1A]' : 'text-[#5C574C]'}`}>{t}</button>
                         ))}
                       </div>
                     </div>
-                    <div className="flex-1 relative min-h-[140px] border-b border-l border-[#EBEBE6]">
+                    <div className="flex-1 relative min-h-[140px] border-b border-l border-[#E9E4DA]">
                       {/* Grid lines */}
                       <div className="absolute inset-0 grid grid-rows-4 gap-0 pointer-events-none">
-                        {[...Array(4)].map((_, i) => <div key={i} className="border-t border-[#EBEBE6] w-full h-full"></div>)}
+                        {[...Array(4)].map((_, i) => <div key={i} className="border-t border-[#E9E4DA] w-full h-full"></div>)}
                       </div>
                       <svg className="absolute inset-0 w-full h-full overflow-visible z-10" viewBox="0 0 800 200" preserveAspectRatio="none">
                         <defs>
@@ -1500,43 +1500,43 @@ const DashboardPreview = () => (
                         2,451
                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-[#1A1A1A] rotate-45"></div>
                       </div>
-                      <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-[#3F8F38] border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
+                      <div className="absolute top-[30%] left-[60%] w-2 h-2 bg-[#15795A] border-2 border-white rounded-full z-20 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
                   </div>
                 </div>
 
                 {/* Row 3: Bottom Density (New) */}
                 <div className="grid grid-cols-3 gap-4 h-24 hidden sm:grid">
-                  <div className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden relative">
-                    <h4 className="text-[9px] font-bold text-[#808080] uppercase mb-2">Topp søk</h4>
+                  <div className="bg-white p-3 rounded-xl border border-[#E9E4DA] shadow-sm overflow-hidden relative">
+                    <h4 className="text-[9px] font-bold text-[#5C574C] uppercase mb-2">Topp søk</h4>
                     <div className="space-y-1.5">
                       {[{ w: "seo byrå", r: 1 }, { w: "digital markedsføring", r: 3 }].map((kw, i) => (
-                        <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-[#EBEBE6] pb-1">
+                        <div key={i} className="flex justify-between items-center text-[10px] font-medium border-b border-[#E9E4DA] pb-1">
                           <span className="text-[#1A1A1A]">{kw.w}</span>
-                          <span className="text-[#3F8F38] font-bold">#{kw.r}</span>
+                          <span className="text-[#15795A] font-bold">#{kw.r}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden">
-                    <h4 className="text-[9px] font-bold text-[#808080] uppercase mb-2">Brukeropplevelse</h4>
+                  <div className="bg-white p-3 rounded-xl border border-[#E9E4DA] shadow-sm overflow-hidden">
+                    <h4 className="text-[9px] font-bold text-[#5C574C] uppercase mb-2">Brukeropplevelse</h4>
                     <div className="flex items-end gap-2 h-10 mt-2">
                       {[
-                        { l: "Fart", v: 80, c: "bg-[#3F8F38]" },
-                        { l: "Respons", v: 95, c: "bg-[#3F8F38]" },
+                        { l: "Fart", v: 80, c: "bg-[#15795A]" },
+                        { l: "Respons", v: 95, c: "bg-[#15795A]" },
                         { l: "Stabilitet", v: 60, c: "bg-amber-400" }
                       ].map((m, i) => (
                         <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1">
                           <div className={`w-full rounded-t-sm ${m.c}`} style={{ height: `${m.v}%` }}></div>
-                          <span className="text-[8px] font-bold text-[#808080]">{m.l}</span>
+                          <span className="text-[8px] font-bold text-[#5C574C]">{m.l}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="bg-[#1A1A1A] p-3 rounded-xl border border-[#EBEBE6] shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
-                    <div className="absolute inset-0 bg-[#F5F5F0] animate-pulse"></div>
+                  <div className="bg-[#1A1A1A] p-3 rounded-xl border border-[#E9E4DA] shadow-sm overflow-hidden relative flex flex-col justify-center items-center text-center">
+                    <div className="absolute inset-0 bg-[#F2EFE8] animate-pulse"></div>
                     <Activity size={20} className="text-[#1A1A1A] mb-2 relative z-10" />
-                    <span className="text-[9px] font-bold text-[#808080] uppercase relative z-10">Sikt AI</span>
+                    <span className="text-[9px] font-bold text-[#5C574C] uppercase relative z-10">Sikt AI</span>
                     <span className="text-[10px] font-black text-white relative z-10">Jobber...</span>
                   </div>
                 </div>
@@ -1564,7 +1564,7 @@ const DeepDiveHero = () => (
   <section className="relative pt-24 pb-12 md:pt-48 md:pb-32 overflow-hidden bg-white/40">
     <div className="max-w-4xl mx-auto px-5 text-center relative z-10">
       <RevealOnScroll direction="down">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-[#EBEBE6]">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F2EFE8] text-[#1A1A1A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6 border border-[#E9E4DA]">
           <Check size={11} />
           <span>Din vei til toppen</span>
         </div>
@@ -1572,8 +1572,8 @@ const DeepDiveHero = () => (
           Fra Usynlig til <br className="hidden sm:block" />
           <span className="text-[#1A1A1A]">Markedsledende.</span>
         </h1>
-        <p className="text-base sm:text-lg md:text-2xl text-[#808080] font-medium leading-relaxed max-w-2xl mx-auto mb-10">
-          Å se på prosessen ware er det første steget. <span className="text-[#1A1A1A] font-bold underline decoration-[#EBEBE6]">Google-dominans</span> er matematikk og AI i samspill.
+        <p className="text-base sm:text-lg md:text-2xl text-[#5C574C] font-medium leading-relaxed max-w-2xl mx-auto mb-10">
+          Å se på prosessen ware er det første steget. <span className="text-[#1A1A1A] font-bold underline decoration-[#E9E4DA]">Google-dominans</span> er matematikk og AI i samspill.
         </p>
       </RevealOnScroll>
     </div>
@@ -1595,14 +1595,14 @@ const PainPointData = () => (
               <div className="text-4xl sm:text-5xl md:text-7xl font-black text-rose-500 shrink-0">9/10</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">får nær null trafikk.</h4>
-                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">De fleste nettsider er en digital fasade nesten ingen finner via Google.</p>
+                <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">De fleste nettsider er en digital fasade nesten ingen finner via Google.</p>
               </div>
             </div>
             <div className="flex gap-4 sm:gap-6 items-start">
               <div className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] shrink-0">Side 1</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">er alt som teller.</h4>
-                <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">Nesten ingen blar til side 2 på Google — er du ikke der oppe, mister du kunden.</p>
+                <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">Nesten ingen blar til side 2 på Google — er du ikke der oppe, mister du kunden.</p>
               </div>
             </div>
           </div>
@@ -1613,7 +1613,7 @@ const PainPointData = () => (
               <AlertTriangle size={24} className="text-white sm:w-8 sm:h-8" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Hvert minutt teller.</h3>
-            <p className="text-sm sm:text-base md:text-lg text-[#808080] leading-relaxed mb-6 sm:mb-8 font-medium">
+            <p className="text-sm sm:text-base md:text-lg text-[#5C574C] leading-relaxed mb-6 sm:mb-8 font-medium">
               Mens du leser dette, søker potensielle kunder etter dine tjenester. De finner konkurrentene dine akkurat nå.
             </p>
             <div className="space-y-3 sm:space-y-4">
@@ -1639,7 +1639,7 @@ const AiProcessDeepDive = () => (
       <div className="text-center mb-12 sm:mb-20">
         <RevealOnScroll direction="up">
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-[#1A1A1A] mb-4 sm:mb-6 leading-tight">Fremtidens SEO (2026-Teknologi)</h2>
-          <p className="text-sm sm:text-lg text-[#808080] max-w-2xl mx-auto font-medium leading-relaxed">Vi bruker kraftige AI-modeller for å utkonkurrere markedet.</p>
+          <p className="text-sm sm:text-lg text-[#5C574C] max-w-2xl mx-auto font-medium leading-relaxed">Vi bruker kraftige AI-modeller for å utkonkurrere markedet.</p>
         </RevealOnScroll>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center">
@@ -1647,30 +1647,30 @@ const AiProcessDeepDive = () => (
           <div className="space-y-6 sm:space-y-8">
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F2EFE8] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Cpu size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Autonome Analyser</h3>
               </div>
-              <p className="text-sm sm:text-base text-[#808080] pl-14 sm:pl-16 font-medium leading-relaxed">Våre modeller skanner algoritme-endringer i sanntid og utfører 1000x flere beregninger.</p>
+              <p className="text-sm sm:text-base text-[#5C574C] pl-14 sm:pl-16 font-medium leading-relaxed">Våre modeller skanner algoritme-endringer i sanntid og utfører 1000x flere beregninger.</p>
             </div>
             <div className="group">
               <div className="flex items-center gap-4 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F5F5F0] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F2EFE8] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0">
                   <Zap size={20} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Lynrask Implementering</h3>
               </div>
-              <p className="text-sm sm:text-base text-[#808080] pl-14 sm:pl-16 font-medium leading-relaxed">Vi identifiserer tekniske hull på sekunder og genererer optimalisert innhold umiddelbart.</p>
+              <p className="text-sm sm:text-base text-[#5C574C] pl-14 sm:pl-16 font-medium leading-relaxed">Vi identifiserer tekniske hull på sekunder og genererer optimalisert innhold umiddelbart.</p>
             </div>
           </div>
         </RevealOnScroll>
         <RevealOnScroll direction="right">
           <div className="p-1.5 sm:p-2 bg-[#1A1A1A] rounded-[28px] sm:rounded-[40px] shadow-2xl mt-8 md:mt-0">
-            <div className="bg-white rounded-[24px] sm:rounded-[34px] p-6 sm:p-8 border border-[#EBEBE6]">
+            <div className="bg-white rounded-[24px] sm:rounded-[34px] p-6 sm:p-8 border border-[#E9E4DA]">
               <div className="flex justify-between items-center mb-6 sm:mb-8">
                 <div className="text-sm sm:text-base font-black text-[#1A1A1A] uppercase">AI Prosessering</div>
-                <div className="text-[8px] sm:text-xs bg-[#F5F5F0] text-[#1A1A1A] px-2 py-1 rounded-full font-bold">Aktiv</div>
+                <div className="text-[8px] sm:text-xs bg-[#F2EFE8] text-[#1A1A1A] px-2 py-1 rounded-full font-bold">Aktiv</div>
               </div>
               <div className="space-y-4 sm:space-y-6">
                 {[
@@ -1679,8 +1679,8 @@ const AiProcessDeepDive = () => (
                   { label: "Innholds-skår", val: "9.2/10" }
                 ].map((stat, i) => (
                   <div key={i}>
-                    <div className="flex justify-between text-[9px] sm:text-xs font-bold text-[#808080] mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
-                    <div className="h-1.5 sm:h-2 bg-[#F5F5F0] rounded-full overflow-hidden">
+                    <div className="flex justify-between text-[9px] sm:text-xs font-bold text-[#5C574C] mb-1.5 sm:mb-2 uppercase tracking-widest">{stat.label}<span>{stat.val}</span></div>
+                    <div className="h-1.5 sm:h-2 bg-[#F2EFE8] rounded-full overflow-hidden">
                       <div className="h-full bg-[#1A1A1A] animate-draw-line" style={{ width: stat.val, animationDelay: `${i * 200}ms` }}></div>
                     </div>
                   </div>
@@ -1986,10 +1986,10 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
   };
 
   return (
-    <section className="min-h-screen bg-[#F5F5F0] py-20 px-5 flex items-center justify-center">
-      <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-[#EBEBE6]">
+    <section className="min-h-screen bg-[#F2EFE8] py-20 px-5 flex items-center justify-center">
+      <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-[#E9E4DA]">
         <h1 className="text-3xl font-black text-[#1A1A1A] mb-2">Fortell oss om din <span className="text-[#1A1A1A]">bedrift</span></h1>
-        <p className="text-sm text-[#808080] mb-8">
+        <p className="text-sm text-[#5C574C] mb-8">
           {prefillLoading
             ? 'Henter dine opplysninger…'
             : (formData.companyName || formData.websiteUrl)
@@ -2002,12 +2002,12 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur} placeholder="Bedriftsnavn" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
-            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} onBlur={handleBlur} placeholder="Kontaktperson" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
+            <input required name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur} placeholder="Bedriftsnavn" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
+            <input required name="contactPerson" value={formData.contactPerson} onChange={handleChange} onBlur={handleBlur} placeholder="Kontaktperson" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
-            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
+            <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
+            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
           </div>
           <div>
             <div className="relative">
@@ -2019,7 +2019,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
                 onChange={handleChange}
                 onBlur={handleWebsiteUrlBlur}
                 placeholder="Nettside URL (https://...)"
-                className={`w-full p-4 pr-11 bg-[#F5F5F0] rounded-xl border ${websiteUrlStatus === 'valid' ? 'border-[#808080]' : websiteUrlStatus === 'invalid' ? 'border-rose-300' : 'border-[#EBEBE6]'} focus:ring-2 focus:ring-[#808080]/25 outline-none`}
+                className={`w-full p-4 pr-11 bg-[#F2EFE8] rounded-xl border ${websiteUrlStatus === 'valid' ? 'border-[#5C574C]' : websiteUrlStatus === 'invalid' ? 'border-rose-300' : 'border-[#E9E4DA]'} focus:ring-2 focus:ring-[#5C574C]/25 outline-none`}
               />
               {websiteUrlStatus === 'valid' && (
                 <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1A1A1A]" />
@@ -2039,14 +2039,14 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
               name="platform"
               value={formData.platform}
               onChange={(e) => { const v = e.target.value; setFormData(prev => { const next = { ...prev, platform: v }; saveDraft(next); return next; }); }}
-              className={`w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none ${formData.platform ? 'text-[#1A1A1A]' : 'text-[#808080]'}`}
+              className={`w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none ${formData.platform ? 'text-[#1A1A1A]' : 'text-[#5C574C]'}`}
             >
               <option value="" disabled>Hvilken plattform er siden bygd på?</option>
               {SITE_PLATFORMS.map((p) => (
                 <option key={p.id} value={p.id} className="text-[#1A1A1A]">{p.label}</option>
               ))}
             </select>
-            <p className="text-xs text-[#808080] mt-2">Bygde du siden med et AI-verktøy (Claude, Cursor, v0 …)? Velg «Bygd med AI» — da får du ferdige prompts du kan lime rett inn.</p>
+            <p className="text-xs text-[#5C574C] mt-2">Bygde du siden med et AI-verktøy (Claude, Cursor, v0 …)? Velg «Bygd med AI» — da får du ferdige prompts du kan lime rett inn.</p>
           </div>
 
           <div className="relative">
@@ -2060,16 +2060,16 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
               placeholder="Bransje (Begynn å skrive...)"
-              className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none"
+              className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none"
             />
 
             {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-50 w-full bg-white border border-[#EBEBE6] rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
+              <ul className="absolute z-50 w-full bg-white border border-[#E9E4DA] rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={index}
                     onClick={() => handleSelectIndustry(suggestion)}
-                    className="p-3 hover:bg-[#F5F5F0] cursor-pointer text-[#1A1A1A] transition-colors"
+                    className="p-3 hover:bg-[#F2EFE8] cursor-pointer text-[#1A1A1A] transition-colors"
                   >
                     {suggestion}
                   </li>
@@ -2078,7 +2078,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             )}
           </div>
 
-          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-[#F5F5F0] rounded-xl border border-[#EBEBE6] focus:ring-2 focus:ring-[#808080]/25 outline-none" />
+          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
 
           <button
             type="submit"
@@ -2098,7 +2098,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 // --- STORYBRAND SEKSJON (Med Animasjon) ---
 const StoryBrandOneLiner = () => {
   return (
-    <section className="relative py-20 sm:py-32 md:py-48 overflow-hidden bg-[#F5F5F0]">
+    <section className="relative py-20 sm:py-32 md:py-48 overflow-hidden bg-[#F2EFE8]">
 
       {/* Bakgrunn: En rolig, pulserende glød */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[800px] h-[400px] sm:h-[500px] bg-gradient-to-tr from-violet-100/50 via-indigo-50/50 to-white rounded-[100%] blur-[80px] animate-[pulse_10s_ease-in-out_infinite] pointer-events-none"></div>
@@ -2109,12 +2109,12 @@ const StoryBrandOneLiner = () => {
           {/* DEL 1: PROBLEMET (Venstre side) */}
           <RevealOnScroll delay={0} className="self-start sm:ml-12 relative">
             {/* En liten bakgrunns-sirkel for dybde */}
-            <div className="absolute -left-4 -top-4 w-20 h-20 bg-[#F5F5F0] rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
+            <div className="absolute -left-4 -top-4 w-20 h-20 bg-[#F2EFE8] rounded-full blur-xl opacity-50 animate-pulse pointer-events-none"></div>
 
-            <div className="backdrop-blur-md bg-white/80 border border-[#EBEBE6]/60 shadow-sm px-5 py-4 sm:px-8 sm:py-5 rounded-2xl inline-flex items-center gap-3 sm:gap-4 max-w-lg relative z-10">
-              <div className="w-2 h-2 rounded-full bg-[#808080] shrink-0"></div>
-              <p className="text-[#808080] font-medium text-sm sm:text-lg leading-snug">
-                Mange bedrifter gjetter på hvordan de oppnår <span className="text-[#1A1A1A] font-bold border-b-2 border-[#EBEBE6]">høyere rangering</span> på Google.
+            <div className="backdrop-blur-md bg-white/80 border border-[#E9E4DA]/60 shadow-sm px-5 py-4 sm:px-8 sm:py-5 rounded-2xl inline-flex items-center gap-3 sm:gap-4 max-w-lg relative z-10">
+              <div className="w-2 h-2 rounded-full bg-[#5C574C] shrink-0"></div>
+              <p className="text-[#5C574C] font-medium text-sm sm:text-lg leading-snug">
+                Mange bedrifter gjetter på hvordan de oppnår <span className="text-[#1A1A1A] font-bold border-b-2 border-[#E9E4DA]">høyere rangering</span> på Google.
               </p>
             </div>
           </RevealOnScroll>
@@ -2133,8 +2133,8 @@ const StoryBrandOneLiner = () => {
 
                 {/* Graf-stolper */}
                 <div className="flex items-end gap-2 w-full h-32">
-                  <div className="w-1/4 bg-[#EBEBE6]/50 rounded-t-lg h-[30%] animate-[loading_3s_ease-in-out_infinite_0.2s]"></div>
-                  <div className="w-1/4 bg-[#EBEBE6]/50 rounded-t-lg h-[50%] animate-[loading_3s_ease-in-out_infinite_0.5s]"></div>
+                  <div className="w-1/4 bg-[#E9E4DA]/50 rounded-t-lg h-[30%] animate-[loading_3s_ease-in-out_infinite_0.2s]"></div>
+                  <div className="w-1/4 bg-[#E9E4DA]/50 rounded-t-lg h-[50%] animate-[loading_3s_ease-in-out_infinite_0.5s]"></div>
                   <div className="w-1/4 bg-violet-300/50 rounded-t-lg h-[70%] animate-[loading_3s_ease-in-out_infinite_0.8s]"></div>
                   {/* Vinner-stolpen */}
                   <div className="w-1/4 bg-gradient-to-t from-violet-500 to-indigo-500 rounded-t-lg h-[100%] relative shadow-lg animate-[loading_3s_ease-in-out_infinite_1.1s]">
@@ -2149,11 +2149,11 @@ const StoryBrandOneLiner = () => {
             {/* Teksten */}
             <div className="text-left sm:text-right">
               <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] tracking-tight leading-[1.2] sm:leading-[1.15]">
-                Vi bruker <span className="text-[#1A1A1A]">AI</span> til å gi deg en <br className="hidden sm:block" />
+                Vi bruker <span className="text-violet-600">AI</span> til å gi deg en <br className="hidden sm:block" />
                 konkret oppskrift på å <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">nå toppen.</span>
               </h2>
 
-              <p className="mt-4 sm:mt-8 text-base sm:text-xl md:text-2xl text-[#808080] font-normal leading-relaxed max-w-2xl sm:ml-auto">
+              <p className="mt-4 sm:mt-8 text-base sm:text-xl md:text-2xl text-[#5C574C] font-normal leading-relaxed max-w-2xl sm:ml-auto">
                 Slik at du får trafikken og veksten du fortjener – helt uten gjetting.
               </p>
             </div>
@@ -2188,14 +2188,14 @@ const IndustriesSection = () => {
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <RevealOnScroll direction="up">
           <div className="text-center mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F1EB] text-[#15795A] text-[10px] font-bold uppercase tracking-widest mb-5 border border-[#E9E4DA]">
               <Users size={11} />
               <span>Er dette for meg</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] mb-4 tracking-tight leading-tight">
-              Sikt hjelper <span className="text-[#1A1A1A]">bedrifter som dere.</span>
+              Sikt hjelper <span className="text-violet-600">bedrifter som dere.</span>
             </h2>
-            <p className="text-base sm:text-lg text-[#808080] font-medium max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#5C574C] font-medium max-w-2xl mx-auto">
               Hvis kundene dine søker etter deg på Google — så fungerer Sikt for deg. Her er noen eksempler.
             </p>
           </div>
@@ -2204,19 +2204,19 @@ const IndustriesSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           {industries.map((industry, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 50}>
-              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-[#EBEBE6] rounded-2xl sm:rounded-3xl ui-motion ui-lift-sm h-full [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#F5F5F0] text-[#1A1A1A] flex items-center justify-center mb-4 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+              <div className="group p-5 sm:p-7 bg-white/70 backdrop-blur-sm border border-[#E9E4DA] rounded-2xl sm:rounded-3xl ui-motion ui-lift-sm h-full [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#E9E4DA] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#F2EFE8] text-[#1A1A1A] flex items-center justify-center mb-4 [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-violet-700 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-white transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   {industry.icon}
                 </div>
                 <h3 className="text-sm sm:text-base font-black text-[#1A1A1A] mb-1">{industry.name}</h3>
-                <p className="text-[11px] sm:text-xs text-[#808080] font-medium leading-relaxed">{industry.example}</p>
+                <p className="text-[11px] sm:text-xs text-[#5C574C] font-medium leading-relaxed">{industry.example}</p>
               </div>
             </RevealOnScroll>
           ))}
         </div>
 
         <RevealOnScroll direction="up" delay={300}>
-          <p className="text-center text-xs sm:text-sm text-[#808080] font-medium mt-8 italic">
+          <p className="text-center text-xs sm:text-sm text-[#5C574C] font-medium mt-8 italic">
             Driver du noe annet? Sikt fungerer for alle bransjer der Google er kilden til kunder.
           </p>
         </RevealOnScroll>
@@ -2409,16 +2409,16 @@ const GeoFaq = () => {
         </RevealOnScroll>
         <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="border border-[#EBEBE6] rounded-[24px] sm:rounded-[32px] overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            <div key={i} className="border border-[#E9E4DA] rounded-[24px] sm:rounded-[32px] overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#E9E4DA] transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full p-6 sm:p-8 flex items-center justify-between text-left [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-[#F5F5F0]/50 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
+                className="w-full p-6 sm:p-8 flex items-center justify-between text-left [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-[#F2EFE8]/50 transition-[background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.99]"
               >
                 <span className="text-base sm:text-xl font-bold text-[#1A1A1A] pr-6 sm:pr-8 leading-snug">{faq.q}</span>
                 <ChevronDown className={`shrink-0 transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] size-5 ${open === i ? 'rotate-180' : ''}`} />
               </button>
               {open === i && (
-                <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-sm sm:text-lg text-[#808080] leading-relaxed font-medium animate-fade-in">
+                <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-sm sm:text-lg text-[#5C574C] leading-relaxed font-medium animate-fade-in">
                   {faq.a}
                 </div>
               )}
@@ -2480,16 +2480,16 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
   const remainingSeconds = Math.max(0, Math.ceil((TOTAL_DURATION_MS - elapsedMs) / 1000));
 
   return (
-    <section className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-4 relative overflow-hidden">
+    <section className="min-h-screen bg-[#F2EFE8] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Bakgrunnseffekter */}
       <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-transparent rounded-full blur-3xl pointer-events-none animate-pulse"></div>
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-transparent rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-[#EBEBE6] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-300">
+      <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-2xl border border-[#E9E4DA] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-300">
 
         {/* Toppstripe — fylles opp i takt med hovedprogressjonen */}
-        <div className="h-1.5 bg-[#F5F5F0] relative overflow-hidden">
+        <div className="h-1.5 bg-[#F2EFE8] relative overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-emerald-500 transition-[width] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]"
             style={{ width: `${overallProgress}%` }}
@@ -2499,8 +2499,8 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
         <div className="p-8 sm:p-12 text-center">
 
           {/* Pulserende ikon som skifter med aktivt steg */}
-          <div className="mx-auto w-24 h-24 bg-[#F5F5F0] rounded-full flex items-center justify-center mb-6 relative">
-            <div className="absolute inset-0 bg-[#F5F5F0] rounded-full animate-ping opacity-30"></div>
+          <div className="mx-auto w-24 h-24 bg-[#F2EFE8] rounded-full flex items-center justify-center mb-6 relative">
+            <div className="absolute inset-0 bg-[#F2EFE8] rounded-full animate-ping opacity-30"></div>
             <div className="absolute inset-2 bg-white rounded-full"></div>
             {currentStep < steps.length ? (
               (() => {
@@ -2515,7 +2515,7 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
           <h1 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] mb-3">
             {currentStep < steps.length ? 'Setter opp Sikt for deg' : 'Alt er klart!'}
           </h1>
-          <p className="text-[#808080] text-base sm:text-lg mb-2 leading-relaxed">
+          <p className="text-[#5C574C] text-base sm:text-lg mb-2 leading-relaxed">
             {currentStep < steps.length
               ? steps[currentStep].detail
               : 'Åpner dashboardet ditt...'}
@@ -2523,17 +2523,17 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
           {/* Nedtelling + prosent */}
           <div className="flex items-center justify-center gap-4 mb-8 text-sm">
-            <span className="text-[#808080] font-mono">
+            <span className="text-[#5C574C] font-mono">
               {currentStep < steps.length
                 ? `~${remainingSeconds}s igjen`
                 : 'Ferdig'}
             </span>
-            <span className="w-1 h-1 bg-[#EBEBE6] rounded-full" />
+            <span className="w-1 h-1 bg-[#E9E4DA] rounded-full" />
             <span className="text-[#1A1A1A] font-black">{Math.round(overallProgress)}%</span>
           </div>
 
           {/* Stor progress-bar */}
-          <div className="h-2 bg-[#F5F5F0] rounded-full overflow-hidden mb-10 relative">
+          <div className="h-2 bg-[#F2EFE8] rounded-full overflow-hidden mb-10 relative">
             <div
               className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500 rounded-full transition-[width,background-position] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[length:200%_100%]"
               style={{ width: `${overallProgress}%`, backgroundPosition: `${overallProgress * 2}% 0` }}
@@ -2541,11 +2541,11 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
           </div>
 
           {/* Steg-liste */}
-          <div className="bg-[#F5F5F0] rounded-2xl p-6 text-left border border-[#EBEBE6]">
-            <h3 className="text-xs font-bold text-[#808080] uppercase tracking-wider mb-5">Sikt jobber i bakgrunnen</h3>
+          <div className="bg-[#F2EFE8] rounded-2xl p-6 text-left border border-[#E9E4DA]">
+            <h3 className="text-xs font-bold text-[#5C574C] uppercase tracking-wider mb-5">Sikt jobber i bakgrunnen</h3>
 
             <div className="space-y-4 relative">
-              <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-[#EBEBE6]"></div>
+              <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-[#E9E4DA]"></div>
 
               {steps.map((step, i) => {
                 const StepIcon = step.icon;
@@ -2555,20 +2555,20 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
 
                 return (
                   <div key={i} className="flex gap-4 items-center relative z-10">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-[#F5F5F0] shrink-0 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]
-                      ${isDone ? 'bg-[#1A1A1A]' : isActive ? 'bg-white border-2 border-[#1A1A1A]' : 'bg-[#EBEBE6] border-2 border-white'}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ring-4 ring-[#F2EFE8] shrink-0 transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]
+                      ${isDone ? 'bg-[#1A1A1A]' : isActive ? 'bg-white border-2 border-[#1A1A1A]' : 'bg-[#E9E4DA] border-2 border-white'}
                     `}>
                       {isDone ? (
                         <Check size={13} className="text-white" />
                       ) : isActive ? (
-                        <div className="w-2 h-2 bg-[#808080] rounded-full animate-pulse" />
+                        <div className="w-2 h-2 bg-[#5C574C] rounded-full animate-pulse" />
                       ) : (
-                        <StepIcon size={11} className="text-[#808080]" />
+                        <StepIcon size={11} className="text-[#5C574C]" />
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className={`text-sm font-bold transition-colors
-                        ${isDone ? 'text-[#808080] line-through decoration-[#EBEBE6]' : isActive ? 'text-[#1A1A1A]' : 'text-[#808080]'}
+                        ${isDone ? 'text-[#5C574C] line-through decoration-[#E9E4DA]' : isActive ? 'text-[#1A1A1A]' : 'text-[#5C574C]'}
                       `}>
                         {step.label}
                       </span>
@@ -2576,7 +2576,7 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
                         <span className="text-xs text-[#1A1A1A] font-medium animate-pulse mt-0.5">Jobber nå...</span>
                       )}
                       {isPending && (
-                        <span className="text-xs text-[#808080] mt-0.5">Venter</span>
+                        <span className="text-xs text-[#5C574C] mt-0.5">Venter</span>
                       )}
                       {isDone && (
                         <span className="text-xs text-[#1A1A1A] font-medium mt-0.5">Ferdig</span>
@@ -2588,10 +2588,10 @@ const SuccessPage = ({ onBackHome }: { onBackHome: () => void }) => {
             </div>
           </div>
 
-          <p className="text-sm text-[#808080] mt-6 pt-5 border-t border-[#EBEBE6] leading-relaxed">
+          <p className="text-sm text-[#5C574C] mt-6 pt-5 border-t border-[#E9E4DA] leading-relaxed">
             Teknisk analyse er klar med én gang. Søkeorddata fra Google kommer vanligvis om 1–2 uker etter tilkobling — det er normalt for en ny konto, og du får varsel når tallene er inne.
           </p>
-          <p className="text-xs text-[#808080] mt-3">
+          <p className="text-xs text-[#5C574C] mt-3">
             Du blir automatisk sendt til dashboardet når oppsettet er ferdig.
           </p>
 
@@ -2731,10 +2731,10 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
   };
 
   const scoreColor = (s: number | null) => {
-    if (s === null || s === undefined) return '#808080';
-    if (s >= 90) return '#3F8F38';
-    if (s >= 50) return '#C77700';
-    return '#DC2626';
+    if (s === null || s === undefined) return '#5C574C';
+    if (s >= 90) return '#15795A';
+    if (s >= 50) return '#9A6700';
+    return '#B4231F';
   };
 
   const scoreCards = result ? [
@@ -2769,17 +2769,17 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
       <div className="max-w-3xl mx-auto px-4 sm:px-5 relative z-10">
         <RevealOnScroll direction="up">
           <div className="text-center mb-8 sm:mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F2EFE8] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#E9E4DA]">
               Gratis · Tar 30 sekunder
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">Hvor synlig er siden din <span className="text-violet-600">i dag?</span></h2>
-            <p className="text-base sm:text-lg text-[#808080] max-w-xl mx-auto">Skriv inn nettsiden din, så analyserer vi fart, SEO og teknisk kvalitet — og viser deg de største mulighetene. Ingen forpliktelser.</p>
+            <p className="text-base sm:text-lg text-[#5C574C] max-w-xl mx-auto">Skriv inn nettsiden din, så analyserer vi fart, SEO og teknisk kvalitet — og viser deg de største mulighetene. Ingen forpliktelser.</p>
           </div>
         </RevealOnScroll>
 
         {!result ? (
           <RevealOnScroll direction="up" delay={100}>
-            <form onSubmit={runAudit} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-5 sm:p-8 shadow-sm">
+            <form onSubmit={runAudit} className="bg-[#F2EFE8] border border-[#E9E4DA] rounded-3xl p-5 sm:p-8 shadow-sm">
               <div className="space-y-3">
                 <input
                   type="text"
@@ -2787,18 +2787,18 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="dinbedrift.no"
-                  className="w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                  className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
                 />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="din@epost.no"
-                  className="w-full px-5 py-4 rounded-2xl border border-[#EBEBE6] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                  className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
                 />
               </div>
               {error && (
-                <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#DC2626]"><AlertCircle size={16} /> {error}</p>
+                <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#B4231F]"><AlertCircle size={16} /> {error}</p>
               )}
               <button
                 type="submit"
@@ -2807,14 +2807,14 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               >
                 {loading ? (<><Loader2 size={20} className="animate-spin" /> Analyserer siden …</>) : (<>Analyser gratis <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" /></>)}
               </button>
-              <p className="mt-3 text-center text-xs text-[#808080]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst.</p>
+              <p className="mt-3 text-center text-xs text-[#5C574C]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst.</p>
             </form>
           </RevealOnScroll>
         ) : (
           <RevealOnScroll direction="up">
-            <div className="bg-white border border-[#EBEBE6] rounded-3xl p-5 sm:p-8 shadow-xl">
+            <div className="bg-white border border-[#E9E4DA] rounded-3xl p-5 sm:p-8 shadow-xl">
               {/* Dom */}
-              <p className="text-xs font-bold uppercase tracking-widest text-[#808080] mb-1">Resultat for</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#5C574C] mb-1">Resultat for</p>
               <p className="text-sm font-bold text-[#1A1A1A] mb-5 break-all">{result.url}</p>
 
               {/* Leder med spesifikke on-page-funn — det som føles som «de leste MIN side». */}
@@ -2825,18 +2825,18 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   <ul className="space-y-3">
                     {shownFindings.map((find, i) => (
                       <li key={i} className="flex items-start gap-2.5">
-                        <AlertCircle size={16} className="text-[#C77700] mt-0.5 shrink-0" />
+                        <AlertCircle size={16} className="text-[#9A6700] mt-0.5 shrink-0" />
                         <span className="text-sm text-[#1A1A1A]">
                           <span className="font-bold">{find.title}</span>
-                          <span className="block text-[#808080] font-normal mt-0.5">{find.impact}</span>
+                          <span className="block text-[#5C574C] font-normal mt-0.5">{find.impact}</span>
                         </span>
                       </li>
                     ))}
                   </ul>
                   {hiddenFindings > 0 && (
-                    <div className="mt-3 rounded-xl border border-dashed border-[#EBEBE6] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
+                    <div className="mt-3 rounded-xl border border-dashed border-[#E9E4DA] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
                       <Lock size={15} className="text-[#B3AD9F] shrink-0" />
-                      <span className="text-sm font-bold text-[#808080]">+{hiddenFindings} flere funn venter i full rapport</span>
+                      <span className="text-sm font-bold text-[#5C574C]">+{hiddenFindings} flere funn venter i full rapport</span>
                     </div>
                   )}
                 </div>
@@ -2846,7 +2846,7 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                 <span className="text-5xl sm:text-6xl font-black tabular-nums leading-none" style={{ color: scoreColor(overall) }}>{overall ?? '–'}</span>
                 <span className="text-lg font-bold text-[#B3AD9F] mb-1">/ 100</span>
               </div>
-              <p className="text-base text-[#808080] mb-6">
+              <p className="text-base text-[#5C574C] mb-6">
                 {overall !== null && overall >= 90
                   ? 'Sterkt! Men selv små forbedringer kan gi flere kunder.'
                   : 'Under det Google belønner — her er hva som holder deg tilbake.'}
@@ -2855,9 +2855,9 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               {/* Score-rad + benchmark */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-2">
                 {scoreCards.map((c) => (
-                  <div key={c.label} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-2xl p-4 text-center">
+                  <div key={c.label} className="bg-[#F2EFE8] border border-[#E9E4DA] rounded-2xl p-4 text-center">
                     <div className="text-3xl font-black tabular-nums" style={{ color: scoreColor(c.value) }}>{c.value ?? '–'}</div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#808080] mt-1">{c.label}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#5C574C] mt-1">{c.label}</div>
                   </div>
                 ))}
               </div>
@@ -2866,19 +2866,19 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               {/* Fallback: rene PSI-funn vises kun når vi IKKE klarte å lese HTML-en (ingen on-page-funn). */}
               {shownFindings.length === 0 && issueCount > 0 && (
                 <div className="mb-7">
-                  <p className="text-sm font-black text-[#1A1A1A] mb-3">Vi fant <span className="text-[#DC2626]">{issueCount}</span> ting som koster deg synlighet:</p>
+                  <p className="text-sm font-black text-[#1A1A1A] mb-3">Vi fant <span className="text-[#B4231F]">{issueCount}</span> ting som koster deg synlighet:</p>
                   <ul className="space-y-2">
                     {result.topIssues.map((issue, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-[#1A1A1A]">
-                        <AlertCircle size={16} className="text-[#C77700] mt-0.5 shrink-0" />
-                        <span className="font-semibold">{issue.title}{issue.displayValue ? <span className="text-[#808080] font-normal"> — {issue.displayValue}</span> : null}</span>
+                        <AlertCircle size={16} className="text-[#9A6700] mt-0.5 shrink-0" />
+                        <span className="font-semibold">{issue.title}{issue.displayValue ? <span className="text-[#5C574C] font-normal"> — {issue.displayValue}</span> : null}</span>
                       </li>
                     ))}
                   </ul>
                   {hiddenIssues > 0 && (
-                    <div className="mt-2 rounded-xl border border-dashed border-[#EBEBE6] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
+                    <div className="mt-2 rounded-xl border border-dashed border-[#E9E4DA] bg-[#FAF8F3] px-4 py-3 flex items-center gap-2.5">
                       <Lock size={15} className="text-[#B3AD9F] shrink-0" />
-                      <span className="text-sm font-bold text-[#808080]">+{hiddenIssues} flere funn venter i full rapport</span>
+                      <span className="text-sm font-bold text-[#5C574C]">+{hiddenIssues} flere funn venter i full rapport</span>
                     </div>
                   )}
                 </div>
@@ -2886,20 +2886,20 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
 
               {/* Ærlig estimat (synlig forutsetning, justerbar) */}
               {extraVisits > 0 && (
-                <div className="mb-7 rounded-2xl bg-[#F5F5F0] border border-[#EBEBE6] p-4 sm:p-5">
+                <div className="mb-7 rounded-2xl bg-[#F2EFE8] border border-[#E9E4DA] p-4 sm:p-5">
                   <p className="text-sm text-[#1A1A1A] leading-relaxed">
                     <span className="font-black">Grovt anslag:</span> en side med ~<span className="font-bold tabular-nums">{monthlyVisits.toLocaleString('nb-NO')}</span> besøk/mnd kan tape i størrelsesorden <span className="font-black">~{krLost.toLocaleString('nb-NO')} kr/mnd</span> i tapt synlighet på denne scoren (≈ {extraVisits.toLocaleString('nb-NO')} besøk · 8 kr/besøk).
                   </p>
                   <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    <label className="text-xs font-bold text-[#808080]">Tilpass med dine tall:</label>
+                    <label className="text-xs font-bold text-[#5C574C]">Tilpass med dine tall:</label>
                     <input
                       type="number"
                       min={0}
                       value={monthlyVisits}
                       onChange={(e) => setMonthlyVisits(Math.max(0, Math.min(10000000, Number(e.target.value) || 0)))}
-                      className="w-28 px-3 py-1.5 rounded-lg border border-[#EBEBE6] bg-white text-sm font-bold text-[#1A1A1A] tabular-nums focus:outline-none focus:border-violet-400"
+                      className="w-28 px-3 py-1.5 rounded-lg border border-[#E9E4DA] bg-white text-sm font-bold text-[#1A1A1A] tabular-nums focus:outline-none focus:border-violet-400"
                     />
-                    <span className="text-xs text-[#808080]">besøk/mnd</span>
+                    <span className="text-xs text-[#5C574C]">besøk/mnd</span>
                   </div>
                   <p className="mt-2 text-[11px] text-[#B3AD9F]">Anslag, ikke en måling av din faktiske trafikk — vi kan ikke se besøkstallet ditt fra en hastighetsanalyse.</p>
                 </div>
@@ -2917,13 +2917,13 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                 </button>
                 <button
                   onClick={() => onSelectPlan('STANDARD')}
-                  className="group w-full mt-3 px-6 py-4 bg-white text-[#1A1A1A] border border-[#EBEBE6] rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-between gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700"
+                  className="group w-full mt-3 px-6 py-4 bg-white text-[#1A1A1A] border border-[#E9E4DA] rounded-2xl text-base font-black tracking-tight ui-motion flex items-center justify-between gap-3 [@media(hover:hover)_and_(pointer:fine)]:hover:border-violet-300 [@media(hover:hover)_and_(pointer:fine)]:hover:text-violet-700"
                 >
-                  <span className="text-left leading-tight">La oss fikse alt for deg<br /><span className="text-xs font-semibold text-[#808080]">Standard — vi gjør jobben automatisk</span></span>
+                  <span className="text-left leading-tight">La oss fikse alt for deg<br /><span className="text-xs font-semibold text-[#5C574C]">Standard — vi gjør jobben automatisk</span></span>
                   <ArrowRight size={20} className="shrink-0 transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
                 </button>
-                <p className="mt-4 text-center text-xs font-bold text-[#808080]">Founding-pris for de første kundene · ingen bindingstid</p>
-                <button onClick={() => { setResult(null); setError(null); }} className="w-full mt-3 text-sm font-bold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
+                <p className="mt-4 text-center text-xs font-bold text-[#5C574C]">Founding-pris for de første kundene · ingen bindingstid</p>
+                <button onClick={() => { setResult(null); setError(null); }} className="w-full mt-3 text-sm font-bold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
               </div>
             </div>
           </RevealOnScroll>
@@ -2958,7 +2958,7 @@ const SocialProofSection = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-5 relative z-10">
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F5F0] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F2EFE8] text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#E9E4DA]">
               {hasTestimonials ? 'Kundehistorier' : 'Bygget i åpenhet'}
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">
@@ -2966,7 +2966,7 @@ const SocialProofSection = () => {
                 ? <>Hva kundene <span className="text-violet-600">faktisk sier</span></>
                 : <>Vi er nye — og <span className="text-violet-600">ærlige om det</span></>}
             </h2>
-            <p className="text-base sm:text-lg text-[#808080] max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#5C574C] max-w-2xl mx-auto">
               {hasTestimonials
                 ? 'Ekte resultater fra bedrifter som bruker Sikt.'
                 : 'De fleste SEO-løfter er umulige å etterprøve. Vi gjør det motsatte: se nøyaktig hva som er galt på din egen side først — gratis — så bestemmer du.'}
@@ -2978,18 +2978,18 @@ const SocialProofSection = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {TESTIMONIALS.map((t, i) => (
               <RevealOnScroll key={i} direction="up" delay={i * 80}>
-                <figure className="h-full bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-6 sm:p-7 flex flex-col">
+                <figure className="h-full bg-[#F2EFE8] border border-[#E9E4DA] rounded-3xl p-6 sm:p-7 flex flex-col">
                   {typeof t.rating === 'number' && (
                     <div className="flex gap-0.5 mb-3">
                       {Array.from({ length: 5 }).map((_, s) => (
-                        <Star key={s} size={15} className={s < t.rating! ? 'text-[#C77700] fill-[#C77700]' : 'text-[#D8D3C7]'} />
+                        <Star key={s} size={15} className={s < t.rating! ? 'text-[#9A6700] fill-[#9A6700]' : 'text-[#E9E4DA]'} />
                       ))}
                     </div>
                   )}
                   <blockquote className="text-[#1A1A1A] text-sm sm:text-base leading-relaxed font-medium flex-1">«{t.quote}»</blockquote>
-                  <figcaption className="mt-5 pt-4 border-t border-[#EBEBE6]">
+                  <figcaption className="mt-5 pt-4 border-t border-[#E9E4DA]">
                     <div className="text-sm font-black text-[#1A1A1A]">{t.name}</div>
-                    <div className="text-xs text-[#808080]">{t.role}</div>
+                    <div className="text-xs text-[#5C574C]">{t.role}</div>
                   </figcaption>
                 </figure>
               </RevealOnScroll>
@@ -2999,10 +2999,10 @@ const SocialProofSection = () => {
           <RevealOnScroll direction="up">
             {/* Ærlig bruks-tall (gated) + alltid-sanne kapabilitets-fakta — sosialt bevis ved null kunder. */}
             <UsageStat tone="light" className="mb-6 sm:mb-8" />
-            <div className="mb-8 sm:mb-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#808080]">
+            <div className="mb-8 sm:mb-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-bold text-[#5C574C]">
               {['Googles egne data', 'Svar på ~30 sekunder', 'Ingen binding'].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
-                  <Check size={15} className="text-[#3F8F38]" /> {t}
+                  <Check size={15} className="text-[#15795A]" /> {t}
                 </span>
               ))}
             </div>
@@ -3014,10 +3014,10 @@ const SocialProofSection = () => {
               ].map((card, i) => {
                 const Icon = card.icon;
                 return (
-                  <div key={i} className="bg-[#F5F5F0] border border-[#EBEBE6] rounded-3xl p-5 sm:p-6">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#EBEBE6] flex items-center justify-center text-violet-700 mb-3"><Icon size={18} /></div>
+                  <div key={i} className="bg-[#F2EFE8] border border-[#E9E4DA] rounded-3xl p-5 sm:p-6">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#E9E4DA] flex items-center justify-center text-violet-700 mb-3"><Icon size={18} /></div>
                     <div className="text-sm font-black text-[#1A1A1A] mb-1">{card.title}</div>
-                    <div className="text-xs text-[#808080] leading-relaxed">{card.body}</div>
+                    <div className="text-xs text-[#5C574C] leading-relaxed">{card.body}</div>
                   </div>
                 );
               })}
@@ -3091,11 +3091,11 @@ const CaseStudySection = () => {
   const cases = CASES.filter((c) => c.consent);
   if (cases.length === 0) return null; // ekte tall eller ingenting — aldri en tom skval
   return (
-    <section id="resultater" className="py-16 sm:py-24 md:py-28 bg-[#F5F5F0] relative overflow-hidden scroll-mt-24">
+    <section id="resultater" className="py-16 sm:py-24 md:py-28 bg-[#F2EFE8] relative overflow-hidden scroll-mt-24">
       <div className="max-w-5xl mx-auto px-4 sm:px-5 relative z-10">
         <RevealOnScroll direction="up">
           <div className="text-center mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#EBEBE6]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[#1A1A1A] text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-5 border border-[#E9E4DA]">
               Dokumentert resultat
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4">
@@ -3103,7 +3103,7 @@ const CaseStudySection = () => {
                 ? <>Ekte <span className="text-violet-600">resultater</span></>
                 : <>Vårt første <span className="text-violet-600">dokumenterte resultat</span></>}
             </h2>
-            <p className="text-base sm:text-lg text-[#808080] max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#5C574C] max-w-2xl mx-auto">
               Ikke et løfte — de faktiske endringene Sikt gjorde, og hva som skjedde etterpå. Tallene er hentet rett fra Google Search Console.
             </p>
           </div>
@@ -3115,12 +3115,12 @@ const CaseStudySection = () => {
               <div>
                 <div className="text-sm font-black text-[#1A1A1A] mb-4">{c.domain}</div>
 
-                <p className="text-[11px] tracking-wide uppercase text-[#808080] mb-3">
+                <p className="text-[11px] tracking-wide uppercase text-[#5C574C] mb-3">
                   Hva Sikt endret · {c.snippet.changedLabel}
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-white border border-[#EBEBE6] overflow-hidden">
-                    <p className="text-[11px] tracking-wide uppercase text-[#808080] px-4 pt-3">Før</p>
+                  <div className="rounded-2xl bg-white border border-[#E9E4DA] overflow-hidden">
+                    <p className="text-[11px] tracking-wide uppercase text-[#5C574C] px-4 pt-3">Før</p>
                     <GoogleSnippetPreview
                       title={c.snippet.beforeTitle}
                       url={c.snippet.url}
@@ -3139,7 +3139,7 @@ const CaseStudySection = () => {
                 </div>
 
                 {c.outcome && (
-                  <div className="mt-5 rounded-2xl bg-white border border-[#EBEBE6] p-5 sm:p-6">
+                  <div className="mt-5 rounded-2xl bg-white border border-[#E9E4DA] p-5 sm:p-6">
                     <div className="flex items-center gap-2 mb-5">
                       <TrendingUp size={16} className="text-[#52A447]" />
                       <p className="text-sm font-black text-[#1A1A1A]">
@@ -3148,24 +3148,24 @@ const CaseStudySection = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide text-[#808080] mb-1">Posisjon i Google</p>
+                        <p className="text-[11px] uppercase tracking-wide text-[#5C574C] mb-1">Posisjon i Google</p>
                         <p className="text-2xl sm:text-3xl font-black tabular-nums text-[#1A1A1A]">
                           #{c.outcome.posBefore}
-                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#808080]" />
-                          <span className="text-[#3F8F38]">#{c.outcome.posAfter}</span>
+                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#5C574C]" />
+                          <span className="text-[#15795A]">#{c.outcome.posAfter}</span>
                         </p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide text-[#808080] mb-1">Klikk per måned</p>
+                        <p className="text-[11px] uppercase tracking-wide text-[#5C574C] mb-1">Klikk per måned</p>
                         <p className="text-2xl sm:text-3xl font-black tabular-nums text-[#1A1A1A]">
                           {c.outcome.clicksBefore}
-                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#808080]" />
-                          <span className="text-[#3F8F38]">{c.outcome.clicksAfter}</span>
+                          <ArrowRight size={18} className="inline mx-1 -mt-1 text-[#5C574C]" />
+                          <span className="text-[#15795A]">{c.outcome.clicksAfter}</span>
                         </p>
                       </div>
                     </div>
                     {c.outcome.clicksAfter > c.outcome.clicksBefore && (
-                      <p className="text-xs text-[#808080] mt-4 leading-relaxed">
+                      <p className="text-xs text-[#5C574C] mt-4 leading-relaxed">
                         ~{((c.outcome.clicksAfter - c.outcome.clicksBefore) * 8).toLocaleString('nb-NO')} kr/mnd i estimert verdi av de ekstra klikkene (8 kr/klikk — samme forsiktige anslag som i ukesrapporten).
                       </p>
                     )}
@@ -3182,7 +3182,7 @@ const CaseStudySection = () => {
           ))}
         </div>
 
-        <p className="text-center text-[11px] text-[#b0b0aa] mt-10">
+        <p className="text-center text-[11px] text-[#8A8578] mt-10">
           Tallene er hentet fra Google Search Console og delt med kundens samtykke.
         </p>
       </div>
@@ -3263,14 +3263,14 @@ const PainPointsSection = () => (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 relative z-10 text-left">
         {[
           { text: "Lave Google-rangeringer hindrer din suksess.", icon: <TrendingDown size={18} />, subIcon: <Monitor className="text-rose-200/40 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
-          { text: "Bortkastet tid på strategier som ikke virker.", icon: <Clock size={18} />, subIcon: <Clock className="text-[#F5F5F0] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
-          { text: "Frustrasjon over manglende kunder.", icon: <Frown size={18} />, subIcon: <User className="text-[#F5F5F0] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
+          { text: "Bortkastet tid på strategier som ikke virker.", icon: <Clock size={18} />, subIcon: <Clock className="text-[#F2EFE8] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
+          { text: "Frustrasjon over manglende kunder.", icon: <Frown size={18} />, subIcon: <User className="text-[#F2EFE8] absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> },
           { text: "Tapte muligheter for vekst og salg.", icon: <TrendingDown size={18} />, subIcon: <BarChart3 className="text-rose-200/40 absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none" /> }
         ].map((point, i) => (
           <RevealOnScroll key={i} direction={i % 2 === 0 ? 'left' : 'right'} delay={i * 50}>
-            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-[#EBEBE6] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md">
+            <div className="flex items-center gap-4 sm:gap-6 p-6 sm:p-8 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-[#E9E4DA] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md">
               {point.subIcon}
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-[#F5F5F0] flex items-center justify-center text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-rose-50 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 relative z-10">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-[#F2EFE8] flex items-center justify-center text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-rose-50 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-rose-500 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 relative z-10">
                 {React.cloneElement(point.icon as React.ReactElement<any>, { size: 24 })}
               </div>
               <p className="text-[#1A1A1A] font-bold text-sm sm:text-lg leading-snug relative z-10">{point.text}</p>
@@ -3288,7 +3288,7 @@ const PainPointsSection = () => (
             Sjekk siden din gratis
             <ArrowRight size={18} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
           </a>
-          <span className="text-xs sm:text-sm text-[#808080] font-semibold">Gratis · ingen bindingstid</span>
+          <span className="text-xs sm:text-sm text-[#5C574C] font-semibold">Gratis · ingen bindingstid</span>
         </div>
       </RevealOnScroll>
     </div>
@@ -3326,21 +3326,21 @@ const FAQSection = () => {
   ];
 
   return (
-    <section className="py-16 sm:py-32 bg-[#F5F5F0]/30 relative overflow-hidden">
+    <section className="py-16 sm:py-32 bg-[#F2EFE8]/30 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-[0.05] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20">
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left">
             <RevealOnScroll direction="left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#EBEBE6]">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F1EB] text-[#15795A] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#E9E4DA]">
                 <HelpCircle size={11} />
                 <span>Det du lurer på</span>
               </div>
               <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] mb-6 leading-tight tracking-tight">
                 Spørsmål vi <br className="hidden lg:block" /> faktisk får.
               </h2>
-              <p className="text-[#808080] font-medium text-sm sm:text-lg leading-relaxed mb-8 max-w-md">
+              <p className="text-[#5C574C] font-medium text-sm sm:text-lg leading-relaxed mb-8 max-w-md">
                 Ærlige svar på det folk lurer på før de prøver Sikt. Ingen salgssnakk.
               </p>
               <Lightbulb className="w-32 h-32 text-violet-100 hidden lg:block opacity-50 mt-10 -ml-4" />
@@ -3353,26 +3353,26 @@ const FAQSection = () => {
                 <RevealOnScroll key={i} direction="up" delay={i * 50}>
                   <div
                     className={`group transition-[border-color,background-color,box-shadow] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] border rounded-[20px] sm:rounded-[24px] overflow-hidden ${openIndex === i
-                      ? 'bg-white border-[#EBEBE6] shadow-xl shadow-violet-500/5'
-                      : 'bg-white/60 backdrop-blur-sm border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white'
+                      ? 'bg-white border-[#E9E4DA] shadow-xl shadow-violet-500/5'
+                      : 'bg-white/60 backdrop-blur-sm border-[#E9E4DA] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#E9E4DA] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white'
                       }`}
                   >
                     <button
                       onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${openIndex === i ? 'bg-[#F5F5F0]/50' : ''}`}
+                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left gap-4 transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${openIndex === i ? 'bg-[#F2EFE8]/50' : ''}`}
                     >
                       <span className={`text-sm sm:text-lg font-bold transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] pr-2 sm:pr-4 ${openIndex === i ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>
                         {faq.question}
                       </span>
                       <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center shrink-0 transition-[background-color,border-color,color,transform] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i
                         ? 'bg-violet-700 border-violet-700 text-white shadow-lg'
-                        : 'bg-[#F5F5F0] border-[#EBEBE6] text-[#808080]'
+                        : 'bg-[#F2EFE8] border-[#E9E4DA] text-[#5C574C]'
                         }`}>
                         <ChevronDown size={16} className={`transition-transform duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] ${openIndex === i ? 'rotate-180' : 'rotate-0'}`} />
                       </div>
                     </button>
                     <div className={`transition-[max-height,opacity,padding-bottom] duration-[280ms] ease-[cubic-bezier(0.77,0,0.175,1)] overflow-hidden ${openIndex === i ? 'max-h-[500px] opacity-100 pb-6 sm:pb-8' : 'max-h-0 opacity-0'}`}>
-                      <div className="px-6 sm:px-8 text-xs sm:text-base text-[#808080] font-medium leading-relaxed pt-4 sm:pt-6 border-t border-[#EBEBE6]/50 mx-2">
+                      <div className="px-6 sm:px-8 text-xs sm:text-base text-[#5C574C] font-medium leading-relaxed pt-4 sm:pt-6 border-t border-[#E9E4DA]/50 mx-2">
                         {faq.answer}
                       </div>
                     </div>
@@ -3401,7 +3401,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
   return (
     <section className="relative py-16 sm:py-24 md:py-36 overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 text-white">
       {/* Dekorative glød-effekter */}
-      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#F5F5F0] rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-0 left-1/4 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#F2EFE8] rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-indigo-400/20 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
@@ -3427,7 +3427,7 @@ const FinalCTASection = ({ onSelectPlan }: { onSelectPlan?: (plan?: string) => v
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={scrollToPricing}
-              className="group ui-motion ui-lift w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-[#1A1A1A] rounded-full text-base sm:text-lg font-black tracking-tight flex items-center justify-center gap-3 shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]"
+              className="group ui-motion ui-lift w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-white text-[#1A1A1A] rounded-full text-base sm:text-lg font-black tracking-tight flex items-center justify-center gap-3 shadow-2xl [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]"
             >
               Se pakkene
               <ArrowRight size={20} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />
@@ -3481,25 +3481,25 @@ const ValuePropositionSection = () => {
     {
       title: "Rapporter på norsk du faktisk leser",
       desc: "Ingen grafer med engelske forkortelser. Du får vite hva vi har gjort, hva som har skjedd med bedriften din, og hva som kommer — på plain norsk.",
-      icon: <FileText className="text-[#3F8F38]" />,
+      icon: <FileText className="text-[#15795A]" />,
       illu: <FileText className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     },
     {
       title: "Spør Sikt AI hva som helst",
       desc: "Ikke en anelse hva et søkeord eller en backlink er? Spør dashboardet. Du får svar som en 10-åring kan forstå på 10 sekunder.",
-      icon: <Sparkles className="text-[#3F8F38]" />,
+      icon: <Sparkles className="text-[#15795A]" />,
       illu: <Sparkles className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     },
     {
       title: "Vi måler i kunder, ikke i bounce rate",
       desc: "Du ser ekte forretningstall: hvor mange besøkende, hvor mange potensielle kunder, hvor mye omsetning. Ikke tall du må google for å forstå.",
-      icon: <TrendingUp className="text-[#3F8F38]" />,
+      icon: <TrendingUp className="text-[#15795A]" />,
       illu: <TrendingUp className="w-12 h-12 text-violet-100/50 absolute top-4 right-4" />
     }
   ];
 
   return (
-    <section className="py-16 sm:py-32 bg-[#F5F5F0]/20 relative overflow-hidden text-center">
+    <section className="py-16 sm:py-32 bg-[#F2EFE8]/20 relative overflow-hidden text-center">
       <div className="absolute inset-0 pointer-events-none -z-10">
         <div className="absolute top-[-20%] left-[-10%] w-[50rem] h-[50rem] bg-violet-200/10 rounded-full blur-[140px] animate-mesh opacity-60"></div>
       </div>
@@ -3508,20 +3508,20 @@ const ValuePropositionSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20 items-center">
           <RevealOnScroll direction="left">
             <div className="max-w-xl text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#EBEBE6]">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F1EB] text-[#15795A] text-[10px] font-bold uppercase tracking-widest mb-6 border border-[#E9E4DA]">
                 <Sparkles size={11} />
                 <span>Hvorfor Sikt</span>
               </div>
               <h2 className="text-2xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight text-[#1A1A1A] mb-4 sm:mb-8 leading-tight">
                 Andre byråer snakker tech.
                 <br />
-                <span className="text-[#3F8F38]">Vi snakker norsk.</span>
+                <span className="text-[#15795A]">Vi snakker norsk.</span>
               </h2>
-              <p className="text-sm sm:text-lg md:text-xl text-[#808080] leading-relaxed mb-8 font-medium opacity-80">
+              <p className="text-sm sm:text-lg md:text-xl text-[#5C574C] leading-relaxed mb-8 font-medium opacity-80">
                 Du driver en bedrift, ikke et IT-selskap. Sikt oversetter alt det tekniske til plain norsk — så du kan fokusere på det viktigste: kundene dine.
               </p>
               <div className="hidden lg:flex gap-4">
-                <div className="w-20 h-20 bg-[#F5F5F0] rounded-2xl flex items-center justify-center text-[#1A1A1A] rotate-6 shadow-sm"><FileText size={32} /></div>
+                <div className="w-20 h-20 bg-[#F2EFE8] rounded-2xl flex items-center justify-center text-[#1A1A1A] rotate-6 shadow-sm"><FileText size={32} /></div>
                 <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 -rotate-3 shadow-sm mt-8"><Sparkles size={32} /></div>
                 <div className="w-20 h-20 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-400 rotate-12 shadow-sm"><TrendingUp size={32} /></div>
               </div>
@@ -3530,14 +3530,14 @@ const ValuePropositionSection = () => {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 text-left">
             {benefits.map((benefit, i) => (
               <RevealOnScroll key={i} direction="right" delay={i * 100}>
-                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] ui-motion ui-lift-sm h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6]">
+                <div className="p-6 sm:p-8 rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#E9E4DA] ui-motion ui-lift-sm h-full flex flex-col sm:flex-row sm:items-start gap-5 relative overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#E9E4DA]">
                   {benefit.illu}
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#F5F5F0] flex items-center justify-center shrink-0 relative z-10">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#F2EFE8] flex items-center justify-center shrink-0 relative z-10">
                     {React.cloneElement(benefit.icon as React.ReactElement<any>, { size: 28 })}
                   </div>
                   <div className="flex-1 relative z-10">
                     <h3 className="text-base sm:text-xl font-bold text-[#1A1A1A] mb-2">{benefit.title}</h3>
-                    <p className="text-xs sm:text-base text-[#808080] leading-relaxed font-medium">{benefit.desc}</p>
+                    <p className="text-xs sm:text-base text-[#5C574C] leading-relaxed font-medium">{benefit.desc}</p>
                   </div>
                 </div>
               </RevealOnScroll>
@@ -3565,7 +3565,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
         <RevealOnScroll direction="up">
           <div className="mb-12 sm:mb-24">
             <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1A1A1A] mb-4 sm:mb-8">3 trinn til suksess</h2>
-            <p className="text-sm sm:text-lg md:text-xl text-[#808080] font-medium max-w-2xl mx-auto leading-relaxed opacity-90 px-4">
+            <p className="text-sm sm:text-lg md:text-xl text-[#5C574C] font-medium max-w-2xl mx-auto leading-relaxed opacity-90 px-4">
               Vi har forenklet SEO. Slik tar vi din bedrift fra usynlig til markedsleder.
             </p>
           </div>
@@ -3573,12 +3573,12 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
 
         {/* Stegene */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-16 relative mb-16">
-          <div className="hidden md:block absolute top-[30%] left-[15%] right-[15%] h-[1px] bg-[#F5F5F0] -z-0"></div>
+          <div className="hidden md:block absolute top-[30%] left-[15%] right-[15%] h-[1px] bg-[#F2EFE8] -z-0"></div>
           {steps.map((step, i) => (
             <RevealOnScroll key={i} direction="up" delay={i * 150}>
               <div className="relative z-10 flex flex-col items-center group cursor-default">
 
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-[#EBEBE6] shadow-sm flex items-center justify-center mb-8 relative [@media(hover:hover)_and_(pointer:fine)]:group-hover:-translate-y-2 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-visible">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[32px] sm:rounded-[44px] bg-white border border-[#E9E4DA] shadow-sm flex items-center justify-center mb-8 relative [@media(hover:hover)_and_(pointer:fine)]:group-hover:-translate-y-2 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-visible">
 
                   {/* --- HER ER RABATT-BADGEN --- */}
                   {step.number === "1" && (
@@ -3599,7 +3599,7 @@ const StepPlanSection = ({ onNavigate, onSelectPlan }: { onNavigate: (view: stri
                 </div>
 
                 <h3 className="text-xl sm:text-2xl font-bold text-[#1A1A1A] mb-3 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">{step.title}</h3>
-                <p className="text-sm sm:text-lg text-[#808080] font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                <p className="text-sm sm:text-lg text-[#5C574C] font-medium leading-relaxed max-w-xs mx-auto">{step.desc}</p>
               </div>
             </RevealOnScroll>
           ))}
@@ -3632,14 +3632,14 @@ const InsightSection = () => {
           {/* Venstre side: Kontekst og emosjonell tekst */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <RevealOnScroll direction="left">
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[rgba(63,143,56,0.09)] text-[#3F8F38] text-[10px] font-black uppercase tracking-widest mb-4 border border-[#EBEBE6]">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#E8F1EB] text-[#15795A] text-[10px] font-black uppercase tracking-widest mb-4 border border-[#E9E4DA]">
                 <Sparkles size={12} />
                 <span>Vi forstår problemet</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#1A1A1A] leading-[1.15] sm:leading-[1.1] tracking-tight">
-                Føles markedsføringen <span className="text-[#1A1A1A]">ineffektiv?</span>
+                Føles markedsføringen <span className="text-violet-600">ineffektiv?</span>
               </h2>
-              <div className="space-y-4 sm:space-y-6 text-[#808080] font-medium leading-relaxed mt-6 sm:mt-8">
+              <div className="space-y-4 sm:space-y-6 text-[#5C574C] font-medium leading-relaxed mt-6 sm:mt-8">
                 <p className="text-base sm:text-lg md:text-xl text-[#1A1A1A] font-bold">
                   Du legger ned timer og kroner — men telefonen ringer ikke.
                 </p>
@@ -3656,7 +3656,7 @@ const InsightSection = () => {
 
             {/* Kort 1: Frustrasjon (Stor) */}
             <RevealOnScroll direction="up" className="md:col-span-2">
-              <div className="p-6 sm:p-8 md:p-10 bg-white border border-[#EBEBE6] rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+              <div className="p-6 sm:p-8 md:p-10 bg-white border border-[#E9E4DA] rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative overflow-hidden group [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
                 <div className="absolute -right-6 -bottom-6 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-10 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-110 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <HeartHandshake size={180} />
                 </div>
@@ -3666,7 +3666,7 @@ const InsightSection = () => {
                   </div>
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[#1A1A1A]">Full åpenhet, null gjetting</h3>
                 </div>
-                <p className="text-sm sm:text-base md:text-lg text-[#808080] font-medium leading-relaxed max-w-xl">
+                <p className="text-sm sm:text-base md:text-lg text-[#5C574C] font-medium leading-relaxed max-w-xl">
                   Du ser nøyaktig hva vi gjør, hvorfor, og hvilken effekt det har. Ingen svarte bokser, ingen månedsrapporter fulle av stammespråk.
                 </p>
               </div>
@@ -3683,7 +3683,7 @@ const InsightSection = () => {
                 </div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] mb-2 sm:mb-3">Drevet av moderne AI</h3>
-                  <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">
+                  <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">
                     Vi bruker banebrytende teknologi for å maksimere rekkevidden din og automatisere suksess på en måte tradisjonelle metoder ikke kan.
                   </p>
                 </div>
@@ -3692,7 +3692,7 @@ const InsightSection = () => {
 
             {/* Kort 3: Vekst (Liten) */}
             <RevealOnScroll direction="up" delay={200}>
-              <div className="group p-6 sm:p-8 bg-[#F5F5F0]/30 border border-[#EBEBE6]/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
+              <div className="group p-6 sm:p-8 bg-[#F2EFE8]/30 border border-[#E9E4DA]/50 rounded-3xl sm:rounded-[32px] shadow-sm ui-motion ui-lift-sm relative h-full flex flex-col justify-between overflow-hidden [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl">
                 <div className="absolute -right-4 -top-4 opacity-5 [@media(hover:hover)_and_(pointer:fine)]:group-hover:-rotate-12 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                   <BarChart4 size={100} />
                 </div>
@@ -3701,7 +3701,7 @@ const InsightSection = () => {
                 </div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] mb-2 sm:mb-3">Velprøvde strategier</h3>
-                  <p className="text-sm sm:text-base text-[#808080] font-medium leading-relaxed">
+                  <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">
                     Utviklet spesifikt for små bedrifter i Norge med fokus på vekst. Vi leverer målbare resultater som faktisk merkes på trafikken din.
                   </p>
                 </div>
@@ -3725,7 +3725,7 @@ const TrustSection = () => {
 
         <div className="mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/15 text-violet-200 text-xs sm:text-sm font-bold mb-6 sm:mb-8">
-            <ShieldCheck size={14} className="text-[#6BBF63]" />
+            <ShieldCheck size={14} className="text-[#52A447]" />
             <span>Founding-kunder · Tidlig tilgang</span>
           </div>
 
@@ -3756,7 +3756,7 @@ const TrustSection = () => {
 
           {/* Punkt 2: Sikkerhet */}
           <div className="bg-white/[0.04] border border-white/10 p-6 sm:p-8 rounded-3xl transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07] [@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 group">
-            <div className={`${iconTileClass} text-[#6BBF63]`}>
+            <div className={`${iconTileClass} text-[#52A447]`}>
               <ShieldCheck size={22} />
             </div>
             <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white">Din side er trygg</h3>
@@ -3869,7 +3869,7 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-[280ms]">
-      <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-[#808080] flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">
+      <button onClick={onBack} className="mb-8 ui-motion text-sm font-bold text-[#5C574C] flex items-center gap-2 rounded-lg px-1 py-0.5 -ml-1 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">
         <ArrowRight className="rotate-180" size={16} /> Tilbake
       </button>
 
@@ -3878,10 +3878,10 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* MENY SIDEBAR */}
         <div className="w-full md:w-64 flex flex-col gap-2">
-          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'general' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}>
+          <button onClick={() => setActiveTab('general')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'general' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]'}`}>
             <User size={18} /> Profil & Bedrift
           </button>
-          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'billing' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]'}`}>
+          <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-[background-color,color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] ${activeTab === 'billing' ? 'bg-[#1A1A1A] text-white' : 'bg-white text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]'}`}>
             <CreditCard size={18} /> Abonnement
           </button>
         </div>
@@ -3894,19 +3894,19 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
             <div className="space-y-6">
 
               {/* Nettadresse med Lås */}
-              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
+              <div className="bg-white p-6 rounded-2xl border border-[#E9E4DA] shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-[#1A1A1A]">Nettadresse</h3>
                   {isUrlLocked && <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-full flex items-center gap-1"><Shield size={10} /> Låst</span>}
                 </div>
 
-                <div className={`flex items-center border rounded-lg p-2 transition-colors ${isUrlLocked ? 'bg-[#F5F5F0] border-[#EBEBE6]' : 'bg-white border-[#EBEBE6] focus-within:ring-2 focus-within:ring-violet-500'}`}>
-                  <Globe size={18} className="text-[#808080] mx-2" />
+                <div className={`flex items-center border rounded-lg p-2 transition-colors ${isUrlLocked ? 'bg-[#F2EFE8] border-[#E9E4DA]' : 'bg-white border-[#E9E4DA] focus-within:ring-2 focus-within:ring-violet-500'}`}>
+                  <Globe size={18} className="text-[#5C574C] mx-2" />
                   <input
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     disabled={isUrlLocked}
-                    className={`flex-1 outline-none font-medium ${isUrlLocked ? 'bg-transparent text-[#808080] cursor-not-allowed' : 'text-[#1A1A1A]'}`}
+                    className={`flex-1 outline-none font-medium ${isUrlLocked ? 'bg-transparent text-[#5C574C] cursor-not-allowed' : 'text-[#1A1A1A]'}`}
                   />
                   {!isUrlLocked && (
                     <button onClick={handleSaveUrl} className="bg-[#1A1A1A] text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-violet-700 transition-colors">
@@ -3914,37 +3914,37 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
                     </button>
                   )}
                 </div>
-                <p className="text-[11px] text-[#808080] mt-2">
-                  <span className="font-bold text-[#808080]">OBS:</span> Du kan kun endre nettadressen 1 gang.
+                <p className="text-[11px] text-[#5C574C] mt-2">
+                  <span className="font-bold text-[#5C574C]">OBS:</span> Du kan kun endre nettadressen 1 gang.
                 </p>
               </div>
 
               {/* Bransje (Søkbar) */}
-              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
+              <div className="bg-white p-6 rounded-2xl border border-[#E9E4DA] shadow-sm">
                 <h3 className="font-bold mb-4 text-[#1A1A1A]">Bransje</h3>
                 <div className="relative">
-                  <Briefcase className="absolute left-3 top-3 text-[#808080]" size={18} />
+                  <Briefcase className="absolute left-3 top-3 text-[#5C574C]" size={18} />
                   <input
                     type="text"
                     placeholder="Søk bransje..."
                     value={industrySearch}
                     onFocus={() => setIsIndustryOpen(true)}
                     onChange={(e) => { setIndustrySearch(e.target.value); setIsIndustryOpen(true); }}
-                    className="w-full pl-10 pr-4 py-2.5 border border-[#EBEBE6] rounded-lg bg-white outline-none font-medium text-[#1A1A1A] focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-10 pr-4 py-2.5 border border-[#E9E4DA] rounded-lg bg-white outline-none font-medium text-[#1A1A1A] focus:ring-2 focus:ring-violet-500"
                   />
                   {/* Dropdown liste */}
                   {isIndustryOpen && industrySearch.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#EBEBE6] rounded-xl shadow-xl z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#E9E4DA] rounded-xl shadow-xl z-20">
                       {filteredIndustries.map((item) => (
-                        <button key={item} onClick={() => { setIndustry(item); setIndustrySearch(item); setIsIndustryOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-[#808080] hover:bg-[#F5F5F0] hover:text-[#1A1A1A] transition-colors">
+                        <button key={item} onClick={() => { setIndustry(item); setIndustrySearch(item); setIsIndustryOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-[#5C574C] hover:bg-[#F2EFE8] hover:text-[#1A1A1A] transition-colors">
                           {item}
                         </button>
                       ))}
-                      {filteredIndustries.length === 0 && <div className="p-3 text-sm text-[#808080] italic">Ingen treff...</div>}
+                      {filteredIndustries.length === 0 && <div className="p-3 text-sm text-[#5C574C] italic">Ingen treff...</div>}
                     </div>
                   )}
                 </div>
-                {industry && <p className="mt-2 text-sm text-[#808080] font-bold">Valgt: <span className="text-[#1A1A1A]">{industry}</span></p>}
+                {industry && <p className="mt-2 text-sm text-[#5C574C] font-bold">Valgt: <span className="text-[#1A1A1A]">{industry}</span></p>}
               </div>
 
               {/* Slett Konto */}
@@ -3962,16 +3962,16 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
             <div className="space-y-6">
               <div className="bg-[#1A1A1A] text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
-                  <p className="text-[#808080] text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
+                  <p className="text-[#5C574C] text-xs font-bold uppercase tracking-widest mb-1">Nåværende plan</p>
                   <h3 className="text-3xl font-black mb-2">Gratis</h3>
-                  <button className="bg-white text-[#1A1A1A] px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0]">Endre plan</button>
+                  <button className="bg-white text-[#1A1A1A] px-6 py-2.5 rounded-lg font-bold text-sm ui-motion mt-4 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]">Endre plan</button>
                 </div>
-                <div className="absolute top-0 right-0 p-32 bg-[#808080] rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                <div className="absolute top-0 right-0 p-32 bg-[#5C574C] rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-[#EBEBE6] shadow-sm">
+              <div className="bg-white p-6 rounded-2xl border border-[#E9E4DA] shadow-sm">
                 <h3 className="font-bold mb-4 text-[#1A1A1A]">Fakturahistorikk</h3>
-                <div className="p-4 bg-[#F5F5F0] rounded-lg text-center text-[#808080] text-sm font-medium">Ingen fakturaer funnet</div>
+                <div className="p-4 bg-[#F2EFE8] rounded-lg text-center text-[#5C574C] text-sm font-medium">Ingen fakturaer funnet</div>
               </div>
             </div>
           )}
@@ -4040,10 +4040,10 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F2EFE8] flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
       <div className="absolute inset-0 grid-pattern opacity-[0.04] pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F5F5F0] blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F2EFE8] blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
 
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/50 p-8 sm:p-12 relative z-10 text-center animate-in fade-in zoom-in-95 duration-[280ms]">
 
@@ -4052,13 +4052,13 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
         </div>
 
         <h2 className="text-3xl font-black text-[#1A1A1A] mb-3 tracking-tight">Velkommen</h2>
-        <p className="text-[#808080] font-medium mb-8 leading-relaxed">
+        <p className="text-[#5C574C] font-medium mb-8 leading-relaxed">
           Logg inn for å få tilgang til analysen din.
         </p>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-[#EBEBE6] text-[#1A1A1A] font-bold py-4 px-6 rounded-xl ui-motion transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#EBEBE6] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F5F5F0] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-[#E9E4DA] text-[#1A1A1A] font-bold py-4 px-6 rounded-xl ui-motion transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm group [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#E9E4DA] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -4082,13 +4082,13 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
         </button>
 
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-[#EBEBE6]"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#808080]">eller</span>
-          <div className="flex-1 h-px bg-[#EBEBE6]"></div>
+          <div className="flex-1 h-px bg-[#E9E4DA]"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#5C574C]">eller</span>
+          <div className="flex-1 h-px bg-[#E9E4DA]"></div>
         </div>
 
         {magicLinkSent ? (
-          <div className="bg-[#F5F5F0] border border-emerald-200 rounded-xl p-5 text-left">
+          <div className="bg-[#F2EFE8] border border-emerald-200 rounded-xl p-5 text-left">
             <div className="flex items-center gap-3 mb-2">
               <Mail size={18} className="text-[#1A1A1A]" />
               <p className="text-sm font-bold text-emerald-900">Lenke sendt</p>
@@ -4105,14 +4105,14 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
           </div>
         ) : (
           <form onSubmit={handleMagicLink} className="space-y-3 text-left">
-            <label className="text-xs font-bold text-[#808080] block">Logg inn med e-post (uten passord)</label>
+            <label className="text-xs font-bold text-[#5C574C] block">Logg inn med e-post (uten passord)</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="din@bedrift.no"
-              className="w-full p-3 bg-white border border-[#EBEBE6] rounded-xl focus:ring-2 focus:ring-[#808080]/25 focus:border-transparent outline-none text-sm"
+              className="w-full p-3 bg-white border border-[#E9E4DA] rounded-xl focus:ring-2 focus:ring-[#5C574C]/25 focus:border-transparent outline-none text-sm"
               disabled={magicLinkLoading}
             />
             <button
@@ -4130,7 +4130,7 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
                 </>
               )}
             </button>
-            <p className="text-[10px] text-[#808080] text-center pt-1">
+            <p className="text-[10px] text-[#5C574C] text-center pt-1">
               Vi sender en engangs-lenke til e-posten din. Ingen passord å huske på.
             </p>
           </form>
@@ -4138,14 +4138,14 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
 
         <button
           onClick={onBack}
-          className="mt-8 text-sm font-bold text-[#808080] hover:text-[#808080] transition-colors flex items-center justify-center gap-2 mx-auto"
+          className="mt-8 text-sm font-bold text-[#5C574C] hover:text-[#5C574C] transition-colors flex items-center justify-center gap-2 mx-auto"
         >
           <ArrowLeft size={16} /> Gå tilbake til forsiden
         </button>
 
       </div>
 
-      <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-[#808080] uppercase tracking-widest">
+      <div className="absolute bottom-6 flex gap-4 text-xs font-bold text-[#5C574C] uppercase tracking-widest">
         <span className="flex items-center gap-1"><ShieldCheck size={12} /> Sikker innlogging</span>
         <span className="flex items-center gap-1"><Key size={12} /> Kryptert</span>
       </div>
@@ -4186,7 +4186,7 @@ function SiktLoadingScreen() {
 
   return (
     <div
-      className="sikt-loading-screen fixed inset-0 z-[100] bg-[#F5F5F0] flex flex-col items-center justify-center overflow-hidden"
+      className="sikt-loading-screen fixed inset-0 z-[100] bg-[#F2EFE8] flex flex-col items-center justify-center overflow-hidden"
       style={{ animation: 'sikt-loader-fade-in 400ms cubic-bezier(0.23, 1, 0.32, 1) forwards', opacity: 0 }}
     >
       <span className="absolute top-5 left-6 text-xl font-black tracking-tight text-slate-900">Sikt.</span>
@@ -4197,13 +4197,13 @@ function SiktLoadingScreen() {
           <span className="font-script font-normal text-violet-600 lowercase">automatisk.</span>
         </h1>
 
-        <div className="relative w-[200px] h-[2px] bg-[#EBEBE6] rounded-full overflow-hidden">
+        <div className="relative w-[200px] h-[2px] bg-[#E9E4DA] rounded-full overflow-hidden">
           <div className="sikt-loading-sweep h-full w-[35%] bg-[#1A1A1A] rounded-full" />
         </div>
 
         <p
           aria-live="polite"
-          className="text-[13px] font-semibold text-[#808080] min-h-[1.25rem] text-center"
+          className="text-[13px] font-semibold text-[#5C574C] min-h-[1.25rem] text-center"
           style={{
             opacity: statusOpacity,
             transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1)',
@@ -4958,7 +4958,7 @@ function App() {
   // 🏠 HOVEDHUSET (For nye besøkende / ikke-kunder)
   // ---------------------------------------------------------
   return (
-    <div className="min-h-screen selection:bg-[#EBEBE6] selection:text-[#1A1A1A] bg-[#F5F5F0] relative overflow-x-hidden">
+    <div className="min-h-screen selection:bg-[#E9E4DA] selection:text-[#1A1A1A] bg-[#F2EFE8] relative overflow-x-hidden">
       {devOverlay}
       <GlobalDecorations />
 

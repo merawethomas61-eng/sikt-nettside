@@ -44,7 +44,7 @@ export function FeatureSplit({
         {body && (
           <p
             className={`mt-5 text-base sm:text-lg leading-relaxed font-medium ${
-              dark ? 'text-white/70' : 'text-[#808080]'
+              dark ? 'text-white/70' : 'text-[#5C574C]'
             }`}
           >
             {body}
@@ -63,7 +63,7 @@ export function FeatureSplit({
                   className={`mt-px shrink-0 flex items-center justify-center w-5 h-5 rounded-full ${
                     dark
                       ? 'bg-violet-500/20 text-violet-300'
-                      : 'bg-[rgba(63,143,56,0.1)] text-[#3F8F38]'
+                      : 'bg-[#E8F1EB] text-[#15795A]'
                   }`}
                 >
                   <Check size={13} strokeWidth={2.5} />

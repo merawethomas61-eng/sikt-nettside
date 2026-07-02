@@ -23,7 +23,7 @@ export default function NotFoundPage() {
           <h1 className="mt-6 text-2xl sm:text-3xl font-black text-[#1A1A1A]">
             Denne siden finnes ikke
           </h1>
-          <p className="mt-4 max-w-md text-base sm:text-lg text-[#808080] font-medium leading-relaxed">
+          <p className="mt-4 max-w-md text-base sm:text-lg text-[#5C574C] font-medium leading-relaxed">
             Lenken kan være feil, eller så er siden flyttet. Sjekk adressen, eller
             gå tilbake til forsiden — vi hjelper deg videre derfra.
           </p>
@@ -36,7 +36,7 @@ export default function NotFoundPage() {
             </Link>
             <Link
               to="/funksjoner"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#808080] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-bold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
             >
               Se hva Sikt gjør <ArrowRight size={16} />
             </Link>

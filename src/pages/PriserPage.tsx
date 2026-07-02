@@ -25,33 +25,33 @@ function BillingMock() {
   return (
     <Frame url="app.siktseo.com/abonnement">
       <div className="bg-[#FBFBFA] p-4 sm:p-6 space-y-4">
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] p-4 sm:p-5">
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-[#808080] font-bold">Ditt abonnement</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#5C574C] font-bold">Ditt abonnement</div>
               <div className="text-lg sm:text-xl font-black text-[#1A1A1A] mt-0.5">
-                Standard <span className="text-sm font-bold text-[#808080]">· 1 690 kr/mnd</span>
+                Standard <span className="text-sm font-bold text-[#5C574C]">· 1 690 kr/mnd</span>
               </div>
             </div>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(63,143,56,0.09)] border border-[rgba(63,143,56,0.18)] shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3F8F38] animate-pulse" />
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E8F1EB] border border-[#D6EEDF] shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#15795A] animate-pulse" />
               <span className="text-[9px] font-black text-[#1A1A1A] uppercase tracking-wider">Aktiv</span>
             </span>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#EBEBE6] divide-y divide-[#EBEBE6]">
+        <div className="bg-white rounded-2xl border border-[#E9E4DA] divide-y divide-[#E9E4DA]">
           {rows.map((r) => (
             <div key={r.l} className="flex items-center justify-between px-4 py-3">
-              <span className="text-xs sm:text-sm text-[#808080] font-medium">{r.l}</span>
+              <span className="text-xs sm:text-sm text-[#5C574C] font-medium">{r.l}</span>
               <span className="text-xs sm:text-sm font-bold text-[#1A1A1A]">{r.v}</span>
             </div>
           ))}
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="flex-1 text-center text-xs font-bold text-[#1A1A1A] border border-[#EBEBE6] rounded-full py-2.5">Bytt plan</span>
-          <span className="flex-1 text-center text-xs font-bold text-[#808080] border border-[#EBEBE6] rounded-full py-2.5">Si opp</span>
+          <span className="flex-1 text-center text-xs font-bold text-[#1A1A1A] border border-[#E9E4DA] rounded-full py-2.5">Bytt plan</span>
+          <span className="flex-1 text-center text-xs font-bold text-[#5C574C] border border-[#E9E4DA] rounded-full py-2.5">Si opp</span>
         </div>
       </div>
     </Frame>
@@ -82,7 +82,7 @@ function ExpectationTimeline() {
           />
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={80}>
-          <ol className="relative border-l border-[#EBEBE6] ml-2 sm:ml-3 space-y-7">
+          <ol className="relative border-l border-[#E9E4DA] ml-2 sm:ml-3 space-y-7">
             {expectationSteps.map((s) => (
               <li key={s.when} className="relative pl-6 sm:pl-8">
                 <span className="absolute -left-[6px] top-1.5 w-3 h-3 rounded-full bg-violet-600 ring-4 ring-[#F2EFE8]" />
@@ -176,10 +176,10 @@ export default function PriserPage() {
               title={<>Enkle priser, <span className="text-violet-600">ingen overraskelser.</span></>}
               intro="Tre planer fra 790 kr/mnd. Rabattert de tre første månedene, og ingen bindingstid — si opp når du vil."
             />
-            <div className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-3 text-xs sm:text-sm font-bold text-[#808080]">
+            <div className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-3 text-xs sm:text-sm font-bold text-[#5C574C]">
               {['Ingen bindingstid', 'Si opp når som helst', 'Rabattert de 3 første månedene'].map((t) => (
                 <span key={t} className="flex items-center gap-2">
-                  <Check size={16} className="text-[#3F8F38]" /> {t}
+                  <Check size={16} className="text-[#15795A]" /> {t}
                 </span>
               ))}
             </div>
@@ -193,7 +193,7 @@ export default function PriserPage() {
       {/* Hjelp / usikker */}
       <Container size="md" className="pb-4 text-center">
         <RevealOnScroll direction="up">
-          <p className="text-[#808080] font-medium">
+          <p className="text-[#5C574C] font-medium">
             Usikker på hvilken plan som passer?{' '}
             <Link to="/kontakt" className="font-bold text-violet-700 underline decoration-violet-200 underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:decoration-violet-700">
               Ta kontakt

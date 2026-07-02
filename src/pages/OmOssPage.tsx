@@ -14,7 +14,7 @@ import { FeatureSplit } from '../components/marketing/FeatureSplit';
 // uten å navngi noen — vi holder en anonym «vi»-stemme.
 function NoteCard() {
   return (
-    <div className="relative rounded-[24px] sm:rounded-[28px] bg-white border border-[#EBEBE6] shadow-[0_30px_60px_-24px_rgba(26,26,26,0.15)] p-7 sm:p-9">
+    <div className="relative rounded-[24px] sm:rounded-[28px] bg-white border border-[#E9E4DA] shadow-[0_30px_60px_-24px_rgba(26,26,26,0.15)] p-7 sm:p-9">
       <div className="flex items-center gap-2 mb-5 text-violet-700">
         <Sparkles size={15} />
         <span className="text-xs font-black uppercase tracking-widest">Ærlig talt</span>
@@ -129,14 +129,14 @@ export default function OmOssPage() {
               className="mb-10 sm:mb-14 text-center"
             />
           </RevealOnScroll>
-          <div className="border-t border-[#EBEBE6]">
+          <div className="border-t border-[#E9E4DA]">
             {values.map((v, i) => (
               <RevealOnScroll key={v.title} direction="up" delay={i * 80}>
-                <div className="grid sm:grid-cols-[4rem_1fr] gap-2 sm:gap-8 py-7 sm:py-9 border-b border-[#EBEBE6]">
+                <div className="grid sm:grid-cols-[4rem_1fr] gap-2 sm:gap-8 py-7 sm:py-9 border-b border-[#E9E4DA]">
                   <div className="text-3xl sm:text-5xl font-black text-violet-600/25 leading-none">{v.n}</div>
                   <div>
                     <h3 className="text-xl sm:text-2xl font-black tracking-tight text-[#1A1A1A]">{v.title}</h3>
-                    <p className="mt-2 text-[#808080] font-medium leading-relaxed max-w-2xl">{v.body}</p>
+                    <p className="mt-2 text-[#5C574C] font-medium leading-relaxed max-w-2xl">{v.body}</p>
                   </div>
                 </div>
               </RevealOnScroll>

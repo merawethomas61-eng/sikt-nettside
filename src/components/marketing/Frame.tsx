@@ -24,17 +24,17 @@ export function Frame({
       {glow && (
         <div className="pointer-events-none absolute -inset-6 sm:-inset-10 bg-gradient-to-tr from-violet-500/15 via-indigo-400/8 to-transparent blur-3xl rounded-[44px]" />
       )}
-      <div className="relative rounded-2xl sm:rounded-[26px] bg-white border border-[#EBEBE6] shadow-[0_30px_60px_-24px_rgba(26,26,26,0.18)] overflow-hidden">
+      <div className="relative rounded-2xl sm:rounded-[26px] bg-white border border-[#E9E4DA] shadow-[0_30px_60px_-24px_rgba(26,26,26,0.18)] overflow-hidden">
         {/* Topplinje */}
-        <div className="flex items-center gap-3 h-9 sm:h-11 px-3 sm:px-4 border-b border-[#EBEBE6] bg-[#F5F5F0]/70">
+        <div className="flex items-center gap-3 h-9 sm:h-11 px-3 sm:px-4 border-b border-[#E9E4DA] bg-[#F2EFE8]/70">
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#EBEBE6]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#EBEBE6]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#EBEBE6]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E9E4DA]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E9E4DA]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E9E4DA]" />
           </div>
           {url && (
             <div className="flex-1 flex justify-center min-w-0">
-              <span className="flex items-center gap-1.5 max-w-full px-3 py-1 rounded-full bg-white border border-[#EBEBE6] text-[10px] sm:text-xs font-medium text-[#808080]">
+              <span className="flex items-center gap-1.5 max-w-full px-3 py-1 rounded-full bg-white border border-[#E9E4DA] text-[10px] sm:text-xs font-medium text-[#5C574C]">
                 <Lock size={10} className="text-[#B3AD9F] shrink-0" />
                 <span className="truncate">{url}</span>
               </span>

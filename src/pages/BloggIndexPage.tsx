@@ -11,13 +11,13 @@ import { GradientCTA } from '../components/marketing/GradientCTA';
 import { getAllPosts, formatDateNo, type BlogPost } from '../blog/loader';
 
 const cardCls =
-  'group block relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#EBEBE6] ui-motion ui-lift-sm [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl';
+  'group block relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white/80 backdrop-blur-sm border border-[#E9E4DA] ui-motion ui-lift-sm [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl';
 
 function Meta({ date, minutes }: { date: string; minutes: number }) {
   return (
     <div className="flex items-center gap-3 text-xs font-bold text-[#B3AD9F] uppercase tracking-wider">
       <span>{formatDateNo(date)}</span>
-      <span className="w-1 h-1 rounded-full bg-[#EBEBE6]" />
+      <span className="w-1 h-1 rounded-full bg-[#E9E4DA]" />
       <span className="flex items-center gap-1.5">
         <Clock size={12} /> {minutes} min
       </span>
@@ -96,7 +96,7 @@ export default function BloggIndexPage() {
                 {topics.map((t) => (
                   <span
                     key={t}
-                    className="text-[11px] font-bold uppercase tracking-wider text-[#808080] bg-white/70 border border-[#EBEBE6] rounded-full px-3 py-1"
+                    className="text-[11px] font-bold uppercase tracking-wider text-[#5C574C] bg-white/70 border border-[#E9E4DA] rounded-full px-3 py-1"
                   >
                     {t}
                   </span>
@@ -109,7 +109,7 @@ export default function BloggIndexPage() {
 
       <Container size="xl" className="pb-16 sm:pb-24">
         {posts.length === 0 ? (
-          <p className="text-center text-[#808080]">Innlegg kommer snart.</p>
+          <p className="text-center text-[#5C574C]">Innlegg kommer snart.</p>
         ) : (
           <>
             {/* Fremhevet siste innlegg */}
@@ -126,7 +126,7 @@ export default function BloggIndexPage() {
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#1A1A1A] leading-tight max-w-3xl [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                     {featured.title}
                   </h2>
-                  <p className="mt-4 text-[#808080] font-medium leading-relaxed text-base sm:text-lg max-w-2xl">
+                  <p className="mt-4 text-[#5C574C] font-medium leading-relaxed text-base sm:text-lg max-w-2xl">
                     {featured.description}
                   </p>
                   <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-violet-700">
@@ -151,7 +151,7 @@ export default function BloggIndexPage() {
                         <h3 className="mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-[#1A1A1A] leading-snug [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-violet-700 transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                           {post.title}
                         </h3>
-                        <p className="mt-3 text-[#808080] font-medium leading-relaxed flex-1">{post.description}</p>
+                        <p className="mt-3 text-[#5C574C] font-medium leading-relaxed flex-1">{post.description}</p>
                         <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-violet-700">
                           Les mer
                           <ArrowRight size={16} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1.5" />

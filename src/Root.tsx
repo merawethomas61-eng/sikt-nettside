@@ -21,7 +21,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 // Nøytral fallback mens en rute-chunk lastes. Holder forsidens bakgrunnsfarge så
 // det ikke blir et hvitt blink, men uten innhold (rask, layout-stabil).
 function RouteFallback() {
-  return <div className="min-h-screen bg-[#F5F5F0]" aria-hidden="true" />;
+  return <div className="min-h-screen bg-[#F2EFE8]" aria-hidden="true" />;
 }
 
 // Nullstiller scroll til toppen ved hvert rute-bytte. React Router v7 med
@@ -44,7 +44,7 @@ function ScrollToTop() {
 function LegalRoute({ kind }: { kind: 'privacy' | 'terms' }) {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen selection:bg-[#EBEBE6] selection:text-[#1A1A1A] bg-[#F5F5F0] relative overflow-x-hidden">
+    <div className="min-h-screen selection:bg-[#E9E4DA] selection:text-[#1A1A1A] bg-[#F2EFE8] relative overflow-x-hidden">
       <Navbar />
       <main className="relative z-10">
         {kind === 'privacy'

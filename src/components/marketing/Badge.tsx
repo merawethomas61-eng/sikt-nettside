@@ -5,7 +5,7 @@ import React from 'react';
 type Tone = 'green' | 'violet' | 'onDark';
 
 const tones: Record<Tone, string> = {
-  green: 'bg-[rgba(63,143,56,0.09)] text-[#3F8F38] border border-[#EBEBE6]',
+  green: 'bg-[#E8F1EB] text-[#15795A] border border-[#E9E4DA]',
   violet: 'bg-violet-50 text-violet-700 border border-violet-100',
   onDark: 'bg-white/10 text-white border border-white/20 backdrop-blur-md',
 };
