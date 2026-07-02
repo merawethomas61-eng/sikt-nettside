@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildAuditReportEmail } from './report-email.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -133,6 +134,53 @@ async function fetchPageFacts(targetUrl: string): Promise<PageFacts | null> {
   }
 }
 
+// Sender full rapport til leaden fra gratis-analysen. Respekterer
+// outreach_optouts (folk som har bedt om å slippe å høre fra oss), og er
+// en stille no-op uten RESEND_API_KEY — analysen skal aldri feile på e-post.
+async function sendAuditReportEmail(
+  svc: ReturnType<typeof createClient>,
+  opts: {
+    to: string;
+    url: string;
+    scores: { performance: number | null; seo: number | null; accessibility: number | null; bestPractices: number | null };
+    pageFacts: PageFacts | null;
+    psiIssues: Array<{ title: string; displayValue: string }>;
+  },
+): Promise<void> {
+  const resendKey = Deno.env.get('RESEND_API_KEY') ?? '';
+  if (!resendKey) {
+    console.warn('[scan-pagespeed] RESEND_API_KEY mangler — hopper over rapport-e-post.');
+    return;
+  }
+
+  const { data: optout } = await svc
+    .from('outreach_optouts')
+    .select('email')
+    .eq('email', opts.to)
+    .maybeSingle();
+  if (optout) {
+    console.log('[scan-pagespeed] lead har meldt seg av — sender ikke rapport-e-post.');
+    return;
+  }
+
+  const fromEmail = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com';
+  const { subject, html } = buildAuditReportEmail({
+    url: opts.url,
+    scores: opts.scores,
+    pageFacts: opts.pageFacts,
+    psiIssues: opts.psiIssues,
+  });
+
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: `Sikt <${fromEmail}>`, to: [opts.to], subject, html }),
+  });
+  if (!resp.ok) {
+    console.error('[scan-pagespeed] Resend svarte', resp.status, await resp.text().catch(() => ''));
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -215,9 +263,10 @@ Deno.serve(async (req) => {
     // lasting). Isolert: feiler den, faller vi grasiøst tilbake til kun PSI.
     const pageFacts = await fetchPageFacts(publicUrl);
 
+    const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
     // Lead-lagring (service-role) — skal aldri blokkere svaret til besøkende.
     try {
-      const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
       await svc.from('audit_leads').insert({
         email,
         url: publicUrl,
@@ -232,6 +281,17 @@ Deno.serve(async (req) => {
     } catch (err) {
       console.error('[scan-pagespeed] audit_leads insert feilet:', err);
     }
+
+    // Forsiden lover «Vi sender deg rapporten» — hold løftet. E-posten får
+    // flere PSI-funn enn teaseren (som låser alt utover topp 3). Sendingen
+    // skjer etter at svaret er levert (waitUntil) og kan aldri velte det.
+    const emailIssues = failing
+      .slice(0, 10)
+      .map((a) => ({ title: a.title as string, displayValue: (a.displayValue as string) || '' }));
+    const sendPromise = sendAuditReportEmail(svc, { to: email, url: publicUrl, scores, pageFacts, psiIssues: emailIssues })
+      .catch((err) => console.error('[scan-pagespeed] rapport-e-post feilet:', err));
+    const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+    if (runtime?.waitUntil) runtime.waitUntil(sendPromise); else await sendPromise;
 
     return json({ teaser: true, url: publicUrl, scores, topIssues, issueCount, pageFacts }, 200);
   }
