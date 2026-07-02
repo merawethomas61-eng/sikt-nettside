@@ -1,4 +1,38 @@
+# Sikt — https://siktseo.com
+# Alle crawlere er velkomne. AI/answer-engine-crawlere (GPTBot, ClaudeBot,
+# PerplexityBot, Google-Extended m.fl.) er eksplisitt tillatt nedenfor.
+# Kun /api/ er stengt (interne endepunkter, ikke innhold).
+
 User-agent: *
+Allow: /
+Disallow: /api/
+
+# --- AI / answer engines (eksplisitt tillatt) ---
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
 Allow: /
 Disallow: /api/
 
