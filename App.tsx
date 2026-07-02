@@ -15,6 +15,7 @@ import { UsageStat } from './src/shared/trustStats';
 import { StickyCta } from './src/components/marketing/StickyCta';
 import { ProductPreview } from './src/pages/home/ProductPreview';
 import { ProblemSection } from './src/pages/home/ProblemSection';
+import { WhySiktSection } from './src/pages/home/WhySiktSection';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
@@ -3175,7 +3176,8 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     <FreeAuditSection onSelectPlan={onSelectPlan} />
     {/* Problemet: samler gamle StoryBrand/PainPoints/Insight i ÉN redaksjonell splitt */}
     <ProblemSection />
-    <ValuePropositionSection />
+    {/* Hvorfor Sikt: løftet + plain-norsk-beviset (erstatter ValueProposition) */}
+    <WhySiktSection />
     {/* "Er dette for min bransje?" — self-identification etter "Hvorfor Sikt" */}
     <IndustriesSection />
     {/* Her er endringen: Vi sender onSelectPlan videre til StepPlanSection også */}
