@@ -29,6 +29,9 @@ Sikt (siktseo.com) hjelper norske småbedrifter å bli mer synlige på Google og
 
 ## Blogg
 
+- [AI-søk i Norge — slik finner kundene deg i 2026](https://siktseo.com/blogg/ai-sok-i-norge): Stadig flere nordmenn spør ChatGPT, Gemini og Perplexity i stedet for å google. Her er hva skiftet betyr for norske bedrifter — og hvordan du blir en av dem AI-en anbefaler.
+- [Hva koster SEO i Norge? Byrå, frilanser eller verktøy](https://siktseo.com/blogg/hva-koster-seo): SEO-byrå koster ofte fra 10 000 kr i måneden og oppover. Her er en ærlig gjennomgang av hva SEO koster i Norge — og hvilke alternativer en småbedrift faktisk har.
+- [Hvor lang tid tar SEO? Ærlig svar med tidslinje](https://siktseo.com/blogg/hvor-lang-tid-tar-seo): SEO gir sjelden resultater over natten — men det går raskere enn mange tror når grunnmuren er feil. Her er en ærlig tidslinje, uke for uke.
 - [Google Bedriftsprofil: komplett guide for norske bedrifter](https://siktseo.com/blogg/google-bedriftsprofil-guide): For en lokal bedrift er Google Bedriftsprofil ofte den viktigste synlighetskanalen du har — og den er helt gratis. Slik setter du den opp riktig og kommer på kartet.
 - [AEO (Answer Engine Optimization) — bli svaret, ikke bare et søketreff](https://siktseo.com/blogg/hva-er-aeo): AEO handler om å bli selve svaret når noen spør Google, ChatGPT eller en taleassistent — ikke bare en lenke i en liste. Her er hva det er, og hvordan du gjør det.
 - [Hvorfor dukker ikke bedriften min opp på Google?](https://siktseo.com/blogg/hvorfor-dukker-ikke-bedriften-opp-pa-google): Du søker opp bedriften din og finner ingenting — eller konkurrenten ligger øverst. Her er de vanligste grunnene, og nøyaktig hva du gjør med hver enkelt.
