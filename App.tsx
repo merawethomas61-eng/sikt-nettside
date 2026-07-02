@@ -18,6 +18,7 @@ import { ProblemSection } from './src/pages/home/ProblemSection';
 import { WhySiktSection } from './src/pages/home/WhySiktSection';
 import { IndustriesSection as HomeIndustriesSection } from './src/pages/home/IndustriesSection';
 import { StepPlanSection as HomeStepPlanSection } from './src/pages/home/StepPlanSection';
+import { TrustSection as HomeTrustSection } from './src/pages/home/TrustSection';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
@@ -3183,7 +3184,7 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     {/* "Er dette for min bransje?" — self-identification etter "Hvorfor Sikt" */}
     <HomeIndustriesSection />
     <HomeStepPlanSection />
-    <TrustSection />
+    <HomeTrustSection onLogin={handleLogin} />
     {/* Ekte case: dokumentert før/etter — rendres KUN når CASES er fylt med ekte tall */}
     <CaseStudySection />
     {/* Sosialt bevis: ærlig founding-tilstand (sitater når de finnes) */}
