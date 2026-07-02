@@ -36,6 +36,7 @@ import { PORTAL, chartPalette, chartTooltipStyle, formatChartDate, scoreColor } 
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from '../shared/Buttons';
 import { buildStripeCheckoutUrl } from '../shared/stripeLinks';
+import { companyInfo } from '../shared/companyInfo';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -3663,6 +3664,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelDone, setCancelDone] = useState(false);
+  // Save-steg: første «Avslutt»-klikk viser ETT rolig nedgraderings-alternativ
+  // (når det finnes en lavere pakke) før oppsigelsen fullføres.
+  const [cancelSaveOfferSeen, setCancelSaveOfferSeen] = useState(false);
   // Plan-baserte bruksgrenser: analyser brukt inneværende måned (fra clients).
   const [analysesMonth, setAnalysesMonth] = useState<string | null>(null);
   const [analysesUsed, setAnalysesUsed] = useState(0);
@@ -6130,10 +6134,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
   // ── Oppsigelse ────────────────────────────────────────────────────
   // Stripe «no-code» customer-portal login-lenke. Konfigureres i Stripe
-  // Dashboard → Settings → Billing → Customer portal → «login page».
-  // Tom streng = ikke satt opp ennå → vi viser bekreftelse + e-post-fallback
-  // i stedet for å sende kunden til en død lenke.
-  const STRIPE_BILLING_PORTAL_URL = '';
+  // Dashboard → Settings → Billing → Customer portal → «login page», og
+  // settes som VITE_STRIPE_BILLING_PORTAL_URL i Vercel-env (ingen redeploy
+  // av kode ved endring — bare nytt bygg). Tom = ikke satt opp ennå → vi
+  // viser bekreftelse + e-post-fallback i stedet for en død lenke.
+  const STRIPE_BILLING_PORTAL_URL = (import.meta.env.VITE_STRIPE_BILLING_PORTAL_URL as string | undefined) ?? '';
   const CANCEL_REASONS: { id: string; label: string }[] = [
     { id: 'too_expensive', label: 'For dyrt' },
     { id: 'no_value', label: 'Fikk ikke nok verdi' },
@@ -6149,6 +6154,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     setCancelError(null);
     setCancelDone(false);
     setCancelSubmitting(false);
+    setCancelSaveOfferSeen(false);
     setShowCancelModal(true);
   };
   const closeCancelModal = () => {
@@ -6158,6 +6164,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
   const submitCancellation = async () => {
     if (!cancelReason) { setCancelError('Velg en grunn først.'); return; }
+    // Save-steg: har kunden en lavere pakke å falle tilbake på, vis den ÉN
+    // gang før endelig oppsigelse. Andre klikk går rett videre.
+    if (!cancelSaveOfferSeen && activePlanKey !== 'BASIC') {
+      setCancelSaveOfferSeen(true);
+      return;
+    }
     setCancelSubmitting(true);
     setCancelError(null);
     try {
@@ -6183,7 +6195,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       // Portal ikke konfigurert ennå → bekreft at vi har registrert det.
       setCancelDone(true);
     } catch {
-      setCancelError('Kunne ikke registrere oppsigelsen. Prøv igjen, eller skriv til support@siktseo.com.');
+      setCancelError(`Kunne ikke registrere oppsigelsen. Prøv igjen, eller skriv til ${companyInfo.supportEmail}.`);
     } finally {
       setCancelSubmitting(false);
     }
@@ -11928,7 +11940,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
         <footer className="mt-12 pt-6 border-t border-[color:var(--hair)] text-center text-sm font-['Geist','DM_Sans',sans-serif]" style={{ color: 'var(--muted)' }}>
           <p className="inline-flex items-center justify-center gap-2 flex-wrap">
-            <span>support@siktseo.com</span>
+            <span>{companyInfo.supportEmail}</span>
             <span>·</span>
             <span>Svar innen 1 virkedag</span>
           </p>
@@ -12524,7 +12536,56 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
           <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 max-h-[90vh] overflow-y-auto font-['Geist','DM_Sans',sans-serif]">
-            {!cancelDone ? (
+            {!cancelDone && cancelSaveOfferSeen ? (
+              (() => {
+                const downKey: 'BASIC' | 'STANDARD' = activePlanKey === 'PREMIUM' ? 'STANDARD' : 'BASIC';
+                return (
+                  <>
+                    <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Før du går — ett alternativ</h3>
+                    <p className="text-sm mb-5" style={{ color: 'var(--ink)', lineHeight: 1.55 }}>
+                      Du trenger ikke velge mellom alt og ingenting. {planNames[downKey]} ({planPrices[downKey]}/mnd) beholder
+                      overvåkingen og rapportene, så det du har bygget opp ikke stopper. Ingen bindingstid der heller.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCancelModal(false);
+                          setPlanChangeTarget({ key: downKey, name: planNames[downKey], price: planPrices[downKey], type: 'downgrade' });
+                        }}
+                        className="rounded-full px-4 py-2.5 text-sm text-white border border-[color:var(--ink)] bg-[color:var(--btn-bg)]"
+                      >
+                        Bytt til {planNames[downKey]} i stedet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={submitCancellation}
+                        disabled={cancelSubmitting}
+                        className={`rounded-full px-4 py-2.5 text-sm inline-flex items-center justify-center gap-2 border${cancelSubmitting ? ' opacity-50 cursor-not-allowed' : ''}`}
+                        style={{ color: '#B4231F', borderColor: 'rgba(180,35,31,0.4)', background: 'transparent' }}
+                      >
+                        {cancelSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                        Nei takk — avslutt abonnementet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={closeCancelModal}
+                        disabled={cancelSubmitting}
+                        className="text-sm mt-1"
+                        style={{ color: 'var(--muted)' }}
+                      >
+                        Ombestemte meg — behold som i dag
+                      </button>
+                    </div>
+                    {cancelError && (
+                      <div className="rounded-xl px-4 py-3 text-sm mt-4" style={{ background: 'var(--dangerbg)', color: 'var(--danger)', border: '1px solid rgba(180,35,31,0.25)' }}>
+                        {cancelError}
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            ) : !cancelDone ? (
               <>
                 <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Avslutt abonnement</h3>
                 <p className="text-sm mb-4" style={{ color: 'var(--ink)', lineHeight: 1.55 }}>
@@ -12593,7 +12654,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Takk — vi har registrert det</h3>
                 <p className="text-sm mb-4" style={{ color: 'var(--ink)', lineHeight: 1.55 }}>
                   Vi har lagret tilbakemeldingen din. For å stoppe videre trekk fullfører vi oppsigelsen i betalingsløsningen — skriv til
-                  {' '}<a href="mailto:support@siktseo.com?subject=Avslutt%20abonnement" className="underline" style={{ color: 'var(--ink)' }}>support@siktseo.com</a>{' '}
+                  {' '}<a href={`mailto:${companyInfo.supportEmail}?subject=Avslutt%20abonnement`} className="underline" style={{ color: 'var(--ink)' }}>{companyInfo.supportEmail}</a>{' '}
                   så bekrefter vi med en gang. Du beholder tilgang ut perioden du har betalt for.
                 </p>
                 <div className="flex justify-end">

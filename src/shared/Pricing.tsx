@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HelpCircle, Check } from 'lucide-react';
 import { RevealOnScroll } from './RevealOnScroll';
+import { companyInfo } from './companyInfo';
 
 // Pris-seksjon i redaksjonell handbook-stil. Rekkefølgen er bevisst HØY→LAV
 // (Premium → Standard → Basic): den første prisen øyet treffer fungerer som
@@ -25,7 +26,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       tagline: "Når én ny kunde er verdt titusener.",
       who: "For advokater, tannleger, klinikker og B2B.",
       ctaLabel: "Book en GEO-gjennomgang",
-      ctaHref: "mailto:siktseo@gmail.com?subject=GEO-gjennomgang%20(Premium)&body=Hei%20Sikt%2C%0A%0AJeg%20vil%20ha%20en%20GEO-gjennomgang%20og%20se%20om%20ChatGPT%2FGemini%2FPerplexity%20nevner%20bedriften%20min.%0A%0ABedrift%2Fnettside%3A%20%0ABransje%3A%20%0A",
+      ctaHref: `mailto:${companyInfo.supportEmail}?subject=GEO-gjennomgang%20(Premium)&body=Hei%20Sikt%2C%0A%0AJeg%20vil%20ha%20en%20GEO-gjennomgang%20og%20se%20om%20ChatGPT%2FGemini%2FPerplexity%20nevner%20bedriften%20min.%0A%0ABedrift%2Fnettside%3A%20%0ABransje%3A%20%0A`,
       ctaNote: "Én ny klient betaler hele året — vi går gjennom tallene sammen først.",
       desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
       features: [

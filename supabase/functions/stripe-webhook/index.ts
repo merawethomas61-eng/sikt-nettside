@@ -23,7 +23,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { renderEmail, railNote, escapeHtml } from '../_shared/email.ts';
+import { renderEmail, railNote, defList, escapeHtml } from '../_shared/email.ts';
+
+// Support-adressen kunder kan svare til. Env-styrt så bytte til domene-e-post
+// (support@siktseo.com) ikke krever redeploy — bare ny secret.
+const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') ?? 'siktseo@gmail.com';
+const PORTAL_URL = 'https://siktseo.com/portal';
 
 console.log('Sikt Stripe Webhook v7 (canonical) lastet inn');
 
@@ -110,7 +115,7 @@ async function sendDunningEmail(
       ? { label: 'Oppdater betaling', url: hostedInvoiceUrl }
       : { label: 'Åpne dashbordet', url: 'https://siktseo.com/portal' },
     signoff: 'Har du allerede ordnet det? Da kan du se bort fra denne e-posten.',
-    footer: 'Spørsmål? Svar på denne e-posten, eller kontakt support@siktseo.com.',
+    footer: `Spørsmål? Svar på denne e-posten, eller kontakt ${escapeHtml(SUPPORT_EMAIL)}.`,
   });
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -126,6 +131,61 @@ async function sendDunningEmail(
     if (!res.ok) console.error('Dunning-e-post feilet:', res.status, await res.text());
   } catch (err) {
     console.error('Dunning-e-post kastet:', (err as Error).message);
+  }
+}
+
+// ── Velkomst-e-post (rett etter kjøp) ────────────────────────────────
+// Før denne fantes var det TOTAL stillhet etter betaling — kunden betalte
+// og hørte ingenting før første rapport. Velkomsten setter samme ærlige
+// 4–12-ukers-forventning som JourneyTimeline i portalen, så «hvorfor har
+// ingenting skjedd ennå?»-churnen dempes fra dag én.
+async function sendWelcomeEmail(
+  to: string,
+  firstName: string | null,
+  planLabel: string,
+): Promise<void> {
+  const apiKey = Deno.env.get('RESEND_API_KEY') ?? '';
+  if (!apiKey || !to) {
+    console.warn('Velkomst: mangler RESEND_API_KEY eller mottaker — hopper over e-post.');
+    return;
+  }
+  const fromEmail = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com';
+  const html = renderEmail({
+    preheader: 'Betalingen er registrert. Her er hva som skjer nå — og hva du kan forvente når.',
+    brand: 'sikt',
+    kicker: escapeHtml(planLabel),
+    heading: 'Velkommen til Sikt',
+    intro: `${firstName ? `Hei ${escapeHtml(firstName)}. ` : ''}Betalingen er registrert, og vi er i gang. Her er hva som skjer nå — og like viktig: hva du realistisk kan forvente når.`,
+    blocks: [
+      defList([
+        { title: '1. Fullfør oppstarten', body: 'Et kort skjema (2 minutter) forteller oss hvilken side vi skal jobbe med og hva som betyr mest for deg.' },
+        { title: '2. Vi analyserer siden din automatisk', body: 'Første tekniske analyse kjører i bakgrunnen med én gang skjemaet er levert — du ser resultatet i dashbordet.' },
+        { title: '3. Rapportene kommer av seg selv', body: 'Du får jevnlige rapporter på e-post med hva som er gjort, hva vi fant og hva det er verdt. Frekvensen styrer du selv i innstillingene.' },
+      ]),
+      railNote({
+        title: 'Ærlig forventning: SEO er en klatring, ikke en bryter',
+        body: 'Tekniske forbedringer skjer fra uke én, men Google belønner dem typisk etter 4–12 uker. Det er normalt — og det er derfor introrabatten din dekker nettopp de første månedene av klatringen.',
+        tone: 'green',
+      }),
+    ],
+    cta: { label: 'Kom i gang', url: PORTAL_URL },
+    signoff: 'Vi holder vakt fra nå av — snakkes i første rapport.',
+    footer: `Spørsmål? Svar på denne e-posten, eller kontakt ${escapeHtml(SUPPORT_EMAIL)}.`,
+  });
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `Sikt <${fromEmail}>`,
+        to: [to],
+        subject: 'Velkommen til Sikt — dette skjer nå',
+        html,
+      }),
+    });
+    if (!res.ok) console.error('Velkomst-e-post feilet:', res.status, await res.text());
+  } catch (err) {
+    console.error('Velkomst-e-post kastet:', (err as Error).message);
   }
 }
 
@@ -216,6 +276,15 @@ Deno.serve(async (req) => {
 
       const packageName = PLAN_TO_PACKAGE_NAME[plan];
 
+      // Leses FØR upsert: var kunden allerede aktiv, er dette en Stripe-retry
+      // eller et plan-bytte — da skal det ikke gå ut en ny velkomst-e-post.
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('subscription_status, contact_person')
+        .eq('user_id', userId)
+        .maybeSingle();
+      const isNewCustomer = existing?.subscription_status !== 'active';
+
       // VIKTIG: vi rører IKKE onboarding_completed her — det settes når kunden
       // fyller ut skjemaet. UPSERT slik at raden opprettes om den ikke finnes.
       const { error } = await supabase
@@ -238,6 +307,15 @@ Deno.serve(async (req) => {
       }
 
       console.log(`Lagret ${packageName} på bruker ${userId}.`);
+
+      if (isNewCustomer && email) {
+        const firstName =
+          existing?.contact_person?.split(' ')[0] ||
+          session.customer_details?.name?.split(' ')[0] ||
+          null;
+        await sendWelcomeEmail(email, firstName, packageName);
+        console.log(`Velkomst-e-post sendt til ny kunde ${userId}.`);
+      }
     }
 
     if (event.type === 'customer.subscription.deleted') {

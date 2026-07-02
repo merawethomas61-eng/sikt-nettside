@@ -6,6 +6,7 @@ import { Navbar } from './src/shared/Navbar';
 import { Footer } from './src/shared/Footer';
 import { PrivacyPage, TermsPage } from './src/shared/Legal';
 import { buildStripeCheckoutUrl } from './src/shared/stripeLinks';
+import { companyInfo } from './src/shared/companyInfo';
 
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -3562,7 +3563,7 @@ function App() {
           setHasAccess(false);
           setView('home');
           toastWarning(
-            'Betaling ikke bekreftet ennå. Vent litt og oppdater siden, eller kontakt support@siktseo.com hvis problemet vedvarer.',
+            `Betaling ikke bekreftet ennå. Vent litt og oppdater siden, eller kontakt ${companyInfo.supportEmail} hvis problemet vedvarer.`,
           );
           return;
         }
@@ -3579,7 +3580,29 @@ function App() {
           setView('onboarding');
         }
         else if (!harBetalt) {
-          // REGEL 1: Ikke betalt -> Bli på hjemmesiden!
+          // REGEL 1a: Ikke betalt, men valgte en pakke FØR innloggingen ->
+          // gjenoppta checkouten automatisk i stedet for å parkere dem på
+          // forsiden (der de måtte klikke pakken på nytt — ren konverterings-
+          // lekkasje, spesielt via magic-link). sessionStorage-markøren gjør
+          // gjenopptaket til et engangsforsøk per fane, så en som avbryter
+          // hos Stripe ikke fanges i en redirect-løkke.
+          const alreadyResumed = (() => {
+            try { return !!sessionStorage.getItem('sikt_checkout_resumed'); } catch { return true; }
+          })();
+          if (savedPlan && !alreadyResumed) {
+            const resumeUrl = buildStripeCheckoutUrl(savedPlan.toUpperCase(), {
+              email: user.email || '',
+              userId: user.id,
+            });
+            if (resumeUrl) {
+              try { sessionStorage.setItem('sikt_checkout_resumed', '1'); } catch { /* ignore */ }
+              track('checkout_redirect', { plan: savedPlan, resumed: true });
+              window.location.href = resumeUrl;
+              return;
+            }
+          }
+
+          // REGEL 1b: Ikke betalt -> Bli på hjemmesiden!
           setHasAccess(false);
           setView('home');
           // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
