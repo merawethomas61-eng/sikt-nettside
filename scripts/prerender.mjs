@@ -242,8 +242,8 @@ const faqPageLd = (faqs) => ({
 });
 
 // Forside-FAQ — ÉN kilde, brukt både i FAQPage-schema og i den synlige statiske
-// body-en (Google krever at markup matcher synlig tekst). Speiler de seks
-// FAQ-ene i forsidens FAQSection som React rendrer ved last.
+// body-en (Google krever at markup matcher synlig tekst). Speiler homeFaqs i
+// src/pages/home/FaqSection.tsx som React rendrer ved last.
 const homeFaqs = [
   { q: 'Jeg skjønner ikke SEO. Må jeg lære det?', a: 'Nei. Det er hele poenget med Sikt. Vi tar oss av det tekniske og oversetter det til plain norsk i en månedlig rapport. Du trenger ikke vite hva en "meta-description" er — du trenger bare å vite at flere kunder finner deg. Hvis du lurer på noe, kan du spørre Sikt AI direkte på dashboardet og få svar som en 10-åring kan forstå.' },
   { q: 'Hvor lang tid tar det før jeg ser resultater?', a: 'Du ser forbedringer på det tekniske (hastighet, feilmeldinger, sidescore) allerede første uken. Flere besøkende på nettsiden merker du vanligvis etter 2–3 måneder. Topposisjoner på Google tar 6–12 måneder — det er ikke noen som kan love det raskere uten å lyve. Vi gir deg ærlige tall hver måned så du ser at det går riktig vei.' },

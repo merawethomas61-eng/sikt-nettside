@@ -19,6 +19,8 @@ import { WhySiktSection } from './src/pages/home/WhySiktSection';
 import { IndustriesSection as HomeIndustriesSection } from './src/pages/home/IndustriesSection';
 import { StepPlanSection as HomeStepPlanSection } from './src/pages/home/StepPlanSection';
 import { TrustSection as HomeTrustSection } from './src/pages/home/TrustSection';
+import { FaqSection as HomeFaqSection } from './src/pages/home/FaqSection';
+import { FinalCta } from './src/pages/home/FinalCta';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
@@ -3192,9 +3194,9 @@ const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => 
     {/* GEO-seksjon: peak-end — siste wow-argument før pris */}
     <GeoShiftSection onSelectPlan={onSelectPlan as (plan: string) => void} />
     <Pricing onSelectPlan={onSelectPlan} />
-    <FAQSection />
-    {/* Final CTA: fanger opp besøkere som scrollet helt ned */}
-    <FinalCTASection onSelectPlan={onSelectPlan} />
+    <HomeFaqSection />
+    {/* Final CTA: fanger opp besøkere som scrollet helt ned — delt GradientCTA */}
+    <FinalCta />
     {/* Sticky mobil-CTA: dukker opp etter hero, skjules når gratis-analyse er i view */}
     <StickyCta />
   </>
