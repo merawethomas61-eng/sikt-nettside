@@ -1,7 +1,7 @@
 // Genererer per-side OG-bilder (1200×630) til dist/og/<slug>.png.
 // Kjøres ETTER `vite build` og FØR `scripts/prerender.mjs`, som peker hver
 // sides og:image/twitter:image hit. Bruk Sikt-uttrykket: warm-neutral flate,
-// mørk logo + lilla aksent. Ingen designede filer nødvendig.
+// mørk logo + grønn aksent. Ingen designede filer nødvendig.
 import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,8 +29,8 @@ function card({ title, subtitle, badge = 'SEO · AI-synlighet' }) {
       flexDirection: 'column',
       justifyContent: 'space-between',
       padding: '72px 80px',
-      background: '#F5F5F0',
-      borderTop: '12px solid #6d28d9',
+      background: '#F2EFE8',
+      borderTop: '12px solid #15795A',
       fontFamily: 'Inter',
     },
     [
@@ -63,15 +63,15 @@ function card({ title, subtitle, badge = 'SEO · AI-synlighet' }) {
           title,
         ),
         subtitle
-          ? el('div', { display: 'flex', fontSize: 30, fontWeight: 400, color: '#6b6b6b', marginTop: 24, maxWidth: 980 }, subtitle)
+          ? el('div', { display: 'flex', fontSize: 30, fontWeight: 400, color: '#5C574C', marginTop: 24, maxWidth: 980 }, subtitle)
           : el('div', { display: 'flex' }, ''),
       ]),
-      // Bunn: domene + lilla pill
+      // Bunn: domene + grønn pill
       el('div', { display: 'flex', alignItems: 'center', justifyContent: 'space-between' }, [
-        el('div', { display: 'flex', fontSize: 26, fontWeight: 700, color: '#808080' }, 'siktseo.com'),
+        el('div', { display: 'flex', fontSize: 26, fontWeight: 700, color: '#5C574C' }, 'siktseo.com'),
         el(
           'div',
-          { display: 'flex', fontSize: 22, fontWeight: 700, color: '#ffffff', background: '#6d28d9', padding: '12px 24px', borderRadius: 999 },
+          { display: 'flex', fontSize: 22, fontWeight: 700, color: '#ffffff', background: '#15795A', padding: '12px 24px', borderRadius: 999 },
           badge,
         ),
       ]),

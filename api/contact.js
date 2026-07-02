@@ -83,7 +83,7 @@ export default withSentry(async function handler(req, res) {
     blocks: [
       note(
         `<strong style="color:#1A1A1A">${esc(cleanName)}</strong> &nbsp;·&nbsp; ` +
-        `<a href="mailto:${esc(cleanEmail)}" style="color:#6D28D9;text-decoration:underline">${esc(cleanEmail)}</a>` +
+        `<a href="mailto:${esc(cleanEmail)}" style="color:#15795A;text-decoration:underline">${esc(cleanEmail)}</a>` +
         `<br><br>${esc(cleanMessage).replace(/\n/g, '<br>')}`,
       ),
     ],

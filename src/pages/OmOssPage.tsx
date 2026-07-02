@@ -125,7 +125,7 @@ export default function OmOssPage() {
           <RevealOnScroll direction="up">
             <SectionHeading
               align="center"
-              title={<>Tre ting vi <span className="text-[#3F8F38]">aldri tukler med.</span></>}
+              title={<>Tre ting vi <span className="text-violet-600">aldri tukler med.</span></>}
               className="mb-10 sm:mb-14 text-center"
             />
           </RevealOnScroll>
