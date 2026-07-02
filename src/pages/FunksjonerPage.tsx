@@ -23,36 +23,12 @@ import { PillButton } from '../components/marketing/PillButton';
 import { GradientCTA } from '../components/marketing/GradientCTA';
 import { FeatureSplit } from '../components/marketing/FeatureSplit';
 import { Frame } from '../components/marketing/Frame';
+import { PanelHeader, LiveChip } from '../components/marketing/ProductMock';
 
 /* ------------------------------------------------------------------ *
  * Små, side-spesifikke produkt-mockups. Satt sammen av delte primitiver
- * (Frame / FeatureSplit). Poenget: vise ekte UI, ikke ikon-pynt.
+ * (Frame / FeatureSplit / ProductMock). Poenget: vise ekte UI, ikke ikon-pynt.
  * ------------------------------------------------------------------ */
-
-// Felles app-topplinje inne i en Frame (vindusramme + app-header = ekte produkt).
-function PanelHeader({
-  title,
-  right,
-}: {
-  title: string;
-  right?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between h-12 sm:h-14 px-4 sm:px-6 border-b border-[#E9E4DA] bg-white">
-      <span className="text-xs sm:text-sm font-bold text-[#1A1A1A] tracking-tight">{title}</span>
-      {right}
-    </div>
-  );
-}
-
-function LiveChip() {
-  return (
-    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#E8F1EB] border border-[#D6EEDF]">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#15795A] animate-pulse" />
-      <span className="text-[9px] font-black text-[#1A1A1A] uppercase tracking-wider">Live</span>
-    </span>
-  );
-}
 
 // Hero-visuell: en kompakt «oversikt» som speiler forsidens dashboard uten å kopiere den.
 function HeroPanel() {

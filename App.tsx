@@ -13,6 +13,7 @@ import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
 import { track } from './src/analytics';
 import { UsageStat } from './src/shared/trustStats';
 import { StickyCta } from './src/components/marketing/StickyCta';
+import { ProductPreview } from './src/pages/home/ProductPreview';
 import { supabaseRest, getStoredAccessToken } from './src/supabaseRest';
 import {
   ArrowRight, Timer, ArrowDown, Eye, Trophy, Sun, BarChart2, Map as MapIcon, Users, Key, Check, Search, Zap, Target, ChevronDown, Menu, X, Sparkles, CalendarClock,
@@ -158,20 +159,6 @@ export const handleLogin = async () => {
 
 // --- TYPESCRIPT DEFINISJONER (Lim inn dette øverst i filen) ---
 
-
-// --- Decorative Background Elements ---
-const GlobalDecorations = () => {
-  return (
-    <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-      <div className="absolute top-[2%] left-[10%] w-[40rem] h-[40rem] bg-[#F2EFE8] rounded-full blur-[160px] animate-mesh"></div>
-      <div className="absolute bottom-[5%] right-[2%] w-[45rem] h-[45rem] bg-indigo-400/10 rounded-full blur-[180px] animate-mesh" style={{ animationDelay: '-12s' }}></div>
-      <div className="absolute top-[40%] right-[15%] w-[35rem] h-[35rem] bg-fuchsia-400/5 rounded-full blur-[140px] animate-mesh" style={{ animationDelay: '-6s' }}></div>
-      <div className="absolute bottom-[30%] left-[-10%] w-[30rem] h-[30rem] bg-blue-400/5 rounded-full blur-[120px] animate-mesh" style={{ animationDelay: '-18s' }}></div>
-      <div className="absolute inset-0 grid-pattern opacity-[0.03] pointer-events-none"></div>
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100vw] h-[50vh] bg-gradient-to-b from-violet-50/5 to-transparent blur-[100px]"></div>
-    </div>
-  );
-};
 
 // --- DIN NYE CTA KOMPONENT ---
 const GoogleCTA = () => (
@@ -1274,17 +1261,6 @@ const TechCTAV2 = ({ onNavigate }: { onNavigate: (view: string) => void }) => (
 const Hero = () => {
   return (
     <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-28 md:pt-44 md:pb-60 hero-gradient overflow-hidden">
-      <div className="absolute top-1/4 -left-12 hidden xl:block animate-float-subtle opacity-20 pointer-events-none">
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#E9E4DA] rotate-12">
-          <SearchIcon size={48} className="text-[#15795A]" />
-        </div>
-      </div>
-      <div className="absolute bottom-1/4 -right-16 hidden xl:block animate-float-subtle opacity-20 pointer-events-none" style={{ animationDelay: '2s' }}>
-        <div className="p-5 bg-white rounded-[2rem] shadow-2xl border border-[#E9E4DA] -rotate-12">
-          <TrendingUp size={48} className="text-[#15795A]" />
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto px-5 sm:px-6 text-center relative z-10">
         <RevealOnScroll direction="up" delay={200}>
           <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-[#1A1A1A] mb-6 sm:mb-10 max-w-5xl mx-auto leading-[1.1] md:leading-[0.9]">
@@ -1292,7 +1268,7 @@ const Hero = () => {
           </h1>
         </RevealOnScroll>
         <RevealOnScroll direction="up" delay={300}>
-          <p className="text-sm sm:text-lg md:text-xl mb-10 sm:mb-14 max-w-2xl mx-auto leading-relaxed font-semibold tracking-tight animate-subtext-dynamic px-2 opacity-90">
+          <p className="text-sm sm:text-lg md:text-xl mb-10 sm:mb-14 max-w-2xl mx-auto leading-relaxed font-semibold tracking-tight text-[#5C574C] px-2">
             For bedrifter som vil bli mer synlige og få flere kunder gjennom Google.
           </p>
         </RevealOnScroll>
@@ -3192,9 +3168,8 @@ const CaseStudySection = () => {
 
 const HomeView = ({ onNavigate, onSelectPlan }: { onNavigate: (view: string) => void, onSelectPlan: (plan?: string) => void }) => (
   <>
-    <ScrollProgressRing />
     <Hero />
-    <DashboardPreview />
+    <ProductPreview />
     {/* Gratis-analyse: lokkemiddel høyt i trakten — verdi før innlogging */}
     <FreeAuditSection onSelectPlan={onSelectPlan} />
     <StoryBrandOneLiner />
@@ -4960,7 +4935,6 @@ function App() {
   return (
     <div className="min-h-screen selection:bg-[#E9E4DA] selection:text-[#1A1A1A] bg-[#F2EFE8] relative overflow-x-hidden">
       {devOverlay}
-      <GlobalDecorations />
 
       {/* Navbar for vanlige besøkende */}
       {view !== 'login' && (
