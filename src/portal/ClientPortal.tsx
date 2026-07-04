@@ -2111,7 +2111,7 @@ const KonkurrenterPage: React.FC<{
                       {opp.recommendation_text && (
                         <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>{opp.recommendation_text}</p>
                       )}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                         <div>
                           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: '0 0 4px' }}>Søk per måned</p>
                           <p style={{ fontSize: 22, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
@@ -7183,7 +7183,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         </div>
 
         {/* MOBIL (< sm): slank merkevare-topp. All navigasjon ligger i bunnmenyen under. */}
-        <div className="sm:hidden" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--hair)' }}>
+        {/* MERK: ingen inline `display` her — da ville den overstyrt sm:hidden og vist stripen på PC. */}
+        <div className="sm:hidden flex items-center" style={{ padding: '12px 16px', borderBottom: '1px solid var(--hair)' }}>
           <button
             onClick={() => setActiveTab('home')}
             aria-label="Til Hjem"
@@ -7209,12 +7210,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
         return (
           <>
+            {/* MERK: ingen inline `display` her — da ville den overstyrt sm:hidden og vist bunnmenyen på PC. */}
             <nav
-              className="sm:hidden"
+              className="sm:hidden flex items-stretch"
               aria-label="Hovedmeny"
               style={{
                 position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45,
-                display: 'flex', alignItems: 'stretch',
                 background: 'var(--navbg)', borderTop: '1px solid var(--hair)',
                 paddingBottom: 'env(safe-area-inset-bottom)',
               }}
@@ -9969,7 +9970,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         </div>
 
                         {/* Right: 2×2 meta cards */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                           {[
                             { label: 'KATEGORI',   value: 'Performance',                                                                  color: W.ink,                                                dot: false, mono: false },
                             { label: 'STATUS',     value: 'Åpen',                                                                         color: W.green,                                              dot: true,  mono: false },
@@ -10774,7 +10775,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                           borderRadius: 12,
                                           marginTop: 14,
                                           display: 'grid',
-                                          gridTemplateColumns: a.before_value && a.after_value ? '1fr 28px 1fr' : '1fr',
+                                          gridTemplateColumns: !isMobile && a.before_value && a.after_value ? '1fr 28px 1fr' : '1fr',
                                           alignItems: 'start',
                                           overflow: 'hidden',
                                         }}>
@@ -10784,7 +10785,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                               <p style={{ margin: 0, fontFamily: MONO, fontSize: 12, color: L.muted, textDecoration: 'line-through', lineHeight: 1.45 }}>{a.before_value}</p>
                                             </div>
                                           )}
-                                          {a.before_value && a.after_value && (
+                                          {!isMobile && a.before_value && a.after_value && (
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 22 }}>
                                               <ArrowRight size={12} style={{ color: L.green }} />
                                             </div>
