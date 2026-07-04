@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, CheckCircle2, ArrowRight, Globe, Activity, Search, Wrench, X } from 'lucide-react';
+import { Zap, CheckCircle2, ArrowRight, Globe, Activity, Search, Wrench, X, Target, Users } from 'lucide-react';
 import { SectionTitle } from './src/portalEditorial';
 
 export type ActivationChecklistProps = {
@@ -8,12 +8,16 @@ export type ActivationChecklistProps = {
   hasAnalysis: boolean;
   isAnalyzing: boolean;
   gscConnected: boolean;
+  hasKeywords: boolean;
+  hasCompetitors: boolean;
   hasStandardOrHigher: boolean;
   hostIsFullyConnected: boolean;
   hostWasLightOnly: boolean;
   onAddUrl: () => void;
   onRunAnalysis: () => void;
   onConnectGsc: () => void;
+  onAddKeywords: () => void;
+  onAddCompetitor: () => void;
   onConnectWp: () => void;
   onDismiss?: () => void;
 };
@@ -30,8 +34,9 @@ type Step = {
  */
 export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
   theme, websiteUrl, hasAnalysis, isAnalyzing, gscConnected,
+  hasKeywords, hasCompetitors,
   hasStandardOrHigher, hostIsFullyConnected, hostWasLightOnly,
-  onAddUrl, onRunAnalysis, onConnectGsc, onConnectWp, onDismiss,
+  onAddUrl, onRunAnalysis, onConnectGsc, onAddKeywords, onAddCompetitor, onConnectWp, onDismiss,
 }) => {
   const isLight = theme === 'light';
 
@@ -50,6 +55,22 @@ export const ActivationChecklist: React.FC<ActivationChecklistProps> = ({
     cta: isAnalyzing ? 'Kjører…' : 'Kjør analyse', icon: Activity,
     disabled: !websiteUrl || isAnalyzing,
     onClick: onRunAnalysis,
+  });
+  // De to «aha»-handlingene: egne søkeord og en konkurrent å måle seg mot.
+  // Uten dem lander kunden i tomme faner og ser aldri verdien planen betaler for.
+  steps.push({
+    done: hasKeywords,
+    title: 'Legg inn søkeordene dine',
+    desc: 'Fortell Sikt hvilke søk du vil vinne — da kan vi måle posisjonen din og vise fremgangen i rapportene.',
+    cta: 'Velg søkeord', icon: Target,
+    onClick: onAddKeywords,
+  });
+  steps.push({
+    done: hasCompetitors,
+    title: 'Følg en konkurrent',
+    desc: 'Se hva de gjør som virker — og få varsel når de endrer noe, så du aldri blir tatt på senga.',
+    cta: 'Velg konkurrent', icon: Users,
+    onClick: onAddCompetitor,
   });
   steps.push({
     done: gscConnected,

@@ -14,6 +14,9 @@ import { GradientCTA } from '../components/marketing/GradientCTA';
 import { FeatureSplit } from '../components/marketing/FeatureSplit';
 import { Frame } from '../components/marketing/Frame';
 import { FaqList } from '../components/marketing/Faq';
+// Tekstene bor i src/content/faqData.mjs — samme kilde som prerender.mjs
+// bruker til FAQPage-schemaet, så markup og synlig tekst kan aldri spriker.
+import { priserFaqs as faqs } from '../content/faqData.mjs';
 
 /* Konkret «null binding»-mockup — viser løftet som et ekte abonnement-panel. */
 function BillingMock() {
@@ -96,25 +99,6 @@ function ExpectationTimeline() {
     </section>
   );
 }
-
-const faqs = [
-  {
-    q: 'Er det bindingstid?',
-    a: 'Nei. Du kan si opp når som helst, og betaler bare for inneværende måned. Ingen oppsigelsestid, ingen gebyrer.',
-  },
-  {
-    q: 'Hva skjer etter de tre rabatterte månedene?',
-    a: 'Da går du over til ordinær pris for planen din — 790, 1 690 eller 4 990 kr/mnd. Du vet prisen på forhånd, så ingenting kommer som en overraskelse.',
-  },
-  {
-    q: 'Kan jeg bytte plan senere?',
-    a: 'Ja. Du kan oppgradere eller nedgradere når du vil, og endringen gjelder fra neste faktura.',
-  },
-  {
-    q: 'Hva om jeg ikke ser resultater?',
-    a: 'SEO tar tid, men du ser nøyaktig hva Sikt gjør hver uke — på plain norsk. Er du ikke fornøyd, sier du opp uten binding.',
-  },
-];
 
 export default function PriserPage() {
   const navigate = useNavigate();

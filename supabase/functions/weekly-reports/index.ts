@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import {
   renderEmail, sectionHead, paragraph, statement, winList, statRow,
-  defList, railNote, note, TOKENS,
+  defList, railNote, note, escapeHtml, TOKENS,
 } from '../_shared/email.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
@@ -817,12 +817,4 @@ function buildFounderDigestHtml(rows: HealthRow[], reengagedCount: number): stri
     cta: { label: 'Åpne admin-helse', url: PORTAL_URL },
     footer: 'Sikt · intern eier-rapport',
   })
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }

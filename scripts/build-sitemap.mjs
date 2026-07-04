@@ -19,6 +19,7 @@ const staticRoutes = [
   ['/kontakt', 'yearly', '0.5'],
   ['/personvern', 'yearly', '0.3'],
   ['/vilkar', 'yearly', '0.3'],
+  ['/angrerett', 'yearly', '0.3'],
 ];
 
 // Blogginnlegg.

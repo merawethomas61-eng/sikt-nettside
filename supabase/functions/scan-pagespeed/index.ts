@@ -186,10 +186,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const apiKey = Deno.env.get('GOOGLE_PAGESPEED_API_KEY');
+  // Godtar begge navnene: Vercel-siden (.env.example, api/pagespeed.js) bruker
+  // PAGESPEED_API_KEY — én operatør som følger den docen skal ikke få 500 her.
+  const apiKey = Deno.env.get('GOOGLE_PAGESPEED_API_KEY') ?? Deno.env.get('PAGESPEED_API_KEY');
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'PAGESPEED_API_KEY er ikke konfigurert i Supabase Edge Function secrets.' }),
+      JSON.stringify({ error: 'GOOGLE_PAGESPEED_API_KEY er ikke konfigurert i Supabase Edge Function secrets.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }

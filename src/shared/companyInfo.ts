@@ -39,6 +39,12 @@ export const companyInfo = {
   // TODO: bytt til post@siktseo.com når domene-e-posten er satt opp og mottar e-post.
   supportEmail: 'siktseo@gmail.com',
 
+  // Grunnleggerens navn. Markedssidene lover «du snakker direkte med
+  // grunnleggeren» — navnet gjør løftet troverdig. Tomt = anonym
+  // «Teamet i Sikt»-stemme til navnet er fylt inn (ENK publiserer det uansett).
+  // TODO: fyll inn fullt navn, f.eks. 'Ola Nordmann'.
+  founderName: '',
+
   domain: 'siktseo.com',
 };
 

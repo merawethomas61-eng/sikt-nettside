@@ -19,14 +19,21 @@ export function ConsentBanner() {
 
   if (!visible) return null;
 
+  // Event-signal til andre faste bunn-elementer (StickyCta) om at banneret er
+  // besvart — de holder seg skjult så lenge samtykket er ubesvart, slik at de
+  // to aldri overlapper på mobil.
+  const announceChoice = () => window.dispatchEvent(new Event('sikt-consent-changed'));
+
   const accept = () => {
     setConsent('granted');
     void startAnalytics();
     setVisible(false);
+    announceChoice();
   };
   const decline = () => {
     setConsent('denied');
     setVisible(false);
+    announceChoice();
   };
 
   return (

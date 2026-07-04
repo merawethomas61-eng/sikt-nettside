@@ -19,18 +19,42 @@
 //   SUPABASE_SERVICE_ROLE_KEY        — auto-injisert av Supabase
 //   RESEND_API_KEY                   — for dunning-e-post (samme som weekly-reports)
 //   FROM_EMAIL                       — valgfri, default rapport@siktseo.com
+//   FOUNDER_EMAIL                    — mottaker for eiervarsler (fallback SUPPORT_EMAIL)
 // =====================================================================
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { renderEmail, railNote, defList, escapeHtml } from '../_shared/email.ts';
+import { sendOwnerAlert } from '../_shared/owner-alert.ts';
 
 // Support-adressen kunder kan svare til. Env-styrt så bytte til domene-e-post
 // (support@siktseo.com) ikke krever redeploy — bare ny secret.
 const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') ?? 'siktseo@gmail.com';
 const PORTAL_URL = 'https://siktseo.com/portal';
 
-console.log('Sikt Stripe Webhook v7 (canonical) lastet inn');
+console.log('Sikt Stripe Webhook v8 (canonical) lastet inn');
+
+// ── Felles Resend-utsending for kunde-e-postene under ───────────────
+// Samme mønster som sendWelcomeEmail/sendDunningEmail; logger og svelger
+// feil slik at en e-postglipp aldri velter selve webhooken.
+async function sendViaResend(to: string, subject: string, html: string): Promise<void> {
+  const apiKey = Deno.env.get('RESEND_API_KEY') ?? '';
+  if (!apiKey || !to) {
+    console.warn(`E-post «${subject}»: mangler RESEND_API_KEY eller mottaker — hopper over.`);
+    return;
+  }
+  const fromEmail = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: `Sikt <${fromEmail}>`, to: [to], subject, html }),
+    });
+    if (!res.ok) console.error(`E-post «${subject}» feilet:`, res.status, await res.text());
+  } catch (err) {
+    console.error(`E-post «${subject}» kastet:`, (err as Error).message);
+  }
+}
 
 // Pris-mapping. Vi prøver i denne rekkefølgen:
 //   1) session.metadata.plan ("BASIC" / "STANDARD" / "PREMIUM")
@@ -189,6 +213,74 @@ async function sendWelcomeEmail(
   }
 }
 
+// ── Planbytte-bekreftelse ────────────────────────────────────────────
+// Sendes når en eksisterende kunde fullfører checkout for en ny plan.
+// Viktigst: den forteller eksplisitt at det gamle abonnementet er stoppet,
+// så kunden ikke frykter dobbel fakturering.
+async function sendPlanChangeEmail(
+  to: string,
+  firstName: string | null,
+  planLabel: string,
+): Promise<void> {
+  const html = renderEmail({
+    preheader: 'Byttet er registrert. Det forrige abonnementet ditt er stoppet — du betaler kun for den nye planen.',
+    brand: 'sikt',
+    kicker: escapeHtml(planLabel),
+    heading: 'Planen din er oppdatert',
+    intro: `${firstName ? `Hei ${escapeHtml(firstName)}. ` : ''}Vi har registrert byttet til ${escapeHtml(planLabel)}. Det forrige abonnementet ditt er stoppet automatisk — du faktureres kun for den nye planen fremover.`,
+    blocks: [
+      railNote({
+        title: 'Alt fortsetter som før',
+        body: 'Data, rapporter og innstillinger er urørt. Endringen gjelder kun hvilke funksjoner du har tilgang til, og hva du betaler.',
+        tone: 'green',
+      }),
+    ],
+    cta: { label: 'Åpne dashbordet', url: PORTAL_URL },
+    signoff: 'Ser du noe som ikke stemmer på neste faktura? Si fra, så ordner vi det.',
+    footer: `Spørsmål? Svar på denne e-posten, eller kontakt ${escapeHtml(SUPPORT_EMAIL)}.`,
+  });
+  await sendViaResend(to, `Planen din er oppdatert til ${planLabel}`, html);
+}
+
+// ── Gjenopprettet betaling (dunning løst) ────────────────────────────
+// Motstykket til sendDunningEmail: kunden fikset kortet og skal få
+// bekreftet at alt er i orden igjen — ellers henger uroen igjen.
+async function sendRecoveryEmail(to: string, firstName: string | null): Promise<void> {
+  const html = renderEmail({
+    preheader: 'Betalingen gikk gjennom, og abonnementet ditt fortsetter som normalt.',
+    brand: 'sikt',
+    kicker: 'Abonnement',
+    heading: 'Betalingen er i orden igjen',
+    intro: `${firstName ? `Hei ${escapeHtml(firstName)}. ` : ''}Den utestående betalingen har gått gjennom, og Sikt-abonnementet ditt fortsetter som normalt. Du trenger ikke gjøre noe mer.`,
+    signoff: 'Takk for at du ordnet det så raskt.',
+    footer: `Spørsmål? Svar på denne e-posten, eller kontakt ${escapeHtml(SUPPORT_EMAIL)}.`,
+  });
+  await sendViaResend(to, 'Betalingen er i orden igjen', html);
+}
+
+// ── Oppsigelses-bekreftelse ──────────────────────────────────────────
+// Sendes når abonnementet faktisk avsluttes i Stripe. Uten denne vet ikke
+// kunden om oppsigelsen «tok» — som skaper support-mail og disputter.
+async function sendCancellationEmail(to: string, firstName: string | null): Promise<void> {
+  const html = renderEmail({
+    preheader: 'Oppsigelsen er bekreftet. Du beholder tilgang ut perioden du har betalt for.',
+    brand: 'sikt',
+    kicker: 'Abonnement',
+    heading: 'Abonnementet ditt er avsluttet',
+    intro: `${firstName ? `Hei ${escapeHtml(firstName)}. ` : ''}Oppsigelsen er bekreftet — du blir ikke belastet mer. Du beholder tilgang til dashbordet ut perioden du allerede har betalt for.`,
+    blocks: [
+      railNote({
+        title: 'Dataene dine',
+        body: 'Kontoen og dataene dine slettes innen 90 dager, med unntak av det vi må oppbevare etter regnskapsloven. Ombestemmer du deg før den tid, er alt som før når du kommer tilbake.',
+        tone: 'neutral',
+      }),
+    ],
+    signoff: 'Takk for tiden med oss — du er velkommen tilbake når som helst.',
+    footer: `Spørsmål? Svar på denne e-posten, eller kontakt ${escapeHtml(SUPPORT_EMAIL)}.`,
+  });
+  await sendViaResend(to, 'Oppsigelsen er bekreftet', html);
+}
+
 async function resolvePlan(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -254,7 +346,7 @@ Deno.serve(async (req) => {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.client_reference_id;
+      let userId = session.client_reference_id;
       const email = session.customer_details?.email ?? null;
       const customerId =
         typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null;
@@ -263,14 +355,50 @@ Deno.serve(async (req) => {
           ? session.subscription
           : session.subscription?.id ?? null;
 
+      // Fallback: en rå Payment Link (bokmerke, delt lenke, faktura-lenke) kan
+      // fullføres utenfor innlogget flyt — da mangler client_reference_id.
+      // Kunden ER belastet, så vi prøver å løse konto via e-post før vi gir opp.
+      if (!userId && email) {
+        const { data: matches } = await supabase
+          .from('clients')
+          .select('user_id')
+          .eq('email', email)
+          .limit(2);
+        if (matches && matches.length === 1) {
+          userId = matches[0].user_id;
+          console.log(`client_reference_id manglet — løste bruker via e-post (session ${session.id}).`);
+        }
+      }
+
       if (!userId) {
-        console.error('Mangler client_reference_id i checkout-session — kan ikke koble til bruker.');
-        return new Response('Mangler client_reference_id', { status: 400 });
+        // Permanent feil: Stripe-retries kan ikke fremskaffe en konto som ikke
+        // finnes. Vi svarer 200 og lar eiervarselet være gjenopprettingsveien —
+        // ellers spammer retries i tre døgn uten å løse noe.
+        console.error(`Betaling uten konto: session ${session.id} mangler client_reference_id og e-posten matchet ingen entydig konto.`);
+        await sendOwnerAlert('Betaling uten konto', [
+          { title: 'Hva skjedde', body: 'En checkout ble fullført uten client_reference_id, og e-posten matchet ingen (eller flere) kontoer. Kunden er belastet, men har ikke fått tilgang.' },
+          { title: 'Stripe session', body: session.id },
+          { title: 'E-post fra checkout', body: email ?? 'ukjent' },
+          { title: 'Beløp', body: session.amount_total != null ? `${(session.amount_total / 100).toFixed(2)} kr` : 'ukjent' },
+          { title: 'Neste steg', body: 'Finn betalingen i Stripe Dashboard, opprett/finn kontoen og koble den manuelt — eller refunder.' },
+        ]);
+        return new Response(JSON.stringify({ received: true, unresolved: true }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       const plan = await resolvePlan(stripe, session);
       if (!plan) {
+        // Retryable: mangler STRIPE_PRICE_*-secrets eller nytt beløp (f.eks. mva).
+        // 400 → Stripe prøver igjen i ~3 døgn; settes secreten i mellomtiden,
+        // heles dette uten manuell resend. Varselet kan komme flere ganger.
         console.error(`Ukjent plan for session ${session.id} (amount=${session.amount_total}).`);
+        await sendOwnerAlert('Ukjent plan i checkout', [
+          { title: 'Hva skjedde', body: 'En fullført checkout kunne ikke mappes til Basic/Standard/Premium. Kunden er belastet, men kontoen er ikke oppdatert ennå.' },
+          { title: 'Stripe session', body: session.id },
+          { title: 'Beløp', body: session.amount_total != null ? `${(session.amount_total / 100).toFixed(2)} kr` : 'ukjent' },
+          { title: 'Neste steg', body: 'Sett STRIPE_PRICE_BASIC/STANDARD/PREMIUM som Supabase-secrets (eller oppdater beløps-mappingen). Stripe re-leverer eventen automatisk.' },
+        ]);
         return new Response('Ukjent plan', { status: 400 });
       }
 
@@ -278,9 +406,10 @@ Deno.serve(async (req) => {
 
       // Leses FØR upsert: var kunden allerede aktiv, er dette en Stripe-retry
       // eller et plan-bytte — da skal det ikke gå ut en ny velkomst-e-post.
+      // stripe_subscription_id trengs for å kansellere gammelt abonnement ved bytte.
       const { data: existing } = await supabase
         .from('clients')
-        .select('subscription_status, contact_person')
+        .select('subscription_status, contact_person, stripe_subscription_id')
         .eq('user_id', userId)
         .maybeSingle();
       const isNewCustomer = existing?.subscription_status !== 'active';
@@ -308,11 +437,51 @@ Deno.serve(async (req) => {
 
       console.log(`Lagret ${packageName} på bruker ${userId}.`);
 
+      const firstName =
+        existing?.contact_person?.split(' ')[0] ||
+        session.customer_details?.name?.split(' ')[0] ||
+        null;
+
+      // ── Planbytte: kanseller det gamle abonnementet ─────────────────
+      // Payment Links oppretter et NYTT abonnement ved bytte — uten dette
+      // faktureres kunden dobbelt. Idempotent mot Stripe-retries: etter første
+      // vellykkede kjøring holder DB-raden den nye id-en, så `existing` (lest
+      // over) har samme id og branchen re-fyrer ikke. Rekkefølgen upsert-først/
+      // kanseller-etterpå gjør at et krasj imellom heles av Stripes retry.
+      const oldSubId = existing?.stripe_subscription_id;
+      const isPlanChange = !!(oldSubId && subscriptionId && oldSubId !== subscriptionId);
+      if (isPlanChange) {
+        try {
+          const oldSub = await stripe.subscriptions.retrieve(oldSubId);
+          if (['active', 'trialing', 'past_due', 'unpaid'].includes(oldSub.status)) {
+            await stripe.subscriptions.cancel(oldSubId);
+            console.log(`Planbytte: kansellerte gammelt abonnement ${oldSubId} (nytt: ${subscriptionId}).`);
+          } else {
+            console.log(`Planbytte: gammelt abonnement ${oldSubId} var allerede ${oldSub.status} — ingen handling.`);
+          }
+        } catch (err) {
+          if ((err as { code?: string }).code === 'resource_missing') {
+            console.log(`Planbytte: gammelt abonnement ${oldSubId} finnes ikke lenger — ingen handling.`);
+          } else {
+            // Ikke feile webhooken: kundens konto er allerede riktig. Varselet
+            // gjør dobbel fakturering til en manuell samme-dags-fiks i stedet
+            // for en stille lekkasje.
+            console.error(`Planbytte: klarte ikke kansellere ${oldSubId}:`, (err as Error).message);
+            await sendOwnerAlert('Planbytte: gammelt abonnement ble IKKE kansellert', [
+              { title: 'Kunde (user_id)', body: userId },
+              { title: 'Gammelt abonnement', body: oldSubId },
+              { title: 'Nytt abonnement', body: subscriptionId ?? 'ukjent' },
+              { title: 'Neste steg', body: 'Kanseller det gamle abonnementet manuelt i Stripe Dashboard — ellers faktureres kunden dobbelt.' },
+            ]);
+          }
+        }
+        if (email) {
+          await sendPlanChangeEmail(email, firstName, packageName);
+          console.log(`Planbytte-bekreftelse sendt til ${userId}.`);
+        }
+      }
+
       if (isNewCustomer && email) {
-        const firstName =
-          existing?.contact_person?.split(' ')[0] ||
-          session.customer_details?.name?.split(' ')[0] ||
-          null;
         await sendWelcomeEmail(email, firstName, packageName);
         console.log(`Velkomst-e-post sendt til ny kunde ${userId}.`);
       }
@@ -330,17 +499,37 @@ Deno.serve(async (req) => {
         return new Response('Mangler customer', { status: 400 });
       }
 
-      const { error } = await supabase
+      // Guard mot planbytte: når vi selv kansellerer det GAMLE abonnementet
+      // (se checkout.session.completed), fyrer Stripe denne eventen for det.
+      // Da holder clients-raden allerede den NYE abonnements-id-en — og kunden
+      // skal selvsagt ikke markeres som kansellert eller få oppsigelses-e-post.
+      const { data: client } = await supabase
         .from('clients')
-        .update({ subscription_status: 'canceled' })
-        .eq('stripe_customer_id', customerId);
+        .select('email, contact_person, stripe_subscription_id')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Database-feil (cancel):', error);
-        return new Response('Database error', { status: 500 });
+      if (client?.stripe_subscription_id && client.stripe_subscription_id !== subscription.id) {
+        console.log(`subscription.deleted for ${subscription.id} ignorert — kunden har nyere abonnement ${client.stripe_subscription_id} (planbytte).`);
+      } else {
+        const { error } = await supabase
+          .from('clients')
+          .update({ subscription_status: 'canceled' })
+          .eq('stripe_customer_id', customerId);
+
+        if (error) {
+          console.error('Database-feil (cancel):', error);
+          return new Response('Database error', { status: 500 });
+        }
+
+        console.log(`Markerte abonnement som kansellert for customer ${customerId}.`);
+
+        if (client?.email) {
+          const firstName = client.contact_person ? client.contact_person.split(' ')[0] : null;
+          await sendCancellationEmail(client.email, firstName);
+          console.log(`Oppsigelses-bekreftelse sendt for customer ${customerId}.`);
+        }
       }
-
-      console.log(`Markerte abonnement som kansellert for customer ${customerId}.`);
     }
 
     if (event.type === 'customer.subscription.updated') {
@@ -355,10 +544,22 @@ Deno.serve(async (req) => {
         });
       }
 
-      await supabase
+      // Samme planbytte-guard som over: status-endringer på et UTGÅTT abonnement
+      // (det gamle etter et bytte) skal ikke overskrive status fra det nye.
+      const { data: client } = await supabase
         .from('clients')
-        .update({ subscription_status: subscription.status })
-        .eq('stripe_customer_id', customerId);
+        .select('stripe_subscription_id')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
+
+      if (client?.stripe_subscription_id && client.stripe_subscription_id !== subscription.id) {
+        console.log(`subscription.updated for ${subscription.id} ignorert — kunden følger abonnement ${client.stripe_subscription_id}.`);
+      } else {
+        await supabase
+          .from('clients')
+          .update({ subscription_status: subscription.status })
+          .eq('stripe_customer_id', customerId);
+      }
     }
 
     // ── DUNNING: kortet ble avvist ──────────────────────────────────
@@ -393,21 +594,39 @@ Deno.serve(async (req) => {
     }
 
     // ── DUNNING: betalingen ble reddet ──────────────────────────────
-    // Sett tilbake til active hvis kunden var past_due.
+    // Sett tilbake til active hvis kunden var past_due. `.select()` gjør at
+    // e-posten kun sendes når en rad faktisk flippet (vanlige månedstrekk
+    // treffer ikke past_due-filteret og skal ikke gi e-post).
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object as Stripe.Invoice;
       const customerId =
         typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
       if (customerId) {
-        await supabase
+        const { data: recovered } = await supabase
           .from('clients')
           .update({ subscription_status: 'active' })
           .eq('stripe_customer_id', customerId)
-          .eq('subscription_status', 'past_due');
+          .eq('subscription_status', 'past_due')
+          .select('email, contact_person');
+
+        if (recovered && recovered.length > 0) {
+          const client = recovered[0];
+          const to = client.email || invoice.customer_email || '';
+          const firstName = client.contact_person ? client.contact_person.split(' ')[0] : null;
+          await sendRecoveryEmail(to, firstName);
+          console.log(`Dunning løst: active + bekreftelse for customer ${customerId}.`);
+        }
       }
     }
   } catch (err) {
     console.error('Uventet feil i webhook:', err);
+    // Pengeveien er det siste stedet feil skal dø stille: eieren varsles så
+    // en død webhook oppdages samme dag, ikke ved neste manuelle logg-sjekk.
+    await sendOwnerAlert('Stripe-webhook krasjet', [
+      { title: 'Event', body: `${event.type} (${event.id})` },
+      { title: 'Feil', body: (err as Error).message ?? String(err) },
+      { title: 'Neste steg', body: 'Sjekk loggene til stripe-webhook i Supabase Dashboard. Stripe re-leverer eventen automatisk ved 500-svar.' },
+    ]);
     return new Response('Internal error', { status: 500 });
   }
 

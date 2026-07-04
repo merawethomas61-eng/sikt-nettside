@@ -1325,7 +1325,7 @@ const DeepDiveHero = () => (
           <span className="text-[#1A1A1A]">Markedsledende.</span>
         </h1>
         <p className="text-base sm:text-lg md:text-2xl text-[#5C574C] font-medium leading-relaxed max-w-2xl mx-auto mb-10">
-          Å se på prosessen ware er det første steget. <span className="text-[#1A1A1A] font-bold underline decoration-[#E9E4DA]">Google-dominans</span> er matematikk og AI i samspill.
+          Å forstå prosessen er det første steget. <span className="text-[#1A1A1A] font-bold underline decoration-[#E9E4DA]">Google-dominans</span> er matematikk og AI i samspill.
         </p>
       </RevealOnScroll>
     </div>
@@ -1347,14 +1347,14 @@ const PainPointData = () => (
               <div className="text-4xl sm:text-5xl md:text-7xl font-black text-rose-500 shrink-0">9/10</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">får nær null trafikk.</h4>
-                <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">De fleste nettsider er en digital fasade nesten ingen finner via Google.</p>
+                <p className="text-sm sm:text-base text-white/60 font-medium leading-relaxed">De fleste nettsider er en digital fasade nesten ingen finner via Google.</p>
               </div>
             </div>
             <div className="flex gap-4 sm:gap-6 items-start">
-              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1A1A1A] shrink-0">Side 1</div>
+              <div className="text-4xl sm:text-5xl md:text-7xl font-black text-white/90 shrink-0">Side 1</div>
               <div>
                 <h4 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">er alt som teller.</h4>
-                <p className="text-sm sm:text-base text-[#5C574C] font-medium leading-relaxed">Nesten ingen blar til side 2 på Google — er du ikke der oppe, mister du kunden.</p>
+                <p className="text-sm sm:text-base text-white/60 font-medium leading-relaxed">Nesten ingen blar til side 2 på Google — er du ikke der oppe, mister du kunden.</p>
               </div>
             </div>
           </div>
@@ -1365,16 +1365,16 @@ const PainPointData = () => (
               <AlertTriangle size={24} className="text-white sm:w-8 sm:h-8" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Hvert minutt teller.</h3>
-            <p className="text-sm sm:text-base md:text-lg text-[#5C574C] leading-relaxed mb-6 sm:mb-8 font-medium">
+            <p className="text-sm sm:text-base md:text-lg text-white/60 leading-relaxed mb-6 sm:mb-8 font-medium">
               Mens du leser dette, søker potensielle kunder etter dine tjenester. De finner konkurrentene dine akkurat nå.
             </p>
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
-                <Check className="text-[#1A1A1A] shrink-0" size={16} />
+                <Check className="text-emerald-400 shrink-0" size={16} />
                 <span className="text-xs sm:text-sm font-semibold">Stopp blødningen av tapt omsetning</span>
               </div>
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
-                <Check className="text-[#1A1A1A] shrink-0" size={16} />
+                <Check className="text-emerald-400 shrink-0" size={16} />
                 <span className="text-xs sm:text-sm font-semibold">Begynn din klatring i dag</span>
               </div>
             </div>
@@ -1721,6 +1721,43 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
       if (!responseJson || (Array.isArray(responseJson) && responseJson.length === 0)) {
         throw new Error("Ingen rad returnert — sannsynligvis RLS-policy som blokkerer. Sjekk INSERT/UPDATE-policy på clients-tabellen.");
+      }
+
+      // Opprett sites-raden og start første tekniske analyse server-side.
+      // Velkomst-e-posten lover at analysen «kjører i bakgrunnen med én gang
+      // skjemaet er levert» — uten dette skjedde den først når kunden åpnet
+      // portalen, og ble aldri persistert. Samme rå-REST-mønster som over
+      // (unngår auth-lock-deadlock); unique(user_id, homepage_url) gjør
+      // opprettelsen idempotent. Feil her er ikke-kritisk: portalen
+      // selvhelbreder manglende sites-rad ved første besøk.
+      try {
+        const siteResponse = await fetch(`${supabaseUrl}/rest/v1/sites?on_conflict=user_id,homepage_url`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=representation',
+          },
+          body: JSON.stringify({ user_id: aktivBruker.id, homepage_url: formData.websiteUrl }),
+        });
+        const siteJson = await siteResponse.json().catch(() => null);
+        const siteId = Array.isArray(siteJson) ? siteJson[0]?.id : siteJson?.id;
+        if (siteId) {
+          // KUN site_id (ikke user_id) → system-scan: persisterer health_checks
+          // uten å telle mot kundens analyse-kvote. Fire-and-forget — vi venter
+          // IKKE på PSI-kjøringen (~60 s) før kunden sendes videre.
+          fetch(`${supabaseUrl}/functions/v1/scan-pagespeed`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ site_id: siteId }),
+          }).catch((err) => console.warn('[Onboarding] Bakgrunnsanalysen startet ikke:', err));
+        }
+      } catch (err) {
+        console.warn('[Onboarding] Kunne ikke opprette sites-rad:', err);
       }
 
       onComplete();
@@ -2428,7 +2465,7 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               >
                 {loading ? (<><Loader2 size={20} className="animate-spin" /> Analyserer siden …</>) : (<>Analyser gratis <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" /></>)}
               </button>
-              <p className="mt-3 text-center text-xs text-[#5C574C]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst.</p>
+              <p className="mt-3 text-center text-xs text-[#5C574C]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst. <a href="/personvern" className="underline underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Slik behandler vi e-posten din</a>.</p>
             </form>
           </RevealOnScroll>
         ) : (

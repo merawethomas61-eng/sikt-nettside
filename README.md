@@ -51,11 +51,16 @@ events:
 - `checkout.session.completed`
 - `customer.subscription.deleted`
 - `customer.subscription.updated`
+- `invoice.payment_failed` (dunning: past_due + gjenopprettings-e-post)
+- `invoice.paid` (dunning løst: tilbake til active + bekreftelses-e-post)
 
 Edge Function-secrets (Supabase Dashboard → Edge Functions → Secrets):
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SIGNING_SECRET`
+- `STRIPE_PRICE_BASIC` / `STRIPE_PRICE_STANDARD` / `STRIPE_PRICE_PREMIUM`
+  (price-ID-er — påkrevd før MVA/prisendring, ellers gjetter webhooken på beløp)
+- `FOUNDER_EMAIL` (mottaker for eiervarsler fra webhooken)
 - `GOOGLE_PAGESPEED_API_KEY` (for `scan-pagespeed`)
 
 `SUPABASE_URL` og `SUPABASE_SERVICE_ROLE_KEY` injiseres automatisk.

@@ -71,7 +71,7 @@ const LegalPage = ({ title, lastUpdated, onBack, children }: {
 
 
 const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
-  <LegalPage title="Personvern" lastUpdated="20. april 2026" onBack={onBack}>
+  <LegalPage title="Personvern" lastUpdated="3. juli 2026" onBack={onBack}>
     <p>
       {legalEntityLabel} ("vi", "oss", "Sikt") respekterer personvernet ditt. Denne erklæringen forklarer på plain norsk hvilke opplysninger vi samler inn, hvordan vi bruker dem, og hvilke rettigheter du har.
     </p>
@@ -89,6 +89,7 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
       <li><strong>Konto-informasjon:</strong> navn, e-post og passord når du registrerer deg.</li>
       <li><strong>Bedriftsinformasjon:</strong> nettsideadresse, bransje og informasjon du oppgir i onboarding-skjemaet.</li>
       <li><strong>Betalingsinformasjon:</strong> håndteres av Stripe — vi lagrer aldri kortdetaljer selv.</li>
+      <li><strong>Gratis analyse:</strong> e-postadressen og nettadressen du oppgir når du bestiller gratis analyse. Vi bruker dem til å sende deg rapporten og relevante oppfølgingstips (behandlingsgrunnlag: samtykke). Hver e-post har avmeldingslenke, og du kan når som helst be oss slette opplysningene.</li>
     </ul>
 
     <h3>Opplysninger vi henter automatisk</h3>
@@ -113,6 +114,10 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
       <li><strong>Stripe</strong> — betalingshåndtering.</li>
       <li><strong>Google</strong> — gjennom deres offisielle API-er (Search Console, Analytics, PageSpeed).</li>
       <li><strong>OpenAI / Google AI</strong> — AI-analyser og Sikt AI-funksjoner. Data sendes anonymisert så langt det er mulig.</li>
+      <li><strong>Resend</strong> — utsending av e-post (rapporter, kvitteringer og kontaktskjema).</li>
+      <li><strong>PostHog</strong> — produktanalyse på siktseo.com. Brukes kun hvis du samtykker i cookie-banneret (se punkt 8).</li>
+      <li><strong>Sentry</strong> — feillogging, slik at vi oppdager og retter tekniske feil raskt.</li>
+      <li><strong>Vercel</strong> — drift og hosting av nettsiden.</li>
     </ul>
 
     <h2>5. Hvor lenge lagrer vi data?</h2>
@@ -140,7 +145,10 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
 
     <h2>8. Cookies</h2>
     <p>
-      Vi bruker kun nødvendige cookies for innlogging og økthåndtering. Vi bruker ikke sporings-cookies for reklame. Du kan deaktivere cookies i nettleseren din, men da kan du ikke logge inn på tjenesten.
+      Vi bruker <strong>nødvendige cookies</strong> for innlogging og økthåndtering. De kan ikke velges bort — uten dem virker ikke innloggingen.
+    </p>
+    <p>
+      I tillegg bruker vi <strong>valgfrie analyse-cookies</strong> (PostHog) for å forstå hvordan nettsiden brukes, slik at vi kan forbedre den. Disse settes kun hvis du takker ja i samtykke-banneret. Du kan når som helst trekke samtykket tilbake ved å slette nettleserdata for siktseo.com, eller ved å kontakte oss. Vi bruker ikke cookies til reklame, og vi selger aldri data.
     </p>
 
     <h2>9. Endringer</h2>
@@ -152,7 +160,7 @@ const PrivacyPage = ({ onBack }: { onBack: () => void }) => (
 
 
 const TermsPage = ({ onBack }: { onBack: () => void }) => (
-  <LegalPage title="Vilkår for bruk" lastUpdated="20. april 2026" onBack={onBack}>
+  <LegalPage title="Vilkår for bruk" lastUpdated="3. juli 2026" onBack={onBack}>
     <p>
       Disse vilkårene gjelder mellom deg som kunde ("du") og {legalEntityLabel} ("Sikt", "vi"). Ved å registrere deg og betale for tjenesten, godtar du vilkårene.
     </p>
@@ -178,11 +186,12 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
       <li>Vi kan justere priser med 30 dagers varsel. Du kan alltid si opp før en prisjustering trer i kraft.</li>
     </ul>
 
-    <h2>4. Oppsigelse og refusjon</h2>
+    <h2>4. Oppsigelse, angrerett og refusjon</h2>
     <ul>
       <li><strong>Ingen bindingstid.</strong> Du kan si opp når som helst fra dashbordet.</li>
       <li>Oppsigelsen gjelder fra neste betalingsperiode — du beholder tilgang ut den måneden du har betalt for.</li>
-      <li>Vi refunderer ikke allerede betalte måneder, men du kan bruke tjenesten ut perioden.</li>
+      <li><strong>Angrerett:</strong> er du forbruker, har du 14 dagers angrerett fra avtaleinngåelsen. Tjenesten starter umiddelbart på din anmodning, og ved bruk av angreretten betaler du forholdsmessig for perioden frem til du ga beskjed — resten refunderes. Se <a href="/angrerett">angrerett-siden</a> for fremgangsmåte og angreskjema.</li>
+      <li>Utover angreretten refunderer vi ikke allerede betalte måneder, men du kan bruke tjenesten ut perioden.</li>
       <li>Ved tekniske feil på vår side som gjør tjenesten uten verdi en hel måned, refunderer vi den måneden.</li>
     </ul>
 
@@ -216,4 +225,58 @@ const TermsPage = ({ onBack }: { onBack: () => void }) => (
   </LegalPage>
 );
 
-export { PrivacyPage, TermsPage };
+// Angrerettloven gjelder forbrukere som kjøper på nett. Tjenesten starter
+// umiddelbart på kundens anmodning → forholdsmessig betaling ved angring (§ 26).
+// Standard angreskjema er lovpålagt informasjon og ligger inline nederst.
+const AngrerettPage = ({ onBack }: { onBack: () => void }) => {
+  const angreMailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bruk av angrerett')}&body=${encodeURIComponent(
+    'Jeg gir med dette melding om at jeg ønsker å gå fra min avtale om kjøp av abonnement hos Sikt.\n\nNavn:\nE-post brukt ved kjøpet:\nDato for kjøpet:\n'
+  )}`;
+  return (
+    <LegalPage title="Angrerett" lastUpdated="3. juli 2026" onBack={onBack}>
+      <p>
+        Handler du som forbruker (privatperson), har du 14 dagers angrerett etter angrerettloven når du kjøper abonnement hos {legalEntityLabel} på nett. Her forklarer vi hva det betyr i praksis.
+      </p>
+
+      <h2>1. Hvem gjelder angreretten for?</h2>
+      <p>
+        Angreretten gjelder deg som handler som forbruker. Kjøper du på vegne av en bedrift eller i næringsvirksomhet, gjelder angrerettloven som hovedregel ikke — da gjelder de ordinære oppsigelsesreglene i <a href="/vilkar">vilkårene</a> (ingen bindingstid, si opp når som helst).
+      </p>
+
+      <h2>2. Fristen</h2>
+      <p>
+        Angrefristen er 14 dager fra dagen avtalen ble inngått, altså dagen du gjennomførte kjøpet. Det er nok at du sender melding om at du vil angre før fristen løper ut.
+      </p>
+
+      <h2>3. Tjenesten starter med en gang</h2>
+      <p>
+        Når du kjøper, ber du samtidig om at tjenesten starter umiddelbart — analysene begynner å kjøre fra første dag. Angrer du etter at tjenesten har startet, skal du etter angrerettloven § 26 betale forholdsmessig for perioden fra kjøpet frem til vi mottok meldingen om at du angrer. Resten av det du har betalt, refunderes til samme betalingsmiddel innen 14 dager.
+      </p>
+
+      <h2>4. Slik angrer du</h2>
+      <p>
+        Send en e-post til <a href={angreMailto}>{SUPPORT_EMAIL}</a> og si at du vil bruke angreretten — det finnes ingen formkrav, men oppgi navnet og e-posten du brukte ved kjøpet. Du kan også bruke standard angreskjema under.
+      </p>
+
+      <h3>Standard angreskjema</h3>
+      <p>
+        Fyll ut og send dette skjemaet kun dersom du ønsker å gå fra avtalen:
+      </p>
+      <ul>
+        <li>Til: {legalEntityLabel}, e-post: {SUPPORT_EMAIL}</li>
+        <li>Jeg underretter herved om at jeg ønsker å gå fra min avtale om kjøp av følgende tjeneste: abonnement hos Sikt (Basic/Standard/Premium).</li>
+        <li>Avtalen ble inngått den: (dato for kjøpet)</li>
+        <li>Forbrukerens navn:</li>
+        <li>Forbrukerens adresse:</li>
+        <li>Dato:</li>
+      </ul>
+
+      <h2>5. Etter angrefristen</h2>
+      <p>
+        Etter at de 14 dagene er ute, gjelder de ordinære oppsigelsesreglene i <a href="/vilkar">vilkårene</a>: ingen bindingstid, du kan si opp når som helst fra dashbordet, og du beholder tilgang ut perioden du har betalt for.
+      </p>
+    </LegalPage>
+  );
+};
+
+export { PrivacyPage, TermsPage, AngrerettPage };

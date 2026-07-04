@@ -53,9 +53,16 @@ export default function KontaktPage() {
         setStatus('sent');
         return;
       }
-      // 503 = e-posttjeneste ikke satt opp ennå → bruk mailto i stedet.
-      openMailto();
-      setStatus('sent');
+      if (res.status === 503) {
+        // 503 = e-posttjenesten er bevisst ikke konfigurert ennå → mailto-
+        // fallback er den tiltenkte veien, så her er «sendt» ærlig nok.
+        openMailto();
+        setStatus('sent');
+        return;
+      }
+      // Reell feil (validering, rate-limit, serverfeil): ikke lat som det
+      // gikk — mailto uten konfigurert e-postklient mister meldingen stille.
+      setStatus('error');
     } catch {
       openMailto();
       setStatus('error');
@@ -178,6 +185,12 @@ export default function KontaktPage() {
                   </PillButton>
                   {sent && (
                     <p className="text-sm text-[#5C574C] font-medium text-center">Vi svarer som regel innen én arbeidsdag.</p>
+                  )}
+                  {status === 'error' && (
+                    <p className="text-sm font-semibold text-[#B4231F] text-center">
+                      Kunne ikke sende meldingen akkurat nå. Prøv igjen — eller send direkte til{' '}
+                      <a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-2">{SUPPORT_EMAIL}</a>.
+                    </p>
                   )}
                 </form>
               </div>

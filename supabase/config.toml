@@ -1,15 +1,4 @@
 
-[functions.create-payment-intent]
-enabled = true
-verify_jwt = true
-import_map = "./functions/create-payment-intent/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create-payment-intent/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-payment-intent/*.html" ]
-
 [functions.stripe-webhook]
 enabled = true
 verify_jwt = false
@@ -60,5 +49,30 @@ verify_jwt = false
 
 # outreach-unsubscribe: offentlig avmeldings-lenke i outreach-e-post → MÅ være false.
 [functions.outreach-unsubscribe]
+enabled = true
+verify_jwt = false
+
+# weekly-reports: kjøres av pg_cron. Deployet med verify_jwt = true — cron-jobben
+# sender en Authorization: Bearer-header i tillegg til x-cron-secret, så platt-
+# formens JWT-sjekk passerer. IKKE endre til false uten å vite hvorfor: verdien
+# her må speile prod, ellers flipper en naiv redeploy oppførselen.
+[functions.weekly-reports]
+enabled = true
+verify_jwt = true
+
+# scan-pagespeed: kalles fra frontend med bruker-JWT (gratis analyse bruker
+# anon-key som Bearer, som også passerer). Deployet med verify_jwt = true.
+[functions.scan-pagespeed]
+enabled = true
+verify_jwt = true
+
+# google-oauth-callback: Googles OAuth-redirect (GET, ingen JWT) → MÅ være false.
+[functions.google-oauth-callback]
+enabled = true
+verify_jwt = false
+
+# scan-search-console: kalles fra dashbordet; CORS-preflight (OPTIONS) må slippe
+# gjennom, JWT verifiseres i koden → false (speiler deployet verdi).
+[functions.scan-search-console]
 enabled = true
 verify_jwt = false

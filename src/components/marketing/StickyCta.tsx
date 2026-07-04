@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { track } from '../../analytics';
+import { analyticsConfigured, getConsent, track } from '../../analytics';
 
 // Sticky «Sjekk siden din gratis»-bar for mobil. Dukker opp etter at brukeren
 // har scrollet forbi hero, og skjules igjen når gratis-analyse-seksjonen selv er
@@ -12,6 +12,19 @@ export function StickyCta() {
   const [visible, setVisible] = useState(false);
   const pastHero = useRef(false);
   const auditInView = useRef(false);
+
+  // Samtykke-banneret ligger også fast i bunnen (z-[70]) — mens det venter på
+  // svar holder vi CTA-en skjult så de ikke overlapper på første mobilbesøk.
+  // ConsentBanner dispatcher 'sikt-consent-changed' når brukeren har valgt.
+  const [consentPending, setConsentPending] = useState(
+    () => analyticsConfigured() && getConsent() === null,
+  );
+  useEffect(() => {
+    if (!consentPending) return;
+    const onChanged = () => setConsentPending(analyticsConfigured() && getConsent() === null);
+    window.addEventListener('sikt-consent-changed', onChanged);
+    return () => window.removeEventListener('sikt-consent-changed', onChanged);
+  }, [consentPending]);
 
   useEffect(() => {
     const update = () => setVisible(pastHero.current && !auditInView.current);
@@ -51,6 +64,8 @@ export function StickyCta() {
       if (frame) cancelAnimationFrame(frame);
     };
   }, []);
+
+  if (consentPending) return null;
 
   return (
     <div

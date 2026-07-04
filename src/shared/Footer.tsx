@@ -49,6 +49,12 @@ const Footer = ({ onNavigate }: { onNavigate?: (view: string) => void }) => (
           >
             Vilkår
           </Link>
+          <Link
+            to="/angrerett"
+            className="transition-[color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] uppercase tracking-widest [@media(hover:hover)_and_(pointer:fine)]:hover:text-white active:text-white/90"
+          >
+            Angrerett
+          </Link>
         </div>
       </div>
     </div>

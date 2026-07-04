@@ -220,6 +220,15 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
           ))}
         </div>
 
+        {/* Lovpålagt før-kjøps-info (angrerettloven): tjenesten starter umiddelbart
+            på kundens anmodning → forholdsmessig betaling ved angring. */}
+        <p className="mt-8 text-center text-xs text-[#5C574C] max-w-2xl mx-auto">
+          Ved kjøp starter tjenesten umiddelbart på din anmodning. Forbrukere har 14 dagers{' '}
+          <a href="/angrerett" className="underline underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">angrerett</a>{' '}
+          med forholdsmessig betaling for perioden som er brukt. Se{' '}
+          <a href="/vilkar" className="underline underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">vilkårene</a>.
+        </p>
+
       </div>
     </section>
   );

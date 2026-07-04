@@ -6,7 +6,7 @@ import React, { Suspense, lazy, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from './shared/Navbar';
 import { Footer } from './shared/Footer';
-import { PrivacyPage, TermsPage } from './shared/Legal';
+import { PrivacyPage, TermsPage, AngrerettPage } from './shared/Legal';
 import { ConsentBanner } from './components/ConsentBanner';
 
 const App = lazy(() => import('../App'));
@@ -41,15 +41,16 @@ function ScrollToTop() {
 
 // De juridiske sidene gjenbrukes som ekte URL-er, med Navbar/Footer rundt (samme
 // layout som når de vises inne i App).
-function LegalRoute({ kind }: { kind: 'privacy' | 'terms' }) {
+function LegalRoute({ kind }: { kind: 'privacy' | 'terms' | 'withdrawal' }) {
   const navigate = useNavigate();
+  const goHome = () => navigate('/');
   return (
     <div className="min-h-screen selection:bg-[#E9E4DA] selection:text-[#1A1A1A] bg-[#F2EFE8] relative overflow-x-hidden">
       <Navbar />
       <main className="relative z-10">
-        {kind === 'privacy'
-          ? <PrivacyPage onBack={() => navigate('/')} />
-          : <TermsPage onBack={() => navigate('/')} />}
+        {kind === 'privacy' && <PrivacyPage onBack={goHome} />}
+        {kind === 'terms' && <TermsPage onBack={goHome} />}
+        {kind === 'withdrawal' && <AngrerettPage onBack={goHome} />}
       </main>
       <Footer />
     </div>
@@ -70,6 +71,7 @@ export default function Root() {
           <Route path="/kontakt" element={<KontaktPage />} />
           <Route path="/personvern" element={<LegalRoute kind="privacy" />} />
           <Route path="/vilkar" element={<LegalRoute kind="terms" />} />
+          <Route path="/angrerett" element={<LegalRoute kind="withdrawal" />} />
           {/* Bevar gamle interne lenker (server-redirect i vercel.json; dette er klient-fallback) */}
           <Route path="/deepdive" element={<Navigate to="/funksjoner" replace />} />
           <Route path="/technology" element={<Navigate to="/funksjoner" replace />} />

@@ -9,9 +9,11 @@ import { Badge } from '../components/marketing/Badge';
 import { PillButton } from '../components/marketing/PillButton';
 import { GradientCTA } from '../components/marketing/GradientCTA';
 import { FeatureSplit } from '../components/marketing/FeatureSplit';
+import { companyInfo } from '../shared/companyInfo';
 
-// Ærlig «founding-stage»-notat. Signaturen i font-script gir et menneskelig preg
-// uten å navngi noen — vi holder en anonym «vi»-stemme.
+// Ærlig «founding-stage»-notat. Forsiden lover «du snakker direkte med
+// grunnleggeren» — er founderName satt, innfrir vi løftet med ekte navn her.
+// Tomt navn → anonym «vi»-stemme (samme skjul-til-klart-konvensjon som org.nr).
 function NoteCard() {
   return (
     <div className="relative rounded-[24px] sm:rounded-[28px] bg-white border border-[#E9E4DA] shadow-[0_30px_60px_-24px_rgba(26,26,26,0.15)] p-7 sm:p-9">
@@ -22,7 +24,12 @@ function NoteCard() {
       <p className="text-lg sm:text-xl font-semibold text-[#1A1A1A] leading-relaxed">
         Vi er et lite, norsk team — og vi er nye. Det er vi ærlige om: ingen oppdiktede anmeldelser, ingen lange kontrakter, ingen sjargong. Bare ekte arbeid på siden din, forklart sånn at du forstår det — og et menneske du kan snakke med når du vil.
       </p>
-      <p className="mt-6 font-script text-2xl sm:text-3xl text-violet-700">Teamet i Sikt</p>
+      {companyInfo.founderName && (
+        <p className="mt-4 text-base sm:text-lg font-medium text-[#5C574C] leading-relaxed">
+          Sikt drives av {companyInfo.founderName} — når du skriver til oss, er det meg du snakker med.
+        </p>
+      )}
+      <p className="mt-6 font-script text-2xl sm:text-3xl text-violet-700">{companyInfo.founderName || 'Teamet i Sikt'}</p>
     </div>
   );
 }
