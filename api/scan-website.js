@@ -142,6 +142,9 @@ export default withSentry(async function handler(req, res) {
                     fullUrl: targetUrl,
                     title: title.substring(0, 50) + (title.length > 50 ? '...' : ''),
                     wordCount,
+                    // Tekstutdrag brukes som «Nåværende innhold» + AI-kontekst i Verksted
+                    // for rådgiver-plattformer (AI-bygd, Wix m.fl.) som ikke har fetch-API.
+                    textSample: textContent.slice(0, 1500),
                     status,
                     score,
                     issues,

@@ -296,21 +296,44 @@ const MARKETING = [
       },
       breadcrumbLd([['Hjem', `${BASE}/`], ['Funksjoner', `${BASE}/funksjoner`]]),
     ],
+    // Speiler FunksjonerPage.tsx-seksjonene (FeatureSplit-tekstene) så crawlere ser
+    // samme innhold som brukerne — og siden ikke flagges som «tynt innhold» (< 300 ord).
     body: pageBody({
       h1: 'Mer synlig på Google, helt automatisk',
-      lead: 'Koble til nettsiden din, så finner Sikt hva som stopper deg, fikser det automatisk og forklarer alt på et språk du forstår.',
+      lead: 'Koble til nettsiden din, så finner Sikt hva som stopper deg, fikser det automatisk og forklarer alt på et språk du forstår. Ingen sjargong, ingen dashboards du må lære deg. Bare ekte arbeid på siden din — og en kvittering du faktisk forstår.',
       blocks: [
         {
-          h2: 'Dette får du',
+          h2: 'Vi fikser feilene — du gjør ingenting',
+          p: 'Koble til WordPress eller Shopify, så pusher Sikt forbedringene rett inn på siden din: meta-titler, beskrivelser, alt-tekster og tekniske fikser.',
           items: [
-            'Vi fikser feilene automatisk — meta-titler, beskrivelser, alt-tekster og tekniske fikser pushes rett inn',
-            'Rapporter på plain norsk hver uke',
-            'Synlig i AI-søk (GEO): ukentlig sjekk av om ChatGPT, Gemini og Perplexity nevner deg',
-            'Konkurrent-radar: varsel når konkurrentene endrer noe',
-            '1-klikks angre: alt logges med før- og etterverdi og kan rulles tilbake',
+            'Ekte endringer, pushet live — ikke bare en liste med forslag',
+            'Bygde du siden med AI (Claude, Cursor, v0, Lovable)? Du får en ferdig lim-inn-prompt per problem, som fikser det i din egen kodebase',
           ],
         },
-        { h2: 'Funker uansett plattform', p: 'WordPress, Shopify, Wix, Squarespace, Webflow — eller en side du bygde med AI. Sikt gir deg alltid en vei videre.' },
+        {
+          h2: 'En kvittering, ikke en vegg av tall',
+          p: 'Hver uke får du en kort rapport på hva som er gjort og hva det betyr — skrevet sånn at du forstår det uten å være SEO-ekspert.',
+          items: ['Hva som ble gjort, og hvorfor det hjelper deg', 'Ingen grafer du må tolke selv'],
+        },
+        {
+          h2: 'Kundene googler ikke alltid — noen spør ChatGPT',
+          p: 'Sikt sjekker hver uke om ChatGPT, Gemini og Perplexity nevner bedriften din på spørsmålene som betyr noe — og bygger grunnmuren som gjør at du blir anbefalt.',
+          items: ['Ukentlig sjekk av om AI nevner deg (GEO)', 'Samme grunnmur løfter deg på Google også'],
+        },
+        {
+          h2: 'Konkurrent-radar: du sover, Sikt holder øye',
+          p: 'Få beskjed når konkurrentene dine publiserer nytt innhold, endrer priser eller fikser tekniske ting — så du aldri blir overrasket.',
+          items: ['Varsler samlet på ett sted, ikke i innboksen', 'Vit hva du må svare på — før kundene merker det'],
+        },
+        {
+          h2: 'Alt kan angres med ett klikk',
+          p: 'Hver endring logges med før- og etterverdi og kan rulles tilbake umiddelbart. Ingenting gjøres som ikke kan angres — derfor er det trygt å la Sikt jobbe på siden din.',
+          items: ['Full historikk over hva som er endret', 'Ett klikk tilbake til slik det var'],
+        },
+        {
+          h2: 'Funker uansett plattform',
+          p: 'WordPress, Shopify, Wix, Squarespace, Webflow — eller en side du bygde med Claude, Cursor eller Lovable. Sikt gir deg alltid en vei videre. Ingen bindingstid, si opp når som helst, plain norsk garantert.',
+        },
       ],
       links: NAV_LINKS,
     }),
@@ -338,13 +361,41 @@ const MARKETING = [
       faqPageLd(priserFaqs),
       breadcrumbLd([['Hjem', `${BASE}/`], ['Priser', `${BASE}/priser`]]),
     ],
+    // Speiler plan-tekstene i src/shared/Pricing.tsx (tagline/desc/utvalgte features)
+    // så crawlere ser samme innhold som brukerne — og siden ikke flagges som tynn.
     body: pageBody({
       h1: 'Enkle priser, ingen overraskelser',
       lead: 'Tre planer fra 790 kr/mnd. Rabattert de tre første månedene, og ingen bindingstid — si opp når du vil.',
       blocks: [
         {
-          h2: 'Planer',
-          items: ['Basic — 790 kr/mnd', 'Standard — 1690 kr/mnd', 'Premium — 4990 kr/mnd'],
+          h2: 'Basic — 790 kr/mnd',
+          p: 'Vi fikser det viktigste — så viser vi deg resten. Koble til siden din, så fikser Sikt de tre viktigste tingene automatisk i oppstart. Deretter finner vi hva mer som stopper deg på Google og skriver ferdige løsninger du limer inn selv.',
+          items: [
+            'AI skriver meta-tekster og alt-tekster — klar til innliming',
+            'Kopier-og-lim-inn kode for tekniske fikser, forklart på plain norsk',
+            'Konkurrent-radar: varsel når 2 konkurrenter endrer seg',
+            'Månedlig sjekk av hastighet og tekniske feil + månedlig rapport på plain norsk',
+          ],
+        },
+        {
+          h2: 'Standard — 1690 kr/mnd',
+          p: 'Flere kunder — uten at du løfter en finger. Sikt fikser nettsiden din automatisk og kontinuerlig: WordPress og Shopify får endringene pushet rett inn, og bygde du siden med AI får du en ferdig lim-inn-prompt per problem.',
+          items: [
+            '1-klikks angre på alt — siden din kan aldri ødelegges',
+            'Ukentlig «Dette har Sikt fikset for deg»-kvittering',
+            'Ukentlig rangeringssjekk på inntil 50 søkeord',
+            'Konkurrent-radar utvidet: 3 konkurrenter + innholdsanalyse',
+          ],
+        },
+        {
+          h2: 'Premium — 4990 kr/mnd',
+          p: 'Når én ny kunde er verdt titusener. Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av.',
+          items: [
+            'Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?',
+            'Søkeord-sporing i stort omfang — opptil 200 søkeord',
+            'Konkurrent-radar uten grenser + dyp AI-analyse',
+            'Månedlig strategirapport på 10+ sider og 4-timers support på hverdager',
+          ],
         },
         { h2: 'Null binding', p: 'Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du betaler per måned og kan si opp, oppgradere eller nedgradere når du vil.' },
         // Synlig FAQ — matcher FAQPage-schemaet over (samme spørsmål/svar).
@@ -365,12 +416,36 @@ const MARKETING = [
       orgLd,
       breadcrumbLd([['Hjem', `${BASE}/`], ['Om oss', `${BASE}/om-oss`]]),
     ],
+    // Speiler OmOssPage.tsx (historien, «ærlig talt»-notatet, manifestet og verdiene)
+    // så crawlere ser samme innhold som brukerne — og siden ikke flagges som tynn.
     body: pageBody({
       h1: 'Synlighet skal ikke være forbeholdt de store',
       lead: 'De fleste norske bedrifter gjetter på hvordan de blir synlige på nett. De store har byråer og budsjetter. De små har ofte ingenting. Sikt finnes for å rette opp den ubalansen.',
       blocks: [
-        { h2: 'Det vi tror på', p: 'Vi bygde det motsatte av et byrå: ingen dyre retainere, ingen rapporter fulle av tall du ikke forstår, ingen gjetting. Bare AI som finner og fikser — forklart på plain norsk.' },
-        { h2: 'Tre ting vi aldri tukler med', items: ['Plain norsk, alltid', 'Trygt på siden din — alt kan angres', 'Bygget for de små'] },
+        {
+          h2: 'Laget for dem som ellers gjetter',
+          p: 'SEO er gjort unødvendig mystisk: rapporter fulle av tall, dyre retainere og løfter som sjelden henger sammen med resultater. Samtidig endrer søk seg raskere enn noensinne — folk googler mindre og spør ChatGPT mer. Den som ikke henger med, blir usynlig, ikke bare på Google, men i hele den nye måten folk finner bedrifter på.',
+        },
+        {
+          h2: 'Ærlig talt',
+          p: 'Vi er et lite, norsk team — og vi er nye. Det er vi ærlige om: ingen oppdiktede anmeldelser, ingen lange kontrakter, ingen sjargong. Bare ekte arbeid på siden din, forklart sånn at du forstår det — og et menneske du kan snakke med når du vil.',
+        },
+        {
+          h2: 'Vi bygde det motsatte av et byrå',
+          p: 'Ingen dyre retainere. Ingen rapporter fulle av tall du ikke forstår. Ingen gjetting. Bare AI som finner nøyaktig hva som stopper deg, fikser det automatisk — og forklarer alt på plain norsk. Ingen binding, plain norsk, du eier alt.',
+        },
+        {
+          h2: 'Tre ting vi aldri tukler med',
+          items: [
+            'Plain norsk, alltid: vi forklarer alt vi gjør på et språk du faktisk forstår — fordi du fortjener å vite hva du betaler for',
+            'Trygt på siden din: alt Sikt gjør logges med før- og etterverdi og kan angres med ett klikk — vi rører ikke noe vi ikke kan rulle tilbake',
+            'Bygget for de små: vi er laget for norske småbedrifter uten markedsbyrå på lønningslista — men som fortjener å bli funnet like godt som de store',
+          ],
+        },
+        {
+          h2: 'Klar til å bli funnet?',
+          p: 'Sjekk hvor synlig siden din er i dag — helt gratis. Eller ta en prat med oss først, på plain norsk. Vi svarer som regel innen én arbeidsdag.',
+        },
       ],
       links: NAV_LINKS,
     }),

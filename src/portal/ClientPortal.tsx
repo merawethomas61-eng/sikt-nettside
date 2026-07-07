@@ -3234,6 +3234,38 @@ ${truncateText(contextRaw, 800)}${contextBlock}`;
   }
 }
 
+// Ferdig lim-inn-prompt for AI-bygde sider (Claude, Cursor, v0 …): kunden limer
+// den inn i sitt eget AI-verktøy, som gjør endringen i deres EGEN kildekode.
+// Speiler buildAiPrompt i api/solve-problem.js så de to flytene føles like.
+function buildContentFixToolPrompt(
+  fieldType: ContentFixFieldType,
+  pageUrl: string,
+  currentValue: string,
+  suggestion: string,
+): string {
+  const task =
+    fieldType === 'meta-description'
+      ? 'Sett ny meta-beskrivelse på siden (meta name="description" i <head>, eller SEO-feltet i rammeverket mitt).'
+      : fieldType === 'seo-title'
+        ? 'Sett ny SEO-tittel på siden (<title> i <head>, eller SEO-feltet i rammeverket mitt).'
+        : fieldType === 'h1'
+          ? 'Erstatt hovedoverskriften (H1) på siden. Siden skal fortsatt ha nøyaktig én H1.'
+          : 'Forbedre brødteksten på siden — den er for tynn for Google i dag. Fordel den nye teksten naturlig i eksisterende seksjoner/komponenter der det passer.';
+  const parts = [
+    'Du er en senior webutvikler med tilgang til kildekoden til nettsiden min. Jeg vil forbedre innholdet på en konkret side.',
+    `\nSide: ${pageUrl}\nOppgave: ${task}`,
+  ];
+  const cur = (currentValue || '').trim();
+  if (cur && !cur.startsWith('(Tom')) {
+    parts.push(`\nSlik ser innholdet ut i dag (fra den rendrede siden — kildekoden din kan se annerledes ut):\n${cur}`);
+  }
+  parts.push(`\nNy tekst som skal inn (skrevet for SEO — behold den så ordrett som mulig):\n${suggestion.trim()}`);
+  parts.push(
+    '\nGjør endringen i de RIKTIGE kildefilene mine: finn komponenten/malen som rendrer denne siden, ikke lim inn rendret HTML blindt. Behold eksisterende design, struktur og funksjonalitet. Forklar kort hva du endret til slutt.',
+  );
+  return parts.join('\n');
+}
+
 const ContentPageContextQuestionnaire: React.FC<{
   questions: ContextQuestion[];
   onSubmit: (answers: PageContextAnswers) => void;
@@ -3438,17 +3470,72 @@ const ContentPageContextQuestionnaire: React.FC<{
   );
 };
 
-function getWixFieldInstruction(fieldType: ContentFixFieldType): string {
+// Per-plattform «slik limer du inn»-instruks for rådgiver-plattformer.
+// AI-bygde sider håndteres separat (de får en ferdig AI-prompt i stedet).
+function getPlatformFieldInstruction(platform: string | null | undefined, fieldType: ContentFixFieldType): string {
+  if (platform === 'wix') {
+    switch (fieldType) {
+      case 'meta-description':
+        return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Meta description → Publiser.';
+      case 'seo-title':
+        return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Title tag → Publiser.';
+      case 'h1':
+        return 'I Wix-editoren: klikk på overskriften øverst på siden, endre teksten, og Publiser.';
+      case 'content':
+      default:
+        return 'I Wix-editoren: klikk på tekstområdet, lim inn den nye teksten, og Publiser.';
+    }
+  }
+  if (platform === 'webflow') {
+    switch (fieldType) {
+      case 'meta-description':
+        return 'I Webflow: Pages → tannhjulet på siden → SEO Settings → lim inn i Meta Description → Publish.';
+      case 'seo-title':
+        return 'I Webflow: Pages → tannhjulet på siden → SEO Settings → lim inn i Title Tag → Publish.';
+      case 'h1':
+        return 'I Webflow Designer: klikk på hovedoverskriften på siden, lim inn den nye teksten, og Publish.';
+      case 'content':
+      default:
+        return 'I Webflow Designer: klikk på tekstblokken, lim inn den nye teksten, og Publish.';
+    }
+  }
+  if (platform === 'squarespace') {
+    switch (fieldType) {
+      case 'meta-description':
+        return 'I Squarespace: Pages → tannhjulet på siden → SEO → lim inn i SEO Description → Save.';
+      case 'seo-title':
+        return 'I Squarespace: Pages → tannhjulet på siden → SEO → lim inn i SEO Title → Save.';
+      case 'h1':
+        return 'I Squarespace-editoren: rediger overskriften øverst på siden, lim inn den nye, og Save.';
+      case 'content':
+      default:
+        return 'I Squarespace-editoren: rediger tekstblokken, lim inn den nye teksten, og Save.';
+    }
+  }
+  if (platform === 'ghost') {
+    switch (fieldType) {
+      case 'meta-description':
+        return 'I Ghost: åpne siden → innstillinger (tannhjulet) → Meta data → lim inn i Meta description → Update.';
+      case 'seo-title':
+        return 'I Ghost: åpne siden → innstillinger (tannhjulet) → Meta data → lim inn i Meta title → Update.';
+      case 'h1':
+        return 'I Ghost-editoren: endre tittelen øverst på siden, og Update.';
+      case 'content':
+      default:
+        return 'I Ghost-editoren: lim inn den nye teksten i brødteksten, og Update.';
+    }
+  }
+  // Annet / ukjent plattform.
   switch (fieldType) {
     case 'meta-description':
-      return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Meta description → Publiser.';
+      return 'Åpne siden i redigeringsverktøyet ditt, lim inn den nye meta-beskrivelsen i SEO-innstillingene, og publiser.';
     case 'seo-title':
-      return 'I Wix: Pages & Menu → klikk siden → SEO Basics → lim inn i Title tag → Publiser.';
+      return 'Åpne siden i redigeringsverktøyet ditt, lim inn den nye SEO-tittelen i SEO-innstillingene, og publiser.';
     case 'h1':
-      return 'I Wix-editoren: klikk på overskriften øverst på siden, endre teksten, og Publiser.';
+      return 'Åpne siden i redigeringsverktøyet ditt, erstatt hovedoverskriften med den nye, og publiser.';
     case 'content':
     default:
-      return 'I Wix-editoren: klikk på tekstområdet, lim inn den nye teksten, og Publiser.';
+      return 'Åpne siden i redigeringsverktøyet ditt, erstatt teksten med den nye, og publiser.';
   }
 }
 
@@ -3473,7 +3560,9 @@ function buildAdvisoryPageDataFromContentScan(
       slug,
       link: pageUrl,
       title,
-      content: '',
+      // Tekstutdraget fra skannet er den beste «nåværende innhold»-kilden vi har
+      // uten skrive-API. Gamle cacher mangler feltet → tom streng (nytt skann fikser).
+      content: match.textSample || '',
       excerpt: '',
     },
     yoast: { installed: false },
@@ -8714,7 +8803,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
               (contentFixEntry.pageData.yoast?.installed === true &&
                 (contentFixEntry.fieldType === 'meta-description' ||
                   contentFixEntry.fieldType === 'seo-title')));
-          const showWixAdvisoryActions =
+          const showAdvisoryActions =
             !hostIsFullyConnected &&
             contentFixReady &&
             contentFixEntry?.pageData &&
@@ -9505,11 +9594,74 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </button>
                                 )}
                               </div>
-                              {showWixAdvisoryActions && contentFixLoading === 'idle' && contentFixEntry?.aiSuggestion && (() => {
-                                const wixEditedSuggestion =
+                              {showAdvisoryActions && contentFixLoading === 'idle' && contentFixEntry?.aiSuggestion && (() => {
+                                const advisoryEditedSuggestion =
                                   editedSuggestions[selectedProblem.id] ?? contentFixEntry.aiSuggestion ?? '';
-                                const wixPlaceholders = findPlaceholders(wixEditedSuggestion);
-                                const wixCopyBlocked = wixPlaceholders.length > 0;
+                                const advisoryPlaceholders = findPlaceholders(advisoryEditedSuggestion);
+                                const advisoryCopyBlocked = advisoryPlaceholders.length > 0;
+                                const advisoryHostPlatform = hostConnection?.platform || null;
+                                const isAiBuiltHost = advisoryHostPlatform === 'ai_built';
+
+                                // AI-bygd side + Basic → samme oppsalgskort som i den tekniske flyten
+                                if (isAiBuiltHost && !hasStandardOrHigher) {
+                                  return (
+                                    <div style={{ marginTop: 4, background: W.card, border: `1px dashed ${W.border}`, borderRadius: 14, padding: 16 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                                        <Lock size={13} style={{ color: W.muted }} />
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: W.ink }}>Ferdig AI-prompt — lås opp i Standard</span>
+                                      </div>
+                                      <p style={{ margin: '0 0 12px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Få en ferdig prompt du limer rett inn i Claude/Cursor, så legger den den nye teksten inn i kodebasen din. Inkludert fra Standard og oppover.</p>
+                                      <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                        <Sparkles size={12} /> Oppgrader til Standard
+                                      </button>
+                                    </div>
+                                  );
+                                }
+
+                                // AI-bygd side (Standard+) → ferdig prompt til kundens eget AI-verktøy
+                                if (isAiBuiltHost) {
+                                  const toolPrompt = buildContentFixToolPrompt(
+                                    contentFixEntry.fieldType!,
+                                    selectedProblem.pageUrl || contentFixEntry.pageData!.page.link || '',
+                                    getContentFixCurrentValue(contentFixEntry.fieldType!, contentFixEntry.pageData!).value,
+                                    advisoryEditedSuggestion,
+                                  );
+                                  return (
+                                    <div style={{ marginTop: 4, background: W.card, border: `1px solid ${W.green}`, borderRadius: 14, overflow: 'hidden' }}>
+                                      <div style={{ padding: '10px 14px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                                        <Sparkles size={12} style={{ color: W.green }} />
+                                        <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, fontWeight: 700, color: W.green, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Ferdig prompt for AI-verktøyet ditt</span>
+                                      </div>
+                                      <div style={{ padding: '12px 16px 6px' }}>
+                                        <p style={{ margin: '0 0 10px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Lim denne inn i Claude, Cursor, v0 e.l. — den legger den nye teksten inn i din egen kodebase. Redigerer du forslaget over, oppdateres prompten.</p>
+                                        <div style={{ background: W.ink, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
+                                          <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.9)', whiteSpace: 'pre-wrap' }}><code>{toolPrompt}</code></pre>
+                                        </div>
+                                      </div>
+                                      <div style={{ padding: '8px 14px 12px' }}>
+                                        <button
+                                          type="button"
+                                          disabled={advisoryCopyBlocked || !advisoryEditedSuggestion.trim()}
+                                          title={advisoryCopyBlocked ? 'Fyll inn plassholderne først' : undefined}
+                                          onClick={() => {
+                                            if (advisoryCopyBlocked || !advisoryEditedSuggestion.trim()) return;
+                                            navigator.clipboard?.writeText(toolPrompt);
+                                            toastSuccess('Prompt kopiert.');
+                                          }}
+                                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.green, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: advisoryCopyBlocked ? 'not-allowed' : 'pointer', opacity: advisoryCopyBlocked ? 0.5 : 1 }}
+                                        >
+                                          <Copy size={12} /> Kopier prompt
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                // Øvrige rådgiver-plattformer → lim-inn-instruks for editoren deres
+                                const advisoryBoxTitle =
+                                  advisoryHostPlatform && advisoryHostPlatform !== 'other'
+                                    ? `Lim inn i ${platformLabel(advisoryHostPlatform)} selv`
+                                    : 'Lim inn på siden din selv';
                                 return (
                                   <div
                                     style={{
@@ -9524,23 +9676,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                     }}
                                   >
                                     <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: W.ink }}>
-                                      Lim inn i Wix selv
+                                      {advisoryBoxTitle}
                                     </p>
                                     <p style={{ margin: 0, fontSize: 13, color: W.muted, lineHeight: 1.55 }}>
-                                      {getWixFieldInstruction(contentFixEntry.fieldType)}
+                                      {getPlatformFieldInstruction(advisoryHostPlatform, contentFixEntry.fieldType)}
                                     </p>
                                     <button
                                       type="button"
-                                      disabled={wixCopyBlocked || !wixEditedSuggestion.trim()}
-                                      title={wixCopyBlocked ? 'Fyll inn plassholderne først' : undefined}
+                                      disabled={advisoryCopyBlocked || !advisoryEditedSuggestion.trim()}
+                                      title={advisoryCopyBlocked ? 'Fyll inn plassholderne først' : undefined}
                                       onClick={() => {
-                                        if (wixCopyBlocked || !wixEditedSuggestion.trim()) return;
-                                        navigator.clipboard?.writeText(wixEditedSuggestion);
+                                        if (advisoryCopyBlocked || !advisoryEditedSuggestion.trim()) return;
+                                        navigator.clipboard?.writeText(advisoryEditedSuggestion);
                                         toastSuccess('Kopiert til utklippstavle');
                                       }}
-                                      onMouseDown={wixCopyBlocked ? undefined : pressDown}
-                                      onMouseUp={wixCopyBlocked ? undefined : pressReset}
-                                      onMouseLeave={wixCopyBlocked ? undefined : pressReset}
+                                      onMouseDown={advisoryCopyBlocked ? undefined : pressDown}
+                                      onMouseUp={advisoryCopyBlocked ? undefined : pressReset}
+                                      onMouseLeave={advisoryCopyBlocked ? undefined : pressReset}
                                       style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -9553,8 +9705,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         padding: '11px 16px',
                                         fontSize: 13,
                                         fontWeight: 700,
-                                        cursor: wixCopyBlocked ? 'not-allowed' : 'pointer',
-                                        opacity: wixCopyBlocked ? 0.5 : 1,
+                                        cursor: advisoryCopyBlocked ? 'not-allowed' : 'pointer',
+                                        opacity: advisoryCopyBlocked ? 0.5 : 1,
                                         transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}`,
                                       }}
                                     >
@@ -12325,6 +12477,9 @@ interface ContentPage {
   fullUrl?: string;
   title: string;
   wordCount: number;
+  // Råtekst-utdrag fra skannet (maks 1500 tegn) — «Nåværende innhold» i Verksted
+  // for rådgiver-plattformer. Mangler i gamle localStorage-cacher (før 2026-07).
+  textSample?: string;
   status: 'Bra' | 'Advarsel' | 'Kritisk';
   lastUpdated: string;
   // Standard (AI Analyse)
