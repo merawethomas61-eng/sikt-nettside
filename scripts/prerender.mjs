@@ -213,11 +213,21 @@ const orgLd = {
   '@type': 'Organization',
   name: 'Sikt',
   url: BASE,
+  logo: DEFAULT_IMAGE,
   email: 'siktseo@gmail.com',
   description: 'Moderne norsk SEO-verktøy med AI-drevet optimalisering og plain-norsk rapportering.',
   slogan: 'Moderne SEO for norske bedrifter',
   areaServed: 'NO',
   inLanguage: 'nb-NO',
+  // Entitetssignaler: hjelper Google/AI å knytte «Sikt» til en konkret aktør.
+  // sameAs utelates bevisst til det finnes ekte offentlige profiler å peke på.
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'siktseo@gmail.com',
+    areaServed: 'NO',
+    availableLanguage: ['Norwegian'],
+  },
   // Topiske assosiasjoner hjelper Google og AI-svarmotorer å forstå hva Sikt er
   // ekspert på → større sjanse for å bli sitert riktig i AI-søk (kjernemålet).
   knowsAbout: [
@@ -448,13 +458,33 @@ const MARKETING = [
   },
 ];
 
+/* ---------- relaterte innlegg (speiler getRelatedPosts i src/blog/loader.ts) ---------- */
+function relatedPosts(post, all, limit = 2) {
+  const currentTags = new Set(post.tags);
+  return all
+    .filter((p) => p.slug !== post.slug)
+    .map((p) => ({ p, shared: p.tags.filter((t) => currentTags.has(t)).length }))
+    .sort((a, b) => b.shared - a.shared || (a.p.date < b.p.date ? 1 : -1))
+    .slice(0, limit)
+    .map((x) => x.p);
+}
+
 /* ---------- blogg-brødtekst ---------- */
-function postBody(post) {
+function postBody(post, related = []) {
   const faqHtml = post.faq.length
     ? `<h2 id="vanlige-sporsmal">Vanlige spørsmål</h2>` +
       post.faq.map((f) => `<h3>${escHtml(f.q)}</h3><p>${escHtml(f.a)}</p>`).join('')
     : '';
   const tags = post.tags.length ? `<p style="color:#808080;font-size:.8rem">${post.tags.map(escHtml).join(' · ')}</p>` : '';
+  // «Les videre»: samme relaterte innlegg som React-siden viser brukerne, slik
+  // at crawlere ser den samme interne lenkegrafen (ikke bare nav + money-sider).
+  const relatedHtml = related.length
+    ? `<hr><h2>Les videre</h2><ul>` +
+      related
+        .map((r) => `<li><a href="/blogg/${escAttr(r.slug)}">${escHtml(r.title)}</a>${r.description ? ` — ${escHtml(r.description)}` : ''}</li>`)
+        .join('') +
+      `</ul>`
+    : '';
   // Intern lenking + CTA som crawlere ser (speiler GradientCTA-en React-siden
   // viser brukerne). Sender lenkekraft fra innholdssidene til «money»-sidene
   // /funksjoner og /priser, og til gratis-analysen høyt i trakten.
@@ -472,6 +502,7 @@ function postBody(post) {
     (post.summary ? `<p><strong>Kort svar:</strong> ${escHtml(post.summary)}</p>` : '') +
     post.html +
     faqHtml +
+    relatedHtml +
     footer +
     `</article></main>`
   );
@@ -584,7 +615,7 @@ function main() {
             image,
             jsonLd: ld,
           }),
-          postBody(post),
+          postBody(post, relatedPosts(post, posts)),
         ),
       );
       count += 1;

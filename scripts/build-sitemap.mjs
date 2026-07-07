@@ -29,8 +29,10 @@ if (existsSync(blogDir)) {
   for (const file of readdirSync(blogDir).filter((f) => f.endsWith('.md'))) {
     const raw = readFileSync(join(blogDir, file), 'utf8');
     const slug = file.replace(/\.md$/, '');
+    // Foretrekk `updated` (ekte ferskhetssignal) over `date` (publiseringsdato).
+    const updatedMatch = raw.match(/^updated:\s*(.+)$/m);
     const dateMatch = raw.match(/^date:\s*(.+)$/m);
-    const lastmod = dateMatch ? dateMatch[1].trim() : today;
+    const lastmod = (updatedMatch?.[1] || dateMatch?.[1] || today).trim().replace(/^['"]|['"]$/g, '');
     blogRoutes.push([`/blogg/${slug}`, 'monthly', '0.6', lastmod]);
   }
 }

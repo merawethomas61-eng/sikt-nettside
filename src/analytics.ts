@@ -56,3 +56,15 @@ export function track(event: string, props?: Record<string, unknown>): void {
     /* aldri la sporing brekke en brukerhandling */
   }
 }
+
+// Knytter den anonyme økten til en innlogget bruker, så trakten kan følges
+// anonym → kunde (og betalt konvertering tilskrives riktig person). No-op uten
+// samtykke/nøkkel. Kalles ved innlogging/auth.
+export function identify(distinctId: string, props?: Record<string, unknown>): void {
+  if (!ph || !distinctId) return;
+  try {
+    ph.identify(distinctId, props);
+  } catch {
+    /* aldri la sporing brekke en brukerhandling */
+  }
+}

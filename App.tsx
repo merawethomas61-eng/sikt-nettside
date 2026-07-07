@@ -11,7 +11,7 @@ import { companyInfo } from './src/shared/companyInfo';
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
-import { track } from './src/analytics';
+import { track, identify } from './src/analytics';
 import { UsageStat } from './src/shared/trustStats';
 import { StickyCta } from './src/components/marketing/StickyCta';
 import { ProductPreview } from './src/pages/home/ProductPreview';
@@ -2445,6 +2445,9 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="dinbedrift.no"
+                  aria-label="Nettadressen til bedriften din"
+                  name="url"
+                  autoComplete="url"
                   className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
                 />
                 <input
@@ -2452,6 +2455,10 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="din@epost.no"
+                  aria-label="E-postadressen din"
+                  name="email"
+                  autoComplete="email"
+                  inputMode="email"
                   className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
                 />
               </div>
@@ -3400,6 +3407,11 @@ function App() {
   // 2. VASK URL-EN: Fjerner parameteret umiddelbart for å unngå spøkelser
   useEffect(() => {
     if (isPaymentSuccess && typeof window !== 'undefined') {
+      // Konverterings-event: trakten var «blind» etter Stripe-redirect. Fyres når
+      // brukeren kommer tilbake med payment_success. Plan hentes best-effort.
+      let plan: string | null = null;
+      try { plan = localStorage.getItem('sikt_pending_plan'); } catch { /* ignore */ }
+      track('subscription_activated', plan ? { plan } : undefined);
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: newUrl }, '', newUrl);
     }
@@ -3711,6 +3723,8 @@ function App() {
 
           const sameUserAsBefore = lastRoutedUserId === session.user.id;
           setUser(session.user);
+          // Stitch anonym økt → innlogget bruker, så betalt konvertering tilskrives riktig.
+          identify(session.user.id, session.user.email ? { email: session.user.email } : undefined);
 
           // Viktig: Hvis vi allerede har rutet denne brukeren, IKKE kjør ruting igjen.
           // Dette skjer f.eks. når brukeren bytter fane og kommer tilbake —

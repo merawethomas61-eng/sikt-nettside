@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/build-plugin-zip.mjs && node scripts/build-sitemap.mjs && node scripts/build-llms.mjs",
+    "prebuild": "node scripts/build-plugin-zip.mjs && node scripts/build-sitemap.mjs && node scripts/build-feed.mjs && node scripts/build-llms.mjs",
     "build": "vite build && node scripts/generate-og.mjs && node scripts/prerender.mjs",
     "build:plugin": "node scripts/build-plugin-zip.mjs",
     "preview": "vite preview",

@@ -10,6 +10,11 @@ const rateLimitWindowMs = 60000;
 const maxRequestsPerWindow = 20;
 const ipTracker = new Map();
 
+// Tillatte modeller. `model` kommer fra request-body; uten allowlist kunne en
+// innlogget bruker be om vilkårlig (dyr) modell og drive opp OpenAI-kostnaden.
+const ALLOWED_MODELS = new Set(['gpt-4o-mini']);
+const DEFAULT_MODEL = 'gpt-4o-mini';
+
 export default withSentry(async function handler(req, res) {
     if (req.query.sentrytest === '1') throw new Error('sentry backend test');
     if (req.method !== 'POST') {
@@ -51,7 +56,7 @@ export default withSentry(async function handler(req, res) {
 
     const {
         prompt,
-        model = 'gpt-4o-mini',
+        model = DEFAULT_MODEL,
         maxTokens = 300,
         temperature = 0.7,
         jsonMode = false,
@@ -61,6 +66,9 @@ export default withSentry(async function handler(req, res) {
     if (!prompt || typeof prompt !== 'string') {
         return res.status(400).json({ error: 'Mangler prompt' });
     }
+
+    // Håndhev modell-allowlist server-side (kostnadsvern mot dyre modeller).
+    const safeModel = ALLOWED_MODELS.has(model) ? model : DEFAULT_MODEL;
 
     // Begrens promptens størrelse for å hindre misbruk
     if (prompt.length > 8000) {
@@ -81,7 +89,7 @@ export default withSentry(async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY.trim()}`,
             },
             body: JSON.stringify({
-                model,
+                model: safeModel,
                 messages,
                 max_tokens: Math.min(Number(maxTokens) || 300, 1000),
                 temperature: Math.max(0, Math.min(Number(temperature) || 0.7, 1.5)),

@@ -88,6 +88,30 @@ drop policy if exists "clients_delete_own" on public.clients;
 create policy "clients_delete_own" on public.clients for delete to authenticated
   using (auth.uid() = user_id);
 
+-- Sikkerhet: rollen `authenticated` har tabell-nivå UPDATE by default, som
+-- overstyrer RLS-kolonnebegrensninger. Fjern det og gi tilbake UPDATE kun på
+-- ikke-sensitive kolonner, slik at plan-/betalings-/kvotefelt (package_name,
+-- subscription_status, stripe_*, analyses_count/_month) kun kan settes av
+-- service_role (Stripe-webhook / scan-pagespeed). Uten dette kan en innlogget
+-- bruker PATCH-e seg selv til Premium direkte mot REST-API-et.
+do $$
+declare
+  col text;
+  sensitive text[] := array[
+    'package_name','subscription_status','stripe_customer_id',
+    'stripe_subscription_id','analyses_count','analyses_month'
+  ];
+begin
+  revoke update on public.clients from authenticated, anon;
+  for col in
+    select column_name from information_schema.columns
+    where table_schema = 'public' and table_name = 'clients'
+      and column_name <> all (sensitive)
+  loop
+    execute format('grant update (%I) on public.clients to authenticated', col);
+  end loop;
+end $$;
+
 -- =====================================================================
 -- 2. CLIENT_HOSTS — tilkobling til kundens webhost
 -- =====================================================================
@@ -196,10 +220,10 @@ create policy "health_checks_select_own" on public.health_checks for select to a
     )
   );
 
--- Service-role (Edge Function) skriver
+-- Service-role (Edge Function) skriver. Ingen egen write-policy: service_role
+-- bypasser RLS. En `for all using(true)`-policy uten rollebegrensning ville
+-- (fordi policyer er permissive/OR) gjort alle rader lesbare/skrivbare for alle.
 drop policy if exists "health_checks_service_write" on public.health_checks;
-create policy "health_checks_service_write" on public.health_checks for all
-  using (true) with check (true);
 
 -- =====================================================================
 -- 5. SIKT_ACTIONS — handlingslogg
@@ -370,9 +394,9 @@ create policy "ckr_select_own" on public.competitor_keyword_rankings for select 
     )
   );
 
+-- Service-role (Edge Function) skriver via RLS-bypass; ingen egen write-policy
+-- (en `for all using(true)` uten rolle ville eksponert alle kunders rank-data).
 drop policy if exists "ckr_service_write" on public.competitor_keyword_rankings;
-create policy "ckr_service_write" on public.competitor_keyword_rankings for all
-  using (true) with check (true);
 
 -- =====================================================================
 -- Be PostgREST oppdatere skjema-cachen

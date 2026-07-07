@@ -5166,9 +5166,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   }, [formData.websiteUrl, contentPages.length, linkPages.length]);
 
   // --- SØKEORDSGRENSER ---
+  // Grensene MÅ matche løftene på prissiden (src/shared/Pricing.tsx):
+  // Standard = 50, Premium = høyt tak (200 — i praksis uten grense, men
+  // beskytter mot at én konto driver opp SerpAPI-kostnaden ubegrenset).
   const getKeywordLimit = (level: number) => {
-    if (level >= 3) return 50; // Premium
-    if (level === 2) return 15; // Standard
+    if (level >= 3) return 200; // Premium
+    if (level === 2) return 50; // Standard
     return 3; // Basic
   };
   const currentKeywordLimit = getKeywordLimit(currentLevel);
@@ -5178,7 +5181,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // --- LEGG TIL SØKEORD (Med grense-sjekk) ---
   const handleAddKeyword = () => {
     if (!canAddMoreKeywords) {
-      toastWarning(`Du har nådd grensen på ${currentKeywordLimit} søkeord for din nåværende plan. Oppgrader for å overvåke flere ord.`);
+      toastWarning(
+        currentLevel >= 3
+          ? `Du har nådd taket på ${currentKeywordLimit} søkeord. Trenger du å spore enda flere, ta kontakt med oss.`
+          : `Du har nådd grensen på ${currentKeywordLimit} søkeord for din nåværende plan. Oppgrader for å overvåke flere ord.`
+      );
       return;
     }
     if (newKeywordInput.trim() && locationInput.trim()) {
@@ -5237,7 +5244,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
 
     // --- 1. SØKEORDSKVOTE & AUTOMATISK LEGG TIL ---
-    const currentKeywordLimit = currentLevel >= 3 ? 50 : currentLevel === 2 ? 15 : 3;
+    const currentKeywordLimit = getKeywordLimit(currentLevel); // én kilde (50/200)
     let activeList = [...keywordsToTrack];
 
     // Sjekk om brukeren har skrevet noe nytt i søkefeltet

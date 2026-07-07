@@ -30,10 +30,10 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       ctaNote: "Én ny klient betaler hele året — vi går gjennom tallene sammen først.",
       desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
       features: [
-        { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, 50-søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
+        { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
         { text: "For høyverdi-bransjer der ett oppdrag betaler året", detail: "Tjenesten er priset for bedrifter med høy kundeverdi — advokat, tannlege, eiendomsmegler, entreprenør, B2B. Er marginen din lav per kunde, er Standard sannsynligvis riktigere for deg." },
         { text: "Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?", detail: "Sikt stiller 20–50 bransjerelevante spørsmål til AI-assistentene hver uke og rapporterer om — og hvordan — bedriften din nevnes." },
-        { text: "Ubegrenset søkeord-sporing", detail: "Ingen grense. Spor alle søkeord som er relevante for bedriften din." },
+        { text: "Søkeord-sporing i stort omfang — opptil 200 søkeord", detail: "Spor posisjonen på opptil 200 søkeord hver uke — mer enn nok til å dekke alt som er relevant for bedriften din." },
         { text: "Spør Sikt AI hva som helst — 24/7", detail: "AI-chat som kjenner dine egne SEO-data og svarer på alt du lurer på, når som helst." },
         { text: "Konkurrent-radar uten grenser + dyp AI-analyse", detail: "Overvåk så mange konkurrenter du vil. AI leser deres innhold, estimerer trafikken og sjekker om ChatGPT/Gemini/Perplexity nevner dem — så du vet nøyaktig hva du må gjøre for å gå forbi." },
         { text: "Månedlig strategirapport på 10+ sider", detail: "Grundig AI-generert analyse med GEO-konkurrentanalyse, vekststrategi og konkrete neste steg." },
@@ -157,6 +157,14 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
             Velg {plan.title}
           </button>
         )}
+        {/* Trust-mikrocopy rett ved kjøps-CTA — demper friksjon i kjøpsøyeblikket. */}
+        <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs font-semibold text-[#5C574C]">
+          <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#15795A]" />14 dagers angrerett</span>
+          <span className="text-[#8A8578]" aria-hidden>·</span>
+          <span>Sikker betaling via Stripe</span>
+          <span className="text-[#8A8578]" aria-hidden>·</span>
+          <span>Si opp når som helst</span>
+        </p>
       </>
     );
   };

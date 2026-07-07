@@ -150,6 +150,9 @@ export default function KontaktPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Navn"
+                    aria-label="Navn"
+                    name="name"
+                    autoComplete="name"
                     required
                     className={inputCls}
                   />
@@ -158,6 +161,10 @@ export default function KontaktPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="din@epost.no"
+                    aria-label="E-post"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
                     required
                     className={inputCls}
                   />
@@ -165,6 +172,8 @@ export default function KontaktPage() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Hva kan vi hjelpe deg med?"
+                    aria-label="Melding"
+                    name="message"
                     required
                     rows={5}
                     className={`${inputCls} resize-none`}

@@ -1069,8 +1069,10 @@ async function runGbp(req, res) {
         try {
             const url = `https://serpapi.com/search.json?engine=google_maps&type=search&q=${encodeURIComponent(company)}&google_domain=google.no&hl=no&gl=no&api_key=${SERP_API_KEY}`;
             const r = await fetchExternalWithOptionalRetry429(url);
-            if (isSerpApiRateLimitedResponse(r)) { summary.errors += 1; break; }
-            if (r.ok) serpJson = await r.json();
+            const rData = await r.json().catch(() => ({}));
+            // isSerpApiRateLimitedResponse tar (status, data) — ikke Response-objektet.
+            if (isSerpApiRateLimitedResponse(r.status, rData)) { summary.errors += 1; break; }
+            if (r.ok) serpJson = rData;
         } catch (e) {
             summary.errors += 1;
             console.warn('[gbp] SerpAPI feilet for', company, e?.message || e);
