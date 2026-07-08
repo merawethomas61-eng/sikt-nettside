@@ -10,16 +10,27 @@ const Navbar = ({ onNavigate, currentView, user, onLoginTrigger, onLogout, hasAc
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ekte URL-lenker (react-router). På nye sider mangler onNavigate/onLoginTrigger,
-  // så «Kom i gang» faller tilbake til /priser i stedet.
+  // Ekte URL-lenker (react-router). På sider uten onLoginTrigger (markedssidene)
+  // sendes «Kom i gang» til forsiden med ?login=1 → App åpner innloggingen direkte.
   const marketingLinks = [
     { to: '/funksjoner', label: 'Funksjoner' },
     { to: '/priser', label: 'Priser' },
     { to: '/blogg', label: 'Blogg' },
     { to: '/om-oss', label: 'Om oss' },
   ];
-  const baseStartCta = onLoginTrigger ?? (() => navigate('/priser'));
-  const startCta = () => { track('cta_click', { location: 'navbar', target: 'start' }); baseStartCta(); };
+  const baseStartCta = onLoginTrigger ?? (() => navigate('/?login=1'));
+  const startCta = () => {
+    track('cta_click', { location: 'navbar', target: 'start' });
+    // Husk hvor brukeren sto, så en ikke-betalende bruker sendes tilbake hit
+    // etter innloggingen i stedet for å parkeres øverst på forsiden.
+    try {
+      sessionStorage.setItem('sikt_return_to', JSON.stringify({
+        path: location.pathname + location.search,
+        scrollY: window.scrollY,
+      }));
+    } catch { /* ignore */ }
+    baseStartCta();
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);

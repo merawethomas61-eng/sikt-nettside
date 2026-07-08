@@ -53,6 +53,19 @@ const getSupabase = () => (_supabasePromise ??= import('./supabaseClient').then(
 // brukeren inn i ClientPortal. Juster her ett sted for hele appen.
 const PORTAL_ENTRY_DELAY_MS = 2800;
 
+// Husk hvor brukeren var før innloggingen (side + scrollposisjon), så en
+// ikke-betalende bruker sendes TILBAKE dit etter Google-redirecten i stedet
+// for å parkeres øverst på forsiden. sessionStorage overlever OAuth-rundturen
+// i samme fane. Kalles rett før vi viser login-siden.
+const rememberReturnTo = () => {
+  try {
+    sessionStorage.setItem('sikt_return_to', JSON.stringify({
+      path: window.location.pathname + window.location.search,
+      scrollY: window.scrollY,
+    }));
+  } catch { /* ignore */ }
+};
+
 
 
 // --- ZERO COGNITIVE LOAD ORDBOK ---
@@ -138,6 +151,7 @@ export const handleLogin = async () => {
     }
 
     // 2. START GOOGLE LOGIN (Med tvungen kontovalg)
+    rememberReturnTo();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -3408,10 +3422,6 @@ const SettingsView = ({ user, onBack, initialTab = 'general' }: any) => {
 
 // --- LOGIN PAGE (KUN GOOGLE) ---
 const LoginPage = ({ onBack }: { onBack: () => void }) => {
-  const [email, setEmail] = useState('');
-  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
-
   const handleGoogleLogin = async () => {
     try {
       const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -3431,35 +3441,6 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
       if (error) throw error;
     } catch (error: any) {
       toastError('Kunne ikke logge inn med Google: ' + error.message);
-    }
-  };
-
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toastError('Skriv inn en gyldig e-postadresse.');
-      return;
-    }
-
-    setMagicLinkLoading(true);
-    try {
-      const cleanUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const supabase = await getSupabase();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: {
-          emailRedirectTo: cleanUrl,
-        },
-      });
-      if (error) throw error;
-      setMagicLinkSent(true);
-      toastSuccess('Sjekk e-posten din for innloggings-lenke.');
-    } catch (error: any) {
-      toastError('Kunne ikke sende lenke: ' + (error?.message || 'ukjent feil'));
-    } finally {
-      setMagicLinkLoading(false);
     }
   };
 
@@ -3504,61 +3485,6 @@ const LoginPage = ({ onBack }: { onBack: () => void }) => {
           </svg>
           <span className="group-hover:text-[#1A1A1A] transition-colors">Fortsett med Google</span>
         </button>
-
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-[#E9E4DA]"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#5C574C]">eller</span>
-          <div className="flex-1 h-px bg-[#E9E4DA]"></div>
-        </div>
-
-        {magicLinkSent ? (
-          <div className="bg-[#F2EFE8] border border-emerald-200 rounded-xl p-5 text-left">
-            <div className="flex items-center gap-3 mb-2">
-              <Mail size={18} className="text-[#1A1A1A]" />
-              <p className="text-sm font-bold text-emerald-900">Lenke sendt</p>
-            </div>
-            <p className="text-xs text-emerald-800 leading-relaxed">
-              Vi sendte en innloggings-lenke til <strong>{email}</strong>. Åpne e-posten på samme enhet for å logge inn.
-            </p>
-            <button
-              onClick={() => { setMagicLinkSent(false); setEmail(''); }}
-              className="mt-3 text-xs font-bold text-emerald-700 hover:text-emerald-900 underline"
-            >
-              Prøv en annen e-post
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleMagicLink} className="space-y-3 text-left">
-            <label className="text-xs font-bold text-[#5C574C] block">Logg inn med e-post (uten passord)</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="din@bedrift.no"
-              className="w-full p-3 bg-white border border-[#E9E4DA] rounded-xl focus:ring-2 focus:ring-[#5C574C]/25 focus:border-transparent outline-none text-sm"
-              disabled={magicLinkLoading}
-            />
-            <button
-              type="submit"
-              disabled={magicLinkLoading || !email.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-[#1A1A1A] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl ui-motion transition-[background-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm enabled:hover:bg-[#1A1A1A] enabled:hover:shadow-md"
-            >
-              {magicLinkLoading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Sender lenke…
-                </>
-              ) : (
-                <>
-                  <Mail size={16} /> Send innloggings-lenke
-                </>
-              )}
-            </button>
-            <p className="text-[10px] text-[#5C574C] text-center pt-1">
-              Vi sender en engangs-lenke til e-posten din. Ingen passord å huske på.
-            </p>
-          </form>
-        )}
 
         <button
           onClick={onBack}
@@ -3996,15 +3922,29 @@ function App() {
             }
           }
 
-          // REGEL 1b: Ikke betalt -> Bli på hjemmesiden!
+          // REGEL 1b: Ikke betalt -> tilbake dit brukeren var FØR innloggingen
+          // (lagret av rememberReturnTo/navbaren). Ingen hopp til prisseksjonen —
+          // brukeren skal fortsette der de slapp.
           setHasAccess(false);
           setView('home');
-          // Scroller til priser kun hvis de akkurat trykket "Logg inn" på forsiden
-          if (isExplicitAction) {
-            setTimeout(() => {
-              document.getElementById('priser')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 500);
-          }
+          try {
+            const raw = sessionStorage.getItem('sikt_return_to');
+            if (raw) {
+              sessionStorage.removeItem('sikt_return_to');
+              const saved = JSON.parse(raw);
+              const target = typeof saved?.path === 'string' ? saved.path : '/';
+              const savedScroll = Number(saved?.scrollY) || 0;
+              const here = window.location.pathname + window.location.search;
+              if (target !== '/' && target !== here) {
+                // Kom fra en markedsside (/funksjoner, /blogg …) → naviger tilbake dit.
+                window.location.replace(target);
+                return;
+              }
+              // Samme side (forsiden): gjenopprett scrollposisjonen etter at
+              // view-effekten har rukket å scrolle til toppen.
+              setTimeout(() => window.scrollTo({ top: savedScroll }), 350);
+            }
+          } catch { /* ignore */ }
         }
         else {
           // REGEL 3: Betalt og skjema levert -> Rett inn i ClientPortal
@@ -4050,7 +3990,10 @@ function App() {
           setUser(null);
           setHasAccess(false);
           setSelectedPlan(null);
-          setView('home');
+          // Fresh-tab-utloggingen (INITIAL_SESSION under) fyrer også SIGNED_OUT.
+          // Står brukeren på login-siden (f.eks. via ?login=1 fra navbaren),
+          // skal de bli der — ikke kastes tilbake til forsiden.
+          if (viewRef.current !== 'login') setView('home');
           setIsLoading(false);
           hasInitialized = true;
         }
@@ -4175,7 +4118,10 @@ function App() {
     return () => { cancelled = true; };
   }, [justCompletedOnboarding, hasAccess, user?.id]);
 
-  const handleLoginTrigger = () => setView('login');
+  const handleLoginTrigger = () => {
+    rememberReturnTo();
+    setView('login');
+  };
   const handleBack = () => setView('home');
 
   const handlePlanSelect = async (plan: string) => {
@@ -4207,6 +4153,7 @@ function App() {
 
       if (!currentUser) {
         track('signup_started', { plan });
+        rememberReturnTo();
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (typeof setView === 'function') {
@@ -4258,6 +4205,18 @@ function App() {
     window.history.replaceState({ path: clean }, '', clean);
     handlePlanSelect(planParam.toUpperCase());
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Bro fra markedssidene: «Kom i gang» i navbaren sender ?login=1 hit →
+  // åpne innloggingen direkte (ikke prisseksjonen). Navbaren har allerede
+  // lagret retur-posisjonen i sessionStorage før navigeringen.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const loginParam = new URLSearchParams(window.location.search).get('login');
+    if (!loginParam) return;
+    const clean = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    window.history.replaceState({ path: clean }, '', clean);
+    setView('login');
   }, []);
 
   // Når man kommer fra en annen side med en hash (f.eks. /#gratis-analyse),

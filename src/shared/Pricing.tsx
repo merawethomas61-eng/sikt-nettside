@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { HelpCircle, Check } from 'lucide-react';
 import { RevealOnScroll } from './RevealOnScroll';
-import { companyInfo } from './companyInfo';
 
 // Pris-seksjon i redaksjonell handbook-stil. Rekkefølgen er bevisst HØY→LAV
 // (Premium → Standard → Basic): den første prisen øyet treffer fungerer som
@@ -17,7 +16,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
   const [openDetail, setOpenDetail] = useState<string | null>(null);
 
   type PlanFeature = { text: string; detail?: string };
-  type Plan = { title: string; price: string; tagline: string; who: string; desc: string; features: PlanFeature[]; highlighted?: boolean; ctaLabel?: string; ctaHref?: string; ctaNote?: string };
+  type Plan = { title: string; price: string; tagline: string; who: string; desc: string; features: PlanFeature[]; highlighted?: boolean };
 
   const plans: Plan[] = [
     {
@@ -25,9 +24,6 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
       price: "4 990",
       tagline: "Når én ny kunde er verdt titusener.",
       who: "For advokater, tannleger, klinikker og B2B.",
-      ctaLabel: "Book en GEO-gjennomgang",
-      ctaHref: `mailto:${companyInfo.supportEmail}?subject=GEO-gjennomgang%20(Premium)&body=Hei%20Sikt%2C%0A%0AJeg%20vil%20ha%20en%20GEO-gjennomgang%20og%20se%20om%20ChatGPT%2FGemini%2FPerplexity%20nevner%20bedriften%20min.%0A%0ABedrift%2Fnettside%3A%20%0ABransje%3A%20%0A`,
-      ctaNote: "Én ny klient betaler hele året — vi går gjennom tallene sammen først.",
       desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
       features: [
         { text: "Alt i Standard", detail: "Auto-fiks, ukentlig kvittering, AI-tekster, søkeord-sporing, konkurrent-radar og prioritert support er inkludert." },
@@ -122,41 +118,22 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     </ul>
   );
 
-  // CTA: Basic/Standard → selvbetjent signup. Premium → samtale (vurdert kjøp),
-  // med en sekundærlenke for den som vil starte direkte.
+  // CTA: alle tre pakkene er selvbetjent signup gjennom samme checkout-flyt.
   const renderCta = (plan: Plan) => {
     const inkBtn =
       'w-full sm:w-auto inline-flex justify-center items-center px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base ui-motion bg-[#1A1A1A] text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700 shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-violet-200';
     return (
       <>
-        {plan.ctaNote && (
-          <p className="text-xs sm:text-sm font-semibold text-violet-700 mb-3 max-w-xs">{plan.ctaNote}</p>
-        )}
-        {plan.ctaHref ? (
-          <>
-            <a href={plan.ctaHref} className={inkBtn}>
-              {plan.ctaLabel ?? `Velg ${plan.title}`}
-            </a>
-            <button
-              type="button"
-              onClick={() => onSelectPlan(plan.title)}
-              className="mt-3 block text-xs sm:text-sm font-semibold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A] transition-colors"
-            >
-              eller start abonnementet direkte →
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => onSelectPlan(plan.title)}
-            className={
-              plan.highlighted
-                ? inkBtn
-                : 'w-full sm:w-auto inline-flex justify-center items-center px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base ui-motion bg-white border border-[#E9E4DA] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]/40'
-            }
-          >
-            Velg {plan.title}
-          </button>
-        )}
+        <button
+          onClick={() => onSelectPlan(plan.title)}
+          className={
+            plan.highlighted
+              ? inkBtn
+              : 'w-full sm:w-auto inline-flex justify-center items-center px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base ui-motion bg-white border border-[#E9E4DA] text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#1A1A1A]/40'
+          }
+        >
+          Velg {plan.title}
+        </button>
         {/* Trust-mikrocopy rett ved kjøps-CTA — demper friksjon i kjøpsøyeblikket. */}
         <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs font-semibold text-[#5C574C]">
           <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#15795A]" />14 dagers angrerett</span>
