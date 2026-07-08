@@ -11,7 +11,7 @@ import { companyInfo } from './src/shared/companyInfo';
 import { CodeIntegrationStep } from './CodeIntegrationStep';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { toastInfo, toastSuccess, toastError, toastWarning } from './src/toast';
-import { track, identify } from './src/analytics';
+import { track, trackOnce, identify, getVariant, EXPERIMENTS } from './src/analytics';
 import { UsageStat } from './src/shared/trustStats';
 import { StickyCta } from './src/components/marketing/StickyCta';
 import { ProductPreview } from './src/pages/home/ProductPreview';
@@ -1487,6 +1487,43 @@ const SITE_PLATFORMS: { id: string; label: string }[] = [
   { id: 'other', label: 'Annet / egen side' },
 ];
 
+// Søkeord-forslag for onboarding-steget (eksperiment «onboarding_keywords»).
+// Ren heuristikk uten AI: «bransje + sted» er det folk faktisk googler etter
+// lokale tjenester; tittel/H1 fra gratis-analysen gir et mer spesifikt
+// forslag når den finnes. Alt kan velges bort eller erstattes av kunden.
+function buildKeywordSuggestions(
+  industry: string,
+  city: string,
+  auditFacts: { title?: string | null; h1Text?: string | null } | null,
+): string[] {
+  const ind = (industry || '').trim().toLowerCase();
+  const sted = (city || '').trim().toLowerCase();
+  const out: string[] = [];
+  const push = (s: string) => {
+    const v = s.replace(/\s+/g, ' ').trim();
+    if (v.length >= 3 && v.length <= 60 && !out.includes(v)) out.push(v);
+  };
+  if (ind) {
+    if (sted) push(`${ind} ${sted}`);
+    push(`${ind} nær meg`);
+    if (sted) push(`beste ${ind} ${sted}`);
+    push(`${ind} pris`);
+    if (sted) push(`${ind} tilbud ${sted}`);
+  }
+  // Første segment av tittel/H1 før skilletegn er ofte selve tjenesten
+  // («Rørlegger i Drammen | Rørco AS» → «rørlegger i drammen»).
+  for (const raw of [auditFacts?.title, auditFacts?.h1Text]) {
+    if (!raw) continue;
+    const seg = String(raw).split(/[|–—·»]/)[0].trim().toLowerCase();
+    if (seg && seg.split(' ').length <= 5) push(seg);
+  }
+  return out.slice(0, 8);
+}
+
+// Maks søkeord i onboarding-sjekken: /api/search er ratebegrenset til
+// 5 kall/minutt per IP — flere enn 5 ville gitt 429 midt i oppstarten.
+const ONBOARDING_KW_MAX = 5;
+
 const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: any }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(true);
@@ -1499,6 +1536,40 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Eksperiment «onboarding_keywords» variant B: eget søkeord-steg etter
+  // skjemaet, med automatisk posisjonssjekk — slik at dashbordet viser ekte
+  // Google-posisjoner ved aller første innlasting (aha-øyeblikket).
+  const kwVariant = useMemo(() => getVariant(EXPERIMENTS.onboardingKeywords), []);
+  const [step, setStep] = useState<'form' | 'keywords'>('form');
+  const [kwCity, setKwCity] = useState('');
+  const [kwSelected, setKwSelected] = useState<string[]>([]);
+  const [kwCustom, setKwCustom] = useState('');
+  const [kwChecking, setKwChecking] = useState(false);
+  const [kwProgress, setKwProgress] = useState<string | null>(null);
+  // Brukeren slik handleSubmit faktisk løste den (prop-en kan være null ved
+  // timing-race) — søkeord-steget trenger samme id til REST-skrivingene.
+  const resolvedUserRef = useRef<any>(null);
+  const [auditFacts] = useState<{ title?: string | null; h1Text?: string | null } | null>(() => {
+    try { return JSON.parse(localStorage.getItem('sikt_audit_facts') || 'null'); } catch { return null; }
+  });
+  const kwSuggestions = useMemo(
+    () => buildKeywordSuggestions(formData.industry, kwCity, auditFacts),
+    [formData.industry, kwCity, auditFacts],
+  );
+
+  const toggleKeyword = (kw: string) => {
+    setKwSelected((prev) =>
+      prev.includes(kw) ? prev.filter((k) => k !== kw) : prev.length >= ONBOARDING_KW_MAX ? prev : [...prev, kw],
+    );
+  };
+
+  const addCustomKeyword = () => {
+    const v = kwCustom.trim().toLowerCase();
+    if (!v || kwSelected.includes(v) || kwSelected.length >= ONBOARDING_KW_MAX) return;
+    setKwSelected((prev) => [...prev, v]);
+    setKwCustom('');
+  };
 
   // Preutfyll skjemaet med eksisterende data hvis brukeren har vært her før.
   // Dette gjør at en bruker som betalte og fylte ut delvis kan fortsette der
@@ -1647,6 +1718,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
       setLoading(false);
       return;
     }
+    resolvedUserRef.current = aktivBruker;
 
     try {
       const dataTilDatabase = {
@@ -1760,7 +1832,17 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
         console.warn('[Onboarding] Kunne ikke opprette sites-rad:', err);
       }
 
-      onComplete();
+      track('onboarding_completed');
+
+      // Variant B: søkeord-steget FØR portalen, så aha-en («der ligger jeg
+      // på Google») er klar ved første dashbord-innlasting. A går rett videre.
+      if (kwVariant === 'B') {
+        setKwSelected(buildKeywordSuggestions(formData.industry, kwCity, auditFacts).slice(0, 3));
+        setStep('keywords');
+        track('onboarding_keywords_shown');
+      } else {
+        onComplete();
+      }
 
     } catch (error: any) {
       const rawMsg = error?.message || String(error);
@@ -1774,9 +1856,182 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     }
   };
 
+  // Sjekker de valgte søkeordene mot Google (samme /api/search som Søkeord-
+  // fanen) og lagrer keyword_data i NØYAKTIG samme format som portalens
+  // handleCheckRankings — dashbordet viser da ekte posisjoner ved første
+  // innlasting. Ordene lagres FØR sjekken, så en SERP-feil aldri koster
+  // kunden noe (samme tilstand som manuell tillegging uten sjekk).
+  const runKeywordCheck = async () => {
+    if (kwChecking) return;
+    const uid = resolvedUserRef.current?.id || user?.id;
+    const token = getStoredAccessToken();
+    const selected = kwSelected.slice(0, ONBOARDING_KW_MAX);
+    if (!uid || !token || selected.length === 0) { onComplete(); return; }
+    const sted = kwCity.trim() || 'Oslo';
+    setKwChecking(true);
+    setKwProgress('Lagrer søkeordene dine …');
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const restHeaders = {
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      await fetch(`${supabaseUrl}/rest/v1/user_keywords?on_conflict=user_id,keyword,location`, {
+        method: 'POST',
+        headers: { ...restHeaders, Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify(selected.map((keyword) => ({ user_id: uid, keyword, location: sted }))),
+      });
+      track('keywords_added', { count: selected.length, source: 'onboarding' });
+
+      setKwProgress('Sjekker hvor du ligger på Google …');
+      const cleanDomain = String(formData.websiteUrl || '')
+        .replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase().trim();
+      const matchesDomain = (link: string) => {
+        try {
+          const host = new URL(link).hostname.replace(/^www\./, '').toLowerCase();
+          return host === cleanDomain || host.endsWith('.' + cleanDomain);
+        } catch {
+          return link.toLowerCase().includes(cleanDomain);
+        }
+      };
+      const todayDate = new Date().toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' });
+
+      const checks = selected.map(async (keyword) => {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ keyword, location: sted }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error || !Array.isArray(data.organic_results)) return null;
+        const found = data.organic_results.find((r: any) => r.link && matchesDomain(r.link));
+        const position = found ? found.position : 301; // sentinel: «utenfor topp 100»
+        let resultType = 'Tekst';
+        if (data.local_results) resultType += ', Kart';
+        if (data.inline_images) resultType += ', Bilder';
+        const totalResults = data.search_information?.total_results || 10000;
+        return {
+          keyword,
+          location: sted,
+          position,
+          url: found ? found.link : '-',
+          change: 0,
+          volume: resultType,
+          competition: totalResults,
+          kd: Math.min(100, Math.max(10, Math.round((totalResults / 1000000) * 10))),
+          intent: ['Kjøp', 'Info', 'Lokal'][Math.floor(Math.random() * 3)],
+          history: [{ date: todayDate, rank: position }],
+          competitors: data.organic_results.slice(0, 5).map((r: any) => ({
+            position: r.position, title: r.title, url: r.link, snippet: r.snippet,
+          })),
+        };
+      });
+
+      // Hard tak på ventetiden — kunden skal aldri sitte fast her hvis
+      // SerpApi henger. Det som ikke rakk fristen re-sjekkes i portalen.
+      const settled = await Promise.race([
+        Promise.allSettled(checks),
+        new Promise<PromiseSettledResult<any>[]>((resolve) => setTimeout(() => resolve([]), 25000)),
+      ]);
+      const results = (Array.isArray(settled) ? settled : [])
+        .map((s) => (s.status === 'fulfilled' ? s.value : null))
+        .filter(Boolean) as any[];
+
+      for (const r of results) {
+        await fetch(
+          `${supabaseUrl}/rest/v1/user_keywords?user_id=eq.${uid}&keyword=eq.${encodeURIComponent(r.keyword)}&location=eq.${encodeURIComponent(r.location)}`,
+          { method: 'PATCH', headers: restHeaders, body: JSON.stringify({ keyword_data: r }) },
+        ).catch(() => { /* posisjonen re-sjekkes i portalen */ });
+      }
+
+      if (results.length > 0) {
+        // Portalens hurtig-cache — dashbordet har tallene før REST-hentingen.
+        try {
+          localStorage.setItem(`keywords_${uid}`, JSON.stringify(selected.map((keyword) => ({ keyword, location: sted }))));
+          localStorage.setItem(`rankings_${uid}`, JSON.stringify(results));
+        } catch { /* ignore */ }
+        const top10 = results.filter((r) => r.position <= 10).length;
+        trackOnce('first_rank_check', { keywords: results.length, top10, source: 'onboarding' }, `first_rank_check_${uid}`);
+        track('onboarding_keywords_done', { count: selected.length, checked: results.length });
+      }
+    } catch (err: any) {
+      console.warn('[Onboarding] Søkeord-sjekken feilet (ordene er lagret):', err?.message || err);
+    } finally {
+      setKwChecking(false);
+      onComplete();
+    }
+  };
+
   return (
     <section className="min-h-screen bg-[#F2EFE8] py-20 px-5 flex items-center justify-center">
       <div className="max-w-3xl w-full bg-white rounded-[32px] shadow-2xl p-8 sm:p-12 relative z-10 border border-[#E9E4DA]">
+        {step === 'keywords' ? (
+          <div>
+            <h1 className="text-3xl font-black text-[#1A1A1A] mb-2">Hvilke søk vil du <span className="text-violet-700">vinne?</span></h1>
+            <p className="text-sm text-[#5C574C] mb-8">Velg opptil {ONBOARDING_KW_MAX} søk kundene dine bruker — så sjekker vi med én gang hvor du ligger på Google. Svaret venter i dashbordet ditt.</p>
+
+            <div className="space-y-6">
+              <input
+                value={kwCity}
+                onChange={(e) => setKwCity(e.target.value)}
+                placeholder="Hvor er kundene dine? (f.eks. Drammen)"
+                aria-label="By eller sted kundene dine søker fra"
+                className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none"
+              />
+
+              <div className="flex flex-wrap gap-2">
+                {[...new Set([...kwSuggestions, ...kwSelected])].map((kw) => {
+                  const active = kwSelected.includes(kw);
+                  return (
+                    <button
+                      key={kw}
+                      type="button"
+                      onClick={() => toggleKeyword(kw)}
+                      className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-colors ${active ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]' : 'bg-white text-[#1A1A1A] border-[#E9E4DA] [@media(hover:hover)_and_(pointer:fine)]:hover:border-[#5C574C]'}`}
+                    >
+                      {active ? '✓ ' : '+ '}{kw}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={kwCustom}
+                  onChange={(e) => setKwCustom(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomKeyword(); } }}
+                  placeholder="Eget søkeord (f.eks. «tannlege akutt»)"
+                  aria-label="Legg til eget søkeord"
+                  className="flex-1 p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none"
+                />
+                <button type="button" onClick={addCustomKeyword} className="px-5 rounded-xl border border-[#E9E4DA] font-bold text-[#1A1A1A] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#F2EFE8]">Legg til</button>
+              </div>
+
+              <button
+                type="button"
+                onClick={runKeywordCheck}
+                disabled={kwChecking || kwSelected.length === 0}
+                className="w-full py-5 bg-violet-700 text-white rounded-xl font-bold text-lg transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl disabled:opacity-50 enabled:hover:bg-violet-600 active:enabled:scale-[0.98] flex items-center justify-center gap-3"
+              >
+                {kwChecking
+                  ? (<><Loader2 size={20} className="animate-spin" /> {kwProgress || 'Sjekker …'}</>)
+                  : `Sjekk hvor jeg ligger på Google (${kwSelected.length} av ${ONBOARDING_KW_MAX})`}
+              </button>
+              <button
+                type="button"
+                onClick={() => { track('onboarding_keywords_skipped'); onComplete(); }}
+                disabled={kwChecking}
+                className="w-full text-sm font-bold text-[#5C574C] disabled:opacity-50 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]"
+              >
+                Hopp over — jeg legger inn søkeord senere
+              </button>
+            </div>
+          </div>
+        ) : (
+        <>
         <h1 className="text-3xl font-black text-[#1A1A1A] mb-2">Fortell oss om din <span className="text-[#1A1A1A]">bedrift</span></h1>
         <p className="text-sm text-[#5C574C] mb-8">
           {prefillLoading
@@ -1796,7 +2051,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input required type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} placeholder="E-post" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
-            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
+            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} placeholder="Telefon (valgfritt)" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
           </div>
           <div>
             <div className="relative">
@@ -1867,7 +2122,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             )}
           </div>
 
-          <textarea required name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (Hvem ønsker du å nå?)" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
+          <textarea name="targetAudience" value={formData.targetAudience} rows={3} onChange={handleChange} onBlur={handleBlur} placeholder="Målgruppe (valgfritt — hvem ønsker du å nå?)" className="w-full p-4 bg-[#F2EFE8] rounded-xl border border-[#E9E4DA] focus:ring-2 focus:ring-[#5C574C]/25 outline-none" />
 
           <button
             type="submit"
@@ -1877,6 +2132,8 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
             {loading ? 'Lagrer data...' : 'Fullfør registrering →'}
           </button>
         </form>
+        </>
+        )}
       </div>
     </section>
   );
@@ -2349,6 +2606,14 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
   } | null>(null);
   const [monthlyVisits, setMonthlyVisits] = useState(1000);
 
+  // Eksperiment «free_audit_gate»: A (kontroll) krever e-post FØR analysen,
+  // B viser resultatet uten e-post og spør om adressen ETTER at verdien er
+  // levert (rapporten ettersendes via mode=public_email). Bucketen er stabil
+  // per nettleser og følger alle events som super-property.
+  const gateVariant = useMemo(() => getVariant(EXPERIMENTS.freeAuditGate), []);
+  const [reportEmailStatus, setReportEmailStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [reportEmailError, setReportEmailError] = useState<string | null>(null);
+
   const runAudit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -2356,9 +2621,9 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
     const cleanUrl = url.trim();
     const cleanEmail = email.trim();
     if (!cleanUrl) { setError('Skriv inn nettsiden din.'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { setError('Skriv inn en gyldig e-postadresse.'); return; }
+    if (gateVariant === 'A' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { setError('Skriv inn en gyldig e-postadresse.'); return; }
     setLoading(true);
-    track('free_analysis_started', { url: cleanUrl });
+    track('free_analysis_started', { url: cleanUrl, variant: gateVariant });
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
         method: 'POST',
@@ -2366,25 +2631,62 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ url: cleanUrl, email: cleanEmail, mode: 'public' }),
+        body: JSON.stringify({ url: cleanUrl, ...(gateVariant === 'A' ? { email: cleanEmail } : {}), mode: 'public' }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error || 'Kunne ikke analysere siden. Prøv igjen.');
-        track('free_analysis_failed', { reason: data?.error || `http_${res.status}` });
+        track('free_analysis_failed', { reason: data?.error || `http_${res.status}`, variant: gateVariant });
         return;
       }
       setResult(data);
       track('free_analysis_completed', {
         performance: data?.scores?.performance ?? null,
         seo: data?.scores?.seo ?? null,
+        variant: gateVariant,
       });
-      try { localStorage.setItem('sikt_audit_url', data?.url || cleanUrl); } catch { /* ignore */ }
+      try {
+        localStorage.setItem('sikt_audit_url', data?.url || cleanUrl);
+        // On-page-fakta gjenbrukes av søkeord-forslagene i onboarding
+        // (eksperiment «onboarding_keywords») — tittel/H1 gir bedre forslag.
+        if (data?.pageFacts) localStorage.setItem('sikt_audit_facts', JSON.stringify(data.pageFacts));
+      } catch { /* ignore */ }
     } catch {
       setError('Noe gikk galt. Sjekk URL-en og prøv igjen.');
-      track('free_analysis_failed', { reason: 'network' });
+      track('free_analysis_failed', { reason: 'network', variant: gateVariant });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Variant B: ettersend full rapport til adressen kunden gir ETTER resultatet.
+  const submitReportEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (reportEmailStatus === 'sending') return;
+    const cleanEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) { setReportEmailError('Skriv inn en gyldig e-postadresse.'); return; }
+    setReportEmailError(null);
+    setReportEmailStatus('sending');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-pagespeed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ mode: 'public_email', url: result?.url, email: cleanEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setReportEmailStatus('idle');
+        setReportEmailError(data?.error || 'Kunne ikke sende rapporten. Prøv igjen.');
+        return;
+      }
+      setReportEmailStatus('sent');
+      track('audit_email_submitted', { variant: gateVariant });
+    } catch {
+      setReportEmailStatus('idle');
+      setReportEmailError('Noe gikk galt. Prøv igjen.');
     }
   };
 
@@ -2450,17 +2752,19 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   autoComplete="url"
                   className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
                 />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="din@epost.no"
-                  aria-label="E-postadressen din"
-                  name="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
-                />
+                {gateVariant === 'A' && (
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="din@epost.no"
+                    aria-label="E-postadressen din"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    className="w-full px-5 py-4 rounded-2xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-base font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                  />
+                )}
               </div>
               {error && (
                 <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#B4231F]"><AlertCircle size={16} /> {error}</p>
@@ -2472,7 +2776,11 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
               >
                 {loading ? (<><Loader2 size={20} className="animate-spin" /> Analyserer siden …</>) : (<>Analyser gratis <ArrowRight size={20} className="transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" /></>)}
               </button>
-              <p className="mt-3 text-center text-xs text-[#5C574C]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst. <a href="/personvern" className="underline underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Slik behandler vi e-posten din</a>.</p>
+              {gateVariant === 'A' ? (
+                <p className="mt-3 text-center text-xs text-[#5C574C]">Vi sender deg rapporten og tips. Ingen spam — meld deg av når som helst. <a href="/personvern" className="underline underline-offset-2 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Slik behandler vi e-posten din</a>.</p>
+              ) : (
+                <p className="mt-3 text-center text-xs text-[#5C574C]">Ingen e-post nødvendig — du ser resultatet med en gang.</p>
+              )}
             </form>
           </RevealOnScroll>
         ) : (
@@ -2570,6 +2878,43 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                 </div>
               )}
 
+              {/* Variant B: e-postfangst ETTER at verdien er vist — rapporten ettersendes. */}
+              {gateVariant === 'B' && (
+                <div className="mb-7 rounded-2xl bg-[#F2EFE8] border border-[#E9E4DA] p-4 sm:p-5">
+                  {reportEmailStatus === 'sent' ? (
+                    <p className="flex items-center gap-2.5 text-sm font-bold text-[#15795A]"><CheckCircle size={18} className="shrink-0" /> Rapporten er på vei til innboksen din.</p>
+                  ) : (
+                    <form onSubmit={submitReportEmail}>
+                      <p className="text-sm font-black text-[#1A1A1A] mb-1">Få hele rapporten på e-post</p>
+                      <p className="text-xs text-[#5C574C] mb-3">{(shownFindings.length > 0 ? hiddenFindings : hiddenIssues) > 0 ? `De ${shownFindings.length > 0 ? hiddenFindings : hiddenIssues} låste funnene + konkrete tips — gratis, uten spam.` : 'Alle funnene samlet + konkrete tips — gratis, uten spam.'}</p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="din@epost.no"
+                          aria-label="E-postadressen din"
+                          autoComplete="email"
+                          inputMode="email"
+                          className="flex-1 px-4 py-3 rounded-xl border border-[#E9E4DA] bg-white text-[#1A1A1A] text-sm font-semibold placeholder:text-[#B3AD9F] focus:outline-none focus:border-violet-400"
+                        />
+                        <button
+                          type="submit"
+                          disabled={reportEmailStatus === 'sending'}
+                          className="px-5 py-3 bg-[#1A1A1A] text-white rounded-xl text-sm font-black tracking-tight ui-motion disabled:opacity-60 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-violet-700"
+                        >
+                          {reportEmailStatus === 'sending' ? 'Sender …' : 'Send rapporten'}
+                        </button>
+                      </div>
+                      {reportEmailError && (
+                        <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#B4231F]"><AlertCircle size={14} /> {reportEmailError}</p>
+                      )}
+                      <p className="mt-2 text-[11px] text-[#B3AD9F]">Ingen spam — meld deg av når som helst. <a href="/personvern" className="underline underline-offset-2">Slik behandler vi e-posten din</a>.</p>
+                    </form>
+                  )}
+                </div>
+              )}
+
               {/* Verdi-stige-CTA */}
               <div className="bg-gradient-to-br from-violet-50 to-white border border-violet-200 rounded-2xl p-5 sm:p-6">
                 <p className="text-base font-black text-[#1A1A1A] mb-3">Slik fikser du det:</p>
@@ -2588,7 +2933,7 @@ const FreeAuditSection = ({ onSelectPlan }: { onSelectPlan: (plan?: string) => v
                   <ArrowRight size={20} className="shrink-0 transition-transform duration-200 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1" />
                 </button>
                 <p className="mt-4 text-center text-xs font-bold text-[#5C574C]">Founding-pris for de første kundene · ingen bindingstid</p>
-                <button onClick={() => { setResult(null); setError(null); }} className="w-full mt-3 text-sm font-bold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
+                <button onClick={() => { setResult(null); setError(null); setReportEmailStatus('idle'); setReportEmailError(null); }} className="w-full mt-3 text-sm font-bold text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]">Analyser en annen side</button>
               </div>
             </div>
           </RevealOnScroll>
@@ -3815,6 +4160,7 @@ function App() {
                 JSON.stringify({ url: formattedUrl, mobileRaw: data.mobile, desktopRaw: data.desktop, timestamp: Date.now() }),
               );
             } catch { /* ignore */ }
+            track('first_scan_completed', { url: formattedUrl });
           }
         }
       } catch (err: any) {

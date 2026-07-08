@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Check,
   ChevronRight,
@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { formatChartDate, chartTooltipStyle } from './src/portalTheme';
 import { SectionTitle } from './src/portalEditorial';
+import { trackOnce } from './src/analytics';
 
 type PortalTab =
   | 'home'
@@ -471,6 +472,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
     technicalScore != null && visibilityScore != null
       ? Math.round((technicalScore + visibilityScore) / 2)
       : (technicalScore ?? visibilityScore);
+
+  // Aha-milepælen: første gang kunden ser BEGGE halvdelene av Samlet score —
+  // teknisk analyse + ekte Google-posisjoner på egne søkeord (realRankings,
+  // ikke SEO-fallbacken). Fyrer maks én gang per bruker; måler tid-til-aha.
+  useEffect(() => {
+    if (technicalScore == null || realRankings.length === 0) return;
+    trackOnce(
+      'aha_reached',
+      { technicalScore, visibilityScore, keywords: realRankings.length },
+      `aha_reached_${user?.id ?? ''}`,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [technicalScore, realRankings.length]);
 
   const allTrendData = useMemo(
     () =>

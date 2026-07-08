@@ -181,6 +181,100 @@ async function sendAuditReportEmail(
   }
 }
 
+// Dag-0-eksperimentet: «Første analyse er klar»-e-post til en NY kunde rett
+// etter onboarding-scanet — uten den er neste livstegn først mandagens
+// ukesrapport (opptil 6 dagers stillhet midt i angrerett-vinduet).
+// 50/50-holdout på user_id-hash; BEGGE grupper logges i day0_report_log slik
+// at D1-retur kan måles server-side. Den unike indeksen på user_id gjør
+// logg-innsettingen til en atomisk engangs-port: to samtidige scans kan
+// aldri sende dobbelt. Utløses kun av sitens aller første health_checks-rad,
+// så manuelle re-scans hos etablerte kunder aldri trigger den.
+async function maybeSendDay0Report(
+  svc: ReturnType<typeof createClient>,
+  opts: { siteId: string; url: string; mobileData: any },
+): Promise<void> {
+  const { count } = await svc
+    .from('health_checks')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', opts.siteId);
+  if ((count ?? 0) !== 1) return; // ikke første scan for denne siten
+
+  const { data: site } = await svc
+    .from('sites')
+    .select('user_id')
+    .eq('id', opts.siteId)
+    .maybeSingle();
+  const userId = (site?.user_id as string | undefined) ?? null;
+  if (!userId) return;
+
+  const { data: client } = await svc
+    .from('clients')
+    .select('email, subscription_status')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const toEmail = (client?.email as string | undefined) ?? '';
+  if (!toEmail || client?.subscription_status !== 'active') return;
+
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  const variant = h % 2 === 0 ? 'send' : 'holdout';
+
+  const { error: logError } = await svc
+    .from('day0_report_log')
+    .insert({ user_id: userId, site_id: opts.siteId, variant, url: opts.url });
+  if (logError) {
+    // Rad finnes fra før (unik user_id) eller migrasjonen mangler — send aldri da.
+    console.log('[scan-pagespeed] dag-0-logg ikke skrevet — hopper over e-post:', logError.message);
+    return;
+  }
+  if (variant !== 'send') return;
+
+  const resendKey = Deno.env.get('RESEND_API_KEY') ?? '';
+  if (!resendKey) {
+    console.warn('[scan-pagespeed] RESEND_API_KEY mangler — hopper over dag-0-e-post.');
+    return;
+  }
+
+  const scoreOf = (cat: any) => (cat && typeof cat.score === 'number' ? Math.round(cat.score * 100) : null);
+  const mc = opts.mobileData?.lighthouseResult?.categories ?? {};
+  const scores = {
+    performance: scoreOf(mc.performance),
+    seo: scoreOf(mc.seo),
+    accessibility: scoreOf(mc.accessibility),
+    bestPractices: scoreOf(mc['best-practices']),
+  };
+  const audits = opts.mobileData?.lighthouseResult?.audits ?? {};
+  const failing = (Object.values(audits) as any[])
+    .filter((a) => a && typeof a.score === 'number' && a.score < 0.9 && a.title)
+    .sort((a, b) => a.score - b.score);
+  const psiIssues = failing
+    .slice(0, 10)
+    .map((a) => ({ title: a.title as string, displayValue: (a.displayValue as string) || '' }));
+  const pageFacts = await fetchPageFacts(opts.url);
+
+  const { subject, html, findingsCount } = buildAuditReportEmail({
+    url: opts.url,
+    scores,
+    pageFacts,
+    psiIssues,
+    audience: 'customer',
+  });
+  const fromEmail = Deno.env.get('FROM_EMAIL') ?? 'rapport@siktseo.com';
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: `Sikt <${fromEmail}>`, to: [toEmail], subject, html }),
+  });
+  if (resp.ok) {
+    await svc
+      .from('day0_report_log')
+      .update({ email_sent: true, findings: findingsCount })
+      .eq('user_id', userId);
+  } else {
+    console.error('[scan-pagespeed] dag-0 Resend svarte', resp.status, await resp.text().catch(() => ''));
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -216,11 +310,66 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── Utlogget gratis-analyse (forsiden, e-post-gated) ────────────────
+  // ── Ettersendelse av rapport (variant B av gratis-analysen) ─────────
+  // Eksperiment «free_audit_gate»: variant B kjører analysen UTEN e-post og
+  // spør om adressen etter at resultatet er vist. Dette kallet kobler
+  // adressen til den ferske analysen og sender rapporten. Innholdet bygges
+  // utelukkende fra data VI lagret i audit_leads — aldri fra klient-payload,
+  // så endepunktet ikke kan misbrukes til å sende vilkårlig innhold.
+  if (mode === 'public_email') {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'Ugyldig e-postadresse.' }, 400);
+    }
+    let publicUrl: string;
+    try {
+      publicUrl = normalizePublicUrl(targetUrl ?? '');
+    } catch (e) {
+      return json({ error: (e as Error)?.message || 'URL er ikke tillatt.' }, 400);
+    }
+
+    const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: lead } = await svc
+      .from('audit_leads')
+      .select('id, scores, top_issues, page_facts')
+      .eq('url', publicUrl)
+      .is('email', null)
+      .gte('created_at', new Date(Date.now() - 2 * 3600_000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!lead) {
+      return json({ error: 'Fant ikke en fersk analyse for denne siden. Kjør analysen på nytt.' }, 404);
+    }
+
+    await svc.from('audit_leads').update({ email }).eq('id', lead.id);
+
+    const storedScores = (lead.scores ?? {}) as Record<string, unknown>;
+    const asScore = (v: unknown) => (typeof v === 'number' ? v : null);
+    const sendPromise = sendAuditReportEmail(svc, {
+      to: email,
+      url: publicUrl,
+      scores: {
+        performance: asScore(storedScores.performance),
+        seo: asScore(storedScores.seo),
+        accessibility: asScore(storedScores.accessibility),
+        bestPractices: asScore(storedScores.bestPractices),
+      },
+      pageFacts: (lead.page_facts as PageFacts | null) ?? null,
+      psiIssues: Array.isArray(lead.top_issues) ? (lead.top_issues as Array<{ title: string; displayValue: string }>) : [],
+    }).catch((err) => console.error('[scan-pagespeed] ettersendt rapport feilet:', err));
+    const rt = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+    if (rt?.waitUntil) rt.waitUntil(sendPromise); else await sendPromise;
+
+    return json({ ok: true }, 200);
+  }
+
+  // ── Utlogget gratis-analyse (forsiden) ──────────────────────────────
   // Kjører FØRST og isolert, før all site/limit-logikk, så den ikke kan
   // påvirke betalende kunders flyt. Returnerer KUN en teaser, aldri full rapport.
+  // E-post er valgfri (eksperiment «free_audit_gate» variant B analyserer uten);
+  // uten e-post lagres leaden med email=null og rapport-e-posten hoppes over.
   if (mode === 'public') {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return json({ error: 'Ugyldig e-postadresse.' }, 400);
     }
     let publicUrl: string;
@@ -268,9 +417,11 @@ Deno.serve(async (req) => {
     const svc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     // Lead-lagring (service-role) — skal aldri blokkere svaret til besøkende.
+    // email=null (variant B) er med vilje: raden trengs for netto volum-måling
+    // og for public_email-ettersendelsen; outreach må filtrere på email not null.
     try {
       await svc.from('audit_leads').insert({
-        email,
+        email: email || null,
         url: publicUrl,
         mobile_score: scores.performance,
         desktop_score: scoreOf(d.lighthouseResult?.categories?.performance),
@@ -284,16 +435,19 @@ Deno.serve(async (req) => {
       console.error('[scan-pagespeed] audit_leads insert feilet:', err);
     }
 
-    // Forsiden lover «Vi sender deg rapporten» — hold løftet. E-posten får
-    // flere PSI-funn enn teaseren (som låser alt utover topp 3). Sendingen
+    // Forsiden lover «Vi sender deg rapporten» — hold løftet (når vi HAR en
+    // adresse; variant B fanger den etterpå via mode=public_email). E-posten
+    // får flere PSI-funn enn teaseren (som låser alt utover topp 3). Sendingen
     // skjer etter at svaret er levert (waitUntil) og kan aldri velte det.
-    const emailIssues = failing
-      .slice(0, 10)
-      .map((a) => ({ title: a.title as string, displayValue: (a.displayValue as string) || '' }));
-    const sendPromise = sendAuditReportEmail(svc, { to: email, url: publicUrl, scores, pageFacts, psiIssues: emailIssues })
-      .catch((err) => console.error('[scan-pagespeed] rapport-e-post feilet:', err));
-    const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
-    if (runtime?.waitUntil) runtime.waitUntil(sendPromise); else await sendPromise;
+    if (email) {
+      const emailIssues = failing
+        .slice(0, 10)
+        .map((a) => ({ title: a.title as string, displayValue: (a.displayValue as string) || '' }));
+      const sendPromise = sendAuditReportEmail(svc, { to: email, url: publicUrl, scores, pageFacts, psiIssues: emailIssues })
+        .catch((err) => console.error('[scan-pagespeed] rapport-e-post feilet:', err));
+      const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+      if (runtime?.waitUntil) runtime.waitUntil(sendPromise); else await sendPromise;
+    }
 
     return json({ teaser: true, url: publicUrl, scores, topIssues, issueCount, pageFacts }, 200);
   }
@@ -440,6 +594,14 @@ Deno.serve(async (req) => {
         raw_desktop: desktopData,
         checked_at: new Date().toISOString(),
       });
+
+      // Dag-0-eksperiment: første scan for en ny kunde → «Første analyse er
+      // klar»-e-post (eller holdout-logg). Kjøres etter at svaret er levert
+      // og kan aldri velte selve analysen.
+      const day0Promise = maybeSendDay0Report(supabase, { siteId, url: targetUrl!, mobileData })
+        .catch((err) => console.error('[scan-pagespeed] dag-0-rapport feilet:', err));
+      const day0Runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+      if (day0Runtime?.waitUntil) day0Runtime.waitUntil(day0Promise); else await day0Promise;
     } catch (err) {
       console.error('[scan-pagespeed] Kunne ikke lagre til health_checks:', err);
     }

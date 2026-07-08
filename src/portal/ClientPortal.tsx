@@ -20,6 +20,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { toastInfo, toastSuccess, toastError, toastWarning } from '../toast';
 import { supabaseRest, getStoredAccessToken } from '../supabaseRest';
+import { track, trackOnce } from '../analytics';
 import {
   DashboardCompetitorWidget,
   CompetitorChangeFeed,
@@ -4884,6 +4885,23 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     fetchClientData();
   }, [user]);
 
+  // Aktiverings-måling: skiller første portalbesøk fra retur-besøk. Første
+  // besøk setter kun en markør; besøk ≥1 dag senere fyrer portal_return —
+  // D1/D7-retur er hovedmetrikken for dag-0-e-posten og onboarding-søkeord.
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const key = `sikt_portal_first_seen_${user.id}`;
+      const first = localStorage.getItem(key);
+      if (!first) {
+        localStorage.setItem(key, String(Date.now()));
+        return;
+      }
+      const daysSinceFirst = Math.floor((Date.now() - Number(first)) / 86_400_000);
+      if (daysSinceFirst >= 1) track('portal_return', { daysSinceFirst });
+    } catch { /* ignore */ }
+  }, [user?.id]);
+
   // 3. ANIMASJON (Analyse)
   useEffect(() => {
     let interval: any;
@@ -5347,6 +5365,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       const newEntry = { keyword: newKeywordInput.trim(), location: locationInput.trim() };
       activeList = [...activeList, newEntry];
       setKeywordsToTrack(activeList);
+      track('keywords_added', { count: 1, source: 'portal' });
 
       // Vi sletter localStorage her, siden vi lagrer alt i Supabase lenger ned
       setNewKeywordInput(''); // Tømmer feltet
@@ -5519,6 +5538,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       // Logg til Ukens kvittering
       const top10 = results.filter((r: any) => r.position <= 10).length;
       const top3 = results.filter((r: any) => r.position <= 3).length;
+      if (results.length > 0) {
+        // Aktiverings-milepæl: første posisjonssjekk noensinne for denne brukeren.
+        trackOnce('first_rank_check', { keywords: results.length, top10, source: 'portal' }, `first_rank_check_${user?.id ?? ''}`);
+      }
       if (user?.id) {
         supabase.from('sikt_actions').insert({
           user_id: user.id,

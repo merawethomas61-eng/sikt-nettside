@@ -102,7 +102,13 @@ export function buildAuditReportEmail(opts: {
   scores: AuditScores;
   pageFacts: PageFacts | null;
   psiIssues: Array<{ title: string; displayValue: string }>;
-}): { subject: string; html: string } {
+  // 'lead' (default) = gratis-analysen på forsiden, med plan-pitch og /priser-CTA.
+  // 'customer' = dag-0-rapporten til en NY betalende kunde rett etter onboarding —
+  // samme funn, men null salg: CTA-en går til dashbordet, pitch-blokken byttes
+  // ut med «hva skjer nå», og footeren sier kunde, ikke lead.
+  audience?: 'lead' | 'customer';
+}): { subject: string; html: string; findingsCount: number } {
+  const isCustomer = opts.audience === 'customer';
   const host = (() => {
     try { return new URL(opts.url).hostname.replace(/^www\./, ''); } catch { return opts.url; }
   })();
@@ -162,28 +168,48 @@ export function buildAuditReportEmail(opts: {
     }));
   }
 
-  blocks.push(note(
-    `Vil du fikse det? <strong>Basic</strong> (790 kr/mnd) gir deg hele lista med ferdige oppskrifter du gjør selv. <strong>Standard</strong> (1 690 kr/mnd) kobler seg til siden din og fikser det meste automatisk. Ingen bindingstid — si opp når som helst.`,
-  ));
+  if (isCustomer) {
+    blocks.push(note(
+      `<strong>Hva skjer nå?</strong> Alle funnene ligger allerede i dashbordet ditt, der Sikt prioriterer hva som bør fikses først. Du får rapporter på e-post etter hvert som arbeidet skjer — frekvensen styrer du selv i innstillingene.`,
+    ));
+  } else {
+    blocks.push(note(
+      `Vil du fikse det? <strong>Basic</strong> (790 kr/mnd) gir deg hele lista med ferdige oppskrifter du gjør selv. <strong>Standard</strong> (1 690 kr/mnd) kobler seg til siden din og fikser det meste automatisk. Ingen bindingstid — si opp når som helst.`,
+    ));
+  }
 
-  const subject = findings.length > 0
-    ? `${findings.length} funn på ${host} — hele rapporten din fra Sikt`
-    : `Rapporten for ${host}: solid grunnmur`;
+  const subject = isCustomer
+    ? (findings.length > 0
+        ? `Første analyse er klar: ${findings.length} funn på ${host}`
+        : `Første analyse er klar: solid grunnmur på ${host}`)
+    : (findings.length > 0
+        ? `${findings.length} funn på ${host} — hele rapporten din fra Sikt`
+        : `Rapporten for ${host}: solid grunnmur`);
 
   const html = renderEmail({
-    preheader: findings.length > 0
-      ? `Hele rapporten for ${host}: ${findings.length} funn, uten noe holdt tilbake.`
-      : `Rapporten for ${host} er klar.`,
+    preheader: isCustomer
+      ? `Første analyse av ${host} er ferdig — alt ligger i dashbordet ditt.`
+      : findings.length > 0
+        ? `Hele rapporten for ${host}: ${findings.length} funn, uten noe holdt tilbake.`
+        : `Rapporten for ${host} er klar.`,
     brand: 'sikt',
     kicker: new Date().toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' }),
     heading: `Slik står ${escapeHtml(host)} i dag`,
-    intro: `Her er hele rapporten fra gratis-analysen du kjørte på siktseo.com — alt vi fant, uten noe holdt tilbake.`,
+    intro: isCustomer
+      ? `Den første analysen av siden din er ferdig — den kjørte automatisk i det du fullførte oppstarten. Her er alt vi fant, og alt ligger også i dashbordet ditt.`
+      : `Her er hele rapporten fra gratis-analysen du kjørte på siktseo.com — alt vi fant, uten noe holdt tilbake.`,
     blocks,
-    cta: { label: 'Se hvordan Sikt fikser det', url: 'https://siktseo.com/priser' },
-    secondary: `Vil du sjekke en annen side? <a href="https://siktseo.com/#gratis-analyse" style="color:inherit;text-decoration:underline">Kjør en ny gratis-analyse</a>.`,
-    signoff: 'Lykke til med siden — vi heier uansett.',
-    footer: `Sikt · siktseo.com — du får denne éne e-posten fordi du ba om rapporten på siktseo.com. Vil du ikke høre mer fra oss? Svar «nei takk», så stryker vi deg.`,
+    cta: isCustomer
+      ? { label: 'Åpne dashbordet', url: 'https://siktseo.com/portal' }
+      : { label: 'Se hvordan Sikt fikser det', url: 'https://siktseo.com/priser' },
+    secondary: isCustomer
+      ? `Lurer du på noe? Svar på denne e-posten, så hjelper vi deg.`
+      : `Vil du sjekke en annen side? <a href="https://siktseo.com/#gratis-analyse" style="color:inherit;text-decoration:underline">Kjør en ny gratis-analyse</a>.`,
+    signoff: isCustomer ? 'Vi er i gang. Dette blir bra.' : 'Lykke til med siden — vi heier uansett.',
+    footer: isCustomer
+      ? `Sikt · siktseo.com — du får denne e-posten fordi du er kunde hos Sikt.`
+      : `Sikt · siktseo.com — du får denne éne e-posten fordi du ba om rapporten på siktseo.com. Vil du ikke høre mer fra oss? Svar «nei takk», så stryker vi deg.`,
   });
 
-  return { subject, html };
+  return { subject, html, findingsCount: findings.length };
 }
