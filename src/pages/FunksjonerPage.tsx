@@ -147,6 +147,40 @@ function FixMock() {
   );
 }
 
+function ArticleMock() {
+  return (
+    <Frame url="wp-admin › Innlegg › Utkast">
+      <div className="bg-[#FBFBFA] p-4 sm:p-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C574C] bg-[#F2EFE8] border border-[#E9E4DA] rounded-full px-2.5 py-0.5">Utkast — venter på deg</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#15795A]">
+            <Sparkles size={12} /> Skrevet av Sikt
+          </span>
+        </div>
+        <p className="text-sm sm:text-base font-bold text-[#1A1A1A] leading-snug">
+          Varmepumpe i enebolig: pris, støtte og hva du bør vite
+        </p>
+        <div className="space-y-1.5" aria-hidden>
+          <div className="h-2 rounded bg-[#E9E4DA] w-full" />
+          <div className="h-2 rounded bg-[#E9E4DA] w-11/12" />
+          <div className="h-2 rounded bg-[#E9E4DA] w-4/5" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-bold text-[#5C574C]">
+          <span className="border border-[#E9E4DA] rounded-full px-2.5 py-1">1 240 ord</span>
+          <span className="border border-[#E9E4DA] rounded-full px-2.5 py-1">FAQ-schema</span>
+          <span className="border border-[#E9E4DA] rounded-full px-2.5 py-1">Meta klar</span>
+        </div>
+        <div className="flex items-center justify-between pt-1 gap-2">
+          <span className="text-[10px] sm:text-xs font-bold text-[#5C574C]">Mål: «varmepumpe pris» — plass 14 i dag</span>
+          <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-white bg-[#15795A] rounded-full px-2.5 py-1 shrink-0">
+            <Check size={12} strokeWidth={2.5} /> Godkjenn
+          </span>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
 function ReportMock() {
   const done = [
     { t: 'Skrev om 3 sidetitler', m: 'så Google forstår hva sidene handler om' },
@@ -401,6 +435,17 @@ export default function FunksjonerPage() {
 
             <FeatureSplit
               reverse
+              eyebrow={<Badge icon={<Sparkles size={12} />}>Innholdsmotor</Badge>}
+              title={<>Sikt skriver artiklene som <span className="text-violet-600">flytter deg opp.</span></>}
+              body="Vi finner søkene du nesten vinner, skriver en komplett artikkel målrettet mot dem — basert på din egen bedrift — og legger den som utkast i WordPress. Du godkjenner og publiserer."
+              points={[
+                'Fra søkeord-mulighet til ferdig utkast på under ett minutt',
+                'Ingenting publiseres uten at du har lest og godkjent det',
+              ]}
+              media={<ArticleMock />}
+            />
+
+            <FeatureSplit
               eyebrow={<Badge icon={<FileText size={12} />}>Plain norsk</Badge>}
               title={<>En kvittering, ikke en <span className="text-violet-600">vegg av tall.</span></>}
               body="Hver uke får du en kort rapport på hva som er gjort og hva det betyr — skrevet sånn at du forstår det uten å være SEO-ekspert."

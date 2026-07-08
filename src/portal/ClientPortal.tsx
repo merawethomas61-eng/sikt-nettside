@@ -3235,6 +3235,27 @@ ${truncateText(contextRaw, 800)}${contextBlock}`;
   }
 }
 
+// Lim-inn-prompt for en HEL generert artikkel (AI-bygde sider): kunden limer den
+// inn i sitt eget AI-verktøy som oppretter siden i deres egen kildekode.
+// Speiler aiPrompt-byggeren i handleArticleGeneration (api/solve-problem.js).
+function buildArticleAiPrompt(article: {
+  slug: string; title: string; meta_description: string; h1?: string | null;
+  content_html: string; faq_jsonld?: string | null;
+}): string {
+  return [
+    'Du er en senior webutvikler med tilgang til kildekoden til nettsiden min. Opprett en NY side/artikkel med innholdet under.',
+    `\nURL-slug: /${article.slug}`,
+    `SEO-tittel (<title>): ${article.title}`,
+    `Meta-beskrivelse: ${article.meta_description}`,
+    `H1: ${article.h1 || article.title}`,
+    `\nBrødtekst (HTML — behold overskriftsstrukturen, tilpass til komponentene mine):\n${article.content_html}`,
+    article.faq_jsonld
+      ? `\nLegg også inn dette FAQ-schemaet som JSON-LD i <head> på den nye siden:\n<script type="application/ld+json">${article.faq_jsonld}</script>`
+      : '',
+    '\nOppgave: Lag siden i mine EKTE kildefiler med samme design/layout som resten av siten, legg den til i navigasjon/sitemap der det er naturlig, og forklar kort hva du opprettet.',
+  ].filter(Boolean).join('\n');
+}
+
 // Ferdig lim-inn-prompt for AI-bygde sider (Claude, Cursor, v0 …): kunden limer
 // den inn i sitt eget AI-verktøy, som gjør endringen i deres EGEN kildekode.
 // Speiler buildAiPrompt i api/solve-problem.js så de to flytene føles like.
@@ -4062,6 +4083,41 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     fetchContentChanges();
   }, [activeTab, fetchContentChanges]);
 
+  // ── Innholdsmotor: søkeord-muligheter (mulighets-motoren) + genererte artikler ──
+  const [keywordOpps, setKeywordOpps] = useState<any[]>([]);
+  const [siktArticles, setSiktArticles] = useState<any[]>([]);
+  const [articleGenerating, setArticleGenerating] = useState<string | null>(null);
+  const [articlePushing, setArticlePushing] = useState<string | null>(null);
+
+  const fetchArticleData = useCallback(async () => {
+    if (!supabase || !userIdRef.current) return;
+    try {
+      const [{ data: oppRows, error: oppErr }, { data: artRows, error: artErr }] = await Promise.all([
+        supabase
+          .from('keyword_opportunities')
+          .select('*')
+          .eq('user_id', userIdRef.current)
+          .order('estimated_traffic', { ascending: false })
+          .limit(8),
+        supabase
+          .from('sikt_articles')
+          .select('*')
+          .eq('user_id', userIdRef.current)
+          .order('created_at', { ascending: false })
+          .limit(30),
+      ]);
+      if (!oppErr) setKeywordOpps(Array.isArray(oppRows) ? oppRows : []);
+      if (!artErr) setSiktArticles(Array.isArray(artRows) ? artRows : []);
+    } catch (err: any) {
+      console.warn('[Verksted] Kunne ikke hente innholds-muligheter:', err?.message || err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((activeTab !== 'workshop' && activeTab !== 'home') || !userIdRef.current) return;
+    fetchArticleData();
+  }, [activeTab, fetchArticleData]);
+
   useEffect(() => {
     resetContentFixPushUi();
   }, [expandedWorkshopProblem, resetContentFixPushUi]);
@@ -4303,7 +4359,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   useEffect(() => {
     const fetchAiSolution = async () => {
       if (!activeSolveProblem) return;
-      if (expandedWorkshopProblem?.startsWith('content-')) return;
+      // content- og opp-problemer har egne flyter (content-fix / artikkel-studio).
+      if (expandedWorkshopProblem?.startsWith('content-') || expandedWorkshopProblem?.startsWith('opp-')) return;
 
       setAiIsThinking(true);
       setAiSolution(null);
@@ -5084,8 +5141,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           inlinks: p.inlinks,
           outlinks: p.outlinks,
           status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
-          brokenLinks: 0,
-          linkScore: p.score,
           anchorIssues: [],
           hubType: index === 0 ? 'Pillar' : 'Cluster',
           suggestedInlinks: []
@@ -5209,8 +5264,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           inlinks: p.inlinks,
           outlinks: p.outlinks,
           status: p.inlinks === 0 ? 'Isolert' : p.status === 'Kritisk' ? 'Kritisk' : 'Bra',
-          brokenLinks: 0,
-          linkScore: p.score,
           anchorIssues: [],
           hubType: index === 0 ? 'Pillar' : 'Cluster',
           suggestedInlinks: []
@@ -6595,7 +6648,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // TODOS — aggregert "i dag"-liste fra alle kilder, sortert etter impact.
   // Brukes paa Hjem (3 oeverst + "mer") og er kilden til Verksted-fanen.
   // ===================================================================
-  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'content-page' | 'onboarding' | 'competitor' | 'geo';
+  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'content-page' | 'onboarding' | 'competitor' | 'geo' | 'opportunity';
   type Todo = {
     id: string;
     kind: TodoKind;
@@ -6609,6 +6662,95 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     status?: 'open' | 'solved';
     changeId?: string;
     changeData?: TodoChangeData;
+  };
+
+  // ── Innholdsmotor: kvote + handlinger ──
+  // Samme månedsnøkkel som analyse-kvoten; grensene speiler articleLimitForPackage
+  // i api/solve-problem.js (server-side-gaten er den som gjelder).
+  const articleLimit = hasPremium ? 8 : hasStandardOrHigher ? 2 : 0;
+  const articlesUsedThisMonth = siktArticles.filter(
+    (a) => typeof a?.created_at === 'string' && a.created_at.slice(0, 7) === currentMonthKey,
+  ).length;
+
+  const generateArticleForOpp = async (opp: any) => {
+    if (articleGenerating) return;
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setArticleGenerating(`opp-${opp.id}`);
+    try {
+      const tracked = realRankings.find((r: any) => r.keyword === opp.keyword);
+      const gsc = gscKeywords.find((k: any) => k.keyword === opp.keyword);
+      const home = contentPages.find((p: any) => p.url === '/') || contentPages[0];
+      const res = await fetch('/api/solve-problem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          mode: 'article',
+          keyword: opp.keyword,
+          opportunityId: opp.id,
+          currentPosition: (tracked as any)?.position ?? (gsc as any)?.position ?? null,
+          targetPageUrl: (tracked as any)?.url || null,
+          businessContext: home?.textSample ? String(home.textSample).slice(0, 1500) : undefined,
+        }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.article) {
+        toastError(out?.error || 'Kunne ikke generere utkastet. Prøv igjen.');
+        return;
+      }
+      setSiktArticles((prev) => [out.article, ...prev.filter((a) => a.id !== out.article.id)]);
+      if (Array.isArray(out.qualityNotes) && out.qualityNotes.length > 0) {
+        toastInfo(out.qualityNotes[0]);
+      }
+      toastSuccess('Utkastet er klart — les gjennom før du sender det videre.');
+    } catch (e: any) {
+      toastError(e?.message || 'Nettverksfeil under genereringen.');
+    } finally {
+      setArticleGenerating(null);
+    }
+  };
+
+  const pushArticleDraft = async (article: any) => {
+    if (articlePushing) return;
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setArticlePushing(article.id);
+    try {
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'create-draft', articleId: article.id }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.ok) {
+        toastError(out?.error || 'Kunne ikke sende utkastet til WordPress.');
+        return;
+      }
+      setSiktArticles((prev) => prev.map((a) => (
+        a.id === article.id
+          ? { ...a, status: 'pushed_draft', wp_post_id: out.wpPostId, pushed_at: new Date().toISOString() }
+          : a
+      )));
+      toastSuccess('Utkastet ligger i WordPress — godkjenn og publiser det der.');
+      // Bevis-sløyfe: følg søkeordet automatisk slik at kunden ser effekten.
+      try {
+        const alreadyTracked = keywordsToTrack.some((k: any) => k.keyword === article.keyword);
+        if (!alreadyTracked && userIdRef.current) {
+          const location = locationInput.trim() || 'Oslo';
+          await supabase.from('user_keywords').insert({
+            user_id: userIdRef.current,
+            keyword: article.keyword,
+            location,
+            keyword_data: { keyword: article.keyword, location },
+          });
+          setKeywordsToTrack((prev: any[]) => [...prev, { keyword: article.keyword, location }]);
+        }
+      } catch { /* best effort */ }
+    } catch (e: any) {
+      toastError(e?.message || 'Nettverksfeil under pushen.');
+    } finally {
+      setArticlePushing(null);
+    }
   };
 
   const todos = useMemo<Todo[]>(() => {
@@ -6792,24 +6934,63 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       });
     }
 
+    // 2c. Innholds-muligheter fra mulighets-motoren — Verkstedet skriver utkastet.
+    for (const opp of keywordOpps.slice(0, 6)) {
+      if (!opp?.id || typeof opp.keyword !== 'string' || !opp.keyword.trim()) continue;
+      const article =
+        siktArticles.find((a) => a.opportunity_id === opp.id) ||
+        siktArticles.find((a) => a.keyword === opp.keyword);
+      const isPushed = article?.status === 'pushed_draft';
+      const traffic = Number(opp.estimated_traffic) || 0;
+      items.push({
+        id: `opp-${opp.id}`,
+        kind: 'opportunity',
+        title: opp.recommendation_type === 'gsc_near_miss'
+          ? `Vinn «${opp.keyword}» — utvid innholdet`
+          : `Vinn «${opp.keyword}» — ny artikkel`,
+        desc: traffic > 0 ? `~${traffic} ekstra besøk/mnd å hente` : 'Sikt skriver utkastet for deg',
+        impact: Math.min(90, 58 + Math.round(traffic / 5)),
+        status: isPushed ? 'solved' : 'open',
+        raw: { opportunity: opp, article: article || null },
+        action: {
+          label: article ? 'Se utkastet' : 'Skriv utkast',
+          onClick: () => {
+            setActiveTab('workshop');
+            setExpandedWorkshopProblem(`opp-${opp.id}`);
+          },
+        },
+      });
+    }
+
     // 3. Sokeord pa pos 4-20 (lavt-hengende frukt)
     for (const r of realRankings) {
       const pos = (r as any).position;
       if (pos > 3 && pos < 20) {
+        // Finnes det en innholds-mulighet for samme søkeord, pek dit — Verkstedet
+        // har en faktisk løsning der (artikkel-studio), ikke bare en tabell.
+        const matchingOpp = keywordOpps.find((o) => o.keyword === r.keyword);
         items.push({
           id: `kw-${r.keyword}-${r.location}`,
           kind: 'keyword',
           title: `«${r.keyword}» — plass ${pos}`,
           desc: pos <= 10 ? `${pos - 3} plasser unna topp 3` : `${pos - 10} plasser unna side 1`,
           impact: 70 - (pos - 4) * 2,
-          action: { label: 'Se søkeord', onClick: () => setActiveTab('keywords') },
+          action: matchingOpp
+            ? {
+                label: 'Åpne i Verksted',
+                onClick: () => {
+                  setActiveTab('workshop');
+                  setExpandedWorkshopProblem(`opp-${matchingOpp.id}`);
+                },
+              }
+            : { label: 'Se søkeord', onClick: () => setActiveTab('keywords') },
         });
       }
     }
 
     return Array.from(new Map(items.map((todo) => [todo.id, todo])).values())
       .sort((a, b) => b.impact - a.impact);
-  }, [analysisResults, realRankings, websiteUrl, hostIsFullyConnected, hostWasLightOnly, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing, contentPages, contentChanges]);
+  }, [analysisResults, realRankings, websiteUrl, hostIsFullyConnected, hostWasLightOnly, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing, contentPages, contentChanges, keywordOpps, siktArticles]);
 
   const todayTodos = todos.slice(0, 3);
   const moreTodos = todos.slice(3);
@@ -8019,10 +8200,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </thead>
                                   <tbody>
                                     {linkPages.slice(0, 30).map((p: any, i: number) => {
-                                      const brokenCount = Array.isArray(p.brokenLinks) ? p.brokenLinks.length : Number(p.brokenLinks || 0);
                                       const isolated = p?.status === 'Isolert' || p?.inlinks === 0 || p?.isolated;
-                                      const statusText = isolated ? 'Isolert' : brokenCount > 0 ? `${brokenCount} brutte` : 'Bra';
-                                      const statusTone = isolated ? 'warn' : brokenCount > 0 ? 'bad' : 'good';
+                                      const statusText = isolated ? 'Isolert' : 'Bra';
+                                      const statusTone = isolated ? 'warn' : 'good';
                                       const tone = tonePill(statusTone);
                                       return (
                                         <tr key={i} className="transition-colors hover:bg-[color:var(--subtle)]" style={{ borderTop: i === 0 ? 'none' : `1px solid ${palette.hair}` }}>
@@ -8730,7 +8910,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         {/* VERKSTED — liste-view, ekspander inline for AI-løsning.         */}
         {/* =============================================================== */}
         {activeTab === 'workshop' && (() => {
-          const workshopKinds: TodoKind[] = ['pagespeed', 'content-page', 'keyword'];
+          const workshopKinds: TodoKind[] = ['pagespeed', 'content-page', 'keyword', 'opportunity'];
           const problems = todos
             .filter((t) => workshopKinds.includes(t.kind))
             .map((todo) => ({
@@ -8791,7 +8971,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           };
           const selectProblem = (p: typeof problems[number]) => {
             setExpandedWorkshopProblem(p.id);
-            if (p.kind === 'content-page') {
+            if (p.kind === 'content-page' || p.kind === 'opportunity') {
               setActiveSolveProblem(null);
               setAiSolution(null);
               setAiIsThinking(false);
@@ -8898,6 +9078,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 @media (max-width: 768px) {
                   .ws-content-diff-grid { grid-template-columns: 1fr; }
                 }
+                /* Artikkel-forhåndsvisning: Tailwind-preflight nullstiller alt,
+                   så generert h2/h3/p/li trenger egen typografi her. */
+                .sikt-article-preview h2 { font-size: 17px; font-weight: 700; margin: 20px 0 8px; }
+                .sikt-article-preview h3 { font-size: 15px; font-weight: 600; margin: 16px 0 6px; }
+                .sikt-article-preview p { margin: 0 0 12px; }
+                .sikt-article-preview ul, .sikt-article-preview ol { margin: 0 0 12px; padding-left: 22px; }
+                .sikt-article-preview ul { list-style: disc; }
+                .sikt-article-preview ol { list-style: decimal; }
+                .sikt-article-preview li { margin-bottom: 4px; }
               `}</style>
               <div>
 
@@ -9057,6 +9246,209 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         </div>
                       )}
                     </div>
+
+                  ) : selectedProblem?.kind === 'opportunity' ? (
+                    /* ═══════════════════════════════════
+                       ARTIKKEL-STUDIO — innholdsmotoren
+                       ═══════════════════════════════════ */
+                    (() => {
+                      const opp = selectedProblem.raw?.opportunity;
+                      const article = selectedProblem.raw?.article;
+                      const isGenerating = articleGenerating === selectedProblem.id;
+                      const isPushing = !!article && articlePushing === article.id;
+                      const quotaLeft = Math.max(0, articleLimit - articlesUsedThisMonth);
+                      const isAiBuiltHost = (hostConnection?.platform || null) === 'ai_built';
+                      const isPushed = article?.status === 'pushed_draft';
+                      const wpEditUrl = article?.wp_post_id && hostConnection?.adminUrl
+                        ? `${String(hostConnection.adminUrl).replace(/\/$/, '')}/wp-admin/post.php?post=${article.wp_post_id}&action=edit`
+                        : null;
+                      const articleWords = article
+                        ? String(article.content_html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length
+                        : 0;
+                      const copyText = (text: string, msg: string) => {
+                        navigator.clipboard?.writeText(text);
+                        toastSuccess(msg);
+                      };
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ padding: isMobile ? '14px 16px' : '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedWorkshopProblem(null)}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${W.border}`, borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 600, color: W.muted, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              <ChevronLeft size={12} /> Verksted
+                            </button>
+                            <span style={{ fontSize: 12, color: W.faint }}>Innholds-mulighet</span>
+                          </div>
+
+                          <div style={{ padding: isMobile ? '20px 16px' : '28px 48px', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 780 }}>
+                            {/* Muligheten */}
+                            <div>
+                              <h2 style={{ margin: 0, fontSize: isMobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.02em', color: W.ink, fontFamily: SERIF }}>
+                                Vinn «{opp?.keyword || selectedProblem.title}»
+                              </h2>
+                              <p style={{ margin: '10px 0 0', fontSize: 14, color: W.sub, lineHeight: 1.6 }}>
+                                {opp?.recommendation_text || 'Skriv innhold som svarer på dette søket, så har du en reell sjanse til å ta plassen.'}
+                              </p>
+                              <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+                                {Number(opp?.estimated_traffic) > 0 && (
+                                  <span style={{ fontSize: 12, color: W.green, fontWeight: 600 }}>~{Number(opp.estimated_traffic)} ekstra besøk/mnd</span>
+                                )}
+                                {opp?.recommendation_type === 'gsc_near_miss' && (
+                                  <span style={{ fontSize: 12, color: W.muted }}>Du rangerer nesten på dette — utvid dekningen</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {!hasStandardOrHigher ? (
+                              /* Basic → teaser (samme mørke kort som ellers i Verkstedet) */
+                              <div style={{ background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Sparkles size={16} style={{ color: '#6EE7B7' }} />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 180 }}>
+                                  <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>La Sikt skrive artikkelen for deg</p>
+                                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>2 AI-skrevne artikler/mnd i Standard, 8 i Premium — komplett med SEO-tittel, meta og FAQ, sendt rett til WordPress som utkast.</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpgrade('Standard')}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={pressReset}
+                                  style={{ background: 'var(--surface)', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0, transition: `transform 160ms ${EASE}` }}
+                                >
+                                  Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
+                                </button>
+                              </div>
+                            ) : !article ? (
+                              /* Ingen artikkel ennå → generer */
+                              <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: isMobile ? 18 : 24 }}>
+                                <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: W.ink }}>Sikt skriver utkastet for deg</p>
+                                <p style={{ margin: '0 0 16px', fontSize: 13, color: W.muted, lineHeight: 1.6 }}>
+                                  En komplett artikkel på 1000+ ord basert på din bedrift og det som faktisk rangerer på Google i dag — med SEO-tittel, meta-beskrivelse og FAQ. Du leser gjennom og godkjenner før noe publiseres.
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                                  <button
+                                    type="button"
+                                    disabled={isGenerating || quotaLeft === 0}
+                                    onClick={() => opp && generateArticleForOpp(opp)}
+                                    onMouseDown={pressDown}
+                                    onMouseUp={pressReset}
+                                    onMouseLeave={pressReset}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isGenerating || quotaLeft === 0 ? 'not-allowed' : 'pointer', opacity: isGenerating || quotaLeft === 0 ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                  >
+                                    <Sparkles size={13} className={isGenerating ? 'animate-pulse' : ''} />
+                                    {isGenerating ? 'Skriver utkastet… (ca. 30 sek)' : 'Skriv utkast for meg'}
+                                  </button>
+                                  <span style={{ fontSize: 12, color: quotaLeft === 0 ? '#B4231F' : W.muted }}>
+                                    {articlesUsedThisMonth} av {articleLimit} artikler brukt denne måneden
+                                  </span>
+                                </div>
+                                {quotaLeft === 0 && (
+                                  <p style={{ margin: '12px 0 0', fontSize: 12, color: W.muted }}>
+                                    Kvoten nullstilles ved månedsskiftet.{!hasPremium && ' Premium har 8 artikler/mnd.'}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              /* Artikkel finnes → forhåndsvisning + handlinger */
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                {isPushed && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(21,121,90,0.08)', border: '1px solid rgba(21,121,90,0.25)', borderRadius: 12, padding: '12px 16px' }}>
+                                    <CheckCircle2 size={15} style={{ color: W.green, flexShrink: 0 }} />
+                                    <p style={{ margin: 0, fontSize: 13, color: W.ink }}>
+                                      Utkastet ligger i WordPress — godkjenn og publiser det der.
+                                      {wpEditUrl && (
+                                        <>
+                                          {' '}
+                                          <a href={wpEditUrl} target="_blank" rel="noopener noreferrer" style={{ color: W.green, fontWeight: 600 }}>Åpne utkastet →</a>
+                                        </>
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, overflow: 'hidden' }}>
+                                  <div style={{ padding: isMobile ? 16 : 20, borderBottom: `1px solid ${W.hair}` }}>
+                                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>SEO-tittel <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.title || '').length} tegn)</span></p>
+                                    <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 600, color: W.ink }}>{article.title}</p>
+                                    <p style={{ margin: '14px 0 0', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>Meta-beskrivelse <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.meta_description || '').length} tegn)</span></p>
+                                    <p style={{ margin: '6px 0 0', fontSize: 13, color: W.sub, lineHeight: 1.55 }}>{article.meta_description}</p>
+                                    <p style={{ margin: '14px 0 0', fontSize: 12, color: W.faint }}>/{article.slug} · {articleWords} ord{article.faq_jsonld ? ' · FAQ-schema inkludert' : ''}</p>
+                                  </div>
+                                  <div
+                                    className="sikt-article-preview"
+                                    style={{ padding: isMobile ? 16 : 20, maxHeight: 420, overflowY: 'auto', fontSize: 14, lineHeight: 1.7, color: W.ink }}
+                                  >
+                                    <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: W.ink, fontFamily: SERIF }}>{article.h1 || article.title}</h3>
+                                    {/* Trygt: HTML-en er sanert server-side (sanitizeArticleHtml) før lagring. */}
+                                    <div dangerouslySetInnerHTML={{ __html: article.content_html }} />
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                  {hostIsFullyConnected && !isPushed && (
+                                    <button
+                                      type="button"
+                                      disabled={isPushing}
+                                      onClick={() => pushArticleDraft(article)}
+                                      onMouseDown={pressDown}
+                                      onMouseUp={pressReset}
+                                      onMouseLeave={pressReset}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isPushing ? 'not-allowed' : 'pointer', opacity: isPushing ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                    >
+                                      {isPushing ? 'Sender…' : 'Send som utkast til WordPress'}
+                                    </button>
+                                  )}
+                                  {isAiBuiltHost && (
+                                    <button
+                                      type="button"
+                                      onClick={() => copyText(buildArticleAiPrompt(article), 'AI-prompt kopiert. Lim den inn i Claude/Cursor/v0.')}
+                                      onMouseDown={pressDown}
+                                      onMouseUp={pressReset}
+                                      onMouseLeave={pressReset}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: hostIsFullyConnected && !isPushed ? 'transparent' : W.ink, color: hostIsFullyConnected && !isPushed ? W.ink : '#fff', border: hostIsFullyConnected && !isPushed ? `1px solid ${W.border}` : 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                    >
+                                      <Sparkles size={13} /> Kopier AI-prompt
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(String(article.content_html || ''), 'HTML kopiert. Lim inn i redigereren din.')}
+                                    onMouseDown={pressDown}
+                                    onMouseUp={pressReset}
+                                    onMouseLeave={pressReset}
+                                    style={{ background: 'transparent', color: W.muted, border: `1px solid ${W.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                  >
+                                    Kopier HTML
+                                  </button>
+                                  {!hostIsFullyConnected && !isAiBuiltHost && (
+                                    <button
+                                      type="button"
+                                      onClick={() => { setActiveTab('settings'); openWpWizard(); }}
+                                      style={{ background: 'none', border: 'none', color: W.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                                    >
+                                      Koble til WordPress for å sende utkast direkte
+                                    </button>
+                                  )}
+                                </div>
+
+                                {!isPushed && (
+                                  <p style={{ margin: 0, fontSize: 12, color: W.faint }}>
+                                    {articlesUsedThisMonth} av {articleLimit} artikler brukt denne måneden. Ingenting publiseres uten at du godkjenner det.
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()
 
                   ) : selectedProblem?.kind === 'content-page' && selectedProblem.status === 'solved' && selectedProblem.changeData && hostIsFullyConnected ? (
                     /* ═══════════════════════════════════
@@ -12521,8 +12913,6 @@ interface LinkPage {
   inlinks: number;
   outlinks: number;
   status: 'Bra' | 'Isolert' | 'Blindvei' | 'Kritisk';
-  brokenLinks: number;
-  linkScore: number;
   anchorIssues: string[];
   hubType: 'Pillar' | 'Cluster' | 'None';
   suggestedInlinks: { fromUrl: string; anchor: string; reason: string }[];

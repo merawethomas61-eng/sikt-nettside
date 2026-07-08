@@ -585,6 +585,131 @@ export default withSentry(async function handler(req, res) {
     }
   }
 
+  // --- Innholdsmotor: opprett NYTT WordPress-utkast fra en generert artikkel ---
+  // Standard WP REST API (wp/v2/posts) med Application Password — utkastet
+  // publiseres ALDRI av oss; kunden godkjenner og publiserer selv i wp-admin.
+  if (body.action === 'create-draft') {
+    const articleId = typeof body.articleId === 'string' ? body.articleId.trim() : '';
+    if (!/^[0-9a-f-]{36}$/i.test(articleId)) {
+      return res.status(400).json({ error: 'Gyldig articleId kreves.' });
+    }
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      // Service-nøkkel omgår RLS — filteret på user_id er derfor obligatorisk.
+      const { data: article, error: artErr } = await supabase
+        .from('sikt_articles')
+        .select('id, keyword, title, slug, meta_description, h1, content_html, status, wp_post_id')
+        .eq('id', articleId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (artErr) {
+        Sentry.captureException(artErr);
+        return res.status(500).json({ error: 'Kunne ikke hente artikkelen.' });
+      }
+      if (!article) {
+        return res.status(404).json({ error: 'Fant ikke artikkelen.' });
+      }
+      if (article.status === 'pushed_draft' && article.wp_post_id) {
+        return res.status(409).json({
+          error: 'Artikkelen er allerede sendt til WordPress som utkast.',
+          wpPostId: article.wp_post_id,
+        });
+      }
+
+      const { data: hostRow, error: fetchErr } = await supabase
+        .from('client_hosts')
+        .select('connection_mode, admin_url, notes, access_token_encrypted')
+        .eq('user_id', user.id)
+        .eq('platform', 'wordpress')
+        .maybeSingle();
+      if (fetchErr) {
+        Sentry.captureException(fetchErr);
+        return res.status(500).json({ error: 'Kunne ikke hente WordPress-tilkobling.' });
+      }
+      if (!hostRow || hostRow.connection_mode !== 'full' || !hostRow.access_token_encrypted
+          || typeof hostRow.admin_url !== 'string' || !hostRow.admin_url.trim()
+          || typeof hostRow.notes !== 'string' || !hostRow.notes.trim()) {
+        return res.status(404).json({ error: 'WordPress er ikke aktivt tilkoblet.' });
+      }
+      let appPassword;
+      try {
+        appPassword = decrypt(hostRow.access_token_encrypted);
+      } catch (decErr) {
+        Sentry.captureException(decErr);
+        return res.status(500).json({ error: 'Serveren kan ikke lese lagret nøkkel (sjekk ENCRYPTION_KEY).' });
+      }
+      const authorization = buildBasicAuthHeader(hostRow.notes.trim(), appPassword);
+      const adminUrl = hostRow.admin_url.trim().replace(/\/$/, '');
+
+      const createResult = await wpRequest(`${adminUrl}/wp-json/wp/v2/posts`, authorization, 'POST', {
+        status: 'draft',
+        // Post-tittelen blir sidens H1 i de fleste temaer; SEO-tittelen settes i Yoast under.
+        title: article.h1 || article.title,
+        slug: article.slug,
+        content: article.content_html,
+        excerpt: article.meta_description,
+      });
+      const postId = Number(createResult.data?.id);
+      if (!createResult.response.ok || !Number.isFinite(postId)) {
+        console.error('[wordpress-push] create-draft-not-ok:', {
+          status: createResult.response.status,
+          statusText: createResult.response.statusText,
+          code: createResult.data?.code,
+        });
+        return res.status(502).json({ error: 'WordPress avviste opprettelsen av utkastet.' });
+      }
+
+      // Yoast-felter via connector-pluginen — best effort; utkastet finnes uansett.
+      const seoTitleResult = await pushViaSiktConnector(adminUrl, authorization, postId, 'seo-title', article.title);
+      const metaResult = await pushViaSiktConnector(adminUrl, authorization, postId, 'meta-description', article.meta_description);
+      const yoastPushed = !!(seoTitleResult.ok && metaResult.ok);
+
+      const { error: updErr } = await supabase
+        .from('sikt_articles')
+        .update({ status: 'pushed_draft', wp_post_id: postId, pushed_at: new Date().toISOString() })
+        .eq('id', article.id);
+      if (updErr) {
+        console.error('[wordpress-push] Kunne ikke oppdatere sikt_articles:', updErr.message);
+        Sentry.captureException(updErr);
+      }
+
+      // «Ukens kvittering»: logg at Sikt faktisk skrev innholdet. Best effort.
+      try {
+        await supabase.from('sikt_actions').insert({
+          user_id: user.id,
+          action_type: 'article_draft',
+          category: 'content',
+          title: `Ny artikkel skrevet: «${article.keyword}»`,
+          details: {
+            explanation: `Sikt skrev en komplett artikkel for søkeordet «${article.keyword}» og la den som utkast i WordPress — klar til godkjenning.`,
+            keyword: article.keyword,
+            wp_post_id: postId,
+          },
+          page_url: typeof createResult.data?.link === 'string' ? createResult.data.link : null,
+          before_value: null,
+          after_value: article.title,
+        });
+      } catch (logErr) {
+        console.warn('[wordpress-push] Kunne ikke logge sikt_actions-artikkel:', logErr?.message || logErr);
+      }
+
+      return res.status(200).json({
+        ok: true,
+        wpPostId: postId,
+        editUrl: `${adminUrl}/wp-admin/post.php?post=${postId}&action=edit`,
+        link: typeof createResult.data?.link === 'string' ? createResult.data.link : null,
+        yoastPushed,
+      });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) {
+        console.error('[wordpress-push] create-draft-feil:', err?.message || err);
+        Sentry.captureException(err);
+      }
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt under opprettelsen av utkastet.' });
+    }
+  }
+
   const pageUrlCheck = validatePageUrl(body.pageUrl);
   if (!pageUrlCheck.ok) {
     return res.status(400).json({ error: pageUrlCheck.error });

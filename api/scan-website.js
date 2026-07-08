@@ -99,6 +99,22 @@ export default withSentry(async function handler(req, res) {
         const pagesToScan = [safeStartUrl, ...Array.from(internalLinks)].slice(0, 15);
         const scannedPages = [];
 
+        // Normaliser URL-er slik at /om-oss, /om-oss/ og /om-oss#x teller som samme side
+        // når vi teller interne lenker mellom de skannede sidene.
+        const normalizeUrl = (u) => {
+            try {
+                const parsed = new URL(u);
+                parsed.hash = '';
+                parsed.search = '';
+                const s = parsed.toString();
+                return s.endsWith('/') ? s.slice(0, -1) : s;
+            } catch {
+                return null;
+            }
+        };
+        // normalisert side-URL -> Set av normaliserte interne lenkemål fra den siden
+        const outgoingByPage = new Map();
+
         for (const targetUrl of pagesToScan) {
             try {
                 const safeTargetUrl = await assertSafeUserUrl(targetUrl, websiteUrl);
@@ -111,6 +127,17 @@ export default withSentry(async function handler(req, res) {
                 const textContent = page$('body').text().replace(/\s+/g, ' ').trim();
                 const wordCount = textContent.split(' ').length;
                 const pageLinks = page$('a').length;
+
+                const internalTargets = new Set();
+                page$('a').each((_, el) => {
+                    const href = page$(el).attr('href');
+                    if (!href || href.includes('mailto:')) return;
+                    const full = href.startsWith('/') ? `${baseUrl}${href}` : href.startsWith(baseUrl) ? href : null;
+                    if (!full) return;
+                    const norm = normalizeUrl(full);
+                    if (norm) internalTargets.add(norm);
+                });
+                outgoingByPage.set(normalizeUrl(safeTargetUrl), internalTargets);
 
                 let status = 'Bra';
                 let score = 100;
@@ -148,10 +175,9 @@ export default withSentry(async function handler(req, res) {
                     status,
                     score,
                     issues,
-                    inlinks: Math.floor(Math.random() * 10) + 1,
+                    // inlinks fylles inn etter loopen når alle sidenes lenker er samlet
+                    inlinks: 0,
                     outlinks: pageLinks,
-                    linkScore: score,
-                    brokenLinks: 0,
                     readability: wordCount > 600 ? 'Middels' : 'Enkel',
                     topicCluster: 'Generell',
                     action: status === 'Bra' ? 'Fungerer optimalt' : 'Krever optimalisering',
@@ -160,6 +186,17 @@ export default withSentry(async function handler(req, res) {
             } catch (err) {
                 console.error(`Feil ved skanning av ${targetUrl}:`, err);
             }
+        }
+
+        // Ekte inlinks: hvor mange av de ANDRE skannede sidene som lenker hit.
+        for (const page of scannedPages) {
+            const target = normalizeUrl(page.fullUrl);
+            if (!target) continue;
+            let count = 0;
+            for (const [source, targets] of outgoingByPage) {
+                if (source !== target && targets.has(target)) count += 1;
+            }
+            page.inlinks = count;
         }
 
         res.status(200).json({ pages: scannedPages });
