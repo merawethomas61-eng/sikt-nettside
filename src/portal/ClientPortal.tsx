@@ -3290,7 +3290,14 @@ function buildArticleAiPrompt(article: {
 // items (rader med tekst + valgfri verdi/tone).
 // =====================================================================
 function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }) {
-  const sections: any[] = Array.isArray(report?.sections) ? report.sections : [];
+  const allSections: any[] = Array.isArray(report?.sections) ? report.sections : [];
+  // Intro-en løftes ut som redaksjonell ingress (uten seksjonsoverskrift).
+  const intro = allSections.find((s) => s.id === 'intro');
+  const sections = allSections.filter((s) => s.id !== 'intro');
+  const periodLabel = report.title?.includes('—') ? report.title.split('—')[1].trim() : report.period;
+  const createdLabel = report.created_at
+    ? new Date(report.created_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -3306,14 +3313,15 @@ function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }
           .sikt-report-print, .sikt-report-print * { visibility: visible; }
           .sikt-report-print { position: absolute !important; inset: 0 !important; overflow: visible !important; }
           .sikt-report-noprint { display: none !important; }
+          .sikt-report-paper { border: none !important; box-shadow: none !important; }
         }
       `}</style>
-      <div className="sikt-report-print mx-auto max-w-[720px] px-5 sm:px-8 py-10">
-        <div className="sikt-report-noprint flex items-center justify-between gap-3 mb-10">
+      <div className="sikt-report-print mx-auto max-w-[780px] px-4 sm:px-8 py-6 sm:py-10">
+        <div className="sikt-report-noprint flex items-center justify-between gap-3 mb-6">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-3.5 py-2"
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-3.5 py-2 transition-transform active:scale-[0.97]"
             style={{ color: 'var(--muted)', border: '1px solid var(--hair)', background: 'var(--surface)' }}
           >
             <ChevronLeft size={13} /> Tilbake
@@ -3321,66 +3329,98 @@ function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-4 py-2 text-white"
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-4 py-2 text-white transition-transform active:scale-[0.97]"
             style={{ background: 'var(--btn-bg)' }}
           >
             Last ned PDF
           </button>
         </div>
 
-        <header className="mb-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-3" style={{ color: 'var(--muted)' }}>
-            Sikt · {report.tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'}
-          </p>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>
-            {report.title}
-          </h1>
-          <div aria-hidden className="mt-7" style={{ borderTop: '1px solid var(--hair)' }} />
-        </header>
+        {/* «Papiret» — samme redaksjonelle dokument-uttrykk som e-postene */}
+        <article
+          className="sikt-report-paper rounded-[18px] px-6 py-8 sm:px-12 sm:py-12"
+          style={{ background: 'var(--surface)', border: '1px solid var(--hair)', boxShadow: '0 1px 2px rgba(26,26,26,0.03), 0 18px 40px -20px rgba(26,26,26,0.12)' }}
+        >
+          {/* Masthead: ordmerke + kicker, hårlinje under (speiler e-postmalen) */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-2.5">
+              <span aria-hidden className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[8px]" style={{ background: 'var(--btn-bg)' }}>
+                <span className="text-[17px] font-bold text-white leading-none" style={{ fontFamily: SERIF }}>S</span>
+              </span>
+              <span className="text-[13px] font-bold tracking-[2px]" style={{ color: 'var(--ink)' }}>SIKT</span>
+            </span>
+            <span className="text-[12px] tracking-[0.3px]" style={{ color: 'var(--muted)' }}>
+              {report.tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'} · {periodLabel}
+            </span>
+          </div>
+          <div aria-hidden className="mt-5" style={{ borderTop: '1px solid var(--hair)' }} />
 
-        <div className="space-y-10">
-          {sections.map((s: any) => (
-            <section key={s.id}>
-              <div className="flex items-center gap-2.5 mb-4">
-                <span aria-hidden style={{ width: 18, height: 2, background: 'var(--green)', borderRadius: 2, flexShrink: 0 }} />
-                <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</h2>
-              </div>
-              {s.body && (
-                <p className="text-[15px] leading-[1.7] mb-4" style={{ color: 'var(--ink)' }}>{s.body}</p>
-              )}
-              {Array.isArray(s.stats) && s.stats.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                  {s.stats.map((st: any) => (
-                    <div key={st.label} className="rounded-[14px] p-4" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>{st.label}</p>
-                      <p className="mt-2 text-[26px] font-semibold leading-none tabular-nums" style={{ color: 'var(--ink)' }}>{st.value}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {Array.isArray(s.items) && s.items.length > 0 && (
-                <div className="rounded-[14px] overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
-                  {s.items.map((it: any, i: number) => (
-                    <div key={i} className="flex items-baseline justify-between gap-4 px-4 py-3" style={{ borderTop: i === 0 ? 'none' : '1px solid var(--hair)' }}>
-                      <p className="text-sm min-w-0" style={{ color: 'var(--ink)' }}>{it.text}</p>
-                      {it.value && (
-                        <p className="text-sm font-semibold tabular-nums whitespace-nowrap" style={{ color: it.tone === 'down' ? '#B4231F' : it.tone === 'up' ? 'var(--green)' : 'var(--muted)' }}>
-                          {it.value}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          ))}
-        </div>
+          <header className="mt-10">
+            <h1 className="text-[31px] sm:text-[38px] font-bold leading-[1.15] tracking-[-0.4px]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>
+              {report.title}
+            </h1>
+            {createdLabel && (
+              <p className="mt-3 text-[12px]" style={{ color: 'var(--faint)' }}>Generert {createdLabel}</p>
+            )}
+            {intro?.body && (
+              <p className="mt-6 text-[16px] sm:text-[17px] leading-[1.72]" style={{ color: 'var(--sub)' }}>
+                {intro.body}
+              </p>
+            )}
+          </header>
 
-        <footer className="mt-12 pt-6" style={{ borderTop: '1px solid var(--hair)' }}>
-          <p className="text-xs" style={{ color: 'var(--faint)' }}>
-            Sikt · siktseo.com · Rapporten er bygget på ekte data fra Google Search Console, posisjonssporing og arbeidet Sikt har gjort på siden din.
-          </p>
-        </footer>
+          <div className="mt-12 space-y-11">
+            {sections.map((s: any) => (
+              <section key={s.id}>
+                {/* Seksjonshode: aksent-strek over tittelen (e-postens sectionHead-motiv) */}
+                <div className="mb-4">
+                  <span aria-hidden className="block mb-2.5" style={{ width: 22, height: 2, background: 'var(--green)', borderRadius: 2 }} />
+                  <h2 className="text-[15px] font-bold tracking-[-0.1px]" style={{ color: 'var(--ink)' }}>{s.title}</h2>
+                </div>
+                {s.body && (
+                  <p className="text-[15px] leading-[1.72] mb-5" style={{ color: 'var(--sub)' }}>{s.body}</p>
+                )}
+                {Array.isArray(s.stats) && s.stats.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 mb-5 rounded-[14px] overflow-hidden" style={{ border: '1px solid var(--hair)' }}>
+                    {s.stats.map((st: any, i: number) => (
+                      <div
+                        key={st.label}
+                        className="px-4 py-4 sm:px-5"
+                        style={{
+                          borderLeft: i % 3 === 0 ? 'none' : '1px solid var(--hair)',
+                          borderTop: i >= 3 ? '1px solid var(--hair)' : 'none',
+                        }}
+                      >
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.09em]" style={{ color: 'var(--muted)' }}>{st.label}</p>
+                        <p className="mt-2 text-[26px] font-semibold leading-none tabular-nums" style={{ color: 'var(--ink)' }}>{st.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(s.items) && s.items.length > 0 && (
+                  <div>
+                    {s.items.map((it: any, i: number) => (
+                      <div key={i} className="flex items-baseline justify-between gap-4 py-3" style={{ borderTop: i === 0 ? 'none' : '1px solid var(--hair)' }}>
+                        <p className="text-[14px] font-medium min-w-0" style={{ color: 'var(--ink)' }}>{it.text}</p>
+                        {it.value && (
+                          <p className="text-[13px] font-semibold tabular-nums whitespace-nowrap" style={{ color: it.tone === 'down' ? 'var(--danger)' : it.tone === 'up' ? 'var(--green)' : 'var(--muted)' }}>
+                            {it.value}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+
+          <footer className="mt-14 pt-6" style={{ borderTop: '1px solid var(--hair)' }}>
+            <p className="text-[11px] leading-[1.9] tracking-[0.2px]" style={{ color: 'var(--faint)' }}>
+              Sikt · siktseo.com — rapporten er bygget på ekte tall fra Google Search Console, posisjonssporing og arbeidet Sikt har gjort på siden din. Ingen estimater uten grunnlag.
+            </p>
+          </footer>
+        </article>
       </div>
     </div>
   );
