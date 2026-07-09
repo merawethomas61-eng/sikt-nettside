@@ -3297,7 +3297,9 @@ function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--bg)' }}>
+    // NB: --bg finnes ikke som variabel — var(--subtle) er sidens bakgrunn i begge
+    // temaer. Uten gyldig bakgrunn ble overlayet gjennomsiktig (tekst over Hjem).
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--subtle)' }}>
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -9477,9 +9479,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                             <span style={{ fontSize: 12, color: W.faint }}>Innholds-mulighet</span>
                           </div>
 
-                          <div style={{ padding: isMobile ? '20px 16px' : '28px 48px', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 780 }}>
+                          {/* Full bredde når artikkelen vises (to kolonner trenger plassen);
+                              selve tekstblokkene under begrenses individuelt for lesbarhet. */}
+                          <div style={{ padding: isMobile ? '20px 16px' : '28px 48px', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: article ? 1200 : 780 }}>
                             {/* Muligheten */}
-                            <div>
+                            <div style={{ maxWidth: 760 }}>
                               <h2 style={{ margin: 0, fontSize: isMobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.02em', color: W.ink, fontFamily: SERIF }}>
                                 Vinn «{opp?.keyword || selectedProblem.title}»
                               </h2>
@@ -9565,7 +9569,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </div>
                                 )}
 
-                                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 320px', gap: 14, alignItems: 'start' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 400px', gap: 16, alignItems: 'start' }}>
                                   {/* VENSTRE: innlegget + kopier-knapper rett under */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                     <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, overflow: 'hidden' }}>
@@ -9578,7 +9582,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                       </div>
                                       <div
                                         className="sikt-article-preview"
-                                        style={{ padding: isMobile ? 16 : 20, maxHeight: 420, overflowY: 'auto', fontSize: 14, lineHeight: 1.7, color: W.ink }}
+                                        style={{ padding: isMobile ? 16 : 24, maxHeight: 560, overflowY: 'auto', fontSize: 14, lineHeight: 1.7, color: W.ink }}
                                       >
                                         <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: W.ink, fontFamily: SERIF }}>{article.h1 || article.title}</h3>
                                         {/* Trygt: HTML-en er sanert server-side (sanitizeArticleHtml) før lagring. */}
@@ -9632,15 +9636,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                     </div>
                                   </div>
 
-                                  {/* HØYRE: AI-prompten med kopier-knapp under */}
-                                  <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                  {/* HØYRE: AI-prompten med kopier-knapp under (følger med på scroll) */}
+                                  <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, position: isMobile ? 'static' : 'sticky', top: 16 }}>
                                     <div>
                                       <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>AI-prompt</p>
                                       <p style={{ margin: '6px 0 0', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>
                                         Lim inn i Claude, Cursor eller v0, så bygger den siden i din egen kodebase — med samme design som resten av nettstedet ditt.
                                       </p>
                                     </div>
-                                    <div style={{ background: W.subtle, border: `1px solid ${W.hair}`, borderRadius: 10, padding: 12, maxHeight: 340, overflowY: 'auto', fontSize: 11, lineHeight: 1.6, color: W.sub, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                    <div style={{ background: W.subtle, border: `1px solid ${W.hair}`, borderRadius: 10, padding: 12, maxHeight: 480, overflowY: 'auto', fontSize: 11, lineHeight: 1.6, color: W.sub, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                                       {buildArticleAiPrompt(article)}
                                     </div>
                                     <button
