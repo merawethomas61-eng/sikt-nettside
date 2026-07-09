@@ -311,6 +311,14 @@ const MARKETING = [
           ],
         },
         {
+          h2: 'Sikt skriver artiklene som flytter deg opp',
+          p: 'Vi finner søkene du nesten vinner, skriver en komplett artikkel målrettet mot dem — basert på din egen bedrift — og legger den som utkast i WordPress. Du godkjenner og publiserer.',
+          items: [
+            'Fra søkeord-mulighet til ferdig utkast på under ett minutt',
+            '2 AI-skrevne artikler/mnd i Standard, 8 i Premium — ingenting publiseres uten din godkjenning',
+          ],
+        },
+        {
           h2: 'En kvittering, ikke en vegg av tall',
           p: 'Hver uke får du en kort rapport på hva som er gjort og hva det betyr — skrevet sånn at du forstår det uten å være SEO-ekspert.',
           items: ['Hva som ble gjort, og hvorfor det hjelper deg', 'Ingen grafer du må tolke selv'],
@@ -381,6 +389,7 @@ const MARKETING = [
           h2: 'Standard — 1690 kr/mnd',
           p: 'Flere kunder — uten at du løfter en finger. Sikt fikser nettsiden din automatisk og kontinuerlig: WordPress og Shopify får endringene pushet rett inn, og bygde du siden med AI får du en ferdig lim-inn-prompt per problem.',
           items: [
+            '2 AI-skrevne artikler i måneden — sendt som utkast til WordPress',
             '1-klikks angre på alt — siden din kan aldri ødelegges',
             'Ukentlig «Dette har Sikt fikset for deg»-kvittering',
             'Ukentlig rangeringssjekk på inntil 50 søkeord',
@@ -391,10 +400,11 @@ const MARKETING = [
           h2: 'Premium — 4990 kr/mnd',
           p: 'Når én ny kunde er verdt titusener. Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av.',
           items: [
+            '8 AI-skrevne artikler i måneden — innholdsmotor på autopilot',
             'Ukentlig sjekk: anbefaler ChatGPT, Gemini og Perplexity deg?',
             'Søkeord-sporing i stort omfang — opptil 200 søkeord',
             'Konkurrent-radar uten grenser + dyp AI-analyse',
-            'Månedlig strategirapport på 10+ sider og 4-timers support på hverdager',
+            'Månedlig strategirapport med 10+ seksjoner og 4-timers support på hverdager',
           ],
         },
         { h2: 'Null binding', p: 'Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du betaler per måned og kan si opp, oppgradere eller nedgradere når du vil.' },

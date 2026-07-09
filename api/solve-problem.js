@@ -471,13 +471,17 @@ export default withSentry(async function handler(req, res) {
     let companyName = '';
     let declaredPlatform = null;
     try {
-        const { data: clientRow } = await supabase
+        // NB: kolonnen heter website_url — «websiteUrl» i select-en fikk hele
+        // spørringen til å feile stille, så packageName ble tom → Premium-kunder
+        // traff Basic-gaten (funnet 2026-07-09).
+        const { data: clientRow, error: clientErr } = await supabase
             .from('clients')
-            .select('website_url, websiteUrl, package_name, platform, company_name')
+            .select('website_url, package_name, platform, company_name')
             .eq('user_id', user.id)
             .limit(1)
             .maybeSingle();
-        websiteUrl = (clientRow?.website_url || clientRow?.websiteUrl || '').trim();
+        if (clientErr) console.warn('[solve-problem] clients-oppslag feilet:', clientErr.message);
+        websiteUrl = (clientRow?.website_url || '').trim();
         packageName = (clientRow?.package_name || '').toString();
         companyName = (clientRow?.company_name || '').toString();
         declaredPlatform = clientRow?.platform || null;

@@ -2164,7 +2164,7 @@ async function runMonthlyReport(req, res) {
                 ? '"positions", "opportunities", "work", "content", "competitors", "geo"'
                 : '"positions", "opportunities", "work", "content"';
             const ai = await mrOpenAiJson({
-                system: `Du er SEO-rådgiver for norske småbedrifter og skriver månedsrapporten deres. Plain norsk, ingen jargong, varm men presis tone. Bruk KUN tallene og listene du får — ALDRI finn på tall, navn eller fakta. 2–4 setninger per seksjon.
+                system: `Du er SEO-rådgiver for norske småbedrifter og skriver månedsrapporten deres. Plain norsk, ingen jargong, varm men presis tone. VIKTIG om perspektiv: omtal kunden som «du/dere» og nettsiden som «siden din» — «vi» betyr Sikt (rådgiveren) og brukes kun om arbeid Sikt har gjort. Aldri «våre sider» om kundens sider. Vær ærlig om svake tall, men konstruktiv: pek alltid på hva som gjøres videre. Bruk KUN tallene og listene du får — ALDRI finn på tall, navn eller fakta. 2–4 setninger per seksjon.
 
 SVAR I STRENGT JSON-FORMAT:
 {
