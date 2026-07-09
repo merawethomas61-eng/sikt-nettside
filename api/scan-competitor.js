@@ -291,11 +291,13 @@ export default withSentry(async function handler(req, res) {
     }
 
     // --- 8. Gap-muligheter ---
+    // NB: supabase-js kaster ikke på constraint-feil — { error } MÅ sjekkes,
+    // ellers feiler upserten stille (skjedde i prod frem til 2026-07-08).
     if (gapOpportunities.length > 0) {
-        await supabase
+        const { error: gapErr } = await supabase
             .from('keyword_opportunities')
-            .upsert(gapOpportunities, { onConflict: 'user_id,keyword' })
-            .catch((e) => console.warn('[scan-competitor] Opportunity feil:', e.message));
+            .upsert(gapOpportunities, { onConflict: 'user_id,keyword' });
+        if (gapErr) console.warn('[scan-competitor] Opportunity-upsert feilet:', gapErr.message);
     }
 
     // --- Bygg svar-melding ---

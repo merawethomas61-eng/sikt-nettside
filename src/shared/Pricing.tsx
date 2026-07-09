@@ -33,7 +33,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         { text: "Søkeord-sporing i stort omfang — opptil 200 søkeord", detail: "Spor posisjonen på opptil 200 søkeord hver uke — mer enn nok til å dekke alt som er relevant for bedriften din." },
         { text: "Spør Sikt AI hva som helst — 24/7", detail: "AI-chat som kjenner dine egne SEO-data og svarer på alt du lurer på, når som helst." },
         { text: "Konkurrent-radar uten grenser + dyp AI-analyse", detail: "Overvåk så mange konkurrenter du vil. AI leser deres innhold, estimerer trafikken og sjekker om ChatGPT/Gemini/Perplexity nevner dem — så du vet nøyaktig hva du må gjøre for å gå forbi." },
-        { text: "Månedlig strategirapport på 10+ sider", detail: "Grundig AI-generert analyse med GEO-konkurrentanalyse, vekststrategi og konkrete neste steg." },
+        { text: "Månedlig strategirapport med 10+ seksjoner", detail: "Grundig analyse bygget på dine ekte tall: posisjonsutvikling, GEO-konkurrentanalyse, vekststrategi og konkrete neste steg. Leses i portalen eller lastes ned som PDF — klar den 1. hver måned." },
         { text: "4-timers support på hverdager", detail: "Raskeste svartid vi tilbyr — svar innen 4 timer, mot 24 timer i Standard." }
       ]
     },
@@ -72,7 +72,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         { text: "Månedlig sjekk av hastighet og tekniske feil", detail: "Vi sjekker Core Web Vitals, mobilvennlighet, ødelagte lenker, SSL og redirect-kjeder hver måned." },
         { text: "Ukentlig «Dette har Sikt klargjort for deg»-kvittering", detail: "Hver mandag: konkret liste over funn og ferdige AI-forslag du kan lime inn selv. «3 meta-titler skrevet, 2 ødelagte lenker funnet, 4 alt-tekster generert.» Ingen abstrakte SEO-tall — bare konkret arbeid klart til bruk." },
         { text: "E-postvarsel når noe går galt", detail: "Øyeblikkelig varsel ved trafikkdropp, nye 404-feil eller nedetid." },
-        { text: "Månedlig rapport på plain norsk", detail: "PDF som forklarer hva som har endret seg og hva du bør gjøre — uten SEO-jargon." }
+        { text: "Månedlig rapport på plain norsk", detail: "Klar i portalen den 1. hver måned, og kan lastes ned som PDF. Forklarer hva som har endret seg og hva du bør gjøre — uten SEO-jargon." }
       ]
     }
   ];

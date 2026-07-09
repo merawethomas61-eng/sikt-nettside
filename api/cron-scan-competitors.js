@@ -875,18 +875,20 @@ async function runOpportunities(req, res) {
             const recipe = await oppGenerateRecipe({ keyword: k.keyword, position: k.position, companyName: client.company_name });
             if (dryRun) { summary.nearMiss += 1; continue; }
 
-            // Mat «Ukens mulighet» i kvitteringen (samme tabell som konkurrent-gap)
-            await supabase.from('keyword_opportunities').upsert({
+            // Mat «Ukens mulighet» i kvitteringen (samme tabell som konkurrent-gap).
+            // NB: difficulty er TEXT med check (easy/medium/hard) — pos 11–20 = medium.
+            const { error: oppUpsertErr } = await supabase.from('keyword_opportunities').upsert({
                 user_id: client.user_id,
                 keyword: k.keyword,
                 search_volume: k.impressions || 0,
-                difficulty: 30,
+                difficulty: 'medium',
                 recommendation_type: 'gsc_near_miss',
                 recommendation_text: recipe,
                 estimated_traffic: estClicks,
                 competitor_ids: [],
                 discovered_at: new Date().toISOString(),
             }, { onConflict: 'user_id,keyword' });
+            if (oppUpsertErr) { summary.errors += 1; console.warn('[opp] opportunity upsert feilet:', oppUpsertErr.message); }
 
             const { error: actErr } = await supabase.from('sikt_actions').insert({
                 user_id: client.user_id,
@@ -1838,6 +1840,382 @@ async function runUptime(req, res) {
     return res.status(200).json(summary);
 }
 
+// =====================================================================
+// MÅNEDSRAPPORT (job=monthly_report): innfrir prissidens rapport-løfte.
+// Kjøres av pg_cron hver time den 1. i måneden; hopper over kunder som
+// alt har rapport for perioden, så køen tømmer seg selv i batcher.
+// Premium: 10+ seksjoner (inkl. GEO + strategi); Basic/Standard: kortversjon.
+// Alle TALL beregnes her fra DB — AI skriver kun prosa rundt ekte tall.
+// =====================================================================
+const MR_MAX_CUSTOMERS = 3; // AI-tung: hold godt under Hobby 60s-timeout
+
+function mrTierForPackage(packageName) {
+    if (/premium/i.test(packageName || '')) return 'premium';
+    if (/standard/i.test(packageName || '')) return 'standard';
+    return 'basic';
+}
+
+function mrMonthLabel(period) {
+    try {
+        const d = new Date(`${period}-01T12:00:00Z`);
+        const label = d.toLocaleDateString('nb-NO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        return label.charAt(0).toUpperCase() + label.slice(1);
+    } catch {
+        return period;
+    }
+}
+
+async function mrOpenAiJson({ system, user, maxTokens }) {
+    if (!OPENAI_API_KEY) return null;
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY.trim()}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                temperature: 0.4,
+                max_tokens: maxTokens,
+                response_format: { type: 'json_object' },
+                messages: [
+                    { role: 'system', content: system },
+                    { role: 'user', content: user },
+                ],
+            }),
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        const raw = (data.choices?.[0]?.message?.content || '').replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(raw);
+    } catch (err) {
+        console.warn('[report] OpenAI-kall feilet:', err?.message);
+        return null;
+    }
+}
+
+// Samler månedens fakta for én kunde. Returnerer null hvis det ikke finnes
+// nok data til en meningsfull rapport (helt fersk kunde).
+async function mrGatherData(supabase, client, periodStartIso, periodEndIso) {
+    const userId = client.user_id;
+
+    const { data: siteRows } = await supabase.from('sites').select('id').eq('user_id', userId);
+    const siteIds = (siteRows || []).map((s) => s.id);
+    let gscKeywords = [];
+    if (siteIds.length) {
+        const { data: kwRows } = await supabase
+            .from('keywords')
+            .select('keyword, clicks, impressions, position')
+            .in('site_id', siteIds)
+            .order('clicks', { ascending: false })
+            .limit(100);
+        gscKeywords = kwRows || [];
+    }
+
+    // Posisjonsendring i perioden: første vs siste ukes-snapshot per søkeord.
+    const { data: snaps } = await supabase
+        .from('keyword_snapshots')
+        .select('keyword, position, captured_at')
+        .eq('user_id', userId)
+        .gte('captured_at', periodStartIso)
+        .lte('captured_at', periodEndIso)
+        .order('captured_at', { ascending: true })
+        .limit(400);
+    const firstPos = new Map();
+    const lastPos = new Map();
+    for (const s of snaps || []) {
+        if (typeof s.position !== 'number') continue;
+        if (!firstPos.has(s.keyword)) firstPos.set(s.keyword, s.position);
+        lastPos.set(s.keyword, s.position);
+    }
+    const movers = [];
+    for (const [kw, from] of firstPos) {
+        const to = lastPos.get(kw);
+        if (typeof to !== 'number' || Math.abs(to - from) < 1) continue;
+        movers.push({ keyword: kw, from: Math.round(from), to: Math.round(to), delta: from - to });
+    }
+    movers.sort((a, b) => b.delta - a.delta);
+    const winners = movers.filter((m) => m.delta > 0).slice(0, 5);
+    const losers = movers.filter((m) => m.delta < 0).slice(-5).reverse();
+
+    const { data: actions } = await supabase
+        .from('sikt_actions')
+        .select('action_type, category, title, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', periodStartIso)
+        .lte('created_at', periodEndIso)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+    const { data: articles } = await supabase
+        .from('sikt_articles')
+        .select('keyword, title, status, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', periodStartIso)
+        .lte('created_at', periodEndIso)
+        .limit(20);
+
+    const { data: opps } = await supabase
+        .from('keyword_opportunities')
+        .select('keyword, recommendation_text, estimated_traffic')
+        .eq('user_id', userId)
+        .order('estimated_traffic', { ascending: false })
+        .limit(3);
+
+    const { data: competitors } = await supabase
+        .from('competitors')
+        .select('domain, avg_position, keyword_count, last_scanned_at')
+        .eq('user_id', userId)
+        .limit(5);
+
+    const { data: geoChecks } = await supabase
+        .from('geo_checks')
+        .select('provider, question, mentioned, checked_at')
+        .eq('user_id', userId)
+        .gte('checked_at', periodStartIso)
+        .lte('checked_at', periodEndIso)
+        .limit(60);
+
+    const positions = gscKeywords.map((k) => k.position).filter((p) => typeof p === 'number');
+    const onPage1 = positions.filter((p) => p <= 10).length;
+    const avgPos = positions.length ? positions.reduce((a, b) => a + b, 0) / positions.length : null;
+    const totalClicks = gscKeywords.reduce((a, k) => a + (k.clicks || 0), 0);
+    const actionCount = (actions || []).length;
+    const geoTotal = (geoChecks || []).length;
+    const geoMentioned = (geoChecks || []).filter((g) => g.mentioned).length;
+
+    // Ikke nok data til en ærlig rapport → hopp over (heller ingen rapport
+    // enn en rapport full av nuller og AI-fyll).
+    if (gscKeywords.length === 0 && actionCount === 0 && (articles || []).length === 0) {
+        return null;
+    }
+
+    return {
+        gscKeywords, winners, losers,
+        actions: actions || [], articles: articles || [], opps: opps || [],
+        competitors: competitors || [], geoChecks: geoChecks || [],
+        stats: {
+            totalKeywords: gscKeywords.length, onPage1,
+            avgPos: avgPos != null ? Math.round(avgPos * 10) / 10 : null,
+            totalClicks, actionCount, articleCount: (articles || []).length,
+            geoTotal, geoMentioned,
+        },
+    };
+}
+
+function mrBuildSections({ tier, monthLabel, data, ai }) {
+    const { stats, winners, losers, opps, actions, articles, competitors, geoChecks } = data;
+    const aiSec = ai?.sections || {};
+    const sections = [];
+
+    sections.push({ id: 'intro', title: `Måneden som gikk — ${monthLabel}`, body: ai?.intro || '' });
+
+    const statItems = [
+        { label: 'Søkeord vi følger', value: String(stats.totalKeywords) },
+        { label: 'På side 1 av Google', value: String(stats.onPage1) },
+    ];
+    if (stats.avgPos != null) statItems.push({ label: 'Snittplassering', value: String(stats.avgPos) });
+    if (stats.totalClicks > 0) statItems.push({ label: 'Klikk fra Google (28 d)', value: String(stats.totalClicks) });
+    statItems.push({ label: 'Ting Sikt gjorde', value: String(stats.actionCount) });
+    if (stats.articleCount > 0) statItems.push({ label: 'Artikler skrevet', value: String(stats.articleCount) });
+    sections.push({ id: 'stats', title: 'Måneden i tall', stats: statItems });
+
+    const moverItems = [
+        ...winners.map((m) => ({ text: `«${m.keyword}»`, value: `${m.from} → ${m.to}`, tone: 'up' })),
+        ...losers.map((m) => ({ text: `«${m.keyword}»`, value: `${m.from} → ${m.to}`, tone: 'down' })),
+    ];
+    sections.push({ id: 'positions', title: 'Posisjonsutvikling', body: aiSec.positions || '', items: moverItems });
+
+    if (opps.length) {
+        sections.push({
+            id: 'opportunities', title: 'Størst mulighet nå', body: aiSec.opportunities || '',
+            items: opps.map((o) => ({ text: `«${o.keyword}»`, value: o.estimated_traffic ? `~${o.estimated_traffic} besøk/mnd` : '' })),
+        });
+    }
+
+    sections.push({
+        id: 'work', title: 'Dette gjorde Sikt for deg', body: aiSec.work || '',
+        items: actions.slice(0, 8).map((a) => ({ text: a.title })),
+    });
+
+    if (articles.length) {
+        sections.push({
+            id: 'content', title: 'Nytt innhold', body: aiSec.content || '',
+            items: articles.map((a) => ({ text: a.title, value: a.status === 'pushed_draft' ? 'Utkast i WordPress' : 'Klar til publisering' })),
+        });
+    }
+
+    if (tier === 'premium') {
+        if (competitors.length) {
+            sections.push({
+                id: 'competitors', title: 'Konkurrentbildet', body: aiSec.competitors || '',
+                items: competitors.map((c) => ({ text: c.domain, value: c.avg_position ? `snitt ${c.avg_position}` : '' })),
+            });
+        }
+        if (stats.geoTotal > 0) {
+            sections.push({
+                id: 'geo', title: 'AI-synlighet (ChatGPT, Gemini, Perplexity)', body: aiSec.geo || '',
+                stats: [
+                    { label: 'Spørsmål sjekket', value: String(stats.geoTotal) },
+                    { label: 'Der du ble nevnt', value: String(stats.geoMentioned) },
+                ],
+                items: geoChecks.filter((g) => !g.mentioned).slice(0, 4).map((g) => ({ text: g.question, value: `ikke nevnt (${g.provider})` })),
+            });
+        }
+        if (ai?.strategy) {
+            sections.push({ id: 'strategy', title: 'Vekststrategi for neste måned', body: ai.strategy });
+        }
+    }
+
+    const nextSteps = Array.isArray(ai?.next_steps) ? ai.next_steps.filter((s) => typeof s === 'string' && s.trim()) : [];
+    if (nextSteps.length) {
+        sections.push({ id: 'next', title: 'Neste steg', items: nextSteps.map((t) => ({ text: t })) });
+    }
+
+    return sections.filter((s) => s.body || (s.items && s.items.length) || (s.stats && s.stats.length));
+}
+
+function mrBuildEmail(client, { monthLabel, intro, stats, portalUrl }) {
+    const hei = notifFirstName(client) ? `Hei ${escapeHtml(notifFirstName(client))}, ` : '';
+    return renderEmail({
+        preheader: `Månedsrapporten for ${monthLabel} er klar i portalen.`,
+        brand: 'sikt',
+        kicker: 'Månedsrapport',
+        heading: `Rapporten for ${escapeHtml(monthLabel)} er klar`,
+        intro: `${hei}${escapeHtml(intro || 'her er oppsummeringen av måneden som gikk.')}`,
+        blocks: [
+            sectionHead('Måneden i tall') +
+            `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:2;color:#55514A">` +
+            `Søkeord på side 1: <strong style="color:#1A1A1A">${stats.onPage1}</strong> av ${stats.totalKeywords}<br>` +
+            (stats.avgPos != null ? `Snittplassering: <strong style="color:#1A1A1A">${stats.avgPos}</strong><br>` : '') +
+            `Ting Sikt gjorde for deg: <strong style="color:#1A1A1A">${stats.actionCount}</strong>` +
+            `</div>`,
+        ],
+        cta: { label: 'Les hele rapporten', url: portalUrl },
+        footer: 'Sikt · månedsrapport · styr e-poster i Innstillinger → Varsler.',
+    });
+}
+
+async function runMonthlyReport(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+
+    // Perioden = forrige kalendermåned (kjøres 1. i måneden), overstyrbar for test.
+    let period = typeof req.query?.period === 'string' && /^\d{4}-\d{2}$/.test(req.query.period)
+        ? req.query.period
+        : null;
+    if (!period) {
+        const now = new Date();
+        const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+        period = prev.toISOString().slice(0, 7);
+    }
+    const periodStartIso = `${period}-01T00:00:00Z`;
+    const startDate = new Date(periodStartIso);
+    const periodEndIso = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + 1, 1)).toISOString();
+    const monthLabel = mrMonthLabel(period);
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences')
+        .not('package_name', 'is', null);
+    if (error) {
+        Sentry.captureException(error);
+        return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
+    }
+
+    // Hopp over kunder som allerede har rapport for perioden (selv-drenerende kø).
+    const { data: existing } = await supabase
+        .from('sikt_reports').select('user_id').eq('period', period);
+    const hasReport = new Set((existing || []).map((r) => r.user_id));
+
+    const summary = { period, generated: 0, emailed: 0, skippedExisting: 0, skippedNoData: 0, errors: 0 };
+    let processed = 0;
+
+    for (const client of clients || []) {
+        if (processed >= MR_MAX_CUSTOMERS) break;
+        if (hasReport.has(client.user_id)) { summary.skippedExisting += 1; continue; }
+        processed += 1;
+
+        try {
+            const data = await mrGatherData(supabase, client, periodStartIso, periodEndIso);
+            if (!data) { summary.skippedNoData += 1; continue; }
+
+            const tier = mrTierForPackage(client.package_name);
+            const isPremium = tier === 'premium';
+
+            const facts = {
+                bedrift: client.company_name || 'ukjent',
+                nettside: client.website_url || '',
+                maaned: monthLabel,
+                tall: data.stats,
+                opp_i_posisjon: data.winners,
+                ned_i_posisjon: data.losers,
+                muligheter: data.opps.map((o) => ({ keyword: o.keyword, anbefaling: o.recommendation_text, estimert_trafikk: o.estimated_traffic })),
+                sikt_gjorde: data.actions.slice(0, 10).map((a) => a.title),
+                artikler: data.articles.map((a) => ({ title: a.title, status: a.status })),
+                ...(isPremium ? {
+                    konkurrenter: data.competitors.map((c) => ({ domain: c.domain, snittposisjon: c.avg_position })),
+                    geo: { sjekket: data.stats.geoTotal, nevnt: data.stats.geoMentioned },
+                } : {}),
+            };
+
+            const wantedSections = isPremium
+                ? '"positions", "opportunities", "work", "content", "competitors", "geo"'
+                : '"positions", "opportunities", "work", "content"';
+            const ai = await mrOpenAiJson({
+                system: `Du er SEO-rådgiver for norske småbedrifter og skriver månedsrapporten deres. Plain norsk, ingen jargong, varm men presis tone. Bruk KUN tallene og listene du får — ALDRI finn på tall, navn eller fakta. 2–4 setninger per seksjon.
+
+SVAR I STRENGT JSON-FORMAT:
+{
+  "intro": "3-4 setninger som oppsummerer måneden (les tallene, trekk den ærlige konklusjonen)",
+  "sections": { ${wantedSections} — én kort prosatekst per nøkkel },
+  "next_steps": ["3 konkrete, gjennomførbare anbefalinger for neste måned"]${isPremium ? ',\n  "strategy": "5-7 setninger vekststrategi for neste måned basert på tallene"' : ''}
+}`,
+                user: JSON.stringify(facts),
+                maxTokens: isPremium ? 2200 : 1200,
+            });
+
+            const sections = mrBuildSections({ tier, monthLabel, data, ai });
+            const title = `Månedsrapport — ${monthLabel}`;
+
+            if (dryRun) { summary.generated += 1; continue; }
+
+            const { error: insErr } = await supabase.from('sikt_reports').upsert({
+                user_id: client.user_id,
+                period,
+                tier,
+                title,
+                sections,
+            }, { onConflict: 'user_id,period' });
+            if (insErr) { summary.errors += 1; console.warn('[report] lagring feilet:', insErr.message); continue; }
+            summary.generated += 1;
+
+            const wantsEmail = client.notification_preferences?.monthlyReport !== false;
+            if (client.email && wantsEmail) {
+                const ok = await sendSiktEmail({
+                    to: client.email,
+                    subject: `Månedsrapporten for ${monthLabel} er klar`,
+                    html: mrBuildEmail(client, { monthLabel, intro: ai?.intro, stats: data.stats, portalUrl: 'https://siktseo.com/portal' }),
+                });
+                if (ok) {
+                    summary.emailed += 1;
+                    await supabase.from('sikt_reports')
+                        .update({ emailed_at: new Date().toISOString() })
+                        .eq('user_id', client.user_id).eq('period', period);
+                }
+            }
+        } catch (err) {
+            summary.errors += 1;
+            console.warn('[report] feilet for kunde:', err?.message || err);
+            Sentry.captureException(err);
+        }
+    }
+
+    console.log('[report] ferdig:', JSON.stringify(summary));
+    return res.status(200).json(summary);
+}
+
 export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: aksepter både Bearer-secret og x-cron-secret ---
     const authHeader = req.headers.authorization;
@@ -1870,6 +2248,11 @@ export default withSentry(async function handler(req, res) {
     // Dispatch: oppetids-sjekk (kritiske varsler — nettsiden nede)
     if (req.query?.job === 'uptime') {
         return await runUptime(req, res);
+    }
+
+    // Dispatch: månedsrapport (innfrir «månedlig rapport»-løftet på prissiden)
+    if (req.query?.job === 'monthly_report') {
+        return await runMonthlyReport(req, res);
     }
 
     // Dispatch: optimaliserings-motor (Standard+: near-miss, forfall, schema, alt)

@@ -514,11 +514,13 @@ function kpTimeAgo(dateStr: string): string {
 
 // ─── GEO / AI-SYNLIGHET PAGE ────────────────────────────────────────────────
 const GeoPage: React.FC<{ onNotify: () => void; hasAutoTracking?: boolean }> = ({ onNotify, hasAutoTracking }) => {
-  // Ett kildested: alias til PORTAL (ingen duplisert hex).
+  // Tema-bevisst: CSS-variablene fra .sikt-portal (før: statiske PORTAL-hexer
+  // → siden forble lys i mørk modus). `btn` = mørk knapp-flate i begge temaer.
   const G = {
-    bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
-    muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
-    hair: PORTAL.hair, subtle: PORTAL.subtle,
+    bg: 'var(--subtle)', card: 'var(--surface)', ink: 'var(--ink)', green: 'var(--green)',
+    muted: 'var(--muted)', border: 'var(--hair)', sub: 'var(--sub)', faint: 'var(--faint)',
+    hair: 'var(--hair)', subtle: 'var(--subtle)',
+    btn: 'var(--btn-bg)',
   } as const;
   const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
   const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -570,7 +572,7 @@ const GeoPage: React.FC<{ onNotify: () => void; hasAutoTracking?: boolean }> = (
           </div>
           <button
             onClick={() => openAI('https://chatgpt.com')}
-            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
+            style={{ background: G.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0 }}
             onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
           >
             <ExternalLink size={13} /> Åpne i ChatGPT
@@ -656,7 +658,7 @@ const GeoPage: React.FC<{ onNotify: () => void; hasAutoTracking?: boolean }> = (
           <button
             type="button"
             onClick={onNotify}
-            style={{ background: G.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            style={{ background: G.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
             onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
           >
             Bli varslet når det lanseres <ChevronRight size={14} />
@@ -854,12 +856,14 @@ const ReviewsPage: React.FC<{
   hasStandardOrHigher: boolean;
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, companyName, hasStandardOrHigher, onUpgrade }) => {
-  // Ett kildested: alias til PORTAL (ingen duplisert hex).
+  // Tema-bevisst: CSS-variablene fra .sikt-portal (før: statiske PORTAL-hexer
+  // → siden forble lys i mørk modus). `btn` = mørk knapp-flate i begge temaer.
   const C = {
-    card: PORTAL.card, ink: PORTAL.ink, sub: PORTAL.sub, muted: PORTAL.muted,
-    faint: PORTAL.faint, border: PORTAL.border, hair: PORTAL.hair, subtle: PORTAL.subtle,
-    green: PORTAL.success, greenBg: PORTAL.successBg, amber: PORTAL.warn, amberBg: PORTAL.warnBg,
-    red: PORTAL.danger,
+    card: 'var(--surface)', ink: 'var(--ink)', sub: 'var(--sub)', muted: 'var(--muted)',
+    faint: 'var(--faint)', border: 'var(--hair)', hair: 'var(--hair)', subtle: 'var(--subtle)',
+    green: 'var(--green)', greenBg: 'var(--inset)', amber: 'var(--warn)', amberBg: 'var(--warnbg)',
+    red: 'var(--danger)',
+    btn: 'var(--btn-bg)',
   } as const;
   const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
   const pressD = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -1194,7 +1198,7 @@ const ReviewsPage: React.FC<{
           </p>
           <button
             onClick={() => onUpgrade('Standard')}
-            style={{ background: C.ink, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            style={{ background: C.btn, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
             onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
           >
             <Sparkles size={14} /> Oppgrader til Standard
@@ -1241,7 +1245,7 @@ const ReviewsPage: React.FC<{
             <button
               type="button" onClick={runSearch} disabled={searching}
               onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
-              style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: searching ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: searching ? 0.7 : 1 }}
+              style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: searching ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: searching ? 0.7 : 1 }}
             >
               {searching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} Søk
             </button>
@@ -1335,7 +1339,7 @@ const ReviewsPage: React.FC<{
           <input type="email" value={contact} onChange={(e) => setContact(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendRequest()} placeholder="Kundens e-post" style={{ ...inputStyle, flex: '1 1 200px' }} />
           <button
             type="button" onClick={sendRequest} disabled={sendingId !== null} onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
-            style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: sendingId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: sendingId ? 0.7 : 1 }}
+            style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: sendingId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, flexShrink: 0, opacity: sendingId ? 0.7 : 1 }}
           >
             {sendingId ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Send forespørsel
           </button>
@@ -1420,7 +1424,7 @@ const ReviewsPage: React.FC<{
                       style={{ ...inputStyle, resize: 'vertical', fontFamily: "'Geist','DM Sans',sans-serif" }}
                     />
                     <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                      <button type="button" onClick={() => submitReply(r.reviewId)} disabled={replyingId === r.reviewId} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor: replyingId === r.reviewId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: replyingId === r.reviewId ? 0.7 : 1 }}>
+                      <button type="button" onClick={() => submitReply(r.reviewId)} disabled={replyingId === r.reviewId} style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor: replyingId === r.reviewId ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: replyingId === r.reviewId ? 0.7 : 1 }}>
                         {replyingId === r.reviewId ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Publiser svar
                       </button>
                       <button type="button" onClick={() => { setReplyOpenId(null); setReplyText(''); }} style={{ background: 'none', border: 'none', fontSize: 12.5, fontWeight: 600, color: C.muted, cursor: 'pointer' }}>Avbryt</button>
@@ -1492,7 +1496,7 @@ const ReviewsPage: React.FC<{
               <button
                 type="button" onClick={pushSchemaToWp} disabled={pushingSchema}
                 onMouseDown={pressD} onMouseUp={pressU} onMouseLeave={pressU}
-                style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: pushingSchema ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, opacity: pushingSchema ? 0.7 : 1 }}
+                style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 600, cursor: pushingSchema ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}`, opacity: pushingSchema ? 0.7 : 1 }}
               >
                 {pushingSchema ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Publiser på WordPress
               </button>
@@ -1544,11 +1548,13 @@ const KonkurrenterPage: React.FC<{
   onUpgrade: (targetPlan?: 'Basic' | 'Standard' | 'Premium') => void;
 }> = ({ user, theme, hasStandardOrHigher, hasPremium, onUpgrade }) => {
   // Colour tokens — «warm-neutral Linear»-systemet (samme som resten av dashbordet)
-  // Ett kildested: alias til PORTAL (ingen duplisert hex).
+  // Tema-bevisst: CSS-variablene fra .sikt-portal (før: statiske PORTAL-hexer
+  // → siden forble lys i mørk modus). `btn` = mørk knapp-flate i begge temaer.
   const C = {
-    bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
-    muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
-    hair: PORTAL.hair, subtle: PORTAL.subtle,
+    bg: 'var(--subtle)', card: 'var(--surface)', ink: 'var(--ink)', green: 'var(--green)',
+    muted: 'var(--muted)', border: 'var(--hair)', sub: 'var(--sub)', faint: 'var(--faint)',
+    hair: 'var(--hair)', subtle: 'var(--subtle)',
+    btn: 'var(--btn-bg)',
   } as const;
 
   // Custom easing (Emil: never use default CSS easings)
@@ -1823,7 +1829,7 @@ const KonkurrenterPage: React.FC<{
           </p>
           <button
             onClick={() => onUpgrade('Standard')}
-            style={{ background: C.ink, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+            style={{ background: C.btn, color: '#fff', padding: '11px 22px', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
             onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
           >
             <Sparkles size={14} /> Oppgrader til Standard
@@ -1865,7 +1871,7 @@ const KonkurrenterPage: React.FC<{
           )}
           <button
             onClick={() => { if (competitors.length >= maxCompetitors) { setShowUpgradePrompt(true); return; } setShowAddModal(true); }}
-            style={{ background: C.ink, color: '#fff', padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 6, transition: `transform 160ms ${EASE}` }}
+            style={{ background: C.btn, color: '#fff', padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 6, transition: `transform 160ms ${EASE}` }}
             onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
           >
             <Plus size={14} /> Legg til konkurrent
@@ -2140,7 +2146,7 @@ const KonkurrenterPage: React.FC<{
                       )}
                       <button
                         onClick={() => setGenerateTarget(opp)}
-                        style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', transition: `transform 160ms ${EASE}` }}
+                        style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', transition: `transform 160ms ${EASE}` }}
                         onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
                       >
                         <Sparkles size={11} /> Generer side
@@ -2156,7 +2162,7 @@ const KonkurrenterPage: React.FC<{
                 <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Overvåk ubegrenset antall konkurrenter</p>
                 <button
                   onClick={() => onUpgrade('Premium')}
-                  style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}` }}
+                  style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: `transform 160ms ${EASE}` }}
                   onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
                 >
                   Premium → 4 990 kr
@@ -2170,7 +2176,7 @@ const KonkurrenterPage: React.FC<{
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <SectionTitle size="sm">Endringer hos konkurrentene</SectionTitle>
               {unreadCount > 0 && (
-                <span style={{ background: C.ink, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px', fontVariantNumeric: 'tabular-nums' }}>{unreadCount}</span>
+                <span style={{ background: C.btn, color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 100, padding: '2px 8px', fontVariantNumeric: 'tabular-nums' }}>{unreadCount}</span>
               )}
             </div>
             {unreadCount > 0 && (
@@ -2233,7 +2239,7 @@ const KonkurrenterPage: React.FC<{
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button
                 onClick={handleAddCompetitor} disabled={addLoading || !addDomain.trim()}
-                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: addLoading || !addDomain.trim() ? 'not-allowed' : 'pointer', opacity: addLoading || !addDomain.trim() ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+                style={{ flex: 1, background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: addLoading || !addDomain.trim() ? 'not-allowed' : 'pointer', opacity: addLoading || !addDomain.trim() ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
                 onMouseDown={e => { if (!addLoading && addDomain.trim()) pressDown(e); }}
                 onMouseUp={pressReset} onMouseLeave={pressReset}
               >
@@ -2263,7 +2269,7 @@ const KonkurrenterPage: React.FC<{
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleGeneratePage} disabled={generateLoading}
-                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: generateLoading ? 'not-allowed' : 'pointer', opacity: generateLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
+                style={{ flex: 1, background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: generateLoading ? 'not-allowed' : 'pointer', opacity: generateLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: `transform 160ms ${EASE}` }}
                 onMouseDown={e => { if (!generateLoading) pressDown(e); }}
                 onMouseUp={pressReset} onMouseLeave={pressReset}
               >
@@ -2291,7 +2297,7 @@ const KonkurrenterPage: React.FC<{
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => { setShowUpgradePrompt(false); onUpgrade('Premium'); }}
-                style={{ flex: 1, background: C.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                style={{ flex: 1, background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                 onMouseDown={pressDown} onMouseUp={pressReset} onMouseLeave={pressReset}
               >Oppgrader til Premium</button>
               <button onClick={() => setShowUpgradePrompt(false)}
@@ -3256,6 +3262,107 @@ function buildArticleAiPrompt(article: {
   ].filter(Boolean).join('\n');
 }
 
+// =====================================================================
+// Månedsrapporten (sikt_reports) — fullskjerms lesevisning i handbook-stil.
+// «Last ned PDF» = window.print(); print-CSS-en under gjemmer alt annet.
+// Seksjonstyper: body (prosa), stats (nøkkeltall, SANS-tall per designregel),
+// items (rader med tekst + valgfri verdi/tone).
+// =====================================================================
+function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }) {
+  const sections: any[] = Array.isArray(report?.sections) ? report.sections : [];
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--bg)' }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .sikt-report-print, .sikt-report-print * { visibility: visible; }
+          .sikt-report-print { position: absolute !important; inset: 0 !important; overflow: visible !important; }
+          .sikt-report-noprint { display: none !important; }
+        }
+      `}</style>
+      <div className="sikt-report-print mx-auto max-w-[720px] px-5 sm:px-8 py-10">
+        <div className="sikt-report-noprint flex items-center justify-between gap-3 mb-10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-3.5 py-2"
+            style={{ color: 'var(--muted)', border: '1px solid var(--hair)', background: 'var(--surface)' }}
+          >
+            <ChevronLeft size={13} /> Tilbake
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-4 py-2 text-white"
+            style={{ background: 'var(--btn-bg)' }}
+          >
+            Last ned PDF
+          </button>
+        </div>
+
+        <header className="mb-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-3" style={{ color: 'var(--muted)' }}>
+            Sikt · {report.tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'}
+          </p>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]" style={{ color: 'var(--ink)', fontFamily: SERIF }}>
+            {report.title}
+          </h1>
+          <div aria-hidden className="mt-7" style={{ borderTop: '1px solid var(--hair)' }} />
+        </header>
+
+        <div className="space-y-10">
+          {sections.map((s: any) => (
+            <section key={s.id}>
+              <div className="flex items-center gap-2.5 mb-4">
+                <span aria-hidden style={{ width: 18, height: 2, background: 'var(--green)', borderRadius: 2, flexShrink: 0 }} />
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</h2>
+              </div>
+              {s.body && (
+                <p className="text-[15px] leading-[1.7] mb-4" style={{ color: 'var(--ink)' }}>{s.body}</p>
+              )}
+              {Array.isArray(s.stats) && s.stats.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                  {s.stats.map((st: any) => (
+                    <div key={st.label} className="rounded-[14px] p-4" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>{st.label}</p>
+                      <p className="mt-2 text-[26px] font-semibold leading-none tabular-nums" style={{ color: 'var(--ink)' }}>{st.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {Array.isArray(s.items) && s.items.length > 0 && (
+                <div className="rounded-[14px] overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+                  {s.items.map((it: any, i: number) => (
+                    <div key={i} className="flex items-baseline justify-between gap-4 px-4 py-3" style={{ borderTop: i === 0 ? 'none' : '1px solid var(--hair)' }}>
+                      <p className="text-sm min-w-0" style={{ color: 'var(--ink)' }}>{it.text}</p>
+                      {it.value && (
+                        <p className="text-sm font-semibold tabular-nums whitespace-nowrap" style={{ color: it.tone === 'down' ? '#B4231F' : it.tone === 'up' ? 'var(--green)' : 'var(--muted)' }}>
+                          {it.value}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+
+        <footer className="mt-12 pt-6" style={{ borderTop: '1px solid var(--hair)' }}>
+          <p className="text-xs" style={{ color: 'var(--faint)' }}>
+            Sikt · siktseo.com · Rapporten er bygget på ekte data fra Google Search Console, posisjonssporing og arbeidet Sikt har gjort på siden din.
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 // Ferdig lim-inn-prompt for AI-bygde sider (Claude, Cursor, v0 …): kunden limer
 // den inn i sitt eget AI-verktøy, som gjør endringen i deres EGEN kildekode.
 // Speiler buildAiPrompt i api/solve-problem.js så de to flytene føles like.
@@ -4117,6 +4224,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     if ((activeTab !== 'workshop' && activeTab !== 'home') || !userIdRef.current) return;
     fetchArticleData();
   }, [activeTab, fetchArticleData]);
+
+  // ── Månedsrapporter (sikt_reports) — Hjem-kort + arkiv i Innstillinger ──
+  const [siktReports, setSiktReports] = useState<any[]>([]);
+  const [activeReport, setActiveReport] = useState<any | null>(null);
+
+  useEffect(() => {
+    if ((activeTab !== 'home' && activeTab !== 'settings') || !userIdRef.current) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sikt_reports')
+          .select('id, period, tier, title, sections, created_at')
+          .eq('user_id', userIdRef.current)
+          .order('period', { ascending: false })
+          .limit(12);
+        if (!error && Array.isArray(data)) setSiktReports(data);
+      } catch (err: any) {
+        console.warn('[Rapport] Kunne ikke hente sikt_reports:', err?.message || err);
+      }
+    })();
+  }, [activeTab]);
 
   useEffect(() => {
     resetContentFixPushUi();
@@ -5072,7 +5200,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     setGeoChatReply(null);
     try {
       const ctx = [clientData?.companyName, formData.websiteUrl || clientData?.websiteUrl, clientData?.industry].filter(Boolean).join(' · ');
-      const prompt = `Du er Sikt AI, en norsk rådgiver for synlighet i Google og generativ søk (ChatGPT m.fl.). Bedriftskontekst: ${ctx || 'ikke oppgitt'}. Svar kort, konkret og på norsk (maks ca. 150 ord). Ingen hallusinerte tall om rangering — gi metode og prioritering.\n\nSpørsmål: ${q}`;
+      // Prissiden lover at chatten «kjenner dine egne SEO-data» — så vi sender
+      // med de ekte tallene frontend allerede har (posisjoner, GSC, muligheter).
+      const kwLines = [
+        ...realRankings.slice(0, 8).map((r: any) => `«${r.keyword}»: plass ${r.position ?? 'ikke i topp 100'}`),
+        ...gscKeywords.slice(0, 6).map((k: any) => `«${k.keyword}»: plass ${k.position ?? '—'} (${k.clicks ?? 0} klikk siste 28 d)`),
+      ].slice(0, 10);
+      const oppLines = keywordOpps.slice(0, 3).map((o: any) => `«${o.keyword}»`);
+      const latestScoreEntry = scoreHistory.length ? scoreHistory[scoreHistory.length - 1] : null;
+      const dataCtx = [
+        kwLines.length ? `Søkeord og posisjoner akkurat nå:\n${kwLines.join('\n')}` : '',
+        oppLines.length ? `Største innholds-muligheter: ${oppLines.join(', ')}` : '',
+        latestScoreEntry ? `Teknisk score (mobil): ytelse ${latestScoreEntry.mobilePerf}/100, SEO ${latestScoreEntry.mobileSeo}/100` : '',
+      ].filter(Boolean).join('\n');
+      const prompt = `Du er Sikt AI, en norsk rådgiver for synlighet i Google og generativ søk (ChatGPT m.fl.). Bedriftskontekst: ${ctx || 'ikke oppgitt'}.${dataCtx ? `\n\nKUNDENS EKTE SEO-DATA (bruk disse aktivt i svaret der det er relevant — dette er fakta, ikke estimater):\n${dataCtx}` : ''}\n\nSvar kort, konkret og på norsk (maks ca. 150 ord). Ingen tall du ikke har fått over — gi metode og prioritering.\n\nSpørsmål: ${q}`;
       const res = await fetch('/api/openai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -5534,7 +5675,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           // Ekte data (eller estimater basert på live tall) for volum og KD
           const totalResults = data.search_information?.total_results || 10000;
           const kd = Math.min(100, Math.max(10, Math.round((totalResults / 1000000) * 10)));
-          const intent = ['Kjøp', 'Info', 'Lokal'][Math.floor(Math.random() * 3)];
+          // Intent utledes av ekte signaler (før: tilfeldig valgt — falsk data):
+          // kartresultater i SERP-en = lokalt søk, spørreord = info, kjøpsord = kjøp.
+          const intent = data.local_results ? 'Lokal'
+            : /^(hva|hvordan|hvorfor|når|hvem|hvor)\b/i.test(keyword) ? 'Info'
+            : /\b(pris|priser|billig|kjøp|kjøpe|tilbud|best)\b/i.test(keyword) ? 'Kjøp'
+            : 'Info';
 
           // --- 2. EKTE HISTORIKK-LOGIKK ---
           const todayDate = new Date().toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' });
@@ -7350,8 +7496,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       {/* Tema-tokens: lys = dagens eksakte verdier (uendret), mørk = override.
           Hardkodede farger peker på var(--token) → hele portalen flipper med data-theme. */}
       <style>{`
-.sikt-portal{--ink:#1A1A1A;--sub:#5C574C;--muted:#8A8578;--faint:#B3AD9F;--hair:#E9E4DA;--surface:#FFFFFF;--subtle:#FAF8F3;--green:#15795A;--navbg:#F5F5F0;--inset:#E8F1EB;--insetbd:#D6EEDF;--inset-ink:#2F5C45;--danger:#B4231F;--dangerbg:#FBECEB;--btn-bg:#1A1A1A;}
-.sikt-portal[data-theme="dark"]{--ink:#E8E6E1;--sub:#B8B3A8;--muted:#9A958B;--faint:#6F6A60;--hair:rgba(255,255,255,0.10);--surface:#16181D;--subtle:#1E2127;--green:#3DA77B;--navbg:#121317;--inset:rgba(61,167,123,0.12);--insetbd:rgba(61,167,123,0.28);--inset-ink:#8FD3B0;--danger:#E0796B;--dangerbg:rgba(224,121,107,0.14);--btn-bg:#33373F;}
+.sikt-portal{--ink:#1A1A1A;--sub:#5C574C;--muted:#8A8578;--faint:#B3AD9F;--hair:#E9E4DA;--surface:#FFFFFF;--subtle:#FAF8F3;--green:#15795A;--navbg:#F5F5F0;--inset:#E8F1EB;--insetbd:#D6EEDF;--inset-ink:#2F5C45;--danger:#B4231F;--dangerbg:#FBECEB;--btn-bg:#1A1A1A;--warn:#9A6700;--warnbg:#F6EEDD;}
+.sikt-portal[data-theme="dark"]{--ink:#E8E6E1;--sub:#B8B3A8;--muted:#9A958B;--faint:#6F6A60;--hair:rgba(255,255,255,0.10);--surface:#16181D;--subtle:#1E2127;--green:#3DA77B;--navbg:#121317;--inset:rgba(61,167,123,0.12);--insetbd:rgba(61,167,123,0.28);--inset-ink:#8FD3B0;--danger:#E0796B;--dangerbg:rgba(224,121,107,0.14);--btn-bg:#33373F;--warn:#D9A23F;--warnbg:rgba(217,162,63,0.14);}
 .sikt-portal[data-theme="dark"] input::placeholder,.sikt-portal[data-theme="dark"] textarea::placeholder{color:var(--faint);opacity:1;}
 `}</style>
 
@@ -7713,6 +7859,27 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 </div>
               </div>
             )}
+            {/* Månedsrapporten — innfrir «månedlig rapport»-løftet på prissiden */}
+            {siktReports.length > 0 && (
+              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif] flex items-center gap-4 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">
+                    {siktReports[0].tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'}
+                  </p>
+                  <h3 className="text-lg font-semibold text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>{siktReports[0].title}</h3>
+                  <p className="text-sm mt-1 text-[color:var(--muted)]">Hva som skjedde, hva Sikt gjorde, og hva vi tar tak i nå.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveReport(siktReports[0])}
+                  className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
+                  style={{ background: 'var(--btn-bg)' }}
+                >
+                  Les rapporten <ArrowRight size={13} />
+                </button>
+              </div>
+            )}
+
             <div className={`${tabFadeInClass} space-y-6`}>
               {!activationDismissed && (
                 <ActivationChecklist
@@ -8926,10 +9093,14 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
               changeData: todo.changeData,
             }));
           // Ett kildested: alias til PORTAL (ingen duplisert hex).
+          // Tema-bevisst: CSS-variablene fra .sikt-portal (lys/mørk flipper med
+          // data-theme). Var tidligere statiske PORTAL-hexer → Verkstedet forble
+          // lyst i mørk modus. `btn` er mørk knapp-/teaser-flate i BEGGE temaer.
           const W = {
-            bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
-            muted: PORTAL.muted, border: PORTAL.border, sub: PORTAL.sub, faint: PORTAL.faint,
-            hair: PORTAL.hair, subtle: PORTAL.subtle,
+            bg: 'var(--subtle)', card: 'var(--surface)', ink: 'var(--ink)', green: 'var(--green)',
+            muted: 'var(--muted)', border: 'var(--hair)', sub: 'var(--sub)', faint: 'var(--faint)',
+            hair: 'var(--hair)', subtle: 'var(--subtle)',
+            btn: 'var(--btn-bg)',
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const pressDown = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.transform = 'scale(0.97)'; };
@@ -9148,7 +9319,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   style={{ background: 'none', border: 'none', padding: '10px 16px', fontSize: 14, fontWeight: active ? 600 : 400, color: active ? W.ink : W.muted, cursor: 'pointer', position: 'relative', transition: `color 160ms ${EASE}` }}
                                 >
                                   {tab.label}
-                                  {active && <span style={{ position: 'absolute', bottom: 0, left: 16, right: 16, height: 2, background: W.ink, borderRadius: 2 }} />}
+                                  {active && <span style={{ position: 'absolute', bottom: 0, left: 16, right: 16, height: 2, background: W.btn, borderRadius: 2 }} />}
                                 </button>
                               );
                             })}
@@ -9176,7 +9347,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 onMouseDown={pressDown}
                                 onMouseUp={pressReset}
                                 onMouseLeave={pressReset}
-                                style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                style={{ background: W.btn, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                               >
                                 Tøm søk
                               </button>
@@ -9205,7 +9376,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   animation: `ws-fade-up 220ms ${EASE} both`,
                                   animationDelay: `${listIdx * 40}ms`,
                                 }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(26,26,26,0.03)'; }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--subtle)'; }}
                                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                               >
                                 <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, color: W.muted, fontWeight: 600 }}>{num}</span>
@@ -9222,7 +9393,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
                       {/* Tier teaser */}
                       {!hasStandardOrHigher && (
-                        <div style={{ background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ background: W.btn, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Sparkles size={16} style={{ color: '#6EE7B7' }} />
                           </div>
@@ -9306,7 +9477,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
                             {!hasStandardOrHigher ? (
                               /* Basic → teaser (samme mørke kort som ellers i Verkstedet) */
-                              <div style={{ background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                              <div style={{ background: W.btn, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <Sparkles size={16} style={{ color: '#6EE7B7' }} />
                                 </div>
@@ -9340,7 +9511,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                     onMouseDown={pressDown}
                                     onMouseUp={pressReset}
                                     onMouseLeave={pressReset}
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isGenerating || quotaLeft === 0 ? 'not-allowed' : 'pointer', opacity: isGenerating || quotaLeft === 0 ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isGenerating || quotaLeft === 0 ? 'not-allowed' : 'pointer', opacity: isGenerating || quotaLeft === 0 ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
                                   >
                                     <Sparkles size={13} className={isGenerating ? 'animate-pulse' : ''} />
                                     {isGenerating ? 'Skriver utkastet… (ca. 30 sek)' : 'Skriv utkast for meg'}
@@ -9400,7 +9571,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                       onMouseDown={pressDown}
                                       onMouseUp={pressReset}
                                       onMouseLeave={pressReset}
-                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isPushing ? 'not-allowed' : 'pointer', opacity: isPushing ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isPushing ? 'not-allowed' : 'pointer', opacity: isPushing ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
                                     >
                                       {isPushing ? 'Sender…' : 'Send som utkast til WordPress'}
                                     </button>
@@ -9576,7 +9747,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 onMouseDown={pressDown}
                                 onMouseUp={pressReset}
                                 onMouseLeave={pressReset}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                               >
                                 Angre push
                               </button>
@@ -9596,7 +9767,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               onMouseDown={pressDown}
                               onMouseUp={pressReset}
                               onMouseLeave={pressReset}
-                              style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              style={{ background: W.btn, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                             >
                               Lukk
                             </button>
@@ -9667,7 +9838,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                     <button
                                       type="button"
                                       disabled
-                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
                                     >
                                       <Loader2 size={14} className="ws-content-spin" style={{ animation: 'ws-spin 1s linear infinite' }} />
                                       Ruller tilbake …
@@ -9696,7 +9867,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         onMouseDown={pressDown}
                                         onMouseUp={pressReset}
                                         onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                       >
                                         Rull tilbake nå
                                       </button>
@@ -9735,7 +9906,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                       <div style={{ padding: isMobile ? '20px 16px' : '28px 48px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                            <span style={{ background: W.ink, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
+                            <span style={{ background: W.btn, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>Innhold</span>
                             <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.ink, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                               <span style={{ width: 6, height: 6, borderRadius: '50%', background: W.green, flexShrink: 0 }} /> Åpen
                             </span>
@@ -9800,7 +9971,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               onMouseDown={pressDown}
                               onMouseUp={pressReset}
                               onMouseLeave={pressReset}
-                              style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                              style={{ background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                             >
                               Prøv igjen
                             </button>
@@ -9968,7 +10139,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   onMouseDown={pressDown}
                                   onMouseUp={pressReset}
                                   onMouseLeave={pressReset}
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                 >
                                   <Copy size={14} /> Kopier forslag
                                 </button>
@@ -10026,7 +10197,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         <span style={{ fontSize: 13, fontWeight: 700, color: W.ink }}>Ferdig AI-prompt — lås opp i Standard</span>
                                       </div>
                                       <p style={{ margin: '0 0 12px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Få en ferdig prompt du limer rett inn i Claude/Cursor, så legger den den nye teksten inn i kodebasen din. Inkludert fra Standard og oppover.</p>
-                                      <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                      <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.btn, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                                         <Sparkles size={12} /> Oppgrader til Standard
                                       </button>
                                     </div>
@@ -10049,7 +10220,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                       </div>
                                       <div style={{ padding: '12px 16px 6px' }}>
                                         <p style={{ margin: '0 0 10px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Lim denne inn i Claude, Cursor, v0 e.l. — den legger den nye teksten inn i din egen kodebase. Redigerer du forslaget over, oppdateres prompten.</p>
-                                        <div style={{ background: W.ink, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
+                                        <div style={{ background: W.btn, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
                                           <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.9)', whiteSpace: 'pre-wrap' }}><code>{toolPrompt}</code></pre>
                                         </div>
                                       </div>
@@ -10113,7 +10284,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         alignItems: 'center',
                                         gap: 7,
                                         alignSelf: 'flex-start',
-                                        background: W.ink,
+                                        background: W.btn,
                                         color: '#fff',
                                         border: 'none',
                                         borderRadius: 11,
@@ -10276,7 +10447,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                       onMouseDown={pressDown}
                                       onMouseUp={pressReset}
                                       onMouseLeave={pressReset}
-                                      style={{ background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      style={{ background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                     >
                                       Lukk
                                     </button>
@@ -10303,7 +10474,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         onMouseDown={pressDown}
                                         onMouseUp={pressReset}
                                         onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
                                       >
                                         Rull tilbake nå
                                       </button>
@@ -10312,7 +10483,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                     <button
                                       type="button"
                                       disabled
-                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'not-allowed', opacity: 0.7 }}
                                     >
                                       <Loader2 size={14} className="ws-content-spin" style={{ animation: 'ws-spin 1s linear infinite' }} />
                                       Ruller tilbake …
@@ -10338,7 +10509,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         onMouseDown={pressDown}
                                         onMouseUp={pressReset}
                                         onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                       >
                                         Rull tilbake nå
                                       </button>
@@ -10382,7 +10553,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                           display: 'inline-flex',
                                           alignItems: 'center',
                                           gap: 7,
-                                          background: W.ink,
+                                          background: W.btn,
                                           color: '#fff',
                                           border: 'none',
                                           borderRadius: 10,
@@ -10418,7 +10589,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         onMouseDown={pressDown}
                                         onMouseUp={pressReset}
                                         onMouseLeave={pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                       >
                                         Angre push
                                       </button>
@@ -10464,7 +10635,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                         onMouseDown={pushBlockedByPlaceholders || pushBusy ? undefined : pressDown}
                                         onMouseUp={pushBlockedByPlaceholders || pushBusy ? undefined : pressReset}
                                         onMouseLeave={pushBlockedByPlaceholders || pushBusy ? undefined : pressReset}
-                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: pushBusy || pushBlockedByPlaceholders ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.7 : pushBlockedByPlaceholders ? 0.5 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: pushBusy || pushBlockedByPlaceholders ? 'not-allowed' : 'pointer', opacity: pushBusy ? 0.7 : pushBlockedByPlaceholders ? 0.5 : 1, transition: `transform 160ms ${EASE}, opacity 160ms ${EASE}` }}
                                       >
                                         {pushBusy ? (
                                           <>
@@ -10517,7 +10688,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         <div>
                           {/* Tag pills */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-                            <span style={{ background: W.ink, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>PageSpeed</span>
+                            <span style={{ background: W.btn, color: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "ui-monospace,'SF Mono',Menlo,monospace" }}>PageSpeed</span>
                             <span style={{ border: `1px solid ${W.border}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: W.ink, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                               <span style={{ width: 6, height: 6, borderRadius: '50%', background: W.green, flexShrink: 0 }} /> Åpen
                             </span>
@@ -10572,7 +10743,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: W.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: W.btn, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Sparkles size={13} style={{ color: W.green }} />
                               </div>
                               <div>
@@ -10644,7 +10815,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 onMouseDown={pressDown}
                                 onMouseUp={pressReset}
                                 onMouseLeave={pressReset}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                               >
                                 <Sparkles size={13} /> Be AI om løsning
                               </button>
@@ -10690,7 +10861,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               </div>
                               <div style={{ padding: '12px 16px 6px' }}>
                                 <p style={{ margin: '0 0 10px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Lim denne inn i Claude, Cursor, v0 e.l. — den fikser dette i din egen kodebase.</p>
-                                <div style={{ background: W.ink, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
+                                <div style={{ background: W.btn, borderRadius: 10, padding: '14px 16px', overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
                                   <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.9)', whiteSpace: 'pre-wrap' }}><code>{String(aiSolution.aiPrompt)}</code></pre>
                                 </div>
                               </div>
@@ -10709,7 +10880,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 <span style={{ fontSize: 13, fontWeight: 700, color: W.ink }}>Ferdig AI-prompt — lås opp i Standard</span>
                               </div>
                               <p style={{ margin: '0 0 12px', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>Få en ferdig prompt du limer rett inn i Claude/Cursor, så fikser den dette i kodebasen din. Inkludert fra Standard og oppover.</p>
-                              <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.ink, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                              <button type="button" onClick={() => handleUpgrade('Standard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: W.btn, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                                 <Sparkles size={12} /> Oppgrader til Standard
                               </button>
                             </div>
@@ -10725,7 +10896,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 </div>
                                 {aiSolution.fileHint && <span style={{ fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, color: W.muted }}>{aiSolution.fileHint}</span>}
                               </div>
-                              <div style={{ background: W.ink, padding: '14px 16px', overflowX: 'auto' }}>
+                              <div style={{ background: W.btn, padding: '14px 16px', overflowX: 'auto' }}>
                                 <pre style={{ margin: 0, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 12, lineHeight: 1.6, color: 'rgba(245,245,240,0.65)', whiteSpace: 'pre-wrap' }}><code>{String(aiSolution.originalCode)}</code></pre>
                               </div>
                               <div style={{ padding: '8px 14px' }}>
@@ -10770,7 +10941,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                           onMouseDown={pressDown}
                           onMouseUp={pressReset}
                           onMouseLeave={pressReset}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.ink, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 11, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                         >
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                           Marker som løst
@@ -10800,7 +10971,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
                       {/* Tier teaser */}
                       {!hasStandardOrHigher && (
-                        <div style={{ margin: isMobile ? '0 16px 24px' : '0 48px 32px', background: W.ink, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ margin: isMobile ? '0 16px 24px' : '0 48px 32px', background: W.btn, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Sparkles size={16} style={{ color: W.green }} />
                           </div>
@@ -10828,7 +10999,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                   ) : (
                     <div style={{ padding: isMobile ? '48px 20px' : '64px 48px', textAlign: 'center' }}>
                       <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 18, fontWeight: 700 }}>Funn ikke funnet</p>
-                      <button type="button" onClick={() => setExpandedWorkshopProblem(null)} style={{ marginTop: 12, background: W.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>← Tilbake</button>
+                      <button type="button" onClick={() => setExpandedWorkshopProblem(null)} style={{ marginTop: 12, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>← Tilbake</button>
                     </div>
                   )}
 
@@ -10882,10 +11053,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
             { key: 'alert', label: `Varsler ${counts.alert}` },
           ];
 
-          // Forén til PORTAL (var avvikende: #52A447/#808080/#EBEBE6 → handbook-farger).
+          // Tema-bevisst: CSS-variablene fra .sikt-portal (før: statiske PORTAL-hexer
+          // → seksjonen forble lys i mørk modus). `btn` = mørk knapp-flate i begge temaer.
           const L = {
-            bg: PORTAL.bg, card: PORTAL.card, ink: PORTAL.ink, green: PORTAL.success,
-            muted: PORTAL.muted, border: PORTAL.border,
+            bg: 'var(--subtle)', card: 'var(--surface)', ink: 'var(--ink)', green: 'var(--green)',
+            muted: 'var(--muted)', border: 'var(--hair)',
+            btn: 'var(--btn-bg)',
           } as const;
           const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
           const catColor = (c: string) =>
@@ -10996,7 +11169,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
                   {/* Firmakort */}
                   <div style={{ background: L.card, border: `1px solid ${L.border}`, borderRadius: 16, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: L.ink, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: L.btn, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                       {initials}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -11202,7 +11375,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                           onMouseDown={pressD}
                           onMouseUp={pressU}
                           onMouseLeave={pressU}
-                          style={{ background: L.ink, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                          style={{ background: L.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                         >
                           Gå til Hjem
                         </button>
@@ -11807,6 +11980,38 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 </div>
               </details>
 
+              {/* Månedsrapport-arkiv: alle genererte rapporter, nyeste først */}
+              {siktReports.length > 0 && (
+                <details className={sectionShell} open>
+                  <summary className={sectionSummary}>
+                    <div className="flex items-center gap-3">
+                      <SectionTitle>Månedsrapporter</SectionTitle>
+                    </div>
+                  </summary>
+                  <div className="px-5 sm:px-6 pb-6">
+                    <p className="text-sm" style={{ color: C.muted, lineHeight: 1.6 }}>Les i portalen eller last ned som PDF. Ny rapport kommer den 1. hver måned.</p>
+                    <ul className="mt-2">
+                      {siktReports.map((r: any) => (
+                        <li key={r.id} className={rowShell}>
+                          <div className="min-w-0 pr-2">
+                            <p className="text-sm font-medium" style={{ color: C.ink }}>{r.title}</p>
+                            <p className="text-xs mt-1" style={{ color: C.muted }}>{r.tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'} · generert {new Date(r.created_at).toLocaleDateString('nb-NO')}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveReport(r)}
+                            className="shrink-0 text-[13px] font-semibold rounded-[10px] px-3.5 py-2"
+                            style={{ color: C.ink, border: `1px solid ${C.hair}`, background: 'var(--surface)' }}
+                          >
+                            Åpne
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </details>
+              )}
+
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
                   <div className="flex items-center gap-3">
@@ -12095,6 +12300,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           </div>
         )}
     </main>
+
+      {/* Månedsrapport — fullskjerms lesevisning (print-til-PDF) */}
+      {activeReport && <ReportOverlay report={activeReport} onClose={() => setActiveReport(null)} />}
 
       {/* =============================================================== */}
       {/* WORDPRESS CONNECT WIZARD                                        */}
