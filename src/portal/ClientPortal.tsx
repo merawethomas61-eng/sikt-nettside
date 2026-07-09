@@ -3241,6 +3241,21 @@ ${truncateText(contextRaw, 800)}${contextBlock}`;
   }
 }
 
+// Ren tekst av artikkelen (uten HTML) — «Kopier tekst»-knappen i studioet.
+// Overskrifter/avsnitt blir linjeskift, lister blir punkter.
+function articlePlainText(article: { title: string; h1?: string | null; content_html: string }): string {
+  const text = String(article.content_html || '')
+    .replace(/<\/(h2|h3|p|ul|ol)>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return `${article.h1 || article.title}\n\n${text}`;
+}
+
 // Lim-inn-prompt for en HEL generert artikkel (AI-bygde sider): kunden limer den
 // inn i sitt eget AI-verktøy som oppretter siden i deres egen kildekode.
 // Speiler aiPrompt-byggeren i handleArticleGeneration (api/solve-problem.js).
@@ -3258,7 +3273,13 @@ function buildArticleAiPrompt(article: {
     article.faq_jsonld
       ? `\nLegg også inn dette FAQ-schemaet som JSON-LD i <head> på den nye siden:\n<script type="application/ld+json">${article.faq_jsonld}</script>`
       : '',
-    '\nOppgave: Lag siden i mine EKTE kildefiler med samme design/layout som resten av siten, legg den til i navigasjon/sitemap der det er naturlig, og forklar kort hva du opprettet.',
+    `\nDESIGNKRAV (VIKTIGST AV ALT — den nye siden skal være umulig å skille fra resten av nettstedet mitt):
+1. FØR du skriver noe kode: åpne 1–2 eksisterende sider i kildekoden min og se nøyaktig hvordan de er bygget.
+2. Gjenbruk samme layout som de eksisterende sidene: samme header/navigasjon, footer, container-bredde, mellomrom, typografi, farger og knappestiler.
+3. IKKE lag nytt fargetema, nye fonter, ny CSS-fil eller egne stiler. Bruk kun klassene, design-tokens og komponentene som allerede finnes.
+4. Legg den nye siden til i navigasjon/sitemap på samme måte som de andre sidene.
+5. Kun INNHOLDET er nytt — alt visuelt skal være identisk med resten av siten.`,
+    '\nOppgave: Lag siden i mine EKTE kildefiler etter designkravene over, og forklar kort hva du opprettet til slutt.',
   ].filter(Boolean).join('\n');
 }
 
@@ -9527,7 +9548,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 )}
                               </div>
                             ) : (
-                              /* Artikkel finnes → forhåndsvisning + handlinger */
+                              /* Artikkel finnes → innlegget til venstre, AI-prompt til høyre */
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                                 {isPushed && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(21,121,90,0.08)', border: '1px solid rgba(21,121,90,0.25)', borderRadius: 12, padding: '12px 16px' }}>
@@ -9544,69 +9565,95 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </div>
                                 )}
 
-                                <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, overflow: 'hidden' }}>
-                                  <div style={{ padding: isMobile ? 16 : 20, borderBottom: `1px solid ${W.hair}` }}>
-                                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>SEO-tittel <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.title || '').length} tegn)</span></p>
-                                    <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 600, color: W.ink }}>{article.title}</p>
-                                    <p style={{ margin: '14px 0 0', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>Meta-beskrivelse <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.meta_description || '').length} tegn)</span></p>
-                                    <p style={{ margin: '6px 0 0', fontSize: 13, color: W.sub, lineHeight: 1.55 }}>{article.meta_description}</p>
-                                    <p style={{ margin: '14px 0 0', fontSize: 12, color: W.faint }}>/{article.slug} · {articleWords} ord{article.faq_jsonld ? ' · FAQ-schema inkludert' : ''}</p>
-                                  </div>
-                                  <div
-                                    className="sikt-article-preview"
-                                    style={{ padding: isMobile ? 16 : 20, maxHeight: 420, overflowY: 'auto', fontSize: 14, lineHeight: 1.7, color: W.ink }}
-                                  >
-                                    <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: W.ink, fontFamily: SERIF }}>{article.h1 || article.title}</h3>
-                                    {/* Trygt: HTML-en er sanert server-side (sanitizeArticleHtml) før lagring. */}
-                                    <div dangerouslySetInnerHTML={{ __html: article.content_html }} />
-                                  </div>
-                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 320px', gap: 14, alignItems: 'start' }}>
+                                  {/* VENSTRE: innlegget + kopier-knapper rett under */}
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, overflow: 'hidden' }}>
+                                      <div style={{ padding: isMobile ? 16 : 20, borderBottom: `1px solid ${W.hair}` }}>
+                                        <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>SEO-tittel <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.title || '').length} tegn)</span></p>
+                                        <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 600, color: W.ink }}>{article.title}</p>
+                                        <p style={{ margin: '14px 0 0', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>Meta-beskrivelse <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({String(article.meta_description || '').length} tegn)</span></p>
+                                        <p style={{ margin: '6px 0 0', fontSize: 13, color: W.sub, lineHeight: 1.55 }}>{article.meta_description}</p>
+                                        <p style={{ margin: '14px 0 0', fontSize: 12, color: W.faint }}>/{article.slug} · {articleWords} ord{article.faq_jsonld ? ' · FAQ-schema inkludert' : ''}</p>
+                                      </div>
+                                      <div
+                                        className="sikt-article-preview"
+                                        style={{ padding: isMobile ? 16 : 20, maxHeight: 420, overflowY: 'auto', fontSize: 14, lineHeight: 1.7, color: W.ink }}
+                                      >
+                                        <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: W.ink, fontFamily: SERIF }}>{article.h1 || article.title}</h3>
+                                        {/* Trygt: HTML-en er sanert server-side (sanitizeArticleHtml) før lagring. */}
+                                        <div dangerouslySetInnerHTML={{ __html: article.content_html }} />
+                                      </div>
+                                    </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                                  {hostIsFullyConnected && !isPushed && (
-                                    <button
-                                      type="button"
-                                      disabled={isPushing}
-                                      onClick={() => pushArticleDraft(article)}
-                                      onMouseDown={pressDown}
-                                      onMouseUp={pressReset}
-                                      onMouseLeave={pressReset}
-                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isPushing ? 'not-allowed' : 'pointer', opacity: isPushing ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
-                                    >
-                                      {isPushing ? 'Sender…' : 'Send som utkast til WordPress'}
-                                    </button>
-                                  )}
-                                  {isAiBuiltHost && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                      {hostIsFullyConnected && !isPushed && (
+                                        <button
+                                          type="button"
+                                          disabled={isPushing}
+                                          onClick={() => pushArticleDraft(article)}
+                                          onMouseDown={pressDown}
+                                          onMouseUp={pressReset}
+                                          onMouseLeave={pressReset}
+                                          style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: isPushing ? 'not-allowed' : 'pointer', opacity: isPushing ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                        >
+                                          {isPushing ? 'Sender…' : 'Send som utkast til WordPress'}
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => copyText(articlePlainText(article), 'Teksten er kopiert — lim inn der du skriver.')}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ background: 'transparent', color: W.ink, border: `1px solid ${W.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Kopier tekst
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => copyText(String(article.content_html || ''), 'HTML kopiert. Lim inn i redigereren din.')}
+                                        onMouseDown={pressDown}
+                                        onMouseUp={pressReset}
+                                        onMouseLeave={pressReset}
+                                        style={{ background: 'transparent', color: W.muted, border: `1px solid ${W.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      >
+                                        Kopier HTML
+                                      </button>
+                                      {!hostIsFullyConnected && !isAiBuiltHost && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setActiveTab('settings'); openWpWizard(); }}
+                                          style={{ background: 'none', border: 'none', color: W.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                                        >
+                                          Koble til WordPress for å sende utkast direkte
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* HØYRE: AI-prompten med kopier-knapp under */}
+                                  <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    <div>
+                                      <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>AI-prompt</p>
+                                      <p style={{ margin: '6px 0 0', fontSize: 12, color: W.muted, lineHeight: 1.55 }}>
+                                        Lim inn i Claude, Cursor eller v0, så bygger den siden i din egen kodebase — med samme design som resten av nettstedet ditt.
+                                      </p>
+                                    </div>
+                                    <div style={{ background: W.subtle, border: `1px solid ${W.hair}`, borderRadius: 10, padding: 12, maxHeight: 340, overflowY: 'auto', fontSize: 11, lineHeight: 1.6, color: W.sub, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                      {buildArticleAiPrompt(article)}
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={() => copyText(buildArticleAiPrompt(article), 'AI-prompt kopiert. Lim den inn i Claude/Cursor/v0.')}
                                       onMouseDown={pressDown}
                                       onMouseUp={pressReset}
                                       onMouseLeave={pressReset}
-                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: hostIsFullyConnected && !isPushed ? 'transparent' : W.ink, color: hostIsFullyConnected && !isPushed ? W.ink : '#fff', border: hostIsFullyConnected && !isPushed ? `1px solid ${W.border}` : 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
                                     >
                                       <Sparkles size={13} /> Kopier AI-prompt
                                     </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => copyText(String(article.content_html || ''), 'HTML kopiert. Lim inn i redigereren din.')}
-                                    onMouseDown={pressDown}
-                                    onMouseUp={pressReset}
-                                    onMouseLeave={pressReset}
-                                    style={{ background: 'transparent', color: W.muted, border: `1px solid ${W.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
-                                  >
-                                    Kopier HTML
-                                  </button>
-                                  {!hostIsFullyConnected && !isAiBuiltHost && (
-                                    <button
-                                      type="button"
-                                      onClick={() => { setActiveTab('settings'); openWpWizard(); }}
-                                      style={{ background: 'none', border: 'none', color: W.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                                    >
-                                      Koble til WordPress for å sende utkast direkte
-                                    </button>
-                                  )}
+                                  </div>
                                 </div>
 
                                 {!isPushed && (

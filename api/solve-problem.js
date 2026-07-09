@@ -363,7 +363,8 @@ REGLER FOR content_html:
         return res.status(500).json({ error: 'Artikkelen ble generert, men kunne ikke lagres. Prøv igjen.' });
     }
 
-    // --- «Gjort-for-deg» for AI-bygde sider: ferdig instruks til kundens AI-verktøy ---
+    // --- «Gjort-for-deg» for AI-bygde sider: ferdig instruks til kundens AI-verktøy.
+    // Speiler buildArticleAiPrompt i ClientPortal.tsx (hold de to i synk). ---
     let aiPrompt = null;
     if (isAiBuilt) {
         aiPrompt = [
@@ -374,7 +375,13 @@ REGLER FOR content_html:
             `H1: ${h1}`,
             `\nBrødtekst (HTML — behold overskriftsstrukturen, tilpass til komponentene mine):\n${contentHtml}`,
             faqJsonld ? `\nLegg også inn dette FAQ-schemaet som JSON-LD i <head> på den nye siden:\n<script type="application/ld+json">${faqJsonld}</script>` : '',
-            '\nOppgave: Lag siden i mine EKTE kildefiler med samme design/layout som resten av siten, legg den til i navigasjon/sitemap der det er naturlig, og forklar kort hva du opprettet.',
+            `\nDESIGNKRAV (VIKTIGST AV ALT — den nye siden skal være umulig å skille fra resten av nettstedet mitt):
+1. FØR du skriver noe kode: åpne 1–2 eksisterende sider i kildekoden min og se nøyaktig hvordan de er bygget.
+2. Gjenbruk samme layout som de eksisterende sidene: samme header/navigasjon, footer, container-bredde, mellomrom, typografi, farger og knappestiler.
+3. IKKE lag nytt fargetema, nye fonter, ny CSS-fil eller egne stiler. Bruk kun klassene, design-tokens og komponentene som allerede finnes.
+4. Legg den nye siden til i navigasjon/sitemap på samme måte som de andre sidene.
+5. Kun INNHOLDET er nytt — alt visuelt skal være identisk med resten av siten.`,
+            '\nOppgave: Lag siden i mine EKTE kildefiler etter designkravene over, og forklar kort hva du opprettet til slutt.',
         ].filter(Boolean).join('\n');
     }
 
