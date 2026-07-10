@@ -66,6 +66,12 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+# track-lead: offentlig beacon fra kundenes nettsider (henvendelses-sporing);
+# lead_token i body ER autorisasjonen, svarer alltid 204 → MÅ være false.
+[functions.track-lead]
+enabled = true
+verify_jwt = false
+
 # google-oauth-callback: Googles OAuth-redirect (GET, ingen JWT) → MÅ være false.
 [functions.google-oauth-callback]
 enabled = true

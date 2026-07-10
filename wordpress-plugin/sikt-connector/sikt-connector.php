@@ -3,7 +3,7 @@
  * Plugin Name: Sikt Connector
  * Description: Lar Sikt (siktseo.com) oppdatere SEO-felter på siden
  *              din via et sikret REST-endepunkt.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Sikt
  * License: Proprietary
  */
@@ -83,7 +83,88 @@ add_action('rest_api_init', function () {
             'content' => array('required' => true, 'type' => 'string'),
         ),
     ));
+
+    // v1.3.0: henvendelses-sporing (leads). Sikt setter token + endepunkt;
+    // tom token slår sporingen av. Ingen persondata samles inn.
+    register_rest_route('sikt/v1', '/set-lead-config', array(
+        'methods' => 'POST',
+        'callback' => 'sikt_set_lead_config_handler',
+        'permission_callback' => function () {
+            return current_user_can('manage_options');
+        },
+        'args' => array(
+            'token' => array('required' => true, 'type' => 'string'),
+            'endpoint' => array('required' => false, 'type' => 'string'),
+        ),
+    ));
 });
+
+/**
+ * v1.3.0: lagre lead-sporing-konfig. Endepunktet MÅ være en https-URL mot
+ * Supabase-funksjonen track-lead — alt annet avvises (hindrer at en
+ * kompromittert admin-konto peker beacon-trafikk hvor som helst).
+ */
+function sikt_set_lead_config_handler($request) {
+    $token = trim((string) $request->get_param('token'));
+    $endpoint = trim((string) $request->get_param('endpoint'));
+
+    if ($token === '') {
+        delete_option('sikt_lead_config');
+        return rest_ensure_response(array('ok' => true, 'enabled' => false));
+    }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $token)) {
+        return new WP_Error('invalid_token', 'Ugyldig token.', array('status' => 400));
+    }
+    if (!preg_match('#^https://[a-z0-9-]+\.supabase\.co/functions/v1/track-lead$#i', $endpoint)) {
+        return new WP_Error('invalid_endpoint', 'Ugyldig endepunkt.', array('status' => 400));
+    }
+
+    update_option('sikt_lead_config', array('token' => $token, 'endpoint' => $endpoint), false);
+    return rest_ensure_response(array('ok' => true, 'enabled' => true));
+}
+
+/**
+ * v1.3.0: beacon for henvendelses-sporing. Lite vanilla-script (~0,6 kB) som
+ * melder fra om telefon-klikk, e-post-klikk og skjema-innsendinger til Sikt.
+ * INGEN persondata: kun event-type + sti. Ingen cookies. sessionStorage-dedup
+ * per hendelse per sidevisning så ett klikk ikke telles dobbelt.
+ */
+add_action('wp_footer', function () {
+    $config = get_option('sikt_lead_config', null);
+    if (!is_array($config) || empty($config['token']) || empty($config['endpoint'])) {
+        return;
+    }
+    $token = esc_js($config['token']);
+    $endpoint = esc_js($config['endpoint']);
+    ?>
+<script data-sikt-leads="1">
+(function(){
+  var EP="<?php echo $endpoint; ?>",T="<?php echo $token; ?>";
+  function send(kind,key){
+    try{
+      var sk="sikt_lead_"+kind+"_"+key;
+      if(window.sessionStorage&&sessionStorage.getItem(sk))return;
+      if(window.sessionStorage)sessionStorage.setItem(sk,"1");
+      var payload=JSON.stringify({t:T,k:kind,p:location.pathname});
+      if(navigator.sendBeacon){navigator.sendBeacon(EP,payload);}
+      else{fetch(EP,{method:"POST",body:payload,keepalive:true}).catch(function(){});}
+    }catch(e){}
+  }
+  document.addEventListener("click",function(e){
+    var el=e.target&&e.target.closest?e.target.closest("a[href]"):null;
+    if(!el)return;
+    var href=(el.getAttribute("href")||"").toLowerCase();
+    if(href.indexOf("tel:")===0)send("tel",href);
+    else if(href.indexOf("mailto:")===0)send("mailto",href);
+  },true);
+  document.addEventListener("submit",function(e){
+    var f=e.target;
+    if(f&&f.tagName==="FORM")send("form",(f.getAttribute("action")||location.pathname));
+  },true);
+})();
+</script>
+    <?php
+}, 99);
 
 /**
  * Server /llms.txt (og /llms.txt/) fra lagret option. Den nye standardfilen

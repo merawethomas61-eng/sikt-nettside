@@ -19,6 +19,10 @@ import {
     isSerpApiRateLimitedResponse,
 } from './_lib/external-rate-limit.js';
 import { renderEmail, sectionHead, winList, railNote, escapeHtml } from './_lib/email.js';
+import { crawlSite, normalizePageUrl } from './_lib/site-scan.js';
+import { assertSafeUserUrl, assertSafePublicUrl } from './_lib/url-guard.js';
+import { classifyLinkCheck, computeLinkSuggestions } from './_lib/link-engine.js';
+import { generateArticle, ArticleEngineError, articleLimitForPackage } from './_lib/article-engine.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -740,6 +744,28 @@ const OPP_DEDUP_DAYS = 30;          // ikke gjenta samme nesten-på-side-1
 const OPP_DECAY_DEDUP_DAYS = 14;    // ikke gjenta samme forfall-varsel
 const OPP_MIN_DROP = 3;             // posisjonsfall som regnes som forfall
 const OPP_SNAPSHOT_CAP = 100;       // maks søkeord i ukens snapshot
+const OPP_GSC_REFRESH_DAYS = 3;     // hent fersk GSC-data hvis eldre enn dette
+const OPP_GSC_TIMEOUT_MS = 15_000;  // budsjett per GSC-refresh (best effort)
+
+// Fersk GSC-data ved kilden: kall scan-search-console-edge-funksjonen med
+// service-role (den har en egen service-gren som tar user_id i body).
+// Best effort — feiler den, kjører motoren videre på dataene vi har.
+async function oppRefreshGscData(userId, siteId) {
+    try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/scan-search-console`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+            },
+            body: JSON.stringify({ site_id: siteId, user_id: userId }),
+            signal: AbortSignal.timeout(OPP_GSC_TIMEOUT_MS),
+        });
+        return resp.ok;
+    } catch {
+        return false;
+    }
+}
 
 function oppEstimatedClicks(impressions) {
     // Grovt estimat: ~7 % CTR på posisjon 4–5 mot ~1–2 % på side 2.
@@ -806,10 +832,19 @@ async function runOpportunities(req, res) {
         // GSC-data ligger i keywords-tabellen, nøklet på site_id
         const { data: site } = await supabase
             .from('sites')
-            .select('id')
+            .select('id, last_scanned_at, google_search_console_connected')
             .eq('user_id', client.user_id)
             .maybeSingle();
         if (!site?.id) { summary.skipped += 1; continue; }
+
+        // Fersk GSC-data FØR vi leser keywords — motoren skal ikke være
+        // avhengig av at kunden trykker «Hent søkeord» i portalen.
+        const gscStaleCutoff = new Date(Date.now() - OPP_GSC_REFRESH_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        if (site.google_search_console_connected &&
+            (!site.last_scanned_at || site.last_scanned_at < gscStaleCutoff)) {
+            const refreshed = await oppRefreshGscData(client.user_id, site.id);
+            if (refreshed) summary.gscRefreshed = (summary.gscRefreshed || 0) + 1;
+        }
 
         const { data: kws } = await supabase
             .from('keywords')
@@ -1953,6 +1988,24 @@ async function mrGatherData(supabase, client, periodStartIso, periodEndIso) {
         .lte('created_at', periodEndIso)
         .limit(20);
 
+    // Resultat-bevis: parer artiklene med søkeordets utvikling ETTER publisering
+    // (viewen sikt_article_results; service-role omgår RLS). Tar med alle pushede
+    // artikler — også fra tidligere måneder — så «innhold → utfall» vises over tid.
+    const { data: articleResults } = await supabase
+        .from('sikt_article_results')
+        .select('keyword, status, created_at, position_at_creation, latest_position, best_position')
+        .eq('user_id', userId)
+        .not('latest_position', 'is', null)
+        .limit(20);
+
+    // Henvendelser i perioden (telefon/e-post/skjema fra beacon-sporingen).
+    const { count: leadCount } = await supabase
+        .from('sikt_leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('occurred_at', periodStartIso)
+        .lte('occurred_at', periodEndIso);
+
     const { data: opps } = await supabase
         .from('keyword_opportunities')
         .select('keyword, recommendation_text, estimated_traffic')
@@ -1992,17 +2045,19 @@ async function mrGatherData(supabase, client, periodStartIso, periodEndIso) {
         gscKeywords, winners, losers,
         actions: actions || [], articles: articles || [], opps: opps || [],
         competitors: competitors || [], geoChecks: geoChecks || [],
+        articleResults: articleResults || [],
         stats: {
             totalKeywords: gscKeywords.length, onPage1,
             avgPos: avgPos != null ? Math.round(avgPos * 10) / 10 : null,
             totalClicks, actionCount, articleCount: (articles || []).length,
             geoTotal, geoMentioned,
+            leads: leadCount ?? 0,
         },
     };
 }
 
 function mrBuildSections({ tier, monthLabel, data, ai }) {
-    const { stats, winners, losers, opps, actions, articles, competitors, geoChecks } = data;
+    const { stats, winners, losers, opps, actions, articles, competitors, geoChecks, articleResults } = data;
     const aiSec = ai?.sections || {};
     const sections = [];
 
@@ -2016,6 +2071,7 @@ function mrBuildSections({ tier, monthLabel, data, ai }) {
     if (stats.totalClicks > 0) statItems.push({ label: 'Klikk fra Google (28 d)', value: String(stats.totalClicks) });
     statItems.push({ label: 'Ting Sikt gjorde', value: String(stats.actionCount) });
     if (stats.articleCount > 0) statItems.push({ label: 'Artikler skrevet', value: String(stats.articleCount) });
+    if (stats.leads > 0) statItems.push({ label: 'Henvendelser fra siden', value: String(stats.leads) });
     sections.push({ id: 'stats', title: 'Måneden i tall', stats: statItems });
 
     const moverItems = [
@@ -2040,6 +2096,22 @@ function mrBuildSections({ tier, monthLabel, data, ai }) {
         sections.push({
             id: 'content', title: 'Nytt innhold', body: aiSec.content || '',
             items: articles.map((a) => ({ text: a.title, value: a.status === 'pushed_draft' ? 'Utkast i WordPress' : 'Klar til publisering' })),
+        });
+    }
+
+    // Resultat-bevis: innhold PARET med utfall (ikke separate lister som før) —
+    // vises kun når ekte snapshot-data finnes for artikkelens søkeord.
+    if ((articleResults || []).length) {
+        sections.push({
+            id: 'results', title: 'Innholdet → resultatet',
+            body: 'Slik har søkeordene til artiklene Sikt skrev utviklet seg på Google etter publisering.',
+            items: articleResults.map((r) => ({
+                text: `«${r.keyword}»`,
+                value: r.position_at_creation != null
+                    ? `plass ${Math.round(r.position_at_creation)} → ${Math.round(r.latest_position)}`
+                    : `ny på Google — plass ${Math.round(r.latest_position)}`,
+                tone: r.position_at_creation == null || r.latest_position < r.position_at_creation ? 'up' : 'down',
+            })),
         });
     }
 
@@ -2154,6 +2226,12 @@ async function runMonthlyReport(req, res) {
                 muligheter: data.opps.map((o) => ({ keyword: o.keyword, anbefaling: o.recommendation_text, estimert_trafikk: o.estimated_traffic })),
                 sikt_gjorde: data.actions.slice(0, 10).map((a) => a.title),
                 artikler: data.articles.map((a) => ({ title: a.title, status: a.status })),
+                innhold_resultater: data.articleResults.map((r) => ({
+                    keyword: r.keyword,
+                    posisjon_ved_publisering: r.position_at_creation,
+                    posisjon_naa: r.latest_position,
+                })),
+                henvendelser_fra_siden: data.stats.leads,
                 ...(isPremium ? {
                     konkurrenter: data.competitors.map((c) => ({ domain: c.domain, snittposisjon: c.avg_position })),
                     geo: { sjekket: data.stats.geoTotal, nevnt: data.stats.geoMentioned },
@@ -2216,6 +2294,812 @@ SVAR I STRENGT JSON-FORMAT:
     return res.status(200).json(summary);
 }
 
+// =====================================================================
+// SIDE-SKANN-MOTOR (job=site_scan): ukentlig server-side re-skann.
+// Verksted skal ALDRI gå tom — dette er påfylls-motoren:
+//  1) Crawler kundens side (delt kjerne med /api/scan-website) og
+//     persisterer sidene i sikt_site_pages → portalen hydrerer todos
+//     fra DB, uavhengig av kundens egne skann.
+//  2) Sjekker lenkemål (HEAD, lite budsjett) → sikt_link_issues.
+//     Krever 2 kjøringer på rad før et brudd vises (falske positive).
+//  3) Regner interne lenkeforslag → sikt_link_suggestions.
+//  4) Publisert-deteksjon: WP-utkast som er publisert → sikt_articles.
+// Selv-drenerende: 1 kunde per kjøring, hopper over kunder skannet
+// siste 6 dager → hver time = ukentlig dekning for alle kunder.
+// =====================================================================
+const SS_MAX_CUSTOMERS = 1;      // crawl+lenkesjekk ≈ 30–35 s — hold under Hobby 60 s
+const SS_DEDUP_DAYS = 6;         // ukentlig re-skann med slack
+const SS_MAX_PAGES = 15;         // samme tak som /api/scan-website
+const BL_CHECK_BUDGET = 12;      // maks lenkemål sjekket per kunde per kjøring
+const BL_RECHECK_DAYS = 7;       // ikke re-sjekk samme mål oftere
+const BL_TIMEOUT_MS = 4_000;
+const BL_OPEN_AFTER_FAILURES = 2; // to kjøringer på rad før bruddet vises
+const LS_MAX_NEW_PER_RUN = 5;    // maks nye interne lenkeforslag per kunde
+const SS_PUBLISH_CHECK_MAX = 5;  // maks WP-statussjekker av pushede utkast
+
+async function ssCheckLinkTarget(url) {
+    const headers = { 'User-Agent': 'SiktLinkCheck/1.0 (+https://siktseo.com)' };
+    try {
+        let resp = await fetch(url, {
+            method: 'HEAD', redirect: 'follow', headers,
+            signal: AbortSignal.timeout(BL_TIMEOUT_MS),
+        });
+        if (resp.status === 405 || resp.status === 501) {
+            resp = await fetch(url, {
+                method: 'GET', redirect: 'follow', headers,
+                signal: AbortSignal.timeout(BL_TIMEOUT_MS),
+            });
+        }
+        return { status: resp.status, err: null };
+    } catch (err) {
+        return { status: null, err };
+    }
+}
+
+async function runSiteScan(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, company_name, package_name, website_url')
+        .not('package_name', 'is', null)
+        .not('website_url', 'is', null);
+    if (error) {
+        Sentry.captureException(error);
+        return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
+    }
+
+    // Dedup: kunder med skann nyere enn SS_DEDUP_DAYS hoppes over.
+    const dedupSince = new Date(Date.now() - SS_DEDUP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRows } = await supabase
+        .from('sikt_site_pages')
+        .select('user_id')
+        .gte('last_scanned_at', dedupSince);
+    const recentlyScanned = new Set((recentRows || []).map((r) => r.user_id));
+
+    const summary = {
+        customers: 0, pagesScanned: 0, issuesFound: 0,
+        linksChecked: 0, brokenFound: 0, newOpenIssues: 0, resolvedIssues: 0,
+        suggestionsAdded: 0, articlesPublished: 0,
+        skipped: 0, errors: 0, dryRun, samples: [],
+    };
+
+    let processed = 0;
+    for (const client of clients || []) {
+        if (processed >= SS_MAX_CUSTOMERS) break;
+        if (!AF_PAID_PLANS.has(client.package_name)) continue;
+        if (recentlyScanned.has(client.user_id)) { summary.skipped += 1; continue; }
+        processed += 1;
+        summary.customers += 1;
+        const nowIso = new Date().toISOString();
+
+        // --- 1) Crawl (delt kjerne med /api/scan-website) ---
+        let pages, collectedLinks;
+        try {
+            const startUrl = await assertSafeUserUrl(client.website_url, client.website_url);
+            const crawled = await crawlSite({ startUrl, websiteUrl: client.website_url, maxPages: SS_MAX_PAGES });
+            pages = crawled.pages;
+            collectedLinks = crawled.collectedLinks;
+        } catch (e) {
+            summary.errors += 1;
+            console.warn('[site_scan] crawl feilet for', client.user_id, e?.message || e);
+            continue;
+        }
+        if (!pages || pages.length === 0) { summary.skipped += 1; continue; }
+
+        const issuesFound = pages.reduce((n, p) => n + (p.issues?.length || 0), 0);
+        summary.pagesScanned += pages.length;
+        summary.issuesFound += issuesFound;
+
+        if (dryRun) {
+            summary.samples.push({
+                userId: client.user_id,
+                pages: pages.map((p) => ({ url: p.url, status: p.status, issues: p.issues })),
+                links: collectedLinks.length,
+            });
+        } else {
+            // Upsert sider — dedupe på normalisert URL så batchen ikke kolliderer
+            // med seg selv («cannot affect row a second time»).
+            const rowByUrl = new Map();
+            for (const p of pages) {
+                const normUrl = normalizePageUrl(p.fullUrl) || p.fullUrl;
+                rowByUrl.set(normUrl, {
+                    user_id: client.user_id,
+                    url: normUrl,
+                    path: p.url,
+                    title: p.title,
+                    word_count: p.wordCount,
+                    text_sample: p.textSample,
+                    issues: p.issues || [],
+                    status: p.status,
+                    score: p.score,
+                    inlinks: p.inlinks,
+                    outlinks: p.outlinks,
+                    last_scanned_at: nowIso,
+                });
+            }
+            const { error: upsertErr } = await supabase
+                .from('sikt_site_pages')
+                .upsert(Array.from(rowByUrl.values()), { onConflict: 'user_id,url' });
+            if (upsertErr) { summary.errors += 1; console.warn('[site_scan] side-upsert feilet:', upsertErr.message); }
+        }
+
+        // --- 2) Ødelagte lenker ---
+        const aliveTargets = new Set(pages.map((p) => normalizePageUrl(p.fullUrl)).filter(Boolean));
+        const { data: existingIssues } = await supabase
+            .from('sikt_link_issues')
+            .select('id, page_url, target_url, state, consecutive_failures, last_checked_at')
+            .eq('user_id', client.user_id);
+        const issueByKey = new Map((existingIssues || []).map((i) => [`${i.page_url}|${i.target_url}`, i]));
+        const lastCheckedByTarget = new Map();
+        for (const i of existingIssues || []) {
+            const prev = lastCheckedByTarget.get(i.target_url);
+            if (!prev || i.last_checked_at > prev) lastCheckedByTarget.set(i.target_url, i.last_checked_at);
+        }
+
+        // Mål som er i live-settet (skannet OK nå): løs opp eventuelle åpne brudd.
+        if (!dryRun) {
+            for (const i of existingIssues || []) {
+                if (!aliveTargets.has(normalizePageUrl(i.target_url))) continue;
+                if (!['candidate', 'open', 'queued'].includes(i.state)) continue;
+                const { error: resErr } = await supabase
+                    .from('sikt_link_issues')
+                    .update({ state: 'resolved', resolved_at: nowIso, last_checked_at: nowIso })
+                    .eq('id', i.id);
+                if (resErr) summary.errors += 1; else summary.resolvedIssues += 1;
+            }
+        }
+
+        // Kandidater: unike mål vi ikke har sjekket nylig og som ikke ble
+        // crawlet i live nå. Mål med eksisterende candidate-rader først
+        // (raskere promotering til 'open').
+        const recheckCutoff = new Date(Date.now() - BL_RECHECK_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        const linksByTarget = new Map();
+        for (const l of collectedLinks) {
+            if (aliveTargets.has(normalizePageUrl(l.targetUrl))) continue;
+            if (!linksByTarget.has(l.targetUrl)) linksByTarget.set(l.targetUrl, []);
+            linksByTarget.get(l.targetUrl).push(l);
+        }
+        const candidates = Array.from(linksByTarget.keys())
+            .filter((t) => {
+                const last = lastCheckedByTarget.get(t);
+                return !last || last < recheckCutoff;
+            })
+            .sort((a, b) => {
+                const aHas = (existingIssues || []).some((i) => i.target_url === a && i.state === 'candidate') ? 0 : 1;
+                const bHas = (existingIssues || []).some((i) => i.target_url === b && i.state === 'candidate') ? 0 : 1;
+                return aHas - bHas;
+            })
+            .slice(0, BL_CHECK_BUDGET);
+
+        for (let i = 0; i < candidates.length; i += 4) {
+            const batch = candidates.slice(i, i + 4);
+            const results = await Promise.allSettled(batch.map(async (target) => {
+                // SSRF-vakt for alle mål (interne som eksterne) — sjekk kun status.
+                const safe = await assertSafePublicUrl(target);
+                const { status, err } = await ssCheckLinkTarget(safe);
+                return { target, verdict: classifyLinkCheck(status, err), status };
+            }));
+
+            for (const r of results) {
+                if (r.status !== 'fulfilled') { continue; } // SSRF-avvist o.l. — ikke kundens problem
+                summary.linksChecked += 1;
+                const { target, verdict, status } = r.value;
+                const links = linksByTarget.get(target) || [];
+
+                if (verdict === 'broken') {
+                    summary.brokenFound += 1;
+                    if (dryRun) continue;
+                    for (const link of links) {
+                        const key = `${link.sourceUrl}|${target}`;
+                        const existing = issueByKey.get(key);
+                        if (existing) {
+                            if (['fixed', 'dismissed'].includes(existing.state)) {
+                                const { error: e1 } = await supabase.from('sikt_link_issues')
+                                    .update({ last_checked_at: nowIso, http_status: status })
+                                    .eq('id', existing.id);
+                                if (e1) summary.errors += 1;
+                                continue;
+                            }
+                            const failures = existing.state === 'resolved' ? 1 : (existing.consecutive_failures || 1) + 1;
+                            const nextState = existing.state === 'resolved'
+                                ? 'candidate'
+                                : (existing.state === 'candidate' && failures >= BL_OPEN_AFTER_FAILURES ? 'open' : existing.state);
+                            const { error: e2 } = await supabase.from('sikt_link_issues')
+                                .update({
+                                    consecutive_failures: failures,
+                                    state: nextState,
+                                    http_status: status,
+                                    last_checked_at: nowIso,
+                                    resolved_at: null,
+                                })
+                                .eq('id', existing.id);
+                            if (e2) { summary.errors += 1; }
+                            else if (nextState === 'open' && existing.state !== 'open') summary.newOpenIssues += 1;
+                        } else {
+                            const { error: e3 } = await supabase.from('sikt_link_issues').insert({
+                                user_id: client.user_id,
+                                page_url: link.sourceUrl,
+                                target_url: target,
+                                anchor_text: link.anchorText || null,
+                                kind: link.isInternal ? 'broken_internal' : 'broken_external',
+                                http_status: status,
+                                consecutive_failures: 1,
+                                state: 'candidate',
+                                last_checked_at: nowIso,
+                            });
+                            if (e3) { summary.errors += 1; console.warn('[site_scan] issue-insert feilet:', e3.message); }
+                        }
+                    }
+                } else if (verdict === 'ok') {
+                    if (dryRun) continue;
+                    for (const link of links) {
+                        const existing = issueByKey.get(`${link.sourceUrl}|${target}`);
+                        if (!existing || !['candidate', 'open', 'queued'].includes(existing.state)) continue;
+                        const { error: e4 } = await supabase.from('sikt_link_issues')
+                            .update({ state: 'resolved', resolved_at: nowIso, last_checked_at: nowIso, http_status: status })
+                            .eq('id', existing.id);
+                        if (e4) summary.errors += 1; else summary.resolvedIssues += 1;
+                    }
+                } else if (!dryRun) {
+                    // 'unknown' (transient): oppdater kun last_checked_at så vi ikke hamrer.
+                    for (const link of links) {
+                        const existing = issueByKey.get(`${link.sourceUrl}|${target}`);
+                        if (!existing) continue;
+                        const { error: e5 } = await supabase.from('sikt_link_issues')
+                            .update({ last_checked_at: nowIso })
+                            .eq('id', existing.id);
+                        if (e5) summary.errors += 1;
+                    }
+                }
+            }
+        }
+
+        // --- 3) Interne lenkeforslag (deterministisk, ingen AI-kost) ---
+        let gscKws = [];
+        try {
+            const { data: siteRow } = await supabase
+                .from('sites').select('id').eq('user_id', client.user_id).maybeSingle();
+            if (siteRow?.id) {
+                const { data: kwRows } = await supabase
+                    .from('keywords')
+                    .select('keyword, impressions')
+                    .eq('site_id', siteRow.id)
+                    .order('impressions', { ascending: false })
+                    .limit(50);
+                gscKws = kwRows || [];
+            }
+        } catch { /* best effort */ }
+
+        const suggestions = computeLinkSuggestions({
+            pages: pages.map((p) => ({ url: p.fullUrl, title: p.title, textSample: p.textSample, inlinks: p.inlinks })),
+            internalLinks: collectedLinks.filter((l) => l.isInternal).map((l) => ({ sourceUrl: l.sourceUrl, targetUrl: l.targetUrl })),
+            gscKeywords: gscKws,
+            brandName: client.company_name || '',
+            maxNew: LS_MAX_NEW_PER_RUN,
+        });
+        if (!dryRun && suggestions.length) {
+            const { error: sugErr } = await supabase.from('sikt_link_suggestions').upsert(
+                suggestions.map((s) => ({
+                    user_id: client.user_id,
+                    source_url: normalizePageUrl(s.sourceUrl) || s.sourceUrl,
+                    target_url: normalizePageUrl(s.targetUrl) || s.targetUrl,
+                    anchor_text: s.anchorText,
+                    context_snippet: s.contextSnippet,
+                    reason: s.reason,
+                    status: 'pending',
+                })),
+                { onConflict: 'user_id,source_url,target_url', ignoreDuplicates: true }
+            );
+            if (sugErr) { summary.errors += 1; console.warn('[site_scan] forslag-upsert feilet:', sugErr.message); }
+            else summary.suggestionsAdded += suggestions.length;
+        }
+
+        // --- 4) Publisert-deteksjon: er WP-utkastene våre publisert? ---
+        if (!dryRun) {
+            try {
+                const { data: pushedArticles } = await supabase
+                    .from('sikt_articles')
+                    .select('id, wp_post_id')
+                    .eq('user_id', client.user_id)
+                    .eq('status', 'pushed_draft')
+                    .not('wp_post_id', 'is', null)
+                    .limit(SS_PUBLISH_CHECK_MAX);
+                if (pushedArticles?.length) {
+                    const { data: host } = await supabase
+                        .from('client_hosts')
+                        .select('admin_url, notes, access_token_encrypted')
+                        .eq('user_id', client.user_id)
+                        .eq('platform', 'wordpress')
+                        .eq('connection_mode', 'full')
+                        .maybeSingle();
+                    if (host?.admin_url && host?.notes && host?.access_token_encrypted) {
+                        const authorization = afBasicAuth(host.notes.trim(), decrypt(host.access_token_encrypted));
+                        for (const art of pushedArticles) {
+                            const { ok, data } = await afWpGet(
+                                `${host.admin_url.trim()}/wp-json/wp/v2/posts/${art.wp_post_id}?context=edit&_fields=id,status`,
+                                authorization
+                            );
+                            if (ok && data?.status === 'publish') {
+                                const { error: pubErr } = await supabase
+                                    .from('sikt_articles')
+                                    .update({ status: 'published' })
+                                    .eq('id', art.id);
+                                if (pubErr) summary.errors += 1; else summary.articlesPublished += 1;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[site_scan] publisert-sjekk feilet:', e?.message || e);
+            }
+        }
+
+        // --- Kvitterings-spor: én oppsummeringsrad i aktivitetsloggen ---
+        if (!dryRun) {
+            const parts = [`${pages.length} sider sjekket`];
+            if (issuesFound > 0) parts.push(`${issuesFound} innholds-funn`);
+            if (summary.newOpenIssues > 0) parts.push(`${summary.newOpenIssues} ødelagte lenker`);
+            if (suggestions.length > 0) parts.push(`${suggestions.length} lenkeforslag`);
+            const { error: actErr } = await supabase.from('sikt_actions').insert({
+                user_id: client.user_id,
+                action_type: 'site_scan',
+                category: 'finding',
+                title: `Ukentlig sidesjekk: ${parts.join(', ')}`,
+                details: {
+                    pages: pages.length,
+                    issues: issuesFound,
+                    broken_links_open: summary.newOpenIssues,
+                    link_suggestions: suggestions.length,
+                },
+                page_url: null,
+                status: 'done',
+            });
+            if (actErr) { summary.errors += 1; console.warn('[site_scan] actions-insert feilet:', actErr.message); }
+        }
+    }
+
+    console.log('[site_scan] ferdig:', JSON.stringify({ ...summary, samples: summary.samples.length }));
+    return res.status(200).json(summary);
+}
+
+// =====================================================================
+// INNHOLDSPLAN-MOTOR (job=content_plan + job=content_generate):
+// den proaktive innholdsmotoren. 1.–2. hver måned lages en plan per
+// Standard/Premium-kunde (hvilke søkeord, hvorfor), deretter genererer
+// content_generate utkastene automatisk opp til månedskvoten (2/8) —
+// kunden godkjenner i portalen (ALDRI auto-publisering, kun WP-UTKAST).
+// Dette er anti-churn-kjernen: hver måned står det ferdige artikler og
+// venter — slutter kunden å betale, stopper maskinen.
+// =====================================================================
+const PLAN_MAX_CUSTOMERS = 5;        // kunder per kjøring (selv-drenerende)
+const PLAN_OPP_POOL = 20;            // muligheter vi velger fra
+const CG_MAX_ARTICLES_PER_RUN = 2;   // OpenAI-kostkontroll (24 kjøringer/døgn)
+
+function planCurrentPeriod() {
+    return new Date().toISOString().slice(0, 7);
+}
+
+// Premium-fyll: AI foreslår innholds-gap når muligheter/GSC ikke fyller kvoten.
+// Sesong-bevisst: modellen får dagens dato og bes ligge I FORKANT av kommende
+// sesong/høytid — Google trenger 4–8 uker på å rangere nytt innhold.
+async function planAiGapTopics({ companyName, websiteUrl, count, existingKeywords }) {
+    const todayLabel = new Date().toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const text = await afOpenAiText({
+        system:
+            'Du er SEO-rådgiver for norske småbedrifter. Foreslå søkeord bedriften bør lage innhold for ' +
+            '(kommersiell verdi, realistisk konkurranse, norsk språk). Tenk sesong: innhold må publiseres ' +
+            '4–8 uker FØR folk begynner å søke, så foreslå det som er relevant for KOMMENDE sesong/høytider ' +
+            'i Norge — ikke det som var relevant forrige måned. ' + AF_NO_CLAIMS +
+            ' Svar med KUN en gyldig JSON-array av strenger, ingen forklaring.',
+        user:
+            `Dato i dag: ${todayLabel}\n` +
+            `Bedrift: ${companyName || 'ukjent'}\nNettside: ${websiteUrl || 'ukjent'}\n` +
+            `Har allerede innhold/planer for: ${existingKeywords.slice(0, 20).join(', ') || 'ingenting'}\n\n` +
+            `Foreslå ${count} nye søkeord (gjerne 1–2 sesongaktuelle hvis bransjen har sesong).`,
+        maxTokens: 200,
+        temperature: 0.5,
+    });
+    if (!text) return [];
+    const match = text.match(/\[[\s\S]*?\]/);
+    if (!match) return [];
+    try {
+        const arr = JSON.parse(match[0]);
+        if (!Array.isArray(arr)) return [];
+        return [...new Set(arr.filter((k) => typeof k === 'string').map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 3 && k.length <= 80))];
+    } catch {
+        return [];
+    }
+}
+
+async function runContentPlan(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const period = typeof req.query?.period === 'string' && /^\d{4}-\d{2}$/.test(req.query.period)
+        ? req.query.period
+        : planCurrentPeriod();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id, company_name, package_name, website_url')
+        .not('package_name', 'is', null);
+    if (error) {
+        Sentry.captureException(error);
+        return res.status(500).json({ error: 'Kunne ikke hente kunder.' });
+    }
+
+    // Selv-drenerende: hopp over kunder som allerede har plan for perioden.
+    const { data: existingPlans } = await supabase
+        .from('sikt_content_plans').select('user_id').eq('period', period);
+    const hasPlan = new Set((existingPlans || []).map((p) => p.user_id));
+
+    const summary = { period, plans: 0, items: 0, skippedExisting: 0, skippedNoKeywords: 0, errors: 0, dryRun, samples: [] };
+    let processed = 0;
+
+    for (const client of clients || []) {
+        if (processed >= PLAN_MAX_CUSTOMERS) break;
+        const quota = articleLimitForPackage(client.package_name);
+        if (quota === 0) continue; // Basic: ingen artikler — teaser i portalen i stedet
+        if (hasPlan.has(client.user_id)) { summary.skippedExisting += 1; continue; }
+        processed += 1;
+
+        // Søkeord vi allerede har dekket (artikler alle perioder) — aldri duplikat.
+        const { data: artRows } = await supabase
+            .from('sikt_articles').select('keyword').eq('user_id', client.user_id);
+        const covered = new Set((artRows || []).map((a) => (a.keyword || '').toLowerCase()));
+
+        const picks = [];
+        const pushPick = (keyword, opportunityId, reason) => {
+            const kw = (keyword || '').trim();
+            if (!kw || kw.length > 120) return false;
+            if (covered.has(kw.toLowerCase())) return false;
+            if (picks.some((p) => p.keyword.toLowerCase() === kw.toLowerCase())) return false;
+            picks.push({ keyword: kw, opportunity_id: opportunityId || null, reason });
+            return true;
+        };
+
+        // 1) Åpne muligheter (near-miss + konkurrent-gap), størst trafikk først.
+        const { data: opps } = await supabase
+            .from('keyword_opportunities')
+            .select('id, keyword, recommendation_type, estimated_traffic')
+            .eq('user_id', client.user_id)
+            .order('estimated_traffic', { ascending: false })
+            .limit(PLAN_OPP_POOL);
+        for (const o of opps || []) {
+            if (picks.length >= quota) break;
+            pushPick(
+                o.keyword,
+                o.id,
+                o.recommendation_type === 'gsc_near_miss'
+                    ? 'Nesten på side 1 — utvid dekningen og ta plassen'
+                    : 'Konkurrentene rangerer her — du mangler innholdet'
+            );
+        }
+
+        // 2) GSC-posisjon 11–25 (nesten synlig, høyest visninger først).
+        if (picks.length < quota) {
+            const { data: siteRow } = await supabase
+                .from('sites').select('id').eq('user_id', client.user_id).maybeSingle();
+            if (siteRow?.id) {
+                const { data: kws } = await supabase
+                    .from('keywords')
+                    .select('keyword, position, impressions')
+                    .eq('site_id', siteRow.id)
+                    .order('impressions', { ascending: false })
+                    .limit(100);
+                for (const k of kws || []) {
+                    if (picks.length >= quota) break;
+                    if (typeof k.position !== 'number' || k.position < 11 || k.position > 25) continue;
+                    pushPick(k.keyword, null, `Du er nr. ${Math.round(k.position)} på Google — innhold kan løfte deg til side 1`);
+                }
+            }
+        }
+
+        // 3) Premium-fyll: AI-foreslåtte innholds-gap (ETT kall, kun ved behov).
+        if (picks.length < quota && /premium/i.test(client.package_name || '')) {
+            const gapTopics = await planAiGapTopics({
+                companyName: client.company_name,
+                websiteUrl: client.website_url,
+                count: quota - picks.length,
+                existingKeywords: [...covered, ...picks.map((p) => p.keyword)],
+            });
+            for (const t of gapTopics) {
+                if (picks.length >= quota) break;
+                pushPick(t, null, 'Innholds-gap/sesong — foreslått ut fra bransjen din og tiden på året');
+            }
+        }
+
+        if (picks.length === 0) { summary.skippedNoKeywords += 1; continue; }
+
+        if (dryRun) {
+            summary.plans += 1;
+            summary.items += picks.length;
+            summary.samples.push({ userId: client.user_id, quota, keywords: picks.map((p) => ({ keyword: p.keyword, reason: p.reason })) });
+            continue;
+        }
+
+        const { data: planRow, error: planErr } = await supabase
+            .from('sikt_content_plans')
+            .insert({
+                user_id: client.user_id,
+                period,
+                status: 'planned',
+                rationale: `Valgt fra ${(opps || []).length} søkeord-muligheter og Google-posisjonene dine denne måneden.`,
+            })
+            .select('id')
+            .single();
+        if (planErr || !planRow) {
+            summary.errors += 1;
+            console.warn('[content_plan] plan-insert feilet:', planErr?.message);
+            continue;
+        }
+
+        const { error: itemsErr } = await supabase.from('sikt_content_plan_items').insert(
+            picks.map((p, idx) => ({
+                plan_id: planRow.id,
+                user_id: client.user_id,
+                keyword: p.keyword,
+                opportunity_id: p.opportunity_id,
+                reason: p.reason,
+                sort: idx,
+                status: 'planned',
+            }))
+        );
+        if (itemsErr) {
+            summary.errors += 1;
+            console.warn('[content_plan] items-insert feilet:', itemsErr.message);
+            continue;
+        }
+        summary.plans += 1;
+        summary.items += picks.length;
+    }
+
+    console.log('[content_plan] ferdig:', JSON.stringify({ ...summary, samples: summary.samples.length }));
+    return res.status(200).json(summary);
+}
+
+function buildArticlesReadyEmail(client, { count, keywords, monthLabel }) {
+    const hei = notifFirstName(client) ? `Hei ${escapeHtml(notifFirstName(client))}, ` : '';
+    const rows = keywords.map((k, i) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:${i === 0 ? '0' : '1px solid #EAE6DE'}"><tr>
+      <td style="padding:13px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:500;color:#1A1A1A">${escapeHtml(k)}</td>
+    </tr></table>`).join('');
+    return renderEmail({
+        preheader: `${count} nye artikler venter på godkjenning i portalen.`,
+        brand: 'sikt',
+        kicker: 'Innholdsplan',
+        heading: count === 1 ? 'En ny artikkel er klar til godkjenning' : `${count} nye artikler er klare til godkjenning`,
+        intro: `${hei}Sikt har skrevet ferdig månedens artikler for ${escapeHtml(monthLabel)}. Les gjennom, godkjenn, og de legges som utkast rett i WordPress — ingenting publiseres uten deg.`,
+        blocks: [sectionHead('Månedens artikler') + rows],
+        cta: { label: 'Les og godkjenn i portalen', url: 'https://siktseo.com/portal' },
+        footer: 'Sikt · innholdsplan · styr e-poster i Innstillinger → Varsler.',
+    });
+}
+
+async function runContentGenerate(req, res) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY mangler på serveren' });
+    }
+    if (!OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OPENAI_API_KEY mangler på serveren' });
+    }
+    const dryRun = req.query?.dryRun === '1' || req.query?.dryRun === 'true';
+    const period = typeof req.query?.period === 'string' && /^\d{4}-\d{2}$/.test(req.query.period)
+        ? req.query.period
+        : planCurrentPeriod();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    const summary = { period, generated: 0, dismissed: 0, plansReady: 0, emailed: 0, skippedQuota: 0, errors: 0, dryRun, samples: [] };
+
+    // Neste ugenererte items for perioden (eldste plan først).
+    const { data: items, error: itemsErr } = await supabase
+        .from('sikt_content_plan_items')
+        .select('id, plan_id, user_id, keyword, opportunity_id, sort, sikt_content_plans!inner(period)')
+        .eq('status', 'planned')
+        .is('article_id', null)
+        .eq('sikt_content_plans.period', period)
+        .order('created_at', { ascending: true })
+        .limit(20);
+    if (itemsErr) {
+        Sentry.captureException(itemsErr);
+        return res.status(500).json({ error: 'Kunne ikke hente plan-items.' });
+    }
+
+    let generated = 0;
+    let rateLimited = false;
+    for (const item of items || []) {
+        if (generated >= CG_MAX_ARTICLES_PER_RUN || rateLimited) break;
+
+        const { data: client } = await supabase
+            .from('clients')
+            .select('user_id, company_name, package_name, website_url, email, contact_person, notification_preferences')
+            .eq('user_id', item.user_id)
+            .maybeSingle();
+        if (!client) { summary.errors += 1; continue; }
+
+        // Kontekst: GSC-søkeord + posisjon for akkurat dette søket.
+        let targetKeywords = [];
+        let currentPosition = null;
+        try {
+            const { data: siteRow } = await supabase
+                .from('sites').select('id').eq('user_id', item.user_id).maybeSingle();
+            if (siteRow?.id) {
+                const { data: kwRows } = await supabase
+                    .from('keywords')
+                    .select('keyword, clicks, position')
+                    .eq('site_id', siteRow.id)
+                    .order('clicks', { ascending: false })
+                    .limit(100);
+                targetKeywords = (kwRows || []).slice(0, 8)
+                    .map((k) => (typeof k?.keyword === 'string' ? k.keyword.trim() : ''))
+                    .filter(Boolean);
+                const match = (kwRows || []).find((k) => (k.keyword || '').toLowerCase() === item.keyword.toLowerCase());
+                if (match && typeof match.position === 'number') currentPosition = match.position;
+            }
+        } catch { /* best effort */ }
+
+        // Kontekst fra ukesskannet: forsidetekst + money pages (interne lenkemål).
+        let businessContext = '';
+        let internalLinkTargets = [];
+        try {
+            const { data: sitePages } = await supabase
+                .from('sikt_site_pages')
+                .select('url, path, title, text_sample, inlinks')
+                .eq('user_id', item.user_id)
+                .order('inlinks', { ascending: false })
+                .limit(10);
+            const home = (sitePages || []).find((p) => p.path === '/') || (sitePages || [])[0];
+            if (home?.text_sample) businessContext = home.text_sample.slice(0, 1500);
+            internalLinkTargets = (sitePages || [])
+                .filter((p) => p.url && p.title)
+                .slice(0, 5)
+                .map((p) => ({ url: p.url, title: p.title }));
+        } catch { /* best effort */ }
+
+        if (dryRun) {
+            summary.generated += 1;
+            generated += 1;
+            summary.samples.push({ userId: item.user_id, keyword: item.keyword, hasContext: !!businessContext, linkTargets: internalLinkTargets.length });
+            continue;
+        }
+
+        try {
+            const result = await generateArticle({
+                supabase,
+                userId: item.user_id,
+                keyword: item.keyword,
+                opportunityId: item.opportunity_id,
+                currentPosition,
+                businessContext,
+                targetPageUrl: null,
+                websiteUrl: client.website_url || '',
+                packageName: client.package_name || '',
+                companyName: client.company_name || '',
+                targetKeywords,
+                internalLinkTargets,
+                source: 'plan',
+                planItemId: item.id,
+            });
+            const { error: updErr } = await supabase
+                .from('sikt_content_plan_items')
+                .update({ status: 'generated', article_id: result.article.id })
+                .eq('id', item.id);
+            if (updErr) { summary.errors += 1; console.warn('[content_generate] item-update feilet:', updErr.message); }
+            generated += 1;
+            summary.generated += 1;
+        } catch (err) {
+            if (err instanceof ArticleEngineError) {
+                if (err.code === 'quota_exceeded') {
+                    // Kvoten (delt med manuelle generering) er brukt opp — prøv
+                    // igjen senere/neste måned uten å brenne OpenAI-kall.
+                    summary.skippedQuota += 1;
+                    continue;
+                }
+                if (err.code === 'plan_locked') {
+                    // Nedgradert til Basic midt i måneden → ikke prøv igjen.
+                    const { error: disErr } = await supabase
+                        .from('sikt_content_plan_items')
+                        .update({ status: 'dismissed' })
+                        .eq('id', item.id);
+                    if (disErr) summary.errors += 1; else summary.dismissed += 1;
+                    continue;
+                }
+                if (err.code === 'insert_failed' && err.isUniqueViolation) {
+                    // Racet mot en annen kjøring — artikkelen finnes. Koble den.
+                    const { data: existing } = await supabase
+                        .from('sikt_articles').select('id').eq('plan_item_id', item.id).maybeSingle();
+                    if (existing?.id) {
+                        const { error: linkErr } = await supabase
+                            .from('sikt_content_plan_items')
+                            .update({ status: 'generated', article_id: existing.id })
+                            .eq('id', item.id);
+                        if (linkErr) summary.errors += 1;
+                    }
+                    continue;
+                }
+                if (err.code === 'rate_limited') {
+                    rateLimited = true;
+                    continue;
+                }
+            }
+            summary.errors += 1;
+            console.warn('[content_generate] generering feilet for', item.keyword, err?.message || err);
+        }
+    }
+
+    // Finaliser planer: alle items ferdige (generert/avvist) → 'ready' + e-post.
+    if (!dryRun) {
+        const { data: plans } = await supabase
+            .from('sikt_content_plans')
+            .select('id, user_id, status, emailed_at')
+            .eq('period', period)
+            .neq('status', 'ready');
+        for (const plan of plans || []) {
+            const { count: remaining } = await supabase
+                .from('sikt_content_plan_items')
+                .select('id', { count: 'exact', head: true })
+                .eq('plan_id', plan.id)
+                .eq('status', 'planned');
+            if ((remaining ?? 0) > 0) continue;
+
+            const { data: doneItems } = await supabase
+                .from('sikt_content_plan_items')
+                .select('keyword, status')
+                .eq('plan_id', plan.id)
+                .eq('status', 'generated')
+                .order('sort', { ascending: true });
+            const generatedItems = doneItems || [];
+
+            const { error: readyErr } = await supabase
+                .from('sikt_content_plans')
+                .update({ status: 'ready' })
+                .eq('id', plan.id);
+            if (readyErr) { summary.errors += 1; continue; }
+            summary.plansReady += 1;
+
+            if (generatedItems.length === 0 || plan.emailed_at) continue;
+            const { data: client } = await supabase
+                .from('clients')
+                .select('email, contact_person, notification_preferences')
+                .eq('user_id', plan.user_id)
+                .maybeSingle();
+            const wantsEmail = client?.notification_preferences?.contentPlan !== false;
+            if (!client?.email || !wantsEmail) continue;
+            const ok = await sendSiktEmail({
+                to: client.email,
+                subject: generatedItems.length === 1
+                    ? 'En ny artikkel er klar til godkjenning'
+                    : `${generatedItems.length} nye artikler er klare til godkjenning`,
+                html: buildArticlesReadyEmail(client, {
+                    count: generatedItems.length,
+                    keywords: generatedItems.map((i) => i.keyword),
+                    monthLabel: mrMonthLabel(period),
+                }),
+            });
+            if (ok) {
+                summary.emailed += 1;
+                const { error: emErr } = await supabase
+                    .from('sikt_content_plans')
+                    .update({ emailed_at: new Date().toISOString() })
+                    .eq('id', plan.id);
+                if (emErr) summary.errors += 1;
+            } else {
+                summary.errors += 1;
+            }
+        }
+    }
+
+    console.log('[content_generate] ferdig:', JSON.stringify({ ...summary, samples: summary.samples.length }));
+    return res.status(200).json(summary);
+}
+
 export default withSentry(async function handler(req, res) {
     // --- Sikkerhet: aksepter både Bearer-secret og x-cron-secret ---
     const authHeader = req.headers.authorization;
@@ -2258,6 +3142,21 @@ export default withSentry(async function handler(req, res) {
     // Dispatch: optimaliserings-motor (Standard+: near-miss, forfall, schema, alt)
     if (req.query?.job === 'optimize') {
         return await runOptimize(req, res);
+    }
+
+    // Dispatch: ukentlig side-skann (påfylls-motoren — Verksted går aldri tom)
+    if (req.query?.job === 'site_scan') {
+        return await runSiteScan(req, res);
+    }
+
+    // Dispatch: månedlig innholdsplan (Standard/Premium)
+    if (req.query?.job === 'content_plan') {
+        return await runContentPlan(req, res);
+    }
+
+    // Dispatch: generer plan-artikler opp til kvoten (selv-drenerende)
+    if (req.query?.job === 'content_generate') {
+        return await runContentGenerate(req, res);
     }
 
     if (!SUPABASE_SERVICE_KEY || !SERP_API_KEY) {

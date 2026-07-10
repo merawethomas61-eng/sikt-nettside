@@ -174,6 +174,46 @@ export async function assertSafeUserUrl(rawUrl, userWebsiteUrl) {
 }
 
 /**
+ * Som assertSafeUserUrl, men UTEN same-site-kravet: samme SSRF-vern
+ * (kun http/https, standardporter, ingen private/reserverte nett), for
+ * å HEAD/GET-sjekke eksterne lenkemål i ødelagte-lenker-motoren.
+ * Skal ALDRI brukes til å hente innhold vi viser kunden — kun status-sjekk.
+ * @param {string} rawUrl
+ * @returns {Promise<string>}
+ */
+export async function assertSafePublicUrl(rawUrl) {
+  const trimmed = String(rawUrl || '').trim();
+  if (!trimmed) {
+    throw new Error('Mangler URL.');
+  }
+
+  let candidate = trimmed;
+  if (!/^https?:\/\//i.test(candidate)) {
+    candidate = `https://${candidate}`;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error('Ugyldig URL.');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Kun http- og https-URL-er er tillatt.');
+  }
+
+  const port = parsed.port;
+  if (port && port !== '80' && port !== '443') {
+    throw new Error('Kun standardporter (80 og 443) er tillatt.');
+  }
+
+  await assertResolvableHostSafe(parsed.hostname);
+
+  return parsed.href;
+}
+
+/**
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @param {string} userId
  */

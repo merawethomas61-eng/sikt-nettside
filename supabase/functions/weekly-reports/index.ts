@@ -290,6 +290,75 @@ Deno.serve(async (req) => {
       .maybeSingle()
     const canAutoFix = (hostRow as { connection_mode?: string } | null)?.connection_mode === 'full'
 
+    // Klart til godkjenning: ferdigskrevne plan-artikler + interne lenkeforslag.
+    // Verdien ligger og venter i portalen — kvitteringen skal minne om det.
+    const { count: planArtCount } = await supabase
+      .from('sikt_articles')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', client.user_id)
+      .eq('source', 'plan')
+      .eq('status', 'generated')
+    const { count: linkSugCount } = await supabase
+      .from('sikt_link_suggestions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', client.user_id)
+      .eq('status', 'pending')
+    const pendingPlanArticles = planArtCount ?? 0
+    const pendingLinkSuggestions = linkSugCount ?? 0
+
+    // Resultat-bevis: artiklenes posisjonsutvikling (viewen sikt_article_results
+    // parer artikkel med søkeordets snapshots ETTER publisering). Kvitteringen
+    // viser kun ærlige SEIRE (forbedring eller helt ny rangering) — hele bildet
+    // ligger i portalen.
+    let articleResults: { keyword: string; from: number | null; to: number }[] = []
+    {
+      const { data: resRows } = await supabase
+        .from('sikt_article_results')
+        .select('keyword, position_at_creation, latest_position')
+        .eq('user_id', client.user_id)
+        .not('latest_position', 'is', null)
+      articleResults = ((resRows ?? []) as { keyword: string; position_at_creation: number | null; latest_position: number }[])
+        .filter(r => r.position_at_creation == null || r.latest_position < r.position_at_creation)
+        .map(r => ({
+          keyword: r.keyword,
+          from: r.position_at_creation != null ? Math.round(r.position_at_creation) : null,
+          to: Math.round(r.latest_position),
+        }))
+        .sort((a, b) => ((b.from ?? 40) - b.to) - ((a.from ?? 40) - a.to))
+        .slice(0, 3)
+    }
+
+    // Konkurrent-bevegelser + motangrep (mates av competitor-monitor →
+    // keyword_opportunities med competitor_ids).
+    let competitorMoves = 0
+    let counterMoves = 0
+    if (isStandardOrAbove) {
+      const { count: cm } = await supabase
+        .from('competitor_changes')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', client.user_id)
+        .gte('created_at', periodStart)
+      competitorMoves = cm ?? 0
+      const { count: co } = await supabase
+        .from('keyword_opportunities')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', client.user_id)
+        .gte('discovered_at', periodStart)
+        .neq('competitor_ids', '{}')
+      counterMoves = co ?? 0
+    }
+
+    // Henvendelser fra nettsiden (tel/mailto/skjema — beacon i connector v1.3).
+    let leadsThisPeriod = 0
+    {
+      const { count } = await supabase
+        .from('sikt_leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', client.user_id)
+        .gte('occurred_at', periodStart)
+      leadsThisPeriod = count ?? 0
+    }
+
     // ROI: ekte Google-klikk nå vs. for ~4 uker siden + estimert kroneverdi.
     // Reframer kvitteringen fra «aktivitet» til «penger». Kilde: GSC (keywords)
     // + keyword_snapshots (ukentlig historikk). Vises kun når data finnes.
@@ -418,6 +487,12 @@ Deno.serve(async (req) => {
       wins,
       periodLabel,
       sections,
+      pendingPlanArticles,
+      pendingLinkSuggestions,
+      articleResults,
+      competitorMoves,
+      counterMoves,
+      leadsThisPeriod,
     })
 
     const subject = buildSubject({ fixes, findings, plan, topOpportunity, periodLabel })
@@ -601,8 +676,14 @@ function buildEmailHtml(opts: {
   wins: { keyword: string; position: number; prev: number }[]
   periodLabel: string
   sections: { results: boolean; opportunity: boolean; work: boolean; competitors: boolean; aiVisibility: boolean; lifetime: boolean }
+  pendingPlanArticles: number
+  pendingLinkSuggestions: number
+  articleResults: { keyword: string; from: number | null; to: number }[]
+  competitorMoves: number
+  counterMoves: number
+  leadsThisPeriod: number
 }): string {
-  const { firstName, websiteUrl, plan, fixes, findings, suggestions, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins, periodLabel, sections } = opts
+  const { firstName, websiteUrl, plan, fixes, findings, suggestions, isStandardOrAbove, isPremium, totalFixes, totalFindings, weeksActive, geoMentioned, geoTotal, geoScore, geoPrevScore, topOpportunity, doneThisWeek, openSuggestions, gscClicks, gscImpressions, clicksDeltaPct, estValue, canAutoFix, wins, periodLabel, sections, pendingPlanArticles, pendingLinkSuggestions, articleResults, competitorMoves, counterMoves, leadsThisPeriod } = opts
   const ink = TOKENS.color.ink
   const accent = TOKENS.color.accent
   // Periode-etikett i overskrift (stor forbokstav): «Denne uken» / «De siste 4 dagene».
@@ -657,6 +738,26 @@ function buildEmailHtml(opts: {
     }))))
   }
 
+  // Resultat-bevis: artiklene Sikt skrev → hva de faktisk gjorde på Google.
+  // Vises kun når minst én artikkel har ekte snapshot-data (aldri tomme løfter).
+  if (sections.results && articleResults.length > 0) {
+    blocks.push(sectionHead('Dette har artiklene dine gjort') + winList(articleResults.map(r => ({
+      keyword: r.keyword,
+      from: r.from != null ? r.from : 'ny',
+      to: r.to,
+      flag: r.from == null ? 'ny på Google' : r.to <= 10 ? 'side 1' : undefined,
+    }))))
+  }
+
+  // Henvendelser: det eneste tallet en småbedrift egentlig bryr seg om.
+  if (sections.results && leadsThisPeriod > 0) {
+    blocks.push(sectionHead('Henvendelser fra nettsiden') + statement({
+      value: String(leadsThisPeriod),
+      label: leadsThisPeriod === 1 ? 'henvendelse denne perioden' : 'henvendelser denne perioden',
+      sub: 'Telefon-klikk, e-post-klikk og skjema-innsendinger på siden din — sporet av Sikt, uten cookies og uten persondata.',
+    }))
+  }
+
   if (sections.results && gscClicks > 0) {
     blocks.push(sectionHead('Hva dette er verdt') + statement({
       value: `~${estValue.toLocaleString('nb-NO')} kr`,
@@ -668,6 +769,19 @@ function buildEmailHtml(opts: {
 
   const opp = sections.opportunity ? opportunityBlock(topOpportunity, canAutoFix, !isStandardOrAbove, totalFixes > 0) : ''
   if (opp) blocks.push(opp)
+
+  // Klart til godkjenning: innholdsplan-artikler + interne lenkeforslag som
+  // ligger ferdige i portalen. Sikt har gjort jobben — kunden skal bare si ja.
+  if (sections.work && (pendingPlanArticles > 0 || pendingLinkSuggestions > 0)) {
+    const bits: string[] = []
+    if (pendingPlanArticles > 0) bits.push(`${pendingPlanArticles} ${pendingPlanArticles === 1 ? 'ferdigskrevet artikkel' : 'ferdigskrevne artikler'} fra månedens innholdsplan`)
+    if (pendingLinkSuggestions > 0) bits.push(`${pendingLinkSuggestions} interne lenkeforslag`)
+    blocks.push(sectionHead('Klart til godkjenning') + railNote({
+      title: `${bits.join(' og ')} venter på deg`,
+      body: `Sikt har gjort arbeidet ferdig — les gjennom og godkjenn i portalen, så publiseres det som utkast/endringer på siden din. Ingenting går live uten deg.`,
+      tone: 'accent',
+    }))
+  }
 
   const explanationOf = (a: SiktAction): string | undefined => {
     const ex = a.details && (a.details as Record<string, string>).explanation
@@ -687,9 +801,15 @@ function buildEmailHtml(opts: {
   }
 
   if (sections.competitors && isStandardOrAbove) {
+    // Motangrep: når konkurrentene beveger seg, viser vi at Sikt alt har svart.
+    const moveBody = competitorMoves > 0
+      ? `${competitorMoves} ${competitorMoves === 1 ? 'bevegelse' : 'bevegelser'} hos konkurrentene dine ${periodLabel}${counterMoves > 0
+          ? ` — Sikt har allerede lagt ${counterMoves} ${counterMoves === 1 ? 'motsvar' : 'motsvar'} i mulighetene dine, klare for innholdsplanen.`
+          : '. Detaljene ligger i Konkurrenter-fanen.'}`
+      : 'Publiserer en konkurrent noe nytt, endrer priser eller klatrer på Google, får du beskjed — og Sikt legger motsvaret rett i innholds-mulighetene dine.'
     blocks.push(sectionHead('Konkurrentene dine') + railNote({
-      title: 'Vi holder øye mens du jobber',
-      body: 'Publiserer en konkurrent noe nytt, endrer priser eller klatrer på Google, får du beskjed. Du slipper å følge med selv.',
+      title: competitorMoves > 0 ? 'Konkurrentene beveget seg — Sikt svarte' : 'Vi holder øye mens du jobber',
+      body: moveBody,
     }))
   }
 

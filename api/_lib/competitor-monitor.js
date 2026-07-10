@@ -65,6 +65,84 @@ export async function fetchSitemapUrls(domain) {
     return [...urls].slice(0, 500);
 }
 
+// =====================================================================
+// MOTANGREPS-MOTOR: konkurrent-bevegelser → keyword_opportunities.
+// Røret opportunities → innholdsplan (runContentPlan) finnes allerede;
+// dette mater det. Insert med ignoreDuplicates — eksisterende muligheter
+// (f.eks. near-miss med skreddersydd oppskrift) overskrives ALDRI.
+// =====================================================================
+const COUNTER_MAX_KEYWORDS = 3; // maks motangreps-muligheter fra rangeringer per skann
+const COUNTER_MAX_PAGES = 2;    // maks fra nye konkurrent-sider per skann
+
+// Junk-slugs som aldri er verdt et motsvar (nav/meta/arkiv-sider).
+const SLUG_JUNK = new Set([
+    'om-oss', 'om', 'kontakt', 'kontakt-oss', 'personvern', 'cookies', 'cookie',
+    'blogg', 'blog', 'nyheter', 'nyhet', 'artikkel', 'aktuelt', 'category', 'kategori', 'tag', 'page',
+    'author', 'feed', 'sitemap', 'search', 'sok', 'vilkar', 'betingelser',
+    'privacy', 'terms', 'about', 'contact', 'home', 'hjem', 'index',
+]);
+
+// Deterministisk slug → søkefrase («/tjenester/varmepumpe-service-oslo» →
+// «varmepumpe service oslo»). Returnerer null når sluggen ikke ligner et
+// søk (junk, tall/datoer, for kort/langt). Ingen AI-kost.
+export function slugToPhrase(url) {
+    let path;
+    try {
+        path = new URL(url).pathname;
+    } catch {
+        return null;
+    }
+    const segments = path.split('/').filter(Boolean);
+    if (!segments.length) return null;
+    let slug = segments[segments.length - 1];
+    try { slug = decodeURIComponent(slug); } catch { /* behold rå */ }
+    slug = slug.replace(/\.(html?|php|aspx?)$/i, '').toLowerCase();
+    if (SLUG_JUNK.has(slug) || segments.some((s) => s.startsWith('wp-'))) return null;
+
+    const words = slug
+        .split(/[-_]+/)
+        // dropp rene tall-tokens (id-er, datoer: 2026, 07, 123456)
+        .filter((w) => w && !/^\d+$/.test(w));
+    if (!words.length) return null;
+    const phrase = words.join(' ').replace(/\s+/g, ' ').trim();
+    if (phrase.length < 5 || phrase.length > 60) return null;
+    if (!/[a-zæøå]/i.test(phrase)) return null;
+    if (SLUG_JUNK.has(phrase.replace(/ /g, '-'))) return null;
+    return phrase;
+}
+
+// Samme enkle heuristikk som scan-competitor.js bruker for gap-søkeord.
+function counterRecommendationType(keyword) {
+    return /^(hva|hvordan|hvorfor|når|hvor|hvem|kan|bør|er det)\b/i.test(keyword) ? 'faq' : 'new_page';
+}
+
+// Insert motangreps-muligheter. ignoreDuplicates: eksisterende rad for
+// (user_id, keyword) beholdes urørt. Feil logges og telles, aldri kastes
+// — motangrepet skal aldri velte selve konkurrent-skannet.
+async function insertCounterOpportunities(supabase, competitor, entries) {
+    if (!entries.length) return 0;
+    const domainLabel = competitor.domain.replace(/^www\./i, '');
+    const rows = entries.map((e) => ({
+        user_id: competitor.user_id,
+        keyword: e.keyword,
+        search_volume: 0,
+        difficulty: 'medium',
+        recommendation_type: e.type || counterRecommendationType(e.keyword),
+        recommendation_text: e.text.replace('{domain}', domainLabel),
+        estimated_traffic: 0,
+        competitor_ids: [competitor.id],
+        discovered_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase
+        .from('keyword_opportunities')
+        .upsert(rows, { onConflict: 'user_id,keyword', ignoreDuplicates: true });
+    if (error) {
+        console.warn('[counter] opportunity-insert feilet:', error.message);
+        return 0;
+    }
+    return rows.length;
+}
+
 function extractLocs(xml, urlSet) {
     const locMatches = [...xml.matchAll(/<url>[\s\S]*?<loc>(.*?)<\/loc>/gi)];
     for (const m of locMatches) {
@@ -180,14 +258,31 @@ export async function detectSitemapChanges(supabase, competitor) {
     }
 
     // Lagre varsler i databasen
+    let counterOpportunities = 0;
     if (changes.length > 0) {
-        await supabase.from('competitor_changes').insert(changes);
+        const { error: chErr } = await supabase.from('competitor_changes').insert(changes);
+        if (chErr) console.warn('[monitor] competitor_changes-insert feilet:', chErr.message);
+
+        // MOTANGREP: konkurrentens nye sider → innholds-muligheter (slug→frase).
+        // Innholdsplanen plukker dem opp automatisk neste måned.
+        const counterEntries = [];
+        for (const url of newPages) {
+            if (counterEntries.length >= COUNTER_MAX_PAGES) break;
+            const phrase = slugToPhrase(url);
+            if (!phrase) continue;
+            counterEntries.push({
+                keyword: phrase,
+                text: 'Konkurrenten {domain} publiserte nettopp en side om dette — svar med bedre innhold før de rekker å sette seg.',
+            });
+        }
+        counterOpportunities = await insertCounterOpportunities(supabase, competitor, counterEntries);
     }
 
     return {
         newPages,
         removedPages,
         changes,
+        counterOpportunities,
         sitemapFound: true,
         totalPages: currentUrls.length,
         isFirstScan,
@@ -271,9 +366,24 @@ export async function detectRankingChanges(supabase, competitor, newResults) {
         });
     }
 
+    let counterOpportunities = 0;
     if (changes.length > 0) {
-        await supabase.from('competitor_changes').insert(changes);
+        const { error: chErr } = await supabase.from('competitor_changes').insert(changes);
+        if (chErr) console.warn('[monitor] competitor_changes-insert feilet:', chErr.message);
+
+        // MOTANGREP: søkeord konkurrenten nettopp vant → innholds-muligheter.
+        const counterEntries = [];
+        for (const k of newKeywords) {
+            if (counterEntries.length >= COUNTER_MAX_KEYWORDS) break;
+            const kw = (k.keyword || '').trim();
+            if (kw.length < 5 || kw.length > 80) continue;
+            counterEntries.push({
+                keyword: kw,
+                text: `Konkurrenten {domain} rangerer nå på dette (plass ${Math.round(k.position)}) — skriv innholdet som svarer bedre.`,
+            });
+        }
+        counterOpportunities = await insertCounterOpportunities(supabase, competitor, counterEntries);
     }
 
-    return { changes, newKeywords, improved, dropped };
+    return { changes, newKeywords, improved, dropped, counterOpportunities };
 }

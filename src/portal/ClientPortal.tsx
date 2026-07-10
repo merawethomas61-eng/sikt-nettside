@@ -918,19 +918,32 @@ const ReviewsPage: React.FC<{
   const isConnected = !!reviewLink;
   const hasPlaceId = !!settings?.google_place_id;
 
+  // AI-svarutkast fra den månedlige GBP-sjekken (job=gbp) — lå tidligere kun
+  // i aktivitets-feeden der de druknet; nå vises de her m/ kopier-knapp.
+  const [replyDrafts, setReplyDrafts] = useState<{ id: string; title: string; reply: string; explanation?: string; created_at: string }[]>([]);
+
   const loadData = useCallback(async () => {
     if (!user?.id) { setLoading(false); return; }
     setLoadError(null);
     try {
-      const [sRows, rRows, hRows] = await Promise.all([
+      const [sRows, rRows, hRows, dRows] = await Promise.all([
         supabaseRest<ReviewSettings[]>(`review_settings?user_id=eq.${user.id}&select=*&limit=1`),
         supabaseRest<ReviewRequest[]>(`review_requests?user_id=eq.${user.id}&select=*&order=created_at.desc&limit=50`),
         supabaseRest<{ platform: string; connection_mode: string }[]>(`client_hosts?user_id=eq.${user.id}&select=platform,connection_mode&limit=5`),
+        supabaseRest<{ id: string; title: string; details: any; created_at: string; status: string }[]>(
+          `sikt_actions?user_id=eq.${user.id}&action_type=eq.gbp_check&select=id,title,details,created_at,status&order=created_at.desc&limit=20`,
+        ),
       ]);
       const s = Array.isArray(sRows) && sRows[0] ? sRows[0] : null;
       setSettings(s);
       setRequests(Array.isArray(rRows) ? rRows : []);
       setWpConnected(Array.isArray(hRows) && hRows.some((h) => h.platform === 'wordpress' && h.connection_mode === 'full'));
+      setReplyDrafts(
+        (Array.isArray(dRows) ? dRows : [])
+          .filter((a) => a.status !== 'dismissed' && typeof a?.details?.reply === 'string' && a.details.reply.trim())
+          .map((a) => ({ id: a.id, title: a.title, reply: a.details.reply, explanation: a.details.explanation, created_at: a.created_at }))
+          .slice(0, 5),
+      );
       if (!s?.write_review_url) setEditConnect(true);
     } catch (err: any) {
       setLoadError(err?.message || 'Kunne ikke laste anmeldelses-data.');
@@ -1358,6 +1371,31 @@ const ReviewsPage: React.FC<{
           </span>
         </div>
       </div>
+
+      {/* ── AI-svarutkast på ubesvarte anmeldelser (fra den månedlige GBP-sjekken) ── */}
+      {replyDrafts.length > 0 && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 24px' }}>
+          <SectionTitle>Svarutkast klare til bruk</SectionTitle>
+          <p style={{ margin: '8px 0 16px', fontSize: 13.5, lineHeight: 1.6, color: C.sub, maxWidth: 560 }}>
+            Sikt har skrevet ferdige svar på ubesvarte Google-anmeldelser. Kopier, logg inn på business.google.com → Anmeldelser, og lim inn — bedrifter som svarer oppfattes som mer til å stole på.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {replyDrafts.map((d) => (
+              <div key={d.id} style={{ border: `1px solid ${C.hair}`, borderRadius: 12, padding: '14px 16px' }}>
+                <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, color: C.ink }}>{d.title}</p>
+                <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.6, color: C.sub, whiteSpace: 'pre-wrap' }}>{d.reply}</p>
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard?.writeText(d.reply); toastSuccess('Svaret er kopiert — lim inn på business.google.com.'); }}
+                  style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 9, padding: '7px 13px', fontSize: 12.5, fontWeight: 600, color: C.sub, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Copy size={12} /> Kopier svaret
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Sendt og venter ── */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px' }}>
@@ -4288,6 +4326,108 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     fetchArticleData();
   }, [activeTab, fetchArticleData]);
 
+  // ── Verdi-motorene: server-skann (sikt_site_pages), lenke-funn/-forslag og
+  // månedlig innholdsplan. Alt skrives av cron-jobbene i
+  // api/cron-scan-competitors.js (site_scan / content_plan / content_generate)
+  // — portalen leser og lar kunden godkjenne. ──
+  const [sitePagesServer, setSitePagesServer] = useState<any[]>([]);
+  const [linkIssues, setLinkIssues] = useState<any[]>([]);
+  const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
+  const [contentPlan, setContentPlan] = useState<any | null>(null);
+  const [contentPlanItems, setContentPlanItems] = useState<any[]>([]);
+  const [linkActionBusy, setLinkActionBusy] = useState<string | null>(null);
+  // Resultat-bevis (viewen sikt_article_results) + henvendelses-sporing (sikt_leads)
+  const [articleResults, setArticleResults] = useState<any[]>([]);
+  const [leadStats, setLeadStats] = useState<{ total: number; tel: number; mailto: number; form: number } | null>(null);
+  const [leadToken, setLeadToken] = useState<string | null>(null);
+  const [leadTrackingBusy, setLeadTrackingBusy] = useState(false);
+
+  const fetchGrowthEngineData = useCallback(async () => {
+    if (!supabase || !userIdRef.current) return;
+    const uid = userIdRef.current;
+    const period = new Date().toISOString().slice(0, 7);
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const [resultsRes, leadsRes, tokenRes] = await Promise.all([
+        supabase
+          .from('sikt_article_results')
+          .select('*')
+          .eq('user_id', uid)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('sikt_leads')
+          .select('kind')
+          .eq('user_id', uid)
+          .gte('occurred_at', thirtyDaysAgo)
+          .limit(2000),
+        supabase
+          .from('clients')
+          .select('lead_token')
+          .eq('user_id', uid)
+          .maybeSingle(),
+      ]);
+      if (!resultsRes.error && Array.isArray(resultsRes.data)) setArticleResults(resultsRes.data);
+      if (!leadsRes.error && Array.isArray(leadsRes.data)) {
+        const rows = leadsRes.data as { kind: string }[];
+        setLeadStats({
+          total: rows.length,
+          tel: rows.filter((r) => r.kind === 'tel').length,
+          mailto: rows.filter((r) => r.kind === 'mailto').length,
+          form: rows.filter((r) => r.kind === 'form').length,
+        });
+      }
+      if (!tokenRes.error && tokenRes.data?.lead_token) setLeadToken(tokenRes.data.lead_token);
+
+      const [pagesRes, issuesRes, sugsRes, planRes] = await Promise.all([
+        supabase
+          .from('sikt_site_pages')
+          .select('*')
+          .eq('user_id', uid)
+          .order('last_scanned_at', { ascending: false })
+          .limit(30),
+        supabase
+          .from('sikt_link_issues')
+          .select('*')
+          .eq('user_id', uid)
+          .eq('state', 'open')
+          .order('first_seen_at', { ascending: false })
+          .limit(12),
+        supabase
+          .from('sikt_link_suggestions')
+          .select('*')
+          .eq('user_id', uid)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(12),
+        supabase
+          .from('sikt_content_plans')
+          .select('*, sikt_content_plan_items(*)')
+          .eq('user_id', uid)
+          .eq('period', period)
+          .maybeSingle(),
+      ]);
+      if (!pagesRes.error && Array.isArray(pagesRes.data)) setSitePagesServer(pagesRes.data);
+      if (!issuesRes.error && Array.isArray(issuesRes.data)) setLinkIssues(issuesRes.data);
+      if (!sugsRes.error && Array.isArray(sugsRes.data)) setLinkSuggestions(sugsRes.data);
+      if (!planRes.error) {
+        const plan: any = planRes.data || null;
+        setContentPlan(plan);
+        const items = Array.isArray(plan?.sikt_content_plan_items)
+          ? [...plan.sikt_content_plan_items].sort((a: any, b: any) => (a.sort ?? 0) - (b.sort ?? 0))
+          : [];
+        setContentPlanItems(items);
+      }
+    } catch (err: any) {
+      console.warn('[Portal] Kunne ikke hente verdi-motor-data:', err?.message || err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((activeTab !== 'workshop' && activeTab !== 'home') || !userIdRef.current) return;
+    fetchGrowthEngineData();
+  }, [activeTab, fetchGrowthEngineData]);
+
   // ── Månedsrapporter (sikt_reports) — Hjem-kort + arkiv i Innstillinger ──
   const [siktReports, setSiktReports] = useState<any[]>([]);
   const [activeReport, setActiveReport] = useState<any | null>(null);
@@ -5528,6 +5668,46 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       }
     }
   }, [formData.websiteUrl, contentPages.length, linkPages.length]);
+
+  // --- SERVER-SKANN → CONTENTPAGES ---
+  // Det ukentlige cron-skannet (sikt_site_pages) mater Verksted-todos uten at
+  // kunden trykker «Skann» selv — oppgavelisten går aldri tom. Ferskest kilde
+  // vinner: et nyere kunde-utløst skann (localStorage-cache) beholdes.
+  useEffect(() => {
+    if (!sitePagesServer.length) return;
+    const serverTs = Math.max(
+      ...sitePagesServer.map((r: any) => new Date(r.last_scanned_at).getTime() || 0),
+    );
+    let localTs = 0;
+    if (formData.websiteUrl) {
+      try {
+        const cache = localStorage.getItem(`content_cache_${formData.websiteUrl}`);
+        if (cache) localTs = JSON.parse(cache).timestamp || 0;
+      } catch { /* ignore */ }
+    }
+    // Samme de-facto-form som /api/scan-website-responsen (settes rått i
+    // handleContentScan) — derfor bevisst uten streng ContentPage-typing.
+    const mapped = sitePagesServer.map((r: any) => {
+      const issues = Array.isArray(r.issues) ? r.issues : [];
+      return {
+        url: r.path || '/',
+        fullUrl: r.url,
+        title: r.title || r.url,
+        wordCount: r.word_count || 0,
+        textSample: r.text_sample || '',
+        status: r.status || 'Bra',
+        score: r.score ?? 100,
+        issues,
+        inlinks: r.inlinks ?? 0,
+        outlinks: r.outlinks ?? 0,
+        readability: (r.word_count || 0) > 600 ? 'Middels' : 'Enkel',
+        topicCluster: 'Generell',
+        action: issues.length ? 'Krever optimalisering' : 'Fungerer optimalt',
+        lastUpdated: new Date(r.last_scanned_at).toLocaleDateString('no-NO'),
+      };
+    }) as unknown as ContentPage[];
+    setContentPages((prev) => (localTs >= serverTs && prev.length > 0 ? prev : mapped));
+  }, [sitePagesServer, formData.websiteUrl]);
 
   // --- SØKEORDSGRENSER ---
   // Grensene MÅ matche løftene på prissiden (src/shared/Pricing.tsx):
@@ -6857,7 +7037,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // TODOS — aggregert "i dag"-liste fra alle kilder, sortert etter impact.
   // Brukes paa Hjem (3 oeverst + "mer") og er kilden til Verksted-fanen.
   // ===================================================================
-  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'content-page' | 'onboarding' | 'competitor' | 'geo' | 'opportunity';
+  type TodoKind = 'pagespeed' | 'keyword' | 'content' | 'content-page' | 'onboarding' | 'competitor' | 'geo' | 'opportunity' | 'broken-link' | 'internal-link';
   type Todo = {
     id: string;
     kind: TodoKind;
@@ -6960,6 +7140,122 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     } finally {
       setArticlePushing(null);
     }
+  };
+
+  // ── Lenke-motoren: godkjennings-gatede handlinger mot wordpress-push ──
+  const fixBrokenLink = async (issue: any) => {
+    if (linkActionBusy) return;
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setLinkActionBusy(issue.id);
+    try {
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'fix-link', issueId: issue.id, mode: 'unlink' }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.ok) {
+        if (out?.manual) {
+          toastWarning(out.error || 'Denne må fikses manuelt i WordPress.');
+        } else {
+          toastError(out?.error || 'Kunne ikke fikse lenken.');
+        }
+        return;
+      }
+      setLinkIssues((prev) => prev.filter((i) => i.id !== issue.id));
+      fetchContentChanges();
+      toastSuccess('Lenken er fjernet — teksten står igjen urørt. Angre i endringsloggen.');
+    } catch (e: any) {
+      toastError(e?.message || 'Nettverksfeil under lenke-fiksen.');
+    } finally {
+      setLinkActionBusy(null);
+    }
+  };
+
+  const insertInternalLink = async (sug: any) => {
+    if (linkActionBusy) return;
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setLinkActionBusy(sug.id);
+    try {
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'insert-link', suggestionId: sug.id }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.ok) {
+        if (out?.manual) {
+          setLinkSuggestions((prev) => prev.filter((s) => s.id !== sug.id));
+          toastWarning(out.error || 'Frasen ble ikke funnet — sett inn lenken manuelt.');
+        } else {
+          toastError(out?.error || 'Kunne ikke sette inn lenken.');
+        }
+        return;
+      }
+      setLinkSuggestions((prev) => prev.filter((s) => s.id !== sug.id));
+      fetchContentChanges();
+      toastSuccess('Intern lenke satt inn. Angre i endringsloggen.');
+    } catch (e: any) {
+      toastError(e?.message || 'Nettverksfeil under lenke-innsettingen.');
+    } finally {
+      setLinkActionBusy(null);
+    }
+  };
+
+  const dismissLinkIssue = async (issue: any) => {
+    setLinkIssues((prev) => prev.filter((i) => i.id !== issue.id));
+    try {
+      const { error } = await supabase
+        .from('sikt_link_issues')
+        .update({ state: 'dismissed' })
+        .eq('id', issue.id);
+      if (error) console.warn('[Lenker] Kunne ikke avvise funn:', error.message);
+    } catch { /* best effort */ }
+  };
+
+  const rejectLinkSuggestion = async (sug: any) => {
+    setLinkSuggestions((prev) => prev.filter((s) => s.id !== sug.id));
+    try {
+      const { error } = await supabase
+        .from('sikt_link_suggestions')
+        .update({ status: 'rejected' })
+        .eq('id', sug.id);
+      if (error) console.warn('[Lenker] Kunne ikke avvise forslag:', error.message);
+    } catch { /* best effort */ }
+  };
+
+  // ── Henvendelses-sporing: aktiver beacon i connector-pluginen (WP full) ──
+  const enableLeadTracking = async () => {
+    if (leadTrackingBusy) return;
+    const token = getStoredAccessToken();
+    if (!token) { toastError('Du må være logget inn.'); return; }
+    setLeadTrackingBusy(true);
+    try {
+      const res = await fetch('/api/wordpress-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'enable-lead-tracking' }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.ok) {
+        toastError(out?.error || 'Kunne ikke aktivere sporingen.');
+        return;
+      }
+      toastSuccess('Henvendelses-sporing er på — tallene dukker opp her etter hvert som folk ringer eller skriver.');
+    } catch (e: any) {
+      toastError(e?.message || 'Nettverksfeil under aktiveringen.');
+    } finally {
+      setLeadTrackingBusy(false);
+    }
+  };
+
+  // Copy-paste-beacon for plattformer uten connector (samme endepunkt/payload
+  // som pluginens wp_footer-script — hold de to i synk).
+  const buildLeadSnippet = () => {
+    const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-lead`;
+    return `<script>(function(){var EP="${endpoint}",T="${leadToken}";function s(k,y){try{var K="sikt_lead_"+k+"_"+y;if(window.sessionStorage&&sessionStorage.getItem(K))return;if(window.sessionStorage)sessionStorage.setItem(K,"1");var p=JSON.stringify({t:T,k:k,p:location.pathname});if(navigator.sendBeacon){navigator.sendBeacon(EP,p);}else{fetch(EP,{method:"POST",body:p,keepalive:true}).catch(function(){});}}catch(e){}}document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a)return;var h=(a.getAttribute("href")||"").toLowerCase();if(h.indexOf("tel:")===0)s("tel",h);else if(h.indexOf("mailto:")===0)s("mailto",h);},true);document.addEventListener("submit",function(e){var f=e.target;if(f&&f.tagName==="FORM")s("form",(f.getAttribute("action")||location.pathname));},true);})();</script>`;
   };
 
   const todos = useMemo<Todo[]>(() => {
@@ -7171,6 +7467,76 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       });
     }
 
+    // 2d. Plan-artikler (månedlig innholdsplan) uten mulighets-todo over —
+    // «Artikkel klar: godkjenn utkastet» skal alltid være synlig som oppgave.
+    const oppIds = new Set(keywordOpps.slice(0, 6).map((o) => o.id));
+    for (const art of siktArticles) {
+      if (art?.source !== 'plan' || art?.status !== 'generated') continue;
+      if (art.opportunity_id && oppIds.has(art.opportunity_id)) continue; // dekket av opp-todo
+      const matchingOpp = keywordOpps.find((o) => o.id === art.opportunity_id || o.keyword === art.keyword) || null;
+      items.push({
+        id: `plan-art-${art.id}`,
+        kind: 'opportunity',
+        title: `Artikkel klar: «${art.keyword}» — godkjenn utkastet`,
+        desc: 'Sikt har skrevet månedens artikkel. Les gjennom og send til WordPress.',
+        impact: 72,
+        status: 'open',
+        raw: { opportunity: matchingOpp, article: art },
+        action: {
+          label: 'Se utkastet',
+          onClick: () => {
+            setActiveTab('workshop');
+            setExpandedWorkshopProblem(`plan-art-${art.id}`);
+          },
+        },
+      });
+    }
+
+    // 2e. Ødelagte lenker (fra det ukentlige server-skannet)
+    for (const issue of linkIssues) {
+      if (!issue?.id) continue;
+      const pagePath = pathLabelFromPageUrl(issue.page_url);
+      items.push({
+        id: `link-issue-${issue.id}`,
+        kind: 'broken-link',
+        title: `Ødelagt lenke på ${pagePath}`,
+        desc: `Peker på ${issue.target_url} — svarer ${issue.http_status || 'ikke'}`,
+        impact: 65,
+        status: 'open',
+        pageUrl: issue.page_url,
+        raw: { issue },
+        action: {
+          label: 'Åpne i Verksted',
+          onClick: () => {
+            setActiveTab('workshop');
+            setExpandedWorkshopProblem(`link-issue-${issue.id}`);
+          },
+        },
+      });
+    }
+
+    // 2f. Interne lenkeforslag (kompounderende — nye artikler gir nye forslag)
+    for (const sug of linkSuggestions) {
+      if (!sug?.id) continue;
+      items.push({
+        id: `link-sug-${sug.id}`,
+        kind: 'internal-link',
+        title: `Lenk «${sug.anchor_text}» → ${pathLabelFromPageUrl(sug.target_url)}`,
+        desc: `På ${pathLabelFromPageUrl(sug.source_url)} — interne lenker løfter rangeringen`,
+        impact: 55,
+        status: 'open',
+        pageUrl: sug.source_url,
+        raw: { suggestion: sug },
+        action: {
+          label: 'Åpne i Verksted',
+          onClick: () => {
+            setActiveTab('workshop');
+            setExpandedWorkshopProblem(`link-sug-${sug.id}`);
+          },
+        },
+      });
+    }
+
     // 3. Sokeord pa pos 4-20 (lavt-hengende frukt)
     for (const r of realRankings) {
       const pos = (r as any).position;
@@ -7199,7 +7565,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
 
     return Array.from(new Map(items.map((todo) => [todo.id, todo])).values())
       .sort((a, b) => b.impact - a.impact);
-  }, [analysisResults, realRankings, websiteUrl, hostIsFullyConnected, hostWasLightOnly, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing, contentPages, contentChanges, keywordOpps, siktArticles]);
+  }, [analysisResults, realRankings, websiteUrl, hostIsFullyConnected, hostWasLightOnly, keywordsToTrack.length, hasStandardOrHigher, isAnalyzing, contentPages, contentChanges, keywordOpps, siktArticles, linkIssues, linkSuggestions]);
 
   const todayTodos = todos.slice(0, 3);
   const moreTodos = todos.slice(3);
@@ -7942,6 +8308,171 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 </button>
               </div>
             )}
+
+            {/* Månedens innholdsplan — den proaktive innholdsmotoren. Sikt velger
+                søkeord og skriver utkastene; kunden godkjenner (aldri auto-publisering). */}
+            {(() => {
+              const monthName = new Date().toLocaleDateString('nb-NO', { month: 'long' });
+              const visibleItems = contentPlanItems.filter((i: any) => i.status !== 'dismissed');
+              if (hasStandardOrHigher && visibleItems.length === 0) return null;
+              const articleById = new Map<string, any>(siktArticles.map((a: any) => [a.id, a] as [string, any]));
+              const chipFor = (item: any) => {
+                const art = item.article_id ? articleById.get(item.article_id) : null;
+                if (art?.status === 'published') return { label: 'Publisert', cls: 'text-[color:var(--green)] bg-[color:var(--inset)]' };
+                if (art?.status === 'pushed_draft') return { label: 'Utkast i WordPress', cls: 'text-[color:var(--green)] bg-[color:var(--inset)]' };
+                if (art) return { label: 'Klar til godkjenning', cls: 'text-white bg-[color:var(--btn-bg)]' };
+                return { label: 'Planlagt', cls: 'text-[color:var(--muted)] bg-[color:var(--subtle)]' };
+              };
+              const openItem = (item: any) => {
+                const art = item.article_id ? articleById.get(item.article_id) : null;
+                const opp = keywordOpps.find((o: any) => o.id === item.opportunity_id || o.keyword === item.keyword);
+                setActiveTab('workshop');
+                if (opp) setExpandedWorkshopProblem(`opp-${opp.id}`);
+                else if (art) setExpandedWorkshopProblem(`plan-art-${art.id}`);
+              };
+              return (
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">Innholdsplan for {monthName}</p>
+                    {hasStandardOrHigher && contentPlan?.status === 'ready' && (
+                      <span className="ml-auto text-[11px] font-semibold text-[color:var(--green)] bg-[color:var(--inset)] px-2 py-0.5 rounded-full">Alle utkast klare</span>
+                    )}
+                  </div>
+                  {!hasStandardOrHigher ? (
+                    <>
+                      <h3 className="text-lg font-semibold text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>Sikt kan skrive månedens artikler for deg</h3>
+                      <p className="text-sm mt-1 mb-4 text-[color:var(--muted)] leading-relaxed">
+                        Med Standard planlegger og skriver Sikt 2 artikler hver måned — målrettet mot søkeord du nesten rangerer på. Du leser gjennom og godkjenner; de legges som utkast rett i WordPress.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleUpgrade('Standard')}
+                        className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
+                        style={{ background: 'var(--btn-bg)' }}
+                      >
+                        Oppgrader til Standard <ArrowRight size={13} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm mb-4 text-[color:var(--muted)]">
+                        Sikt har valgt månedens søkeord og skriver utkastene automatisk. Du godkjenner — ingenting publiseres uten deg.
+                      </p>
+                      <div className="space-y-2">
+                        {visibleItems.map((item: any) => {
+                          const chip = chipFor(item);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => openItem(item)}
+                              className="w-full flex items-center gap-3 rounded-[12px] border border-[color:var(--hair)] px-4 py-3 text-left transition-colors hover:bg-[color:var(--subtle)]"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-[color:var(--ink)] truncate">«{item.keyword}»</p>
+                                {item.reason && <p className="text-xs text-[color:var(--muted)] truncate">{item.reason}</p>}
+                              </div>
+                              <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${chip.cls}`}>{chip.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Resultat-bevis: «dette gjorde Sikt → dette skjedde». Vises kun når
+                pushede artikler finnes — med ærlig venter-tilstand til Google-data
+                (keyword_snapshots) foreligger. */}
+            {articleResults.length > 0 && (
+              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Resultater</p>
+                <p className="text-sm mb-4 text-[color:var(--muted)]">
+                  Slik har søkeordene til artiklene Sikt skrev utviklet seg på Google etter publisering.
+                </p>
+                <div className="space-y-2">
+                  {articleResults.map((r: any) => {
+                    const hasData = typeof r.latest_position === 'number';
+                    const from = typeof r.position_at_creation === 'number' ? Math.round(r.position_at_creation) : null;
+                    const to = hasData ? Math.round(r.latest_position) : null;
+                    const improved = hasData && (from == null || (to as number) < from);
+                    const weeksSince = Math.max(1, Math.round((Date.now() - new Date(r.created_at).getTime()) / (7 * 24 * 60 * 60 * 1000)));
+                    return (
+                      <div key={r.article_id} className="flex items-center gap-3 rounded-[12px] border border-[color:var(--hair)] px-4 py-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[color:var(--ink)] truncate">«{r.keyword}»</p>
+                          <p className="text-xs text-[color:var(--muted)]">
+                            {hasData
+                              ? (from != null ? `Plass ${from} da artikkelen ble skrevet` : 'Rangerte ikke før artikkelen')
+                              : `Publisert for ${weeksSince} ${weeksSince === 1 ? 'uke' : 'uker'} siden`}
+                          </p>
+                        </div>
+                        {hasData ? (
+                          <span className={`shrink-0 text-[12px] font-semibold px-2.5 py-1 rounded-full tabular-nums ${improved ? 'bg-[color:var(--inset)] text-[color:var(--green)]' : 'bg-[color:var(--subtle)] text-[color:var(--muted)]'}`}>
+                            {from != null ? `${from} → ${to}` : `ny · plass ${to}`}
+                          </span>
+                        ) : (
+                          <span className="shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[color:var(--subtle)] text-[color:var(--muted)]">
+                            Venter på Google-data (2–6 uker)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Henvendelser: telefon/e-post/skjema fra beacon-sporingen — det
+                eneste tallet en småbedrift egentlig bryr seg om. */}
+            {(() => {
+              const hasLeads = (leadStats?.total ?? 0) > 0;
+              return (
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Henvendelser siste 30 dager</p>
+                  {hasLeads ? (
+                    <div className="flex items-end gap-6 flex-wrap">
+                      <span className="text-5xl font-semibold tracking-[-0.03em] text-[color:var(--ink)] tabular-nums">{leadStats!.total}</span>
+                      <p className="text-sm text-[color:var(--muted)] pb-1.5">
+                        {leadStats!.tel > 0 && <span className="mr-3">{leadStats!.tel} telefon-klikk</span>}
+                        {leadStats!.form > 0 && <span className="mr-3">{leadStats!.form} skjema</span>}
+                        {leadStats!.mailto > 0 && <span>{leadStats!.mailto} e-post-klikk</span>}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm mb-4 text-[color:var(--muted)] leading-relaxed">
+                        Se hvor mange som ringer, sender skjema eller klikker e-posten din fra nettsiden — uten cookies og uten persondata. Dette er tallet SEO-arbeidet til syvende og sist skal flytte.
+                      </p>
+                      {hostIsFullyConnected ? (
+                        <button
+                          type="button"
+                          disabled={leadTrackingBusy}
+                          onClick={enableLeadTracking}
+                          className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97] disabled:opacity-60"
+                          style={{ background: 'var(--btn-bg)' }}
+                        >
+                          {leadTrackingBusy ? 'Aktiverer…' : 'Aktiver sporing'} <ArrowRight size={13} />
+                        </button>
+                      ) : leadToken ? (
+                        <button
+                          type="button"
+                          onClick={() => { navigator.clipboard?.writeText(buildLeadSnippet()); toastSuccess('Sporings-snippet kopiert — lim den inn før </body> på siden din.'); }}
+                          className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] border border-[color:var(--hair)] text-[color:var(--ink)] transition-transform active:scale-[0.97]"
+                        >
+                          Kopier sporings-snippet
+                        </button>
+                      ) : null}
+                      {hostIsFullyConnected && (
+                        <p className="text-xs mt-2 text-[color:var(--muted)]">Krever Sikt Connector v1.3 — får du feilmelding, last ned pluginen på nytt fra Innstillinger.</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className={`${tabFadeInClass} space-y-6`}>
               {!activationDismissed && (
@@ -9140,7 +9671,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         {/* VERKSTED — liste-view, ekspander inline for AI-løsning.         */}
         {/* =============================================================== */}
         {activeTab === 'workshop' && (() => {
-          const workshopKinds: TodoKind[] = ['pagespeed', 'content-page', 'keyword', 'opportunity'];
+          const workshopKinds: TodoKind[] = ['pagespeed', 'content-page', 'keyword', 'opportunity', 'broken-link', 'internal-link'];
           const problems = todos
             .filter((t) => workshopKinds.includes(t.kind))
             .map((todo) => ({
@@ -9205,7 +9736,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           };
           const selectProblem = (p: typeof problems[number]) => {
             setExpandedWorkshopProblem(p.id);
-            if (p.kind === 'content-page' || p.kind === 'opportunity') {
+            if (p.kind === 'content-page' || p.kind === 'opportunity' || p.kind === 'broken-link' || p.kind === 'internal-link') {
               setActiveSolveProblem(null);
               setAiSolution(null);
               setAiIsThinking(false);
@@ -9392,13 +9923,48 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         <div style={{ height: 1, background: W.border }} />
 
                         {filteredProblems.length === 0 ? (
+                          (() => {
+                            // Frisk-tilstand: har server-skannet kjørt, er «tomt» en
+                            // SEIER (alt friskt) — ikke en død blindvei. Neste skann
+                            // og månedens innholdsplan viser at maskinen jobber videre.
+                            const lastScanTs = sitePagesServer.length
+                              ? Math.max(...sitePagesServer.map((r: any) => new Date(r.last_scanned_at).getTime() || 0))
+                              : 0;
+                            const isHealthy = problems.length === 0 && lastScanTs > 0;
+                            const scanDate = lastScanTs ? new Date(lastScanTs).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' }) : '';
+                            const nextScanDate = lastScanTs ? new Date(lastScanTs + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' }) : '';
+                            const planReadyCount = contentPlanItems.filter((i: any) => i.status === 'generated').length;
+                            if (isHealthy) {
+                              return (
+                                <div style={{ padding: '32px 0' }}>
+                                  <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 16, fontWeight: 700 }}>
+                                    Alt er friskt per {scanDate} ✓
+                                  </p>
+                                  <p style={{ margin: '0 0 16px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
+                                    Sikt skannet {sitePagesServer.length} sider og fant ingenting å fikse akkurat nå.
+                                    Neste automatiske skann: {nextScanDate}. Nye funn dukker opp her av seg selv.
+                                  </p>
+                                  {hasStandardOrHigher && planReadyCount > 0 && (
+                                    <p style={{ margin: '0 0 16px', color: W.green, fontSize: 14, fontWeight: 600 }}>
+                                      {planReadyCount} {planReadyCount === 1 ? 'artikkel fra månedens innholdsplan venter' : 'artikler fra månedens innholdsplan venter'} på godkjenning — se «Løste»-filteret eller Hjem-fanen.
+                                    </p>
+                                  )}
+                                  {!hasStandardOrHigher && (
+                                    <p style={{ margin: '0 0 16px', color: W.muted, fontSize: 13, lineHeight: 1.6 }}>
+                                      Med Standard skriver Sikt også 2 nye artikler for deg hver måned — klare til godkjenning her.
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return (
                           <div style={{ padding: '32px 0' }}>
                             <p style={{ margin: '0 0 8px', color: W.ink, fontSize: 16, fontWeight: 700 }}>
                               {problems.length === 0 ? 'Ingen aktive problemer' : 'Ingen problemer i dette filteret'}
                             </p>
                             <p style={{ margin: '0 0 16px', color: W.muted, fontSize: 14, lineHeight: 1.6 }}>
                               {problems.length === 0
-                                ? 'Kjør en analyse under Synlighet → PageSpeed for å finne ting å fikse.'
+                                ? 'Kjør en analyse under Synlighet → PageSpeed for å finne ting å fikse. Sikt skanner også siden din automatisk hver uke — nye funn dukker opp her av seg selv.'
                                 : workshopQuery.trim()
                                   ? 'Ingen funn matcher søket. Tøm søket eller bytt filter.'
                                   : 'Bytt filter for å se andre problemer.'}
@@ -9416,6 +9982,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               </button>
                             )}
                           </div>
+                            );
+                          })()
                         ) : (
                           filteredProblems.map((p, listIdx) => {
                             const num = String(problems.findIndex(x => x.id === p.id) + 1).padStart(2, '0');
@@ -9609,6 +10177,19 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </div>
                                 )}
 
+                                {/* Resultat-bevis: søkeordets utvikling etter publisering (viewen sikt_article_results) */}
+                                {(isPushed || article?.status === 'published') && (() => {
+                                  const resRow = articleResults.find((r: any) => r.article_id === article.id);
+                                  if (!resRow || typeof resRow.latest_position !== 'number') return null;
+                                  const from = typeof resRow.position_at_creation === 'number' ? Math.round(resRow.position_at_creation) : null;
+                                  const to = Math.round(resRow.latest_position);
+                                  return (
+                                    <p style={{ margin: 0, fontSize: 13, color: W.green, fontWeight: 600 }}>
+                                      Siden publisering: {from != null ? `plass ${from} → ${to}` : `ny på Google — plass ${to}`} for «{article.keyword}»
+                                    </p>
+                                  );
+                                })()}
+
                                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 400px', gap: 16, alignItems: 'start' }}>
                                   {/* VENSTRE: innlegget + kopier-knapper rett under */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -9706,6 +10287,163 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   </p>
                                 )}
                               </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()
+
+                  ) : selectedProblem?.kind === 'broken-link' || selectedProblem?.kind === 'internal-link' ? (
+                    /* ═══════════════════════════════════
+                       LENKE-MOTOREN — ødelagt lenke / internt lenkeforslag
+                       ═══════════════════════════════════ */
+                    (() => {
+                      const isBroken = selectedProblem.kind === 'broken-link';
+                      const issue = selectedProblem.raw?.issue;
+                      const sug = selectedProblem.raw?.suggestion;
+                      const rowId = isBroken ? issue?.id : sug?.id;
+                      const busy = linkActionBusy === rowId;
+                      const canPush = hostIsFullyConnected && hasStandardOrHigher;
+                      const sourceUrl = isBroken ? issue?.page_url : sug?.source_url;
+                      const goBack = () => setExpandedWorkshopProblem(null);
+                      // Snippet med markert ankertekst (kun internal-link)
+                      const snippet = String(sug?.context_snippet || '');
+                      const anchor = String(sug?.anchor_text || '');
+                      const anchorIdx = anchor ? snippet.toLowerCase().indexOf(anchor.toLowerCase()) : -1;
+                      const manualText = isBroken
+                        ? `Åpne ${sourceUrl || 'siden'} i redigereren din, finn lenken som peker på ${issue?.target_url || 'målet'}${issue?.anchor_text ? ` (teksten «${issue.anchor_text}»)` : ''}, og fjern lenken — la teksten stå igjen.`
+                        : `Åpne ${sourceUrl || 'siden'} i redigereren din, finn teksten «${anchor}», og gjør den til en lenke som peker på ${sug?.target_url || 'målsiden'}.`;
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ padding: isMobile ? '14px 16px' : '16px 48px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${W.border}` }}>
+                            <button
+                              type="button"
+                              onClick={goBack}
+                              onMouseDown={pressDown}
+                              onMouseUp={pressReset}
+                              onMouseLeave={pressReset}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${W.border}`, borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 600, color: W.muted, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                            >
+                              <ChevronLeft size={12} /> Verksted
+                            </button>
+                            <span style={{ fontSize: 12, color: W.faint }}>{isBroken ? 'Ødelagt lenke' : 'Internt lenkeforslag'}</span>
+                          </div>
+
+                          <div style={{ padding: isMobile ? '20px 16px' : '28px 48px', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 780 }}>
+                            <div>
+                              <h2 style={{ margin: 0, fontSize: isMobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.02em', color: W.ink, fontFamily: SERIF }}>
+                                {selectedProblem.title}
+                              </h2>
+                              <p style={{ margin: '10px 0 0', fontSize: 14, color: W.sub, lineHeight: 1.6 }}>
+                                {isBroken
+                                  ? 'Døde lenker gir dårlig brukeropplevelse og svekker tilliten til siden — både hos besøkende og hos Google.'
+                                  : (sug?.reason || 'Interne lenker hjelper Google å forstå hvilke sider som hører sammen — og løfter siden det lenkes til.')}
+                              </p>
+                            </div>
+
+                            {/* Detaljer */}
+                            <div style={{ background: W.card, border: `1px solid ${W.border}`, borderRadius: 16, padding: isMobile ? 16 : 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>{isBroken ? 'Lenken står på' : 'Lenken settes inn på'}</p>
+                                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 5, fontSize: 13, fontWeight: 600, color: W.ink, textDecoration: 'none', wordBreak: 'break-all' }}>
+                                  {sourceUrl} <ExternalLink size={12} style={{ flexShrink: 0 }} />
+                                </a>
+                              </div>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>{isBroken ? 'Peker på (dødt mål)' : 'Skal peke på'}</p>
+                                <p style={{ margin: '5px 0 0', fontSize: 13, color: isBroken ? 'var(--warn)' : W.sub, wordBreak: 'break-all' }}>
+                                  {isBroken ? issue?.target_url : sug?.target_url}
+                                  {isBroken && issue?.http_status ? `  (HTTP ${issue.http_status})` : ''}
+                                </p>
+                              </div>
+                              {isBroken && issue?.anchor_text && (
+                                <div>
+                                  <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>Lenketekst</p>
+                                  <p style={{ margin: '5px 0 0', fontSize: 13, color: W.sub }}>«{issue.anchor_text}»</p>
+                                </div>
+                              )}
+                              {!isBroken && snippet && (
+                                <div>
+                                  <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: W.muted }}>Slik står det i teksten</p>
+                                  <p style={{ margin: '5px 0 0', fontSize: 13, color: W.sub, lineHeight: 1.6 }}>
+                                    {anchorIdx >= 0 ? (
+                                      <>
+                                        {snippet.slice(0, anchorIdx)}
+                                        <strong style={{ color: W.green, fontWeight: 700 }}>{snippet.slice(anchorIdx, anchorIdx + anchor.length)}</strong>
+                                        {snippet.slice(anchorIdx + anchor.length)}
+                                      </>
+                                    ) : snippet}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Handling */}
+                            {!hasStandardOrHigher ? (
+                              <div style={{ background: W.btn, borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(21,121,90,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Sparkles size={16} style={{ color: '#6EE7B7' }} />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 180 }}>
+                                  <p style={{ margin: '0 0 3px', color: '#fff', fontSize: 14, fontWeight: 700 }}>{isBroken ? 'La Sikt fikse ødelagte lenker for deg' : 'La Sikt sette inn interne lenker for deg'}</p>
+                                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Med Standard fikser Sikt dette med ett klikk rett i WordPress — og alt kan angres fra endringsloggen.</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpgrade('Standard')}
+                                  onMouseDown={pressDown}
+                                  onMouseUp={pressReset}
+                                  onMouseLeave={pressReset}
+                                  style={{ background: 'var(--surface)', color: W.ink, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0, transition: `transform 160ms ${EASE}` }}
+                                >
+                                  Oppgrader <ArrowRight size={12} style={{ display: 'inline', verticalAlign: '-2px' }} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                {canPush ? (
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => (isBroken ? fixBrokenLink(issue) : insertInternalLink(sug))}
+                                    onMouseDown={pressDown}
+                                    onMouseUp={pressReset}
+                                    onMouseLeave={pressReset}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, transition: `transform 160ms ${EASE}` }}
+                                  >
+                                    {busy ? 'Endrer…' : isBroken ? 'Fjern lenken' : 'Sett inn lenken'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => { navigator.clipboard?.writeText(manualText); toastSuccess('Instruksjonen er kopiert.'); }}
+                                    onMouseDown={pressDown}
+                                    onMouseUp={pressReset}
+                                    onMouseLeave={pressReset}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: W.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: `transform 160ms ${EASE}` }}
+                                  >
+                                    Kopier instruksjon
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => { (isBroken ? dismissLinkIssue(issue) : rejectLinkSuggestion(sug)); goBack(); }}
+                                  style={{ background: 'transparent', color: W.muted, border: `1px solid ${W.border}`, borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                  Avvis
+                                </button>
+                              </div>
+                            )}
+
+                            {hasStandardOrHigher && !canPush && (
+                              <p style={{ margin: 0, fontSize: 12, color: W.faint, lineHeight: 1.6 }}>
+                                {manualText}
+                              </p>
+                            )}
+                            {canPush && (
+                              <p style={{ margin: 0, fontSize: 12, color: W.faint }}>
+                                Endringen logges i endringsloggen øverst i Verkstedet og kan angres med ett klikk.
+                              </p>
                             )}
                           </div>
                         </div>

@@ -382,7 +382,8 @@ const MARKETING = [
             'AI skriver meta-tekster og alt-tekster — klar til innliming',
             'Kopier-og-lim-inn kode for tekniske fikser, forklart på plain norsk',
             'Konkurrent-radar: varsel når 2 konkurrenter endrer seg',
-            'Månedlig sjekk av hastighet og tekniske feil + månedlig rapport på plain norsk',
+            'Se henvendelsene: hvor mange ringer og skriver fra siden',
+            'Ukentlig automatisk skann av alle sidene dine + månedlig rapport på plain norsk',
           ],
         },
         {
@@ -390,6 +391,7 @@ const MARKETING = [
           p: 'Flere kunder — uten at du løfter en finger. Sikt fikser nettsiden din automatisk og kontinuerlig: WordPress og Shopify får endringene pushet rett inn, og bygde du siden med AI får du en ferdig lim-inn-prompt per problem.',
           items: [
             '2 AI-skrevne artikler i måneden — sendt som utkast til WordPress',
+            'AI skriver og publiserer tekster, alt-tekster og schema — og rydder i ødelagte og interne lenker',
             '1-klikks angre på alt — siden din kan aldri ødelegges',
             'Ukentlig «Dette har Sikt fikset for deg»-kvittering',
             'Ukentlig rangeringssjekk på inntil 50 søkeord',

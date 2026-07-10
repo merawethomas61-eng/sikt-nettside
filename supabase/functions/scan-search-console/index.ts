@@ -86,17 +86,28 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ success: false, error: "method_not_allowed" }, 405);
 
   try {
-    // 1) Verifiser bruker fra JWT
+    // 1) Verifiser bruker fra JWT — ELLER service-gren for cron-en:
+    //    Authorization: Bearer <SERVICE_ROLE_KEY> + { site_id, user_id } i body.
+    //    (runOpportunities i api/cron-scan-competitors.js henter fersk GSC-data
+    //    ukentlig slik at motoren ikke er avhengig av at kunden trykker
+    //    «Hent søkeord» i portalen.)
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    const authClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await authClient.auth.getUser(token);
-    if (userErr || !user) return json({ success: false, error: "unauthorized" }, 401);
-
-    const { site_id } = await req.json().catch(() => ({} as { site_id?: string }));
+    const body = await req.json().catch(() => ({} as { site_id?: string; user_id?: string }));
+    const site_id = body.site_id;
     if (!site_id) return json({ success: false, error: "missing_site_id" }, 400);
+
+    let userId: string | null = null;
+    if (token === SERVICE_ROLE && typeof body.user_id === "string" && body.user_id) {
+      userId = body.user_id;
+    } else {
+      const authClient = createClient(SUPABASE_URL, ANON, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user }, error: userErr } = await authClient.auth.getUser(token);
+      if (userErr || !user) return json({ success: false, error: "unauthorized" }, 401);
+      userId = user.id;
+    }
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
@@ -106,7 +117,7 @@ Deno.serve(async (req) => {
       .select("id, user_id, domain, homepage_url")
       .eq("id", site_id)
       .maybeSingle();
-    if (siteErr || !site || site.user_id !== user.id) {
+    if (siteErr || !site || site.user_id !== userId) {
       return json({ success: false, error: "forbidden" }, 403);
     }
 
@@ -114,7 +125,7 @@ Deno.serve(async (req) => {
     const { data: cred } = await admin
       .from("api_credentials")
       .select("credentials, expires_at")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("service_name", "google_search_console")
       .maybeSingle();
     if (!cred?.credentials?.enc) return json({ success: false, error: "not_connected" }, 400);
@@ -137,7 +148,7 @@ Deno.serve(async (req) => {
       await admin
         .from("api_credentials")
         .update({ credentials: { enc }, expires_at: newExpiry, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("service_name", "google_search_console");
     }
 

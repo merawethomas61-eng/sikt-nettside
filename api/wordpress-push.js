@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_lib/require-auth.js';
 import { decrypt } from './_lib/crypto.js';
 import { withSentry, Sentry } from './_lib/sentry.js';
+import { applyLinkEditToHtml } from './_lib/link-engine.js';
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -485,6 +486,153 @@ async function pushSiteSchemaViaSiktConnector(adminUrl, authorization, jsonld) {
 }
 
 /**
+ * Hent og valider kundens aktive WordPress-tilkobling (full-modus).
+ * Kaster typede feil (statusCode) som handleren oversetter til HTTP-svar.
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabase
+ * @param {string} userId
+ */
+async function loadWordPressConnection(supabase, userId) {
+  const { data: hostRow, error: fetchErr } = await supabase
+    .from('client_hosts')
+    .select('id, connection_mode, admin_url, notes, access_token_encrypted')
+    .eq('user_id', userId)
+    .eq('platform', 'wordpress')
+    .maybeSingle();
+  if (fetchErr) {
+    Sentry.captureException(fetchErr);
+    const e = new Error('Kunne ikke hente WordPress-tilkobling.');
+    e.statusCode = 500;
+    throw e;
+  }
+  if (!hostRow || hostRow.connection_mode !== 'full' || !hostRow.access_token_encrypted
+      || typeof hostRow.admin_url !== 'string' || !hostRow.admin_url.trim()
+      || typeof hostRow.notes !== 'string' || !hostRow.notes.trim()) {
+    const e = new Error('WordPress er ikke aktivt tilkoblet.');
+    e.statusCode = 404;
+    throw e;
+  }
+  let appPassword;
+  try {
+    appPassword = decrypt(hostRow.access_token_encrypted);
+  } catch (decErr) {
+    Sentry.captureException(decErr);
+    const e = new Error('Serveren kan ikke lese lagret nøkkel (sjekk ENCRYPTION_KEY).');
+    e.statusCode = 500;
+    throw e;
+  }
+  return {
+    hostId: hostRow.id,
+    adminUrl: hostRow.admin_url.trim().replace(/\/$/, ''),
+    authorization: buildBasicAuthHeader(hostRow.notes.trim(), appPassword),
+  };
+}
+
+/**
+ * Kirurgisk innholds-endring (lenke-fiks/-innsetting): hent RÅ innhold,
+ * editer via callback (ren streng-kirurgi), push tilbake ORDRETT via
+ * connector-pluginens full-restore-sti, logg sikt_changes (rollback) +
+ * sikt_actions (kvittering). Nekte-regler:
+ *  - rå-innholdet MÅ ha Gutenberg-markører (<!-- wp:) — ellers ville
+ *    pluginen pakke innholdet om i nye blokker og ødelegge siden
+ *  - resultatet må være ≤ 20 000 tegn (pluginens grense)
+ * @param {object} opts
+ * @param {import('@supabase/supabase-js').SupabaseClient} opts.supabase
+ * @param {string} opts.userId
+ * @param {{hostId: string, adminUrl: string, authorization: string}} opts.conn
+ * @param {string} opts.pageUrl
+ * @param {(raw: string) => {html: string|null, changed: number, reason?: string}} opts.applyEdit
+ * @param {{actionType: string, title: string, explanation: string}} opts.receipt
+ * @returns {Promise<{changeId?: string, changed?: number, manual?: boolean, reason?: string}>}
+ */
+async function performContentSurgery({ supabase, userId, conn, pageUrl, applyEdit, receipt }) {
+  const found = await findWordPressPost(conn.adminUrl, conn.authorization, pageUrl);
+  if (!found) {
+    const e = new Error('Fant ikke siden på WordPress.');
+    e.statusCode = 404;
+    throw e;
+  }
+
+  const rawContent = await fetchWordPressPostContent(conn.adminUrl, conn.authorization, found.id, found.type);
+  if (!rawContent) {
+    const e = new Error('Kunne ikke lese sideinnholdet fra WordPress.');
+    e.statusCode = 502;
+    throw e;
+  }
+  if (!rawContent.includes('<!-- wp:')) {
+    // Classic editor / page-builder uten blokk-markører → ordrett-skriving er
+    // ikke trygg. Kunden får copy-paste-veiledning i stedet.
+    return { manual: true, reason: 'no_gutenberg' };
+  }
+
+  const edit = applyEdit(rawContent);
+  if (!edit.html) {
+    return { manual: true, reason: edit.reason || 'not_found' };
+  }
+  if (edit.html.length > FIELD_MAX_LENGTH.content) {
+    const e = new Error('Siden er for stor for automatisk endring (maks 20 000 tegn). Gjør endringen manuelt i WordPress.');
+    e.statusCode = 400;
+    throw e;
+  }
+
+  // Rollback-spor FØR vi skriver — samme rekkefølge som hovedflyten.
+  const { data: changeRow, error: insertErr } = await supabase
+    .from('sikt_changes')
+    .insert({
+      user_id: userId,
+      client_host_id: conn.hostId,
+      page_url: pageUrl,
+      field: 'content',
+      old_value: rawContent,
+      new_value: edit.html,
+      status: 'active',
+    })
+    .select('id')
+    .single();
+  if (insertErr || !changeRow?.id) {
+    console.error('[wordpress-push] Kunne ikke lagre sikt_changes (kirurgi):', insertErr?.message || insertErr);
+    Sentry.captureException(insertErr || new Error('sikt_changes insert feilet (kirurgi)'));
+    const e = new Error('Kunne ikke lagre endringen. Ingenting ble skrevet til WordPress.');
+    e.statusCode = 500;
+    throw e;
+  }
+
+  const wpResult = await pushViaSiktConnector(conn.adminUrl, conn.authorization, found.id, 'content', edit.html);
+  if (!wpResult.ok) {
+    const wpNote = wpResult.pluginNotInstalled
+      ? 'Sikt Connector-plugin er ikke installert eller aktivert.'
+      : `WP ${wpResult.status || 'unknown'}: ${wpResult.statusText || 'feil'}`;
+    const { error: updateErr } = await supabase
+      .from('sikt_changes')
+      .update({ status: 'failed', notes: wpNote })
+      .eq('id', changeRow.id)
+      .eq('user_id', userId);
+    if (updateErr) console.error('[wordpress-push] sikt_changes-oppdatering etter WP-feil:', updateErr.message);
+
+    const e = new Error(wpResult.pluginNotInstalled ? PLUGIN_NOT_INSTALLED_MESSAGE : 'WordPress avviste endringen.');
+    e.statusCode = wpResult.authFailed ? 401 : 502;
+    throw e;
+  }
+
+  // «Ukens kvittering»: best effort, skal aldri velte selve svaret.
+  try {
+    await supabase.from('sikt_actions').insert({
+      user_id: userId,
+      action_type: receipt.actionType,
+      category: 'fix',
+      title: receipt.title,
+      details: { explanation: receipt.explanation, field: 'content' },
+      page_url: pageUrl,
+      before_value: null,
+      after_value: null,
+    });
+  } catch (logErr) {
+    console.warn('[wordpress-push] Kunne ikke logge sikt_actions (kirurgi):', logErr?.message || logErr);
+  }
+
+  return { changeId: changeRow.id, changed: edit.changed };
+}
+
+/**
  * @param {unknown} yoastHeadJson
  * @param {'meta-description' | 'seo-title'} field
  */
@@ -707,6 +855,226 @@ export default withSentry(async function handler(req, res) {
         Sentry.captureException(err);
       }
       return res.status(status).json({ error: err?.message || 'Noe gikk galt under opprettelsen av utkastet.' });
+    }
+  }
+
+  // --- Lenke-motor: fjern/erstatt en ødelagt lenke (godkjennings-gatet fra portalen) ---
+  if (body.action === 'fix-link') {
+    const issueId = typeof body.issueId === 'string' ? body.issueId.trim() : '';
+    if (!/^[0-9a-f-]{36}$/i.test(issueId)) {
+      return res.status(400).json({ error: 'Gyldig issueId kreves.' });
+    }
+    const mode = body.mode === 'replace' ? 'replace' : 'unlink';
+    const replacementUrl = typeof body.replacementUrl === 'string' ? body.replacementUrl.trim() : '';
+    if (mode === 'replace') {
+      const replCheck = validatePageUrl(replacementUrl);
+      if (!replCheck.ok) {
+        return res.status(400).json({ error: 'replacementUrl må være en gyldig https-URL.' });
+      }
+    }
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      // Service-nøkkel omgår RLS — filteret på user_id er derfor obligatorisk.
+      const { data: issue, error: issueErr } = await supabase
+        .from('sikt_link_issues')
+        .select('id, page_url, target_url, anchor_text, state')
+        .eq('id', issueId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (issueErr) {
+        Sentry.captureException(issueErr);
+        return res.status(500).json({ error: 'Kunne ikke hente lenke-funnet.' });
+      }
+      if (!issue) return res.status(404).json({ error: 'Fant ikke lenke-funnet.' });
+      if (issue.state === 'fixed') {
+        return res.status(409).json({ error: 'Denne lenken er allerede fikset.' });
+      }
+
+      const conn = await loadWordPressConnection(supabase, user.id);
+      if (!pageUrlMatchesConnectedHost(issue.page_url, conn.adminUrl)) {
+        return res.status(400).json({ error: 'Siden hører ikke til den tilkoblede WordPress-siden.' });
+      }
+
+      const result = await performContentSurgery({
+        supabase,
+        userId: user.id,
+        conn,
+        pageUrl: issue.page_url,
+        applyEdit: (raw) => applyLinkEditToHtml(raw, {
+          mode,
+          targetUrl: issue.target_url,
+          replacementUrl,
+          baseUrl: issue.page_url,
+        }),
+        receipt: {
+          actionType: 'broken_link_fix',
+          title: mode === 'unlink' ? 'Ødelagt lenke fjernet' : 'Ødelagt lenke erstattet',
+          explanation: mode === 'unlink'
+            ? `Sikt fjernet en død lenke (${issue.target_url}) fra siden din — teksten står igjen urørt.`
+            : `Sikt byttet en død lenke (${issue.target_url}) til ${replacementUrl}.`,
+        },
+      });
+
+      if (result.manual) {
+        // Siden har endret seg / ikke Gutenberg — kunden må gjøre det manuelt.
+        return res.status(409).json({
+          manual: true,
+          reason: result.reason,
+          error: result.reason === 'no_gutenberg'
+            ? 'Siden bruker ikke blokk-redigering, så Sikt kan ikke endre den trygt automatisk. Fjern lenken manuelt i WordPress-redigereren.'
+            : 'Fant ikke lenken i sideinnholdet — siden kan ha endret seg siden skannet. Sjekk siden i WordPress.',
+        });
+      }
+
+      const { error: updErr } = await supabase
+        .from('sikt_link_issues')
+        .update({ state: 'fixed', change_id: result.changeId })
+        .eq('id', issue.id)
+        .eq('user_id', user.id);
+      if (updErr) {
+        console.error('[wordpress-push] Kunne ikke oppdatere sikt_link_issues:', updErr.message);
+        Sentry.captureException(updErr);
+      }
+
+      return res.status(200).json({ ok: true, changeId: result.changeId, changed: result.changed, mode });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) {
+        console.error('[wordpress-push] fix-link-feil:', err?.message || err);
+        Sentry.captureException(err);
+      }
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt under lenke-fiksen.' });
+    }
+  }
+
+  // --- Lenke-motor: sett inn et internt lenkeforslag (godkjennings-gatet) ---
+  if (body.action === 'insert-link') {
+    const suggestionId = typeof body.suggestionId === 'string' ? body.suggestionId.trim() : '';
+    if (!/^[0-9a-f-]{36}$/i.test(suggestionId)) {
+      return res.status(400).json({ error: 'Gyldig suggestionId kreves.' });
+    }
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const { data: suggestion, error: sugErr } = await supabase
+        .from('sikt_link_suggestions')
+        .select('id, source_url, target_url, anchor_text, status')
+        .eq('id', suggestionId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (sugErr) {
+        Sentry.captureException(sugErr);
+        return res.status(500).json({ error: 'Kunne ikke hente lenkeforslaget.' });
+      }
+      if (!suggestion) return res.status(404).json({ error: 'Fant ikke lenkeforslaget.' });
+      if (suggestion.status === 'applied') {
+        return res.status(409).json({ error: 'Denne lenken er allerede satt inn.' });
+      }
+
+      const conn = await loadWordPressConnection(supabase, user.id);
+      if (!pageUrlMatchesConnectedHost(suggestion.source_url, conn.adminUrl)) {
+        return res.status(400).json({ error: 'Siden hører ikke til den tilkoblede WordPress-siden.' });
+      }
+
+      const result = await performContentSurgery({
+        supabase,
+        userId: user.id,
+        conn,
+        pageUrl: suggestion.source_url,
+        applyEdit: (raw) => applyLinkEditToHtml(raw, {
+          mode: 'insert',
+          targetUrl: suggestion.target_url,
+          anchorText: suggestion.anchor_text,
+          baseUrl: suggestion.source_url,
+        }),
+        receipt: {
+          actionType: 'internal_link',
+          title: 'Intern lenke satt inn',
+          explanation: `Sikt lenket «${suggestion.anchor_text}» til ${suggestion.target_url} — interne lenker hjelper Google å forstå og rangere sidene dine.`,
+        },
+      });
+
+      if (result.manual) {
+        // Frasen finnes ikke i rå-innholdet (page-builder o.l.) → manuell fallback.
+        const { error: failErr } = await supabase
+          .from('sikt_link_suggestions')
+          .update({ status: 'failed' })
+          .eq('id', suggestion.id)
+          .eq('user_id', user.id);
+        if (failErr) console.warn('[wordpress-push] Kunne ikke merke forslag failed:', failErr.message);
+        return res.status(409).json({
+          manual: true,
+          reason: result.reason,
+          error: result.reason === 'no_gutenberg'
+            ? 'Siden bruker ikke blokk-redigering, så Sikt kan ikke endre den trygt automatisk. Sett inn lenken manuelt i WordPress-redigereren.'
+            : 'Fant ikke frasen i sideinnholdet (siden kan bruke en page-builder). Sett inn lenken manuelt.',
+        });
+      }
+
+      const { error: updErr } = await supabase
+        .from('sikt_link_suggestions')
+        .update({ status: 'applied', applied_at: new Date().toISOString(), change_id: result.changeId })
+        .eq('id', suggestion.id)
+        .eq('user_id', user.id);
+      if (updErr) {
+        console.error('[wordpress-push] Kunne ikke oppdatere sikt_link_suggestions:', updErr.message);
+        Sentry.captureException(updErr);
+      }
+
+      return res.status(200).json({ ok: true, changeId: result.changeId, changed: result.changed });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) {
+        console.error('[wordpress-push] insert-link-feil:', err?.message || err);
+        Sentry.captureException(err);
+      }
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt under lenke-innsettingen.' });
+    }
+  }
+
+  // --- Henvendelses-sporing: push lead-token + endepunkt til connector v1.3 ---
+  if (body.action === 'enable-lead-tracking') {
+    try {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const { data: clientRow, error: cliErr } = await supabase
+        .from('clients')
+        .select('lead_token')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cliErr || !clientRow?.lead_token) {
+        return res.status(500).json({ error: 'Fant ikke sporings-nøkkelen din. Prøv igjen.' });
+      }
+      const conn = await loadWordPressConnection(supabase, user.id);
+      const endpoint = `${SUPABASE_URL}/functions/v1/track-lead`;
+      const { response, data } = await wpRequest(
+        `${conn.adminUrl}/wp-json/sikt/v1/set-lead-config`,
+        conn.authorization,
+        'POST',
+        { token: clientRow.lead_token, endpoint },
+        { throwOnAuthErrors: false },
+      );
+      if (response.status === 404) {
+        const code = typeof data?.code === 'string' ? data.code : '';
+        if (code === 'rest_no_route' || code === 'rest_not_found') {
+          return res.status(400).json({
+            error: 'Oppdater Sikt Connector-pluginen til v1.3 først — last ned fra portalen og installer på nytt i WordPress.',
+            pluginOutdated: true,
+          });
+        }
+        return res.status(502).json({ error: 'WordPress avviste forespørselen.' });
+      }
+      if (response.status === 401) return res.status(401).json({ error: 'WordPress avviste innloggingen.' });
+      if (response.status === 403) return res.status(403).json({ error: 'WordPress-brukeren mangler administrator-rettigheter.' });
+      if (!(response.status === 200 && data?.ok === true)) {
+        return res.status(502).json({ error: 'WordPress kunne ikke lagre sporings-oppsettet.' });
+      }
+      return res.status(200).json({ ok: true, enabled: true });
+    } catch (err) {
+      const status = err?.statusCode || 500;
+      if (status >= 500) {
+        console.error('[wordpress-push] enable-lead-tracking-feil:', err?.message || err);
+        Sentry.captureException(err);
+      }
+      return res.status(status).json({ error: err?.message || 'Noe gikk galt under aktiveringen.' });
     }
   }
 
