@@ -8,7 +8,7 @@ import React from 'react';
 import {
   AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar,
-  RadialBarChart, RadialBar, Cell,
+  RadialBarChart, RadialBar, Cell, ReferenceDot,
 } from 'recharts';
 import { PORTAL, chartPalette, chartTooltipStyle, scoreColor, formatChartDate } from './portalTheme';
 
@@ -173,6 +173,88 @@ export const KeywordRankChart: React.FC<{ data: any[] }> = ({ data }) => (
     </AreaChart>
   </ResponsiveContainer>
 );
+
+// SiktEffectChart — «Sikt-effekten» (Hjem): antall søkeord i topp 10 på Google
+// per ukentlige måling, med markør-prikker i uker der Sikt publiserte artikler
+// eller gjorde fikser. Korrelasjon vises, aldri påstått årsak (ærlig copy i
+// kortet rundt). Palette sendes theme-resolvert inn — recharts kan ikke lese
+// CSS-variabler i SVG-attributter.
+export const SiktEffectChart: React.FC<{
+  data: { date: string; top10: number; events: string[] }[];
+  palette: { border: string; muted: string; success: string; ink: string; accent: string; card: string };
+}> = ({ data, palette }) => {
+  const EffectTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const p = payload[0].payload as { date: string; top10: number; events: string[] };
+    return (
+      <div style={{ ...chartTooltipStyle, background: palette.card, border: `1px solid ${palette.border}`, color: palette.ink }}>
+        <div style={{ fontWeight: 600 }}>{formatChartDate(p.date)}</div>
+        <div>{p.top10} søkeord i topp 10</div>
+        {p.events.slice(0, 4).map((e, i) => (
+          <div key={i} style={{ color: palette.muted, marginTop: 2 }}>· {e}</div>
+        ))}
+        {p.events.length > 4 && <div style={{ color: palette.muted, marginTop: 2 }}>+{p.events.length - 4} til</div>}
+      </div>
+    );
+  };
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+        <defs>
+          <linearGradient id="sikt-effect-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={palette.success} stopOpacity={0.16} />
+            <stop offset="100%" stopColor={palette.success} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="2 4" vertical={false} stroke={palette.border} />
+        <XAxis
+          dataKey="date"
+          tickFormatter={(d: string) => formatChartDate(d)}
+          tick={{ fontSize: 10, fill: palette.muted }}
+          axisLine={false}
+          tickLine={false}
+          interval="preserveStartEnd"
+          minTickGap={28}
+          height={18}
+        />
+        <YAxis
+          allowDecimals={false}
+          domain={[0, 'dataMax + 1']}
+          tick={{ fontSize: 11, fill: palette.muted }}
+          axisLine={false}
+          tickLine={false}
+          width={28}
+        />
+        <RechartsTooltip
+          content={<EffectTooltip />}
+          cursor={{ stroke: palette.muted, strokeWidth: 1, strokeDasharray: '3 3' }}
+        />
+        <Area
+          type="monotone"
+          dataKey="top10"
+          stroke={palette.success}
+          strokeWidth={2}
+          fill="url(#sikt-effect-fill)"
+          dot={false}
+          activeDot={{ r: 4, strokeWidth: 0 }}
+          isAnimationActive={false}
+        />
+        {data.filter((d) => d.events.length > 0).map((d) => (
+          <ReferenceDot
+            key={d.date}
+            x={d.date}
+            y={d.top10}
+            r={4.5}
+            fill={palette.accent}
+            stroke={palette.card}
+            strokeWidth={2}
+            isFront
+          />
+        ))}
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
 
 // PositionBucketsChart — fordeling av søkeord per posisjonsbøtte.
 export const PositionBucketsChart: React.FC<{ data: { name: string; value: number; fill: string }[] }> = ({ data }) => (

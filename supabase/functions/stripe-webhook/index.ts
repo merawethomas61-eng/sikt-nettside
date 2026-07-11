@@ -71,6 +71,10 @@ const PRICE_TO_PLAN: Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'> = Object.f
       [Deno.env.get('STRIPE_PRICE_BASIC'), 'BASIC'],
       [Deno.env.get('STRIPE_PRICE_STANDARD'), 'STANDARD'],
       [Deno.env.get('STRIPE_PRICE_PREMIUM'), 'PREMIUM'],
+      // Årlig betaling (12 for 10) — samme plan/gating, bare annet intervall.
+      [Deno.env.get('STRIPE_PRICE_BASIC_YEARLY'), 'BASIC'],
+      [Deno.env.get('STRIPE_PRICE_STANDARD_YEARLY'), 'STANDARD'],
+      [Deno.env.get('STRIPE_PRICE_PREMIUM_YEARLY'), 'PREMIUM'],
     ] as Array<[string | undefined, 'BASIC' | 'STANDARD' | 'PREMIUM']>
   ).filter(([id]) => !!id),
 ) as Record<string, 'BASIC' | 'STANDARD' | 'PREMIUM'>;
@@ -100,6 +104,10 @@ const AMOUNT_TO_PLAN: Record<number, 'BASIC' | 'STANDARD' | 'PREMIUM'> = {
   349300: 'PREMIUM',  // mnd 2 (70 %)
   424150: 'PREMIUM',  // mnd 3 (85 %)
   499000: 'PREMIUM',  // full pris
+  // — Årlig betaling (12 for 10, ingen introrabatt): 10 × månedspris.
+  790000: 'BASIC',    // 7 900 kr/år
+  1690000: 'STANDARD', // 16 900 kr/år
+  4990000: 'PREMIUM', // 49 900 kr/år
 };
 
 const PLAN_TO_PACKAGE_NAME: Record<'BASIC' | 'STANDARD' | 'PREMIUM', string> = {

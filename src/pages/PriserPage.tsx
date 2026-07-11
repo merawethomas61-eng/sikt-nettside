@@ -200,7 +200,7 @@ export default function PriserPage() {
           <FeatureSplit
             eyebrow={<Badge icon={<ShieldCheck size={12} />}>Null binding</Badge>}
             title={<>Du bestemmer. <span className="text-violet-600">Alltid.</span></>}
-            body="Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du betaler per måned og kan si opp, oppgradere eller nedgradere når du vil."
+            body="Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du kan si opp, oppgradere eller nedgradere når du vil."
             points={[
               'Si opp når som helst — du betaler kun for inneværende måned',
               'Bytt plan fritt, endringen gjelder fra neste faktura',

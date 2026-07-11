@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HelpCircle, Check } from 'lucide-react';
 import { RevealOnScroll } from './RevealOnScroll';
+import { hasYearlyLinks } from './stripeLinks';
 
 // Pris-seksjon i redaksjonell handbook-stil. Rekkefølgen er bevisst HØY→LAV
 // (Premium → Standard → Basic): den første prisen øyet treffer fungerer som
@@ -14,14 +15,20 @@ import { RevealOnScroll } from './RevealOnScroll';
 const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => {
   // Sporer hvilken feature-bullet som har detaljer åpne. Format: "kortIndex-featureIndex" eller null.
   const [openDetail, setOpenDetail] = useState<string | null>(null);
+  // Årlig betaling (12 for 10). Toggelen vises KUN når alle tre årslenkene er
+  // satt i env — ellers finnes bare månedlig, og ingen løfter gis som ikke holdes.
+  const yearlyAvailable = hasYearlyLinks();
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
+  const yearlyActive = yearlyAvailable && billing === 'yearly';
 
   type PlanFeature = { text: string; detail?: string };
-  type Plan = { title: string; price: string; tagline: string; who: string; desc: string; features: PlanFeature[]; highlighted?: boolean };
+  type Plan = { title: string; price: string; yearlyPrice: string; tagline: string; who: string; desc: string; features: PlanFeature[]; highlighted?: boolean };
 
   const plans: Plan[] = [
     {
       title: "PREMIUM",
       price: "4 990",
+      yearlyPrice: "49 900",
       tagline: "Når én ny kunde er verdt titusener.",
       who: "For advokater, tannleger, klinikker og B2B.",
       desc: "Bygd for bedrifter der hver kunde teller mest — advokater, tannleger, klinikker, håndverkere og B2B. Full synlighet i både Google og AI-søk, så du fanger kundene konkurrentene dine går glipp av. Én ekstra kunde i måneden betaler hele abonnementet.",
@@ -40,6 +47,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "STANDARD",
       price: "1 690",
+      yearlyPrice: "16 900",
       tagline: "Flere kunder — uten at du løfter en finger.",
       who: "Vi gjør jobben kontinuerlig — du får synligheten.",
       highlighted: true,
@@ -59,6 +67,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     {
       title: "BASIC",
       price: "790",
+      yearlyPrice: "7 900",
       tagline: "Vi fikser det viktigste — så viser vi deg resten.",
       who: "Lavterskel start — perfekt for å komme i gang.",
       desc: "Koble til siden din, så fikser Sikt de tre viktigste tingene automatisk i oppstart — du ser det skje. Deretter finner vi hva mer som stopper deg på Google og skriver ferdige løsninger du limer inn selv. Ikke tilkoblet? Du får alt som ferdig tekst.",
@@ -128,7 +137,7 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
     return (
       <>
         <button
-          onClick={() => onSelectPlan(plan.title)}
+          onClick={() => onSelectPlan(yearlyActive ? `${plan.title}_YEARLY` : plan.title)}
           className={
             plan.highlighted
               ? inkBtn
@@ -137,13 +146,15 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
         >
           Velg {plan.title}
         </button>
-        {/* Trust-mikrocopy rett ved kjøps-CTA — demper friksjon i kjøpsøyeblikket. */}
+        {/* Trust-mikrocopy rett ved kjøps-CTA — demper friksjon i kjøpsøyeblikket.
+            Ærlig per intervall: årlig forskuddsbetales, så «si opp når som helst»
+            byttes med fornyelses-fakta i stedet for å love noe annet. */}
         <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs font-semibold text-[#5C574C]">
           <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#15795A]" />14 dagers angrerett</span>
           <span className="text-[#8A8578]" aria-hidden>·</span>
           <span>Sikker betaling via Stripe</span>
           <span className="text-[#8A8578]" aria-hidden>·</span>
-          <span>Si opp når som helst</span>
+          <span>{yearlyActive ? 'Fornyes årlig — du kan skru av fornyelsen når som helst' : 'Si opp når som helst'}</span>
         </p>
       </>
     );
@@ -164,9 +175,14 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
           )}
         </div>
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight">{plan.price},-</span>
-          <span className="text-[#5C574C] font-medium text-sm sm:text-base">/mnd</span>
+          <span className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight">{yearlyActive ? plan.yearlyPrice : plan.price},-</span>
+          <span className="text-[#5C574C] font-medium text-sm sm:text-base">{yearlyActive ? '/år' : '/mnd'}</span>
         </div>
+        {yearlyActive && (
+          <p className="mt-1.5 text-xs font-bold text-[#15795A]">
+            Du betaler for 10 måneder og får 12 — 2 måneder gratis mot {plan.price} kr/mnd.
+          </p>
+        )}
         <p className="mt-4 text-[15px] sm:text-base font-bold text-[#1A1A1A] leading-snug">{plan.tagline}</p>
         <p className="mt-2 text-sm text-[#5C574C] leading-relaxed">{plan.who}</p>
         <div className="mt-6">{renderCta(plan)}</div>
@@ -187,8 +203,29 @@ const Pricing = ({ onSelectPlan }: { onSelectPlan: (plan: string) => void }) => 
             <p className="text-base sm:text-lg md:text-xl text-[#5C574C] max-w-2xl mx-auto px-2">Ingen skjulte kostnader. Ingen bindingstid. Trykk på <HelpCircle size={14} className="inline text-[#5C574C] -mt-0.5" /> for å se detaljer.</p>
             <p className="mt-4 inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1A1A1A]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#15795A]" />
-              Rabattert de 3 første månedene · 50 / 30 / 15 %
+              {yearlyActive
+                ? 'Årlig betaling: 2 måneder gratis (12 for 10)'
+                : 'Rabattert de 3 første månedene · 50 / 30 / 15 %'}
             </p>
+            {/* Månedlig/Årlig-toggle — rendres kun når årslenkene finnes i env,
+                så knappen aldri kan peke på en død lenke. */}
+            {yearlyAvailable && (
+              <div className="mt-5 inline-flex items-center rounded-full border border-[#E9E4DA] bg-white p-1">
+                {([['monthly', 'Månedlig'], ['yearly', 'Årlig — 2 mnd gratis']] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setBilling(key)}
+                    aria-pressed={billing === key}
+                    className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-colors ${
+                      billing === key ? 'bg-[#1A1A1A] text-white' : 'text-[#5C574C] [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#1A1A1A]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </RevealOnScroll>
 

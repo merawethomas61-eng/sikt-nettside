@@ -1,4 +1,5 @@
 import { GoogleSnippetPreview } from './src/shared/GoogleSnippetPreview';
+import { estimateKeywordDifficulty, deriveKeywordIntent } from './src/shared/keywordDifficulty';
 import { RevealOnScroll } from './src/shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from './src/shared/Buttons';
 import { Pricing } from './src/shared/Pricing';
@@ -1935,8 +1936,10 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
           change: 0,
           volume: resultType,
           competition: totalResults,
-          kd: Math.min(100, Math.max(10, Math.round((totalResults / 1000000) * 10))),
-          intent: ['Kjøp', 'Info', 'Lokal'][Math.floor(Math.random() * 3)],
+          // Delt estimator (src/shared/keywordDifficulty.ts) — gammel formel ga
+          // alltid «10 av 100», og intensjonen var TILFELDIG valgt (falsk data).
+          kd: estimateKeywordDifficulty(data),
+          intent: deriveKeywordIntent(keyword, data),
           history: [{ date: todayDate, rank: position }],
           competitors: data.organic_results.slice(0, 5).map((r: any) => ({
             position: r.position, title: r.title, url: r.link, snippet: r.snippet,

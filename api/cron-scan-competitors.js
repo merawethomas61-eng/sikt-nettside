@@ -403,7 +403,7 @@ async function runAutoFix(req, res) {
 
         const { data: client } = await supabase
             .from('clients')
-            .select('package_name, company_name')
+            .select('package_name, company_name, auto_approve_fixes')
             .eq('user_id', host.user_id)
             .maybeSingle();
         if (!client || !AF_PAID_PLANS.has(client.package_name)) continue;
@@ -494,6 +494,18 @@ async function runAutoFix(req, res) {
 
             const suggested = await afGenerateH1({ pageTitle: page.title, pageUrl: page.link, companyName });
             if (!suggested) { summary.skipped += 1; continue; }
+
+            // «La Sikt fikse selv» (opt-in i Innstillinger): H1 går rett til
+            // push i stedet for godkjenningskøen. Logges i sikt_changes som
+            // vanlig — angre-knappen i Endringsloggen gjelder også disse.
+            if (client.auto_approve_fixes === true) {
+                if (dryRun) { summary.autoFixed += 1; queueCount += 1; continue; }
+                const result = await afPushFix({ userId: host.user_id, pageUrl: page.link, field: 'h1', newValue: suggested });
+                if (result.ok) { summary.autoFixed += 1; queueCount += 1; }
+                else { summary.errors += 1; console.warn('[autofix] h1-push feilet:', page.link, result.error); }
+                continue;
+            }
+
             if (dryRun) { summary.queued += 1; queueCount += 1; continue; }
             const { error: qErr } = await supabase.from('sikt_fix_queue').insert({
                 user_id: host.user_id,

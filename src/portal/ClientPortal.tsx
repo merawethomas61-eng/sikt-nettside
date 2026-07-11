@@ -37,6 +37,7 @@ import { PORTAL, chartPalette, chartTooltipStyle, formatChartDate, scoreColor } 
 import { RevealOnScroll } from '../shared/RevealOnScroll';
 import { PrimaryButton, SecondaryButton } from '../shared/Buttons';
 import { buildStripeCheckoutUrl } from '../shared/stripeLinks';
+import { estimateKeywordDifficulty, deriveKeywordIntent } from '../shared/keywordDifficulty';
 import { companyInfo } from '../shared/companyInfo';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -52,6 +53,7 @@ const RadialScore = (props: { value: number | null; size?: number; theme: Portal
 const LazyScoreHistoryChart = React.lazy(() => import('../PortalCharts').then(m => ({ default: m.ScoreHistoryChart })));
 const LazyKeywordRankChart = React.lazy(() => import('../PortalCharts').then(m => ({ default: m.KeywordRankChart })));
 const LazyPositionBucketsChart = React.lazy(() => import('../PortalCharts').then(m => ({ default: m.PositionBucketsChart })));
+const LazySiktEffectChart = React.lazy(() => import('../PortalCharts').then(m => ({ default: m.SiktEffectChart })));
 
 // DashboardHome bruker recharts → lazy-last den så charts-chunken holdes ute av markedssidene.
 const DashboardHome = React.lazy(() => import('../../DashboardHome').then(m => ({ default: m.DashboardHome })));
@@ -513,6 +515,204 @@ function kpTimeAgo(dateStr: string): string {
 }
 
 // ─── GEO / AI-SYNLIGHET PAGE ────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════
+   SiktLedger — «Siden du startet med Sikt»: kumulativt regnskap over alt
+   Sikt har levert. Rendres i Endringslogg (full), på Hjem (kompakt) og i
+   oppsigelsesflyten. Viser kun tall > 0 — aldri oppblåste nuller.
+   ═══════════════════════════════════════════════════════════ */
+type LedgerData = {
+  fixes: number; findings: number; articles: number; links: number;
+  leads: number; keywordsImproved: number; weeks: number;
+};
+
+const SiktLedger: React.FC<{ data: LedgerData | null; compact?: boolean }> = ({ data, compact }) => {
+  if (!data) return null;
+  const items = [
+    { value: data.fixes, label: 'ting fikset' },
+    { value: data.keywordsImproved, label: data.keywordsImproved === 1 ? 'søkeord forbedret' : 'søkeord forbedret' },
+    { value: data.articles, label: data.articles === 1 ? 'artikkel skrevet' : 'artikler skrevet' },
+    { value: data.links, label: 'lenker fikset/bygget' },
+    { value: data.leads, label: 'henvendelser sporet' },
+    { value: data.findings, label: 'funn oppdaget' },
+  ].filter((it) => it.value > 0);
+
+  if (compact) {
+    if (items.length === 0) return null;
+    return (
+      <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] px-5 py-3.5 font-['Geist','DM_Sans',sans-serif]">
+        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+          <span className="font-semibold uppercase tracking-[0.08em] text-[11px]" style={{ color: 'var(--muted)' }}>Siden du startet</span>
+          {' · '}
+          {items.slice(0, 4).map((it, i) => (
+            <span key={it.label}>
+              {i > 0 && ' · '}
+              <span className="font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{it.value.toLocaleString('nb-NO')}</span> {it.label}
+            </span>
+          ))}
+          {' — '}{data.weeks} {data.weeks === 1 ? 'uke' : 'uker'} med Sikt
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[16px] p-5 sm:p-6" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>Siden du startet med Sikt</p>
+        <p className="text-[12px] tabular-nums" style={{ color: 'var(--faint)' }}>{data.weeks} {data.weeks === 1 ? 'uke' : 'uker'}</p>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm mt-3 leading-relaxed" style={{ color: 'var(--muted)' }}>
+          Regnskapet fylles etter hvert som Sikt jobber — de første tallene kommer etter første ukesskann.
+        </p>
+      ) : (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {items.map((it) => (
+            <div key={it.label} className="rounded-[12px] p-3.5" style={{ background: 'var(--subtle)', border: '1px solid var(--hair)' }}>
+              <p className="text-[26px] font-semibold leading-none tabular-nums" style={{ color: 'var(--ink)' }}>{it.value.toLocaleString('nb-NO')}</p>
+              <p className="text-[11px] font-medium mt-1.5 leading-snug" style={{ color: 'var(--muted)' }}>{it.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   GeoBreakdown — hva AI-ene faktisk svarer (Premium).
+   Rader fra geo_checks siste ~35 dager: siste status per spørsmål ×
+   provider + uke-trend. Ærlig: «ikke nevnt» vises like tydelig som «nevnt».
+   ═══════════════════════════════════════════════════════════ */
+const GEO_PROVIDERS = ['chatgpt', 'gemini', 'perplexity'] as const;
+const GEO_PROVIDER_LABEL: Record<string, string> = { chatgpt: 'ChatGPT', gemini: 'Gemini', perplexity: 'Perplexity' };
+
+const GeoBreakdown: React.FC<{ rows: any[]; pendingFaqCount: number }> = ({ rows, pendingFaqCount }) => {
+  const [openQuestion, setOpenQuestion] = useState<string | null>(null);
+
+  const { questions, runShares } = useMemo(() => {
+    // Siste rad per spørsmål × provider + andel nevnt per kjøringsdag (trend).
+    const latest = new Map<string, any>();
+    const runsByDay = new Map<string, { total: number; mentioned: number }>();
+    for (const r of rows) {
+      if (!r?.question || !r?.provider) continue;
+      const day = String(r.checked_at).slice(0, 10);
+      const run = runsByDay.get(day) || { total: 0, mentioned: 0 };
+      run.total += 1;
+      if (r.mentioned) run.mentioned += 1;
+      runsByDay.set(day, run);
+      const key = `${r.question}::${r.provider}`;
+      const prev = latest.get(key);
+      if (!prev || String(prev.checked_at) < String(r.checked_at)) latest.set(key, r);
+    }
+    const byQuestion = new Map<string, { question: string; providers: Record<string, any>; mentionedCount: number }>();
+    for (const r of latest.values()) {
+      const entry = byQuestion.get(r.question) || { question: r.question, providers: {}, mentionedCount: 0 };
+      entry.providers[r.provider] = r;
+      if (r.mentioned) entry.mentionedCount += 1;
+      byQuestion.set(r.question, entry);
+    }
+    const questions = [...byQuestion.values()].sort(
+      (a, b) => b.mentionedCount - a.mentionedCount || a.question.localeCompare(b.question, 'nb'),
+    );
+    const runShares = [...runsByDay.entries()]
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([, v]) => (v.total ? Math.round((v.mentioned / v.total) * 100) : 0));
+    return { questions, runShares };
+  }, [rows]);
+
+  if (questions.length === 0) return null;
+  const mentionedQuestions = questions.filter((q) => q.mentionedCount > 0).length;
+
+  return (
+    <div className="rounded-[16px] p-5 sm:p-6" style={{ background: 'var(--surface)', border: '1px solid var(--hair)' }}>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>Hva AI-ene faktisk svarer</p>
+          <p className="text-[13px] mt-1.5 leading-relaxed max-w-xl" style={{ color: 'var(--muted)' }}>
+            Vi stiller {questions.length} kundespørsmål til ChatGPT, Gemini og Perplexity hver uke.{' '}
+            <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
+              {mentionedQuestions === 0
+                ? 'Ingen av dem nevner deg ennå — det er dette vi jobber med.'
+                : `${mentionedQuestions} av ${questions.length} nevner deg i minst én AI.`}
+            </span>
+          </p>
+        </div>
+        {runShares.length >= 2 && (
+          <div className="w-[120px] shrink-0" aria-hidden>
+            <Sparkline data={runShares} color="#15795A" height={28} />
+            <p className="text-[10px] mt-1 text-right" style={{ color: 'var(--faint)' }}>Andel nevnt, uke for uke</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4" style={{ borderTop: '1px solid var(--hair)' }}>
+        {questions.map((q) => {
+          const isOpen = openQuestion === q.question;
+          const excerpts = GEO_PROVIDERS
+            .map((p) => q.providers[p])
+            .filter((r: any) => r?.answer_excerpt);
+          return (
+            <div key={q.question} style={{ borderBottom: '1px solid var(--hair)' }}>
+              <button
+                type="button"
+                onClick={() => setOpenQuestion(isOpen ? null : q.question)}
+                className="w-full flex items-center gap-3 py-3 text-left"
+              >
+                <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{q.question}</p>
+                <span className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  {GEO_PROVIDERS.map((p) => {
+                    const r = q.providers[p];
+                    if (!r) return null;
+                    return (
+                      <span
+                        key={p}
+                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                        style={{
+                          background: r.mentioned ? 'rgba(21,121,90,0.10)' : 'var(--subtle)',
+                          color: r.mentioned ? 'var(--green)' : 'var(--faint)',
+                        }}
+                      >
+                        {r.mentioned ? '✓' : '—'} {GEO_PROVIDER_LABEL[p]}
+                      </span>
+                    );
+                  })}
+                  <ChevronDown
+                    size={13}
+                    style={{ color: 'var(--faint)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease-out' }}
+                  />
+                </span>
+              </button>
+              {isOpen && (
+                <div className="pb-3.5 space-y-2.5">
+                  {excerpts.length === 0 ? (
+                    <p className="text-[12px]" style={{ color: 'var(--muted)' }}>Ingen svar-utdrag lagret for dette spørsmålet ennå.</p>
+                  ) : (
+                    excerpts.map((r: any) => (
+                      <div key={r.provider} className="rounded-[10px] p-3" style={{ background: 'var(--subtle)' }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-1" style={{ color: r.mentioned ? 'var(--green)' : 'var(--muted)' }}>
+                          {GEO_PROVIDER_LABEL[r.provider] || r.provider} · {r.mentioned ? 'nevner deg' : 'nevner deg ikke'}
+                        </p>
+                        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>«{r.answer_excerpt}»</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {pendingFaqCount > 0 && (
+        <p className="text-[12px] mt-3.5" style={{ color: 'var(--muted)' }}>
+          For spørsmål uten napp lager Sikt FAQ-utkast — {pendingFaqCount} venter på godkjenning øverst på siden.
+        </p>
+      )}
+    </div>
+  );
+};
+
 const GeoPage: React.FC<{ onNotify: () => void; hasAutoTracking?: boolean }> = ({ onNotify, hasAutoTracking }) => {
   // Tema-bevisst: CSS-variablene fra .sikt-portal (før: statiske PORTAL-hexer
   // → siden forble lys i mørk modus). `btn` = mørk knapp-flate i begge temaer.
@@ -628,10 +828,10 @@ const GeoPage: React.FC<{ onNotify: () => void; hasAutoTracking?: boolean }> = (
           {([
             {
               num: '01',
-              title: 'Daglig sjekk av 50+ kunde-spørsmål',
-              badge: 'Under utvikling',
+              title: 'Ukentlig sjekk av kunde-spørsmål',
+              badge: 'Live for Premium',
               green: true,
-              desc: 'Vi spør ChatGPT, Perplexity og Gemini hver natt om de samme spørsmålene en kunde ville stilt. Du får varsel hvis du dukker opp — eller blir borte.',
+              desc: 'Vi spør ChatGPT, Perplexity og Gemini hver uke om spørsmålene en kunde ville stilt. Premium-kunder ser svarene øverst på denne siden — daglig sjekk er under utvikling.',
             },
             {
               num: '02',
@@ -916,6 +1116,23 @@ const ReviewsPage: React.FC<{
 
   const reviewLink = settings?.write_review_url ?? null;
   const isConnected = !!reviewLink;
+  // QR-kort til disken/kvitteringen — genereres client-side (lazy import av qrcode)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrBusy, setQrBusy] = useState(false);
+  const makeQrCard = async () => {
+    if (!reviewLink) { toastWarning('Koble til Google-lenken din først.'); return; }
+    if (qrBusy) return;
+    setQrBusy(true);
+    try {
+      const QR = await import('qrcode');
+      const url = await QR.toDataURL(reviewLink, { width: 512, margin: 1, color: { dark: '#1A1A1A', light: '#FFFFFF' } });
+      setQrDataUrl(url);
+    } catch {
+      toastError('Kunne ikke lage QR-koden. Prøv igjen.');
+    } finally {
+      setQrBusy(false);
+    }
+  };
   const hasPlaceId = !!settings?.google_place_id;
 
   // AI-svarutkast fra den månedlige GBP-sjekken (job=gbp) — lå tidligere kun
@@ -1366,11 +1583,64 @@ const ReviewsPage: React.FC<{
           >
             <Copy size={13} /> Kopier delbar lenke
           </button>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: C.muted }}>
-            <QrCode size={14} /> Eller del som QR-kode på kvittering / i butikk
-          </span>
+          <button
+            type="button" onClick={makeQrCard} disabled={qrBusy}
+            style={{ background: C.subtle, border: `1px solid ${C.border}`, borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 600, color: C.sub, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, transition: `color 150ms ${EASE}`, opacity: qrBusy ? 0.6 : 1 }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = C.ink)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = C.sub)}
+          >
+            <QrCode size={13} /> {qrBusy ? 'Lager…' : 'Lag QR-kort til disken'}
+          </button>
         </div>
       </div>
+
+      {/* ── QR-kort-overlay: print-vennlig kort til kvittering/disk ── */}
+      {qrDataUrl && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto" style={{ background: 'var(--subtle)' }}>
+          <style>{`
+            @media print {
+              body * { visibility: hidden; }
+              .sikt-qr-print, .sikt-qr-print * { visibility: visible; }
+              .sikt-qr-print { position: absolute !important; inset: 0 !important; }
+              .sikt-qr-noprint { display: none !important; }
+              .sikt-qr-paper { border: none !important; box-shadow: none !important; }
+            }
+          `}</style>
+          <div className="sikt-qr-print mx-auto max-w-[420px] px-4 py-8">
+            <div className="sikt-qr-noprint" style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 18 }}>
+              <button
+                type="button" onClick={() => setQrDataUrl(null)}
+                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: C.muted, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <ChevronLeft size={13} /> Tilbake
+              </button>
+              <button
+                type="button" onClick={() => window.print()}
+                style={{ background: C.btn, color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Skriv ut
+              </button>
+            </div>
+            {/* Kortet: bevisst hvitt i begge temaer — det skal PRINTES. */}
+            <div className="sikt-qr-paper" style={{ background: '#FFFFFF', border: '1px solid #E9E4DA', borderRadius: 18, padding: '36px 32px', textAlign: 'center', boxShadow: '0 18px 40px -20px rgba(26,26,26,0.15)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8578' }}>{businessName}</p>
+              <h2 style={{ margin: '14px 0 6px', fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: '#1A1A1A', fontFamily: SERIF }}>
+                Fornøyd med jobben?
+              </h2>
+              <p style={{ margin: '0 0 22px', fontSize: 14, lineHeight: 1.55, color: '#5C574C' }}>
+                Fortell det på Google — det betyr mye for oss.
+              </p>
+              <img src={qrDataUrl} alt="QR-kode til Google-anmeldelse" style={{ width: 220, height: 220, margin: '0 auto', display: 'block' }} />
+              <p style={{ margin: '20px 0 0', fontSize: 12.5, color: '#8A8578' }}>
+                Skann med mobilkameraet for å gi oss en vurdering
+              </p>
+            </div>
+            <p className="sikt-qr-noprint" style={{ marginTop: 14, fontSize: 12, lineHeight: 1.6, color: 'var(--muted)', textAlign: 'center' }}>
+              Skriv ut og legg ved kassen, på kvitteringen eller i bilen — QR-koden går rett til anmeldelses-skjemaet på Google.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── AI-svarutkast på ubesvarte anmeldelser (fra den månedlige GBP-sjekken) ── */}
       {replyDrafts.length > 0 && (
@@ -1608,6 +1878,7 @@ const KonkurrenterPage: React.FC<{
 
   const { competitors, opportunities, loading, error, refetch } = useCompetitorData(user?.id ?? null);
   const { changes, unreadCount, markAllRead }                    = useCompetitorChanges(user?.id, 20);
+  const [showAllChanges, setShowAllChanges] = useState(false);
 
   const [showAddModal,      setShowAddModal]      = useState(false);
   const [addDomain,         setAddDomain]         = useState('');
@@ -2097,7 +2368,7 @@ const KonkurrenterPage: React.FC<{
           )}
 
           {/* OPPORTUNITIES */}
-          <div>
+          <div id="konkurrent-muligheter" style={{ scrollMarginTop: 80 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
               <SectionTitle>Søkeord du kan ta</SectionTitle>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -2229,9 +2500,12 @@ const KonkurrenterPage: React.FC<{
           {changes.length === 0 ? (
             <p style={{ fontSize: 13, color: C.muted, padding: '8px 0', margin: 0 }}>Ingen endringer enda. Varsler dukker opp her etter neste skann.</p>
           ) : (
+            <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0 24px' }}>
-              {changes.slice(0, 8).map((change) => {
+              {changes.slice(0, showAllChanges ? changes.length : 8).map((change) => {
                 const cfg = changeConfig[change.change_type] || { symbol: '●', positive: true };
+                // Konkurrenten klatrer = trussel → pek rett på motangrepet.
+                const isThreat = change.change_type === 'new_keyword' || change.change_type === 'rank_improved';
                 return (
                   <div
                     key={change.id}
@@ -2245,12 +2519,38 @@ const KonkurrenterPage: React.FC<{
                       {change.detail && (
                         <p style={{ fontSize: 11, color: C.muted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{change.detail}</p>
                       )}
-                      <p style={{ fontSize: 10, fontWeight: 500, color: C.faint, margin: '4px 0 0' }}>{kpTimeAgo(change.created_at)}</p>
+                      <p style={{ fontSize: 10, fontWeight: 500, color: C.faint, margin: '4px 0 0' }}>
+                        {kpTimeAgo(change.created_at)}
+                        {isThreat && (
+                          <>
+                            {' · '}
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('konkurrent-muligheter')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 10, fontWeight: 600, color: C.green }}
+                            >
+                              Se motangrep ↑
+                            </button>
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
                 );
               })}
             </div>
+            {changes.length > 8 && (
+              <button
+                type="button"
+                onClick={() => setShowAllChanges(v => !v)}
+                style={{ marginTop: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: C.sub, transition: `color 120ms ${EASE}` }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.ink)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.sub)}
+              >
+                {showAllChanges ? 'Vis færre' : `Vis alle (${changes.length})`}
+              </button>
+            )}
+            </>
           )}
         </div>
 
@@ -3364,14 +3664,33 @@ function ReportOverlay({ report, onClose }: { report: any; onClose: () => void }
           >
             <ChevronLeft size={13} /> Tilbake
           </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-4 py-2 text-white transition-transform active:scale-[0.97]"
-            style={{ background: 'var(--btn-bg)' }}
-          >
-            Last ned PDF
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Videresend: rapporten skal ut av huset — til partner, bank eller
+                regnskapsfører. Kort sammendrag i e-posten, hele ligger i portalen. */}
+            <a
+              href={(() => {
+                const lines: string[] = [];
+                if (intro?.body) lines.push(String(intro.body), '');
+                for (const s of sections.slice(0, 6)) {
+                  lines.push(`• ${s.title}${s.body ? `: ${String(s.body).slice(0, 140)}` : ''}`);
+                }
+                lines.push('', 'Hele rapporten ligger i Sikt-portalen.');
+                return `mailto:?subject=${encodeURIComponent(report.title || 'Sikt-rapport')}&body=${encodeURIComponent(lines.join('\n').slice(0, 1800))}`;
+              })()}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-3.5 py-2 transition-transform active:scale-[0.97]"
+              style={{ color: 'var(--ink)', border: '1px solid var(--hair)', background: 'var(--surface)' }}
+            >
+              <Send size={12} /> Videresend
+            </a>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-[10px] px-4 py-2 text-white transition-transform active:scale-[0.97]"
+              style={{ background: 'var(--btn-bg)' }}
+            >
+              Last ned PDF
+            </button>
+          </div>
         </div>
 
         {/* «Papiret» — samme redaksjonelle dokument-uttrykk som e-postene */}
@@ -3955,6 +4274,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const [switchingPlan, setSwitchingPlan] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({
     weeklyReport: true, criticalAlerts: true, rankChanges: false,
+    // Henvendelses-varsling (runde 5): instant skjema-varsel + daglig digest.
+    // Opt-out (default på) — manglende nøkkel i DB tolkes som på i motorene.
+    leadAlerts: true, leadDigest: true,
     // Kunde-styrt rapport-e-post (frekvens / klokkeslett / innhold):
     reportFrequency: 'weekly' as string, // 'off'|'weekly'|'biweekly'|'monthly'|'twice_week'|'thrice_week'
     reportHour: 8,                        // 6–22, norsk tid
@@ -3978,6 +4300,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // Save-steg: første «Avslutt»-klikk viser ETT rolig nedgraderings-alternativ
   // (når det finnes en lavere pakke) før oppsigelsen fullføres.
   const [cancelSaveOfferSeen, setCancelSaveOfferSeen] = useState(false);
+  // Intro-steg FØR grunn-valget: Sikt-regnskapet + ærlig «dette stopper»-liste
+  // + pause-alternativ. Ikke mørkt mønster — kunden ser hva de faktisk mister.
+  const [cancelIntroSeen, setCancelIntroSeen] = useState(false);
   // Plan-baserte bruksgrenser: analyser brukt inneværende måned (fra clients).
   const [analysesMonth, setAnalysesMonth] = useState<string | null>(null);
   const [analysesUsed, setAnalysesUsed] = useState(0);
@@ -4054,6 +4379,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const [geoChatInput, setGeoChatInput] = useState('');
   const [geoChatLoading, setGeoChatLoading] = useState(false);
   const [geoChatReply, setGeoChatReply] = useState<string | null>(null);
+  // «Spør AI»-boksen i Dashboard-headeren åpner chatten som modal.
+  const [askSiktOpen, setAskSiktOpen] = useState(false);
 
   // --- UKENS KVITTERING (Sikt-handlinger) ---
   const [siktActions, setSiktActions] = useState<any[]>([]);
@@ -4064,6 +4391,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const [geoSummary, setGeoSummary] = useState<any>(null);
   const [geoState, setGeoState] = useState<any>(null);      // geo_state: llms.txt + score
   const [geoFaqs, setGeoFaqs] = useState<any[]>([]);        // ventende FAQ til godkjenning
+  const [geoRows, setGeoRows] = useState<any[]>([]);        // geo_checks siste ~35 dager (spørsmål × provider)
+  // Ukentlig posisjonshistorikk fra motoren (keyword_snapshots) — nøkkel = lowercase søkeord.
+  const [kwSnapshots, setKwSnapshots] = useState<Record<string, { date: string; rank: number }[]>>({});
+  const [kwSnapshotsLoaded, setKwSnapshotsLoaded] = useState(false);
   const [geoFaqBusyId, setGeoFaqBusyId] = useState<string | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = denne uken, -1 = forrige, osv.
@@ -4338,7 +4669,15 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const [linkActionBusy, setLinkActionBusy] = useState<string | null>(null);
   // Resultat-bevis (viewen sikt_article_results) + henvendelses-sporing (sikt_leads)
   const [articleResults, setArticleResults] = useState<any[]>([]);
+  // Sikt-effekten: full fiks-historikk (siktActions dekker bare siste 60 dager)
+  const [fixHistory, setFixHistory] = useState<{ created_at: string; title: string | null }[]>([]);
   const [leadStats, setLeadStats] = useState<{ total: number; tel: number; mailto: number; form: number } | null>(null);
+  // Rå leads-rader siste 30 dager (path + occurred_at) → ukes-trend og topp-sider
+  const [leadRows, setLeadRows] = useState<{ kind: string; path: string | null; occurred_at: string }[]>([]);
+  // «Siden du startet med Sikt» — kumulative tellinger (head:true, henter aldri rader)
+  const [ledgerCounts, setLedgerCounts] = useState<Omit<LedgerData, 'keywordsImproved' | 'weeks'> | null>(null);
+  // Oppetids-status fra ?job=uptime (hvert 30. min) — trygghets-strip på Hjem
+  const [siteStatus, setSiteStatus] = useState<{ is_up: boolean; last_status_at: string } | null>(null);
   const [leadToken, setLeadToken] = useState<string | null>(null);
   const [leadTrackingBusy, setLeadTrackingBusy] = useState(false);
 
@@ -4348,7 +4687,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     const period = new Date().toISOString().slice(0, 7);
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const [resultsRes, leadsRes, tokenRes] = await Promise.all([
+      const [resultsRes, leadsRes, tokenRes, statusRes] = await Promise.all([
         supabase
           .from('sikt_article_results')
           .select('*')
@@ -4357,7 +4696,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           .limit(10),
         supabase
           .from('sikt_leads')
-          .select('kind')
+          // NB: kolonnen heter page_path i DB — aliaset holder resten av koden på r.path
+          .select('kind, path:page_path, occurred_at')
           .eq('user_id', uid)
           .gte('occurred_at', thirtyDaysAgo)
           .limit(2000),
@@ -4366,10 +4706,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           .select('lead_token')
           .eq('user_id', uid)
           .maybeSingle(),
+        supabase
+          .from('site_status')
+          .select('is_up, last_status_at')
+          .eq('user_id', uid)
+          .maybeSingle(),
       ]);
       if (!resultsRes.error && Array.isArray(resultsRes.data)) setArticleResults(resultsRes.data);
       if (!leadsRes.error && Array.isArray(leadsRes.data)) {
-        const rows = leadsRes.data as { kind: string }[];
+        const rows = leadsRes.data as { kind: string; path: string | null; occurred_at: string }[];
+        setLeadRows(rows);
         setLeadStats({
           total: rows.length,
           tel: rows.filter((r) => r.kind === 'tel').length,
@@ -4378,8 +4724,12 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         });
       }
       if (!tokenRes.error && tokenRes.data?.lead_token) setLeadToken(tokenRes.data.lead_token);
+      // RLS-policy kan mangle til migrasjonen er kjørt — da forblir stripen skjult.
+      if (!statusRes.error && statusRes.data && typeof statusRes.data.is_up === 'boolean') {
+        setSiteStatus(statusRes.data as { is_up: boolean; last_status_at: string });
+      }
 
-      const [pagesRes, issuesRes, sugsRes, planRes] = await Promise.all([
+      const [pagesRes, issuesRes, sugsRes, planRes, fixRes] = await Promise.all([
         supabase
           .from('sikt_site_pages')
           .select('*')
@@ -4406,8 +4756,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           .eq('user_id', uid)
           .eq('period', period)
           .maybeSingle(),
+        // Sikt-effekten: hele fiks-historikken (billig — to små kolonner).
+        supabase
+          .from('sikt_actions')
+          .select('created_at, title')
+          .eq('user_id', uid)
+          .eq('category', 'fix')
+          .order('created_at', { ascending: true })
+          .limit(500),
       ]);
       if (!pagesRes.error && Array.isArray(pagesRes.data)) setSitePagesServer(pagesRes.data);
+      if (!fixRes.error && Array.isArray(fixRes.data)) setFixHistory(fixRes.data as { created_at: string; title: string | null }[]);
       if (!issuesRes.error && Array.isArray(issuesRes.data)) setLinkIssues(issuesRes.data);
       if (!sugsRes.error && Array.isArray(sugsRes.data)) setLinkSuggestions(sugsRes.data);
       if (!planRes.error) {
@@ -4427,6 +4786,52 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     if ((activeTab !== 'workshop' && activeTab !== 'home') || !userIdRef.current) return;
     fetchGrowthEngineData();
   }, [activeTab, fetchGrowthEngineData]);
+
+  // «Siden du startet med Sikt»: rene count-spørringer (head:true) — billige
+  // uansett hvor mye historikk kunden har opparbeidet.
+  const fetchLedgerCounts = useCallback(async () => {
+    if (!supabase || !userIdRef.current) return;
+    const uid = userIdRef.current;
+    try {
+      const cnt = async (q: PromiseLike<{ count: number | null }>) => {
+        const { count } = await q;
+        return typeof count === 'number' ? count : 0;
+      };
+      const [fixes, findings, articles, linksFixed, linksBuilt, leads] = await Promise.all([
+        cnt(supabase.from('sikt_actions').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('category', 'fix')),
+        cnt(supabase.from('sikt_actions').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('category', 'finding')),
+        cnt(supabase.from('sikt_articles').select('id', { count: 'exact', head: true }).eq('user_id', uid).in('status', ['pushed_draft', 'published'])),
+        cnt(supabase.from('sikt_link_issues').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('state', 'fixed')),
+        cnt(supabase.from('sikt_link_suggestions').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'applied')),
+        cnt(supabase.from('sikt_leads').select('id', { count: 'exact', head: true }).eq('user_id', uid)),
+      ]);
+      setLedgerCounts({ fixes, findings, articles, links: linksFixed + linksBuilt, leads });
+    } catch { /* stille — regnskapet er berikelse */ }
+  }, []);
+
+  useEffect(() => { if (userIdRef.current) fetchLedgerCounts(); }, [fetchLedgerCounts, user?.id]);
+
+  // Søkeord forbedret (≥3 plasser eller inn i topp 10) fra ukes-snapshots.
+  const ledgerKeywordsImproved = useMemo(() => {
+    let n = 0;
+    for (const key of Object.keys(kwSnapshots)) {
+      const hist = kwSnapshots[key];
+      if (!hist || hist.length < 2) continue;
+      const first = hist[0].rank;
+      const last = hist[hist.length - 1].rank;
+      if (first - last >= 3 || (first > 10 && last <= 10)) n += 1;
+    }
+    return n;
+  }, [kwSnapshots]);
+
+  const ledger: LedgerData | null = useMemo(() => {
+    if (!ledgerCounts) return null;
+    const startedAt = clientData?.created_at || user?.created_at || null;
+    const weeks = startedAt
+      ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / (7 * 24 * 60 * 60 * 1000)))
+      : 1;
+    return { ...ledgerCounts, keywordsImproved: ledgerKeywordsImproved, weeks };
+  }, [ledgerCounts, ledgerKeywordsImproved, clientData?.created_at, user?.created_at]);
 
   // ── Månedsrapporter (sikt_reports) — Hjem-kort + arkiv i Innstillinger ──
   const [siktReports, setSiktReports] = useState<any[]>([]);
@@ -4543,14 +4948,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   const fetchGeo = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const since = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+      // 35 dager gir uke-trend + spørsmål/svar-utdrag; score-sammendraget
+      // beregnes fortsatt kun på siste 8 dager (uendret semantikk).
+      const since = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString();
       const rows = await supabaseRest<any[]>(
-        `geo_checks?user_id=eq.${user.id}&checked_at=gte.${since}&select=provider,mentioned,checked_at&order=checked_at.desc&limit=200`,
+        `geo_checks?user_id=eq.${user.id}&checked_at=gte.${since}&select=provider,question,mentioned,answer_excerpt,checked_at&order=checked_at.desc&limit=600`,
       );
-      if (!Array.isArray(rows) || rows.length === 0) { setGeoSummary(null); return; }
+      const all = Array.isArray(rows) ? rows : [];
+      setGeoRows(all);
+      const weekAgo = Date.now() - 8 * 24 * 60 * 60 * 1000;
+      const recent = all.filter((r) => new Date(r.checked_at).getTime() >= weekAgo);
+      if (recent.length === 0) { setGeoSummary(null); return; }
       const byProvider: Record<string, { total: number; mentioned: number }> = {};
       let total = 0, mentioned = 0;
-      for (const r of rows) {
+      for (const r of recent) {
         total += 1;
         if (r.mentioned) mentioned += 1;
         const p = r.provider || 'ukjent';
@@ -4558,8 +4969,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         byProvider[p].total += 1;
         if (r.mentioned) byProvider[p].mentioned += 1;
       }
-      setGeoSummary({ total, mentioned, byProvider, lastCheckedAt: rows[0].checked_at });
-    } catch { setGeoSummary(null); }
+      setGeoSummary({ total, mentioned, byProvider, lastCheckedAt: recent[0].checked_at });
+    } catch { setGeoSummary(null); setGeoRows([]); }
 
     // GEO-state (llms.txt + score) og ventende FAQ-utkast til godkjenning
     try {
@@ -4577,6 +4988,78 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   }, [user?.id]);
 
   useEffect(() => { fetchGeo(); }, [fetchGeo]);
+
+  // Ukes-snapshots av GSC-posisjoner (skrives av ?job=opportunities hver mandag).
+  // Gir GSC-søkeord «Plassering over tid» uten at kunden gjør noe. Hentes først
+  // når Søkeord-fanen åpnes — berikelse, aldri kritisk.
+  const fetchKwSnapshots = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const rows = await supabaseRest<any[]>(
+        `keyword_snapshots?user_id=eq.${user.id}&select=keyword,position,captured_at&order=captured_at.asc&limit=5000`,
+      );
+      const byKeyword: Record<string, { date: string; rank: number }[]> = {};
+      for (const r of Array.isArray(rows) ? rows : []) {
+        if (!r?.keyword || r?.position == null) continue;
+        const rank = Math.round(Number(r.position) * 10) / 10;
+        if (!Number.isFinite(rank)) continue;
+        const key = String(r.keyword).toLowerCase();
+        const date = String(r.captured_at).slice(0, 10);
+        const arr = (byKeyword[key] = byKeyword[key] || []);
+        // Én måling per dag — re-kjøringer samme dag skal ikke gi hakk i grafen.
+        if (arr.length && arr[arr.length - 1].date === date) arr[arr.length - 1] = { date, rank };
+        else arr.push({ date, rank });
+      }
+      setKwSnapshots(byKeyword);
+    } catch { /* stille — historikk er berikelse */ }
+  }, [user?.id]);
+
+  // Lastes ved innlogging (ikke fane-gated): både Søkeord-grafen og
+  // Sikt-regnskapet («søkeord forbedret») trenger den.
+  useEffect(() => {
+    if (kwSnapshotsLoaded || !user?.id) return;
+    setKwSnapshotsLoaded(true);
+    fetchKwSnapshots();
+  }, [kwSnapshotsLoaded, fetchKwSnapshots, user?.id]);
+
+  // ===================================================================
+  // SIKT-EFFEKTEN (Hjem): «søkeord i topp 10» per ukentlige måling, med
+  // Sikts arbeid (artikler pushet/publisert + fikser) lagt i samme uke-
+  // bøtter. Kun ekte målinger fra keyword_snapshots — aldri syntetisk.
+  // ===================================================================
+  const siktEffectSeries = React.useMemo(() => {
+    const byDate = new Map<string, number>();
+    for (const rows of Object.values(kwSnapshots) as { date: string; rank: number }[][]) {
+      for (const r of rows) {
+        byDate.set(r.date, (byDate.get(r.date) ?? 0) + (r.rank <= 10 ? 1 : 0));
+      }
+    }
+    const dates = [...byDate.keys()].sort();
+    if (dates.length === 0) return [] as { date: string; top10: number; events: string[] }[];
+
+    // Hendelse → første måling PÅ/ETTER hendelsen (effekten kan tidligst
+    // synes ved neste måling); hendelser etter siste måling legges på siste.
+    const events: { at: string; label: string }[] = [];
+    for (const a of Array.isArray(siktArticles) ? siktArticles : []) {
+      if (a?.status === 'pushed_draft' || a?.status === 'published') {
+        const name = String(a.title || a.keyword || 'artikkel');
+        events.push({ at: String(a.created_at || ''), label: `Artikkel: «${name.slice(0, 40)}»` });
+      }
+    }
+    for (const f of fixHistory) {
+      events.push({ at: String(f.created_at || ''), label: `Fiks: ${String(f.title || 'teknisk forbedring').slice(0, 48)}` });
+    }
+    const eventsByDate = new Map<string, string[]>();
+    for (const ev of events) {
+      const d = ev.at.slice(0, 10);
+      if (!d) continue;
+      const bucket = dates.find((x) => x >= d) ?? dates[dates.length - 1];
+      const arr = eventsByDate.get(bucket) ?? [];
+      arr.push(ev.label);
+      eventsByDate.set(bucket, arr);
+    }
+    return dates.map((date) => ({ date, top10: byDate.get(date) ?? 0, events: eventsByDate.get(date) ?? [] }));
+  }, [kwSnapshots, siktArticles, fixHistory]);
 
   // Godkjenn/avvis et FAQ-utkast. Godkjente mates inn i llms.txt + FAQPage-schema
   // ved neste optimaliserings-kjøring.
@@ -4899,6 +5382,42 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
   // scan-pagespeed-kall så manuelle analyser persisteres til health_checks.
   const [siteId, setSiteId] = useState<string | null>(null);
 
+  // Server-hydrering av score-historikken: localStorage er per nettleser, så
+  // «beviset» forsvant ved enhetsbytte. health_checks har de samme skannene —
+  // hent dem (JSON-path for SEO-score, aldri de tunge rå-JSON-ene) og bruk dem
+  // når lokal historikk er tynnere. Rører ikke combinedScore/aha-logikken.
+  useEffect(() => {
+    if (!siteId || !user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await supabaseRest<any[]>(
+          `health_checks?site_id=eq.${siteId}&mobile_score=not.is.null&select=checked_at,mobile_score,desktop_score,mobile_seo:raw_mobile->lighthouseResult->categories->seo->>score&order=checked_at.desc&limit=30`,
+        );
+        if (cancelled || !Array.isArray(rows) || rows.length === 0) return;
+        const serverHistory = rows
+          .filter((r) => r?.checked_at && r?.mobile_score != null)
+          .reverse()
+          .map((r) => {
+            const seoRaw = r.mobile_seo != null ? Number(r.mobile_seo) : NaN;
+            return {
+              at: String(r.checked_at),
+              mobilePerf: Number(r.mobile_score) || 0,
+              mobileSeo: Number.isFinite(seoRaw) ? Math.round(seoRaw * 100) : Number(r.mobile_score) || 0,
+              desktopPerf: Number(r.desktop_score) || 0,
+            };
+          });
+        if (!serverHistory.length) return;
+        setScoreHistory((prev) => {
+          if (prev.length >= serverHistory.length) return prev; // lokal er minst like rik
+          try { localStorage.setItem(`sikt_portal_score_history_${user.id}`, JSON.stringify(serverHistory)); } catch { /* ignore */ }
+          return serverHistory;
+        });
+      } catch { /* stille — lokal historikk fungerer fortsatt */ }
+    })();
+    return () => { cancelled = true; };
+  }, [siteId, user?.id]);
+
   const getScoreColor = (score: number) => {
     if (score >= 86) return { color: 'text-green-600', label: 'Utmerket', emoji: '🟢' };
     if (score >= 71) return { color: 'text-blue-600', label: 'Bra', emoji: '✓' };
@@ -5195,6 +5714,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
             email: raw.email ?? '',
             phone: raw.phone ?? '',
             industry: raw.industry ?? '',
+            // Hva en henvendelse er verdt for kunden (NOK) — brukes i verdi-kortet
+            leadValueNok: raw.lead_value_nok ?? null,
+            // «La Sikt fikse selv»: trygge fikser pushes uten godkjenningskø
+            autoApproveFixes: raw.auto_approve_fixes ?? false,
             // Ukentlig lås for URL
             urlLastChangedAt: raw.url_last_changed_at ?? null,
           };
@@ -5208,6 +5731,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
             websiteUrl: mapped.websiteUrl,
             industry: mapped.industry,
             targetAudience: mapped.targetAudience,
+            leadValueNok: mapped.leadValueNok,
           });
 
           // Hent lagrede søkeord/resultater fra nettleseren (fallback)
@@ -5342,6 +5866,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       if (merged.phone !== undefined) patch.phone = merged.phone;
       if (merged.industry !== undefined) patch.industry = merged.industry;
       if (merged.targetAudience !== undefined) patch.target_audience = merged.targetAudience;
+      if (merged.leadValueNok !== undefined) {
+        const n = merged.leadValueNok === null || merged.leadValueNok === '' ? null : Math.max(0, Math.round(Number(merged.leadValueNok)));
+        patch.lead_value_nok = n != null && Number.isFinite(n) ? n : null;
+      }
       if (urlChanged) {
         patch.website_url = merged.websiteUrl;
         patch.url_last_changed_at = new Date().toISOString();
@@ -5411,16 +5939,20 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
       ].slice(0, 10);
       const oppLines = keywordOpps.slice(0, 3).map((o: any) => `«${o.keyword}»`);
       const latestScoreEntry = scoreHistory.length ? scoreHistory[scoreHistory.length - 1] : null;
+      const actionLines = siktActions.slice(0, 3).map((a: any) => a?.title).filter(Boolean);
       const dataCtx = [
         kwLines.length ? `Søkeord og posisjoner akkurat nå:\n${kwLines.join('\n')}` : '',
         oppLines.length ? `Største innholds-muligheter: ${oppLines.join(', ')}` : '',
         latestScoreEntry ? `Teknisk score (mobil): ytelse ${latestScoreEntry.mobilePerf}/100, SEO ${latestScoreEntry.mobileSeo}/100` : '',
+        leadStats?.total ? `Henvendelser fra nettsiden siste 30 dager: ${leadStats.total}` : '',
+        actionLines.length ? `Siste ting Sikt gjorde: ${actionLines.join('; ')}` : '',
+        geoSummary ? `AI-synlighet: nevnt i ${geoSummary.mentioned} av ${geoSummary.total} sjekker siste uke` : '',
       ].filter(Boolean).join('\n');
-      const prompt = `Du er Sikt AI, en norsk rådgiver for synlighet i Google og generativ søk (ChatGPT m.fl.). Bedriftskontekst: ${ctx || 'ikke oppgitt'}.${dataCtx ? `\n\nKUNDENS EKTE SEO-DATA (bruk disse aktivt i svaret der det er relevant — dette er fakta, ikke estimater):\n${dataCtx}` : ''}\n\nSvar kort, konkret og på norsk (maks ca. 150 ord). Ingen tall du ikke har fått over — gi metode og prioritering.\n\nSpørsmål: ${q}`;
+      const prompt = `Du er Sikt AI, en norsk rådgiver for synlighet i Google og generativ søk (ChatGPT m.fl.). Bedriftskontekst: ${ctx || 'ikke oppgitt'}.${dataCtx ? `\n\nKUNDENS EKTE SEO-DATA (bruk disse aktivt i svaret der det er relevant — dette er fakta, ikke estimater):\n${dataCtx}` : ''}\n\nSvar kort, konkret og på norsk (maks ca. 150 ord). Ingen tall du ikke har fått over — gi metode og prioritering, og avslutt med ETT konkret neste steg.\n\nSpørsmål: ${q}`;
       const res = await fetch('/api/openai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ prompt, model: 'gpt-4o-mini', maxTokens: 450 }),
+        body: JSON.stringify({ prompt, model: 'gpt-4o-mini', maxTokens: 600 }),
       });
       const data = await res.json().catch(() => ({}));
       if (isApiRateLimited(res.status, data)) {
@@ -5915,15 +6447,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           if (data.local_results) resultType += ", Kart";
           if (data.inline_images) resultType += ", Bilder";
 
-          // Ekte data (eller estimater basert på live tall) for volum og KD
+          // Vanskelighetsgrad + intensjon fra ekte SERP-signaler — delt logikk i
+          // src/shared/keywordDifficulty.ts (gammel formel ga alltid «10 av 100»).
           const totalResults = data.search_information?.total_results || 10000;
-          const kd = Math.min(100, Math.max(10, Math.round((totalResults / 1000000) * 10)));
-          // Intent utledes av ekte signaler (før: tilfeldig valgt — falsk data):
-          // kartresultater i SERP-en = lokalt søk, spørreord = info, kjøpsord = kjøp.
-          const intent = data.local_results ? 'Lokal'
-            : /^(hva|hvordan|hvorfor|når|hvem|hvor)\b/i.test(keyword) ? 'Info'
-            : /\b(pris|priser|billig|kjøp|kjøpe|tilbud|best)\b/i.test(keyword) ? 'Kjøp'
-            : 'Info';
+          const kd = estimateKeywordDifficulty(data);
+          const intent = deriveKeywordIntent(keyword, data);
 
           // --- 2. EKTE HISTORIKK-LOGIKK ---
           const todayDate = new Date().toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit' });
@@ -6754,6 +7282,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     setCancelDone(false);
     setCancelSubmitting(false);
     setCancelSaveOfferSeen(false);
+    setCancelIntroSeen(false);
     setShowCancelModal(true);
   };
   const closeCancelModal = () => {
@@ -7025,12 +7554,33 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
     });
   };
 
-  const toggleNotif = (key: 'weeklyReport' | 'criticalAlerts' | 'rankChanges') => {
+  const toggleNotif = (key: 'weeklyReport' | 'criticalAlerts' | 'rankChanges' | 'leadAlerts' | 'leadDigest') => {
     patchNotifPrefs({ [key]: !notifPrefs[key] });
   };
 
   const toggleSection = (key: keyof typeof notifPrefs.reportSections) => {
     patchNotifPrefs({ reportSections: { ...notifPrefs.reportSections, [key]: !notifPrefs.reportSections[key] } });
+  };
+
+  // «La Sikt fikse selv» (opt-in): trygge fikser (H1 m.m.) pushes direkte i
+  // stedet for godkjenningskø. Optimistisk oppdatering med tilbakerulling.
+  const toggleAutoApproveFixes = async () => {
+    if (!user?.id) return;
+    const next = !clientData?.autoApproveFixes;
+    setClientData((prev: any) => ({ ...prev, autoApproveFixes: next }));
+    try {
+      await supabaseRest(`clients?user_id=eq.${user.id}`, {
+        method: 'PATCH',
+        body: { auto_approve_fixes: next },
+        headers: { Prefer: 'return=minimal' },
+      });
+      toastSuccess(next
+        ? 'Sikt fikser nå trygge ting fortløpende. Alt logges i Sikt-loggen med angre-knapp.'
+        : 'Auto-fiks er av — synlige fikser venter på din godkjenning igjen.');
+    } catch (err: any) {
+      setClientData((prev: any) => ({ ...prev, autoApproveFixes: !next }));
+      toastError(err?.message || 'Kunne ikke lagre.');
+    }
   };
 
   // ===================================================================
@@ -8201,24 +8751,153 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
         {activeTab === 'home' && (
           <div key={activeTab} className="space-y-6">
             <header className="font-['Geist','DM_Sans',sans-serif]">
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>Dashboard</h1>
-              <p className="text-base mt-3 max-w-[58ch] text-[color:var(--muted)]" style={{ lineHeight: 1.6 }}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
-              {analysisLimit !== Infinity && (
-                <p className="text-xs mt-1.5 text-[color:var(--muted)] tabular-nums">
-                  {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
-                  {analysesRemaining === 0 && currentLevel < 3 && (
-                    <button
-                      type="button"
-                      onClick={() => handleUpgrade()}
-                      className="ml-2 font-semibold text-[color:var(--green)] underline"
-                    >
-                      Oppgrader
-                    </button>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>Dashboard</h1>
+                  <p className="text-base mt-3 max-w-[58ch] text-[color:var(--muted)]" style={{ lineHeight: 1.6 }}>Slik står det til med {domainLabel || 'nettsiden din'}.</p>
+                  {analysisLimit !== Infinity && (
+                    <p className="text-xs mt-1.5 text-[color:var(--muted)] tabular-nums">
+                      {analysesUsedThisMonth} av {analysisLimit} analyser brukt denne måneden
+                      {analysesRemaining === 0 && currentLevel < 3 && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpgrade()}
+                          className="ml-2 font-semibold text-[color:var(--green)] underline"
+                        >
+                          Oppgrader
+                        </button>
+                      )}
+                    </p>
                   )}
-                </p>
-              )}
+                </div>
+                {/* Spør AI: liten boks på linje med tittelen — åpner chatten som modal. */}
+                <button
+                  type="button"
+                  onClick={() => setAskSiktOpen(true)}
+                  className="shrink-0 mt-2 inline-flex items-center gap-1.5 rounded-[10px] border border-[color:var(--hair)] bg-[color:var(--surface)] px-3.5 py-2 text-[13px] font-semibold transition-transform active:scale-[0.97]"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <Sparkles size={13} style={{ color: 'var(--green)' }} /> Spør AI
+                </button>
+              </div>
               <div aria-hidden className="mt-6" style={{ borderTop: '1px solid var(--hair)' }} />
             </header>
+
+            {/* Samlet score først: det viktigste tallet møter kunden med en gang. */}
+            <div className={tabFadeInClass}>
+              <React.Suspense fallback={<div className="h-64" />}>
+                <DashboardHome
+                  user={user}
+                  clientData={clientData}
+                  formData={formData}
+                  analysisResults={analysisResults}
+                  scoreHistory={scoreHistory}
+                  siktActions={siktActions}
+                  realRankings={realRankings}
+                  gscConnected={gscConnected}
+                  gscKeywords={gscKeywords}
+                  isAnalyzing={isAnalyzing}
+                  geo={geoSummary}
+                  onRunAnalysis={runRealAnalysis}
+                  onNavigate={setActiveTab}
+                />
+              </React.Suspense>
+            </div>
+
+            {/* Sikt-effekten: ÉN graf som viser synligheten uke for uke med
+                Sikts arbeid markert i samme tidslinje. Korrelasjon, aldri
+                påstått årsak — copy holder seg til det målingene faktisk viser. */}
+            {(() => {
+              const series = siktEffectSeries;
+              // recharts leser ikke CSS-variabler i SVG-attributter → send
+              // theme-resolverte verdier (speiler .sikt-portal[data-theme=dark]).
+              const effPalette = themed === 'dark'
+                ? { border: 'rgba(255,255,255,0.10)', muted: '#9A958B', success: '#3DA77B', ink: '#E8E6E1', accent: '#52A447', card: '#16181D' }
+                : { border: PORTAL.hair, muted: PORTAL.muted, success: PORTAL.success, ink: PORTAL.ink, accent: PORTAL.accent, card: PORTAL.card };
+              const kicker = (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1">Sikt-effekten</p>
+              );
+              const heading = (
+                <h3 className="text-xl font-bold text-[color:var(--ink)]" style={{ fontFamily: SERIF, letterSpacing: '-0.01em' }}>
+                  Synligheten din — og det Sikt gjorde underveis
+                </h3>
+              );
+              const shell = "rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]";
+
+              if (!gscConnected && series.length === 0) {
+                return (
+                  <div className={shell}>
+                    {kicker}
+                    {heading}
+                    <p className="text-sm text-[color:var(--muted)] mt-2 leading-relaxed max-w-[62ch]">
+                      Koble til Google Search Console, så bygger grafen seg opp uke for uke:
+                      hvor mange søkeord du har i topp 10 — og hva Sikt gjorde underveis.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('keywords'); setShowGscPreCheck(true); }}
+                      className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-[color:var(--btn-bg)] text-white text-xs font-semibold ui-motion"
+                    >
+                      Koble til Google Search Console
+                    </button>
+                  </div>
+                );
+              }
+              if (series.length < 3) {
+                const firstLabel = series.length
+                  ? new Date(series[0].date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })
+                  : null;
+                return (
+                  <div className={shell}>
+                    {kicker}
+                    {heading}
+                    <p className="text-sm text-[color:var(--muted)] mt-2 leading-relaxed max-w-[62ch]">
+                      {firstLabel
+                        ? <>Grafen bygges opp — første måling ble tatt {firstLabel}. Sikt måler posisjonene dine ukentlig; etter noen uker ser du utviklingen her.</>
+                        : <>Grafen bygges opp — første måling tas ved neste ukentlige sjekk (mandag). Etter noen uker ser du utviklingen her.</>}
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className={shell}>
+                  {kicker}
+                  {heading}
+                  <div className="h-56 mt-4">
+                    <React.Suspense fallback={<div className="w-full h-full" />}>
+                      <LazySiktEffectChart data={series} palette={effPalette} />
+                    </React.Suspense>
+                  </div>
+                  <p className="text-xs text-[color:var(--muted)] mt-3 leading-relaxed">
+                    Linjen viser antall søkeord i topp 10 på Google (ukentlige målinger).
+                    Prikkene <span aria-hidden className="inline-block w-2 h-2 rounded-full align-middle mx-0.5" style={{ background: effPalette.accent, border: `1.5px solid ${effPalette.card}` }} /> er
+                    uker der Sikt publiserte artikler eller gjorde fikser.
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Trygghets-strip: Sikt passer på siden — også når kunden ikke ser på. */}
+            {siteStatus && (() => {
+              const mins = Math.max(0, Math.round((Date.now() - new Date(siteStatus.last_status_at).getTime()) / 60000));
+              const agoLabel = mins < 60 ? `${mins} min siden` : `${Math.round(mins / 60)} t siden`;
+              return (
+                <div
+                  className="flex items-center gap-2.5 rounded-[12px] px-4 py-2.5 font-['Geist','DM_Sans',sans-serif]"
+                  style={{
+                    background: siteStatus.is_up ? 'rgba(21,121,90,0.06)' : 'var(--dangerbg)',
+                    border: `1px solid ${siteStatus.is_up ? 'rgba(21,121,90,0.18)' : 'rgba(180,35,31,0.25)'}`,
+                  }}
+                >
+                  <span aria-hidden className="w-2 h-2 rounded-full shrink-0" style={{ background: siteStatus.is_up ? 'var(--green)' : 'var(--danger)' }} />
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+                    {siteStatus.is_up
+                      ? <>Siden din overvåkes døgnet rundt — <span className="font-semibold">oppe</span>. Sist sjekket {agoLabel}.</>
+                      : <>Siden din ser ut til å være <span className="font-semibold">nede</span> (sjekket {agoLabel}). Vi følger med og har varslet deg på e-post.</>}
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Punkt 2: forventnings-note for nye kunder (≤6 uker) — SEO tar uker, ikke dager. */}
             {(() => {
@@ -8288,26 +8967,43 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 </div>
               </div>
             )}
-            {/* Månedsrapporten — innfrir «månedlig rapport»-løftet på prissiden */}
-            {siktReports.length > 0 && (
-              <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif] flex items-center gap-4 flex-wrap">
-                <div className="flex-1 min-w-[200px]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">
-                    {siktReports[0].tier === 'premium' ? 'Strategirapport' : 'Månedsrapport'}
-                  </p>
-                  <h3 className="text-lg font-semibold text-[color:var(--ink)]" style={{ fontFamily: SERIF }}>{siktReports[0].title}</h3>
-                  <p className="text-sm mt-1 text-[color:var(--muted)]">Hva som skjedde, hva Sikt gjorde, og hva vi tar tak i nå.</p>
+            {/* Neste steg: ÉN ting denne uken — topp-1 fra Verkstedets aggregerte
+                todo-liste. Fjerner beslutningstrøtthet; resten venter i Verkstedet. */}
+            {todos.length > 0 && (() => {
+              const top = todos[0];
+              return (
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Neste steg — én ting denne uken</p>
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>{top.title}</p>
+                      {top.desc && <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--muted)' }}>{top.desc}</p>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={top.action.onClick}
+                      className="shrink-0 inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
+                      style={{ background: 'var(--btn-bg)' }}
+                    >
+                      {top.action.label} <ArrowRight size={13} />
+                    </button>
+                  </div>
+                  {todos.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('workshop')}
+                      className="text-[12px] font-medium mt-3 hover:underline"
+                      style={{ color: 'var(--muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                      + {todos.length - 1} til venter i Verkstedet
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveReport(siktReports[0])}
-                  className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
-                  style={{ background: 'var(--btn-bg)' }}
-                >
-                  Les rapporten <ArrowRight size={13} />
-                </button>
-              </div>
-            )}
+              );
+            })()}
+
+            {/* Månedsrapport-kortet er fjernet fra Hjem (brukerønske) — rapportene
+                leses fra arkivet i Innstillinger → Månedsrapporter. */}
 
             {/* Månedens innholdsplan — den proaktive innholdsmotoren. Sikt velger
                 søkeord og skriver utkastene; kunden godkjenner (aldri auto-publisering). */}
@@ -8383,6 +9079,194 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
               );
             })()}
 
+            {/* PLANEN FREMOVER — 90-dagers leveransekalender. Kun ting som
+                FAKTISK er planlagt (rader rendres bare når kilden finnes i
+                data) — å si opp betyr å forlate arbeid som alt står her. */}
+            {(() => {
+              const now = new Date();
+              const DAY = 24 * 60 * 60 * 1000;
+              const fmtShort = (d: Date) => d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+              const monthLong = (d: Date) => d.toLocaleDateString('nb-NO', { month: 'long' });
+              // Neste forekomst av en ISO-ukedag (1=man … 7=søn), aldri i dag.
+              const nextWeekday = (isoDay: number) => {
+                const d = new Date(now);
+                const cur = ((d.getDay() + 6) % 7) + 1;
+                const diff = ((isoDay - cur + 7) % 7) || 7;
+                d.setDate(d.getDate() + diff);
+                return d;
+              };
+
+              type PlanRow = { at: Date; label: string; title: string; sub?: string; chip?: 'venter på deg' | 'planlagt' };
+              const rows: PlanRow[] = [];
+              const articleById = new Map<string, any>(siktArticles.map((a: any) => [a.id, a] as [string, any]));
+
+              // Gjenstående artikler i månedens innholdsplan (Standard+).
+              if (hasStandardOrHigher) {
+                for (const item of contentPlanItems) {
+                  if (item.status === 'dismissed') continue;
+                  const art = item.article_id ? articleById.get(item.article_id) : null;
+                  if (art?.status === 'published') continue;
+                  rows.push({
+                    at: now,
+                    label: art ? 'nå' : 'denne mnd',
+                    title: `Artikkel: «${item.keyword}»`,
+                    sub: art?.status === 'pushed_draft'
+                      ? 'Utkastet ligger i WordPress — publiser når du vil'
+                      : art
+                        ? 'Klar til godkjenning i Verkstedet'
+                        : 'Skrives automatisk av Sikt',
+                    chip: art ? 'venter på deg' : 'planlagt',
+                  });
+                }
+                // Neste måneds plan — kun når motoren beviselig er i gang
+                // (en plan finnes i data); ellers loves ingenting.
+                if (contentPlan) {
+                  const d = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                  rows.push({
+                    at: d,
+                    label: `1.–2. ${d.toLocaleDateString('nb-NO', { month: 'short' })}`,
+                    title: `Ny innholdsplan for ${monthLong(d)}`,
+                    sub: `${hasPremium ? 8 : 2} artikler velges og skrives — du godkjenner før noe publiseres`,
+                  });
+                }
+              }
+
+              // Ukentlig side-skann — neste dato fra siste server-skann + 7 d.
+              if (sitePagesServer.length > 0) {
+                const times = sitePagesServer
+                  .map((p: any) => new Date(p.last_scanned_at || 0).getTime())
+                  .filter((t: number) => Number.isFinite(t) && t > 0);
+                if (times.length > 0) {
+                  const next = new Date(Math.max(Math.max(...times) + 7 * DAY, now.getTime()));
+                  rows.push({
+                    at: next,
+                    label: `~${fmtShort(next)}`,
+                    title: 'Ukentlig side-skann',
+                    sub: 'Sidene dine sjekkes for feil, ødelagte lenker og forbedringer',
+                  });
+                }
+              }
+
+              // Mandags-motorene (live pg_cron-jobber): posisjoner/muligheter + AI-sjekk.
+              if (gscConnected) {
+                const d = nextWeekday(1);
+                rows.push({
+                  at: d,
+                  label: fmtShort(d),
+                  title: 'Posisjons-måling og nye muligheter',
+                  sub: 'Søkeordene måles og nye muligheter legges i Verkstedet — hver mandag',
+                });
+              }
+              if (hasPremium) {
+                const d = nextWeekday(1);
+                rows.push({
+                  at: d,
+                  label: fmtShort(d),
+                  title: 'AI-synlighetssjekk',
+                  sub: 'Sikt spør ChatGPT, Gemini og Perplexity om de nevner deg — hver uke',
+                });
+              }
+
+              // Månedsrapporten går alltid 1.–2. i påfølgende måned.
+              {
+                const d = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                rows.push({
+                  at: d,
+                  label: `1.–2. ${d.toLocaleDateString('nb-NO', { month: 'short' })}`,
+                  title: `Månedsrapport for ${monthLong(now)}`,
+                  sub: 'Hele måneden oppsummert — sendes på e-post og legges i arkivet under Innstillinger',
+                });
+              }
+
+              // Neste rapport-e-post — speiler timeplan-logikken i weekly-reports.
+              if ((notifPrefs.reportFrequency ?? 'weekly') !== 'off') {
+                const freq = notifPrefs.reportFrequency ?? 'weekly';
+                const anchor = Math.min(7, Math.max(1, Math.round(notifPrefs.reportAnchorDay ?? 1)));
+                const wrap = (x: number) => ((x - 1) % 7 + 7) % 7 + 1;
+                let d: Date;
+                if (freq === 'monthly') {
+                  const first = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                  const curIso = ((first.getDay() + 6) % 7) + 1;
+                  d = new Date(first.getFullYear(), first.getMonth(), 1 + ((anchor - curIso + 7) % 7));
+                } else {
+                  const days = freq === 'twice_week'
+                    ? [anchor, wrap(anchor + 3)]
+                    : freq === 'thrice_week'
+                      ? [anchor, wrap(anchor + 2), wrap(anchor + 4)]
+                      : [anchor];
+                  d = days.map(nextWeekday).sort((a, b) => a.getTime() - b.getTime())[0];
+                }
+                const hour = Math.min(22, Math.max(6, Math.round(notifPrefs.reportHour ?? 8)));
+                const freqNote = freq === 'biweekly' ? ' · annenhver uke' : freq === 'monthly' ? ' · månedlig' : '';
+                rows.push({
+                  at: d,
+                  label: fmtShort(d),
+                  title: 'Rapport på e-post',
+                  sub: `kl. ${String(hour).padStart(2, '0')}:00${freqNote} — frekvensen styrer du i Innstillinger`,
+                });
+              }
+
+              if (rows.length === 0) return null;
+              rows.sort((a, b) => a.at.getTime() - b.at.getTime());
+              const groups: { month: string; items: PlanRow[] }[] = [];
+              for (const r of rows) {
+                const m = r.at.toLocaleDateString('nb-NO', { month: 'long' });
+                const g = groups[groups.length - 1];
+                if (g && g.month === m) g.items.push(r);
+                else groups.push({ month: m, items: [r] });
+              }
+              const nextMonthName = monthLong(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+
+              return (
+                <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1">Planen fremover</p>
+                  <h3 className="text-xl font-bold text-[color:var(--ink)]" style={{ fontFamily: SERIF, letterSpacing: '-0.01em' }}>
+                    Dette er allerede planlagt for deg
+                  </h3>
+                  <p className="text-sm text-[color:var(--muted)] mt-1 mb-4 leading-relaxed max-w-[62ch]">
+                    Sikt jobber etter en fast kalender — dette står på planen de neste ukene.
+                  </p>
+                  <div>
+                    {groups.map((g) => (
+                      <div key={g.month} className="mt-3 first:mt-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">{g.month}</p>
+                        <div>
+                          {g.items.map((r, i) => (
+                            <div key={`${g.month}-${i}`} className="flex items-start gap-3 py-2.5 border-t border-[color:var(--hair)]">
+                              <span className="shrink-0 w-[74px] text-[12px] tabular-nums text-[color:var(--muted)] pt-0.5">{r.label}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-[color:var(--ink)]">{r.title}</p>
+                                {r.sub && <p className="text-xs text-[color:var(--muted)] leading-relaxed">{r.sub}</p>}
+                              </div>
+                              {r.chip && (
+                                <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${r.chip === 'venter på deg' ? 'text-white bg-[color:var(--btn-bg)]' : 'text-[color:var(--muted)] bg-[color:var(--subtle)]'}`}>
+                                  {r.chip}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {!hasStandardOrHigher && (
+                    <button
+                      type="button"
+                      onClick={() => handleUpgrade('Standard')}
+                      className="mt-3 w-full flex items-center gap-3 rounded-[12px] px-4 py-3 text-left transition-colors hover:bg-[color:var(--subtle)]"
+                      style={{ border: '1px dashed var(--hair)' }}
+                    >
+                      <span className="shrink-0 w-[74px] text-[12px] tabular-nums text-[color:var(--faint)]">{nextMonthName.slice(0, 3)}.</span>
+                      <span className="flex-1 text-sm text-[color:var(--muted)]">
+                        Med Standard hadde 2 artikler stått planlagt her for {nextMonthName} — valgt, skrevet og klare til din godkjenning.
+                      </span>
+                      <span className="shrink-0 text-[12px] font-semibold text-[color:var(--green)]">Oppgrader →</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Resultat-bevis: «dette gjorde Sikt → dette skjedde». Vises kun når
                 pushede artikler finnes — med ærlig venter-tilstand til Google-data
                 (keyword_snapshots) foreligger. */}
@@ -8425,51 +9309,147 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
               </div>
             )}
 
-            {/* Henvendelser: telefon/e-post/skjema fra beacon-sporingen — det
-                eneste tallet en småbedrift egentlig bryr seg om. */}
+            {/* Hva dette er verdt: samme regnestykke som ukes-e-posten — ekte
+                GSC-klikk verdsatt som tilsvarende annonseklikk. Verdi-ankeret
+                skal stå i portalen, ikke bare i innboksen. Henvendelses-tallene
+                er fjernet herfra (brukerønske) — de bor i Innstillinger → Henvendelser. */}
             {(() => {
-              const hasLeads = (leadStats?.total ?? 0) > 0;
+              // Holdes i sync med CLICK_VALUE_NOK i supabase/functions/weekly-reports/index.ts.
+              const CLICK_VALUE_NOK = 8;
+              const gscClicks = gscKeywords.reduce((sum: number, kw: any) => sum + (Number(kw?.clicks) || 0), 0);
+              const gscImpressions = gscKeywords.reduce((sum: number, kw: any) => sum + (Number(kw?.impressions) || 0), 0);
+              const estValue = Math.round(gscClicks * CLICK_VALUE_NOK);
               return (
                 <div className="rounded-[14px] border border-[color:var(--hair)] bg-[color:var(--surface)] p-5 sm:p-6 font-['Geist','DM_Sans',sans-serif]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Henvendelser siste 30 dager</p>
-                  {hasLeads ? (
-                    <div className="flex items-end gap-6 flex-wrap">
-                      <span className="text-5xl font-semibold tracking-[-0.03em] text-[color:var(--ink)] tabular-nums">{leadStats!.total}</span>
-                      <p className="text-sm text-[color:var(--muted)] pb-1.5">
-                        {leadStats!.tel > 0 && <span className="mr-3">{leadStats!.tel} telefon-klikk</span>}
-                        {leadStats!.form > 0 && <span className="mr-3">{leadStats!.form} skjema</span>}
-                        {leadStats!.mailto > 0 && <span>{leadStats!.mailto} e-post-klikk</span>}
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Hva dette er verdt</p>
+                  {gscClicks > 0 ? (
+                    <>
+                      <div className="flex items-end gap-6 flex-wrap">
+                        <span className="text-5xl font-semibold tracking-[-0.03em] text-[color:var(--ink)] tabular-nums">
+                          ≈ {estValue.toLocaleString('nb-NO')} kr
+                        </span>
+                      </div>
+                      <p className="text-xs mt-2 text-[color:var(--muted)] leading-relaxed max-w-xl">
+                        {gscClicks.toLocaleString('nb-NO')} klikk fra {gscImpressions.toLocaleString('nb-NO')} visninger i Google siste 28 dager — verdsatt som hva tilsvarende annonseklikk ville kostet (~{CLICK_VALUE_NOK} kr per klikk).
                       </p>
-                    </div>
+                    </>
+                  ) : gscConnected ? (
+                    <p className="text-sm text-[color:var(--muted)] leading-relaxed">
+                      Google har ikke registrert klikk ennå — tallet fylles inn når søkeordene begynner å hente trafikk.
+                    </p>
                   ) : (
                     <>
                       <p className="text-sm mb-4 text-[color:var(--muted)] leading-relaxed">
-                        Se hvor mange som ringer, sender skjema eller klikker e-posten din fra nettsiden — uten cookies og uten persondata. Dette er tallet SEO-arbeidet til syvende og sist skal flytte.
+                        Koble til Google Search Console, så regner vi ut hva Google-trafikken din er verdt i kroner — samme tall som i ukesrapporten.
                       </p>
-                      {hostIsFullyConnected ? (
-                        <button
-                          type="button"
-                          disabled={leadTrackingBusy}
-                          onClick={enableLeadTracking}
-                          className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97] disabled:opacity-60"
-                          style={{ background: 'var(--btn-bg)' }}
-                        >
-                          {leadTrackingBusy ? 'Aktiverer…' : 'Aktiver sporing'} <ArrowRight size={13} />
-                        </button>
-                      ) : leadToken ? (
-                        <button
-                          type="button"
-                          onClick={() => { navigator.clipboard?.writeText(buildLeadSnippet()); toastSuccess('Sporings-snippet kopiert — lim den inn før </body> på siden din.'); }}
-                          className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] border border-[color:var(--hair)] text-[color:var(--ink)] transition-transform active:scale-[0.97]"
-                        >
-                          Kopier sporings-snippet
-                        </button>
-                      ) : null}
-                      {hostIsFullyConnected && (
-                        <p className="text-xs mt-2 text-[color:var(--muted)]">Krever Sikt Connector v1.3 — får du feilmelding, last ned pluginen på nytt fra Innstillinger.</p>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('keywords'); setShowGscPreCheck(true); }}
+                        className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
+                        style={{ background: 'var(--btn-bg)' }}
+                      >
+                        Koble til Google <ArrowRight size={13} />
+                      </button>
                     </>
                   )}
+                </div>
+              );
+            })()}
+
+            {/* Sikt-regnskapet, kompakt: den opparbeidede historikken er
+                grunnen til å bli — den skal være synlig hver dag, ikke bare
+                i oppsigelses-øyeblikket. */}
+            <SiktLedger data={ledger} compact />
+
+            {/* Spør AI: åpnes fra boksen i headeren. Motoren (sendGeoChat)
+                fantes allerede, men hadde aldri fått UI. */}
+            {askSiktOpen && (() => {
+              const chips = [
+                'Hva bør jeg prioritere denne uken?',
+                'Hvorfor endret plasseringene mine seg?',
+                'Hvordan får jeg flere henvendelser?',
+              ];
+              return (
+                <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+                  <button
+                    type="button"
+                    aria-label="Lukk"
+                    onClick={() => setAskSiktOpen(false)}
+                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                  />
+                  <div className="relative w-full max-w-lg rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 my-8 font-['Geist','DM_Sans',sans-serif]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">Spør AI</p>
+                    {!hasPremium && <Lock size={11} style={{ color: 'var(--muted)' }} />}
+                    <button
+                      type="button"
+                      aria-label="Lukk"
+                      onClick={() => setAskSiktOpen(false)}
+                      className="ml-auto grid place-items-center h-7 w-7 rounded-lg"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                  <p className="text-sm mb-3 text-[color:var(--muted)] leading-relaxed">
+                    Rådgiveren som kjenner tallene dine — still spørsmål om synligheten, og få svar basert på dine egne data.
+                  </p>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {chips.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={hasPremium ? () => setGeoChatInput(c) : undefined}
+                        className="rounded-full px-3.5 py-1.5 text-xs border border-[color:var(--hair)]"
+                        style={{ color: 'var(--sub)', background: 'var(--subtle)', cursor: hasPremium ? 'pointer' : 'default' }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  {hasPremium ? (
+                    <>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={geoChatInput}
+                          onChange={(e) => setGeoChatInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && sendGeoChat()}
+                          placeholder="Skriv spørsmålet ditt…"
+                          className="flex-1 min-w-0 rounded-[10px] px-3.5 py-2.5 text-sm outline-none border border-[color:var(--hair)] focus:border-[color:var(--ink)] transition-colors"
+                          style={{ background: 'var(--subtle)', color: 'var(--ink)' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={sendGeoChat}
+                          disabled={geoChatLoading || !geoChatInput.trim()}
+                          className="shrink-0 inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97] disabled:opacity-50"
+                          style={{ background: 'var(--btn-bg)' }}
+                        >
+                          {geoChatLoading ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                          {geoChatLoading ? 'Tenker…' : 'Spør'}
+                        </button>
+                      </div>
+                      {geoChatReply && (
+                        <div className="mt-3 rounded-[12px] p-4" style={{ background: 'var(--subtle)', border: '1px solid var(--hair)' }}>
+                          <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--ink)' }}>{geoChatReply}</p>
+                          <p className="text-[10px] mt-2.5" style={{ color: 'var(--faint)' }}>
+                            Basert på dine egne tall i Sikt. Dobbeltsjekk viktige beslutninger.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleUpgrade('Premium')}
+                      className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97]"
+                      style={{ background: 'var(--btn-bg)' }}
+                    >
+                      Del av Premium — oppgrader <ArrowRight size={13} />
+                    </button>
+                  )}
+                  </div>
                 </div>
               );
             })()}
@@ -8496,23 +9476,6 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                   onDismiss={dismissActivation}
                 />
               )}
-              <React.Suspense fallback={<div className="h-64" />}>
-                <DashboardHome
-                  user={user}
-                  clientData={clientData}
-                  formData={formData}
-                  analysisResults={analysisResults}
-                  scoreHistory={scoreHistory}
-                  siktActions={siktActions}
-                  realRankings={realRankings}
-                  gscConnected={gscConnected}
-                  gscKeywords={gscKeywords}
-                  isAnalyzing={isAnalyzing}
-                  geo={geoSummary}
-                  onRunAnalysis={runRealAnalysis}
-                  onNavigate={setActiveTab}
-                />
-              </React.Suspense>
               {!journeyDismissed && (
                 <div className="mt-12">
                   <JourneyTimeline theme={themed} onDismiss={dismissJourney} />
@@ -8704,6 +9667,10 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                           </div>
                           <p className="mt-3 text-[11px] font-medium leading-snug" style={{ color: palette.muted }}>
                             Sist oppdatert {latestLabel}
+                          </p>
+                          {/* Avverger «hvorfor to ulike tall»: Hjem-scoren veier også inn Google-plasseringer. */}
+                          <p className="mt-1.5 text-[11px] leading-snug" style={{ color: palette.faint }}>
+                            Snittet av pilarene Fart, Innhold og Lenker. «Samlet score» på Hjem veier i tillegg inn Google-plasseringene dine — derfor kan tallene avvike.
                           </p>
                         </div>
 
@@ -9104,7 +10071,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                   clicks: kw.clicks,
                   impressions: kw.impressions,
                   ctr: kw.ctr,
-                  history: [],
+                  history: kwSnapshots[String(kw.keyword).toLowerCase()] ?? [],
                 })),
                 ...keywordsToTrack.map((k: any) => {
                   const r = realRankings.find((r: any) => r.keyword === k.keyword && r.location === k.location);
@@ -9229,6 +10196,17 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                   {kw.location && (
                                     <span className="text-[10px] truncate" style={{ color: 'var(--muted)' }}>{kw.location}</span>
                                   )}
+                                  {kw.history.length >= 2 && (
+                                    // Negert rank: bedre plassering (lavere tall) tegnes oppover.
+                                    <span className="ml-auto w-[64px] shrink-0" aria-hidden>
+                                      <Sparkline
+                                        data={kw.history.slice(-12).map((h: any) => -h.rank)}
+                                        color={kw.history[0].rank > kw.history[kw.history.length - 1].rank ? '#15795A' : '#8A8578'}
+                                        height={16}
+                                        fill={false}
+                                      />
+                                    </span>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -9301,7 +10279,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                             <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{selected.keyword}</h2>
                             <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
                               {selected.source === 'gsc'
-                                ? `Fra Google · ${gscKeywords.length} søkeord hentet`
+                                ? `Fra Google${selected.history.length >= 2 ? ` · ${selected.history.length} ukesmålinger` : ` · ${gscKeywords.length} søkeord hentet`}`
                                 : `${selected.location} · Egen sporing${selected.history.length > 0 ? ` · ${selected.history.length} målinger` : ''}`}
                             </p>
                           </div>
@@ -9340,7 +10318,7 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                               : [
                                 { label: 'Plassering på Google', value: posLabel, delta: selected.change, hint: overCap ? 'Ikke i topp 300' : undefined },
                                 { label: 'Konkurranse', value: selected.competition != null ? fmtCompact(selected.competition as number) : '—', hint: selected.competition != null ? 'treff i Google' : undefined },
-                                { label: 'Vanskelighetsgrad', value: selected.kd != null ? `${selected.kd}` : '—', hint: selected.kd != null ? 'av 100' : undefined },
+                                { label: 'Vanskelighetsgrad', value: selected.kd != null ? `${selected.kd}` : '—', hint: selected.kd != null ? 'av 100 · estimat' : undefined },
                                 { label: 'Søkeintensjon', value: (selected.intent as string) || '—' },
                               ];
                           return (
@@ -9401,7 +10379,11 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                           <div className="rounded-[12px] p-5 text-center" style={{ background: 'var(--subtle)' }}>
                             <p className="text-xs" style={{ color: 'var(--muted)' }}>Kjør «Sjekk plassering nå» for å se historikk her.</p>
                           </div>
-                        ) : null}
+                        ) : (
+                          <div className="rounded-[12px] p-5 text-center" style={{ background: 'var(--subtle)' }}>
+                            <p className="text-xs" style={{ color: 'var(--muted)' }}>Historikk bygges opp uke for uke — første punkt kommer etter neste ukesskann.</p>
+                          </div>
+                        )}
 
                         {/* Bottom: landing pages + event log */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -9459,6 +10441,16 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                                 }
                                 events.push({ text: 'Ord lagt til manuelt', sub: selected.location });
                               } else {
+                                if (selected.history.length >= 2) {
+                                  const first = selected.history[0];
+                                  const last = selected.history[selected.history.length - 1];
+                                  if (first.rank !== last.rank) {
+                                    events.push({
+                                      text: `Fra plass ${first.rank.toFixed(1)} da vi startet → ${last.rank.toFixed(1)} nå`,
+                                      sub: `${first.date} → ${last.date}`,
+                                    });
+                                  }
+                                }
                                 if (selected.position != null) {
                                   events.push({ text: `Snittplassering ${(selected.position as number).toFixed(1)}`, sub: 'Siste 28 dager' });
                                 }
@@ -9636,6 +10628,9 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                     </div>
                   )}
                 </div>
+              )}
+              {hasPremium && geoRows.length > 0 && (
+                <GeoBreakdown rows={geoRows} pendingFaqCount={geoFaqs.length} />
               )}
               <GeoPage
                 hasAutoTracking={hasPremium && geoState?.geo_score != null}
@@ -11959,6 +12954,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                 </div>
               </header>
               <div className={`${tabFadeInClass} space-y-6`}>
+              {/* Regnskapet hører hjemme over kvitteringene: summen av alt arbeidet. */}
+              <SiktLedger data={ledger} />
               <style>{`
                 @keyframes log-card-in {
                   from { opacity: 0; transform: translateY(6px); }
@@ -12463,6 +13460,8 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
           const notifRows = [
             { id: 'criticalAlerts' as const, label: 'Kritiske varsler', desc: 'Når nettsiden går ned eller får alvorlige feil.' },
             { id: 'rankChanges' as const, label: 'Rangeringsendringer', desc: 'Når du går opp eller ned på topp 10.' },
+            { id: 'leadAlerts' as const, label: 'Henvendelses-varsel', desc: 'E-post med en gang noen sender inn skjema på siden din (07–21).' },
+            { id: 'leadDigest' as const, label: 'Daglig henvendelses-oppsummering', desc: 'Kl. 17 de dagene noen ringer eller klikker e-post fra siden din.' },
           ];
           const sectionCountProfile = editingSection === 'profile' ? profileEditFields.length + 2 : profileDisplayFields.length;
           const sectionCountCms = (/basic/i.test(planBundle) && !hasStandardOrHigher) ? 0 : 3;
@@ -12593,6 +13592,21 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                           className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none resize-none"
                           style={{ color: 'var(--ink)' }}
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1.5" style={{ color: 'var(--muted)' }}>Hva er en typisk henvendelse verdt for deg? (kr)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formData.leadValueNok ?? ''}
+                          onChange={(e) => setFormData({ ...formData, leadValueNok: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder="f.eks. 1500"
+                          className="w-full rounded-lg px-3 py-2.5 text-sm border border-[color:var(--hair)] bg-[color:var(--surface)] focus:outline-none"
+                          style={{ color: 'var(--ink)' }}
+                        />
+                        <p className="text-xs mt-1.5" style={{ color: 'var(--faint)' }}>
+                          Brukes til å vise hva henvendelsene fra nettsiden er verdt i kroner under Henvendelser lenger ned. Valgfritt.
+                        </p>
                       </div>
                       <div className="flex justify-end gap-2 pt-1">
                         <button
@@ -12738,6 +13752,105 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                   </div>
                 </details>
               )}
+
+              {/* Henvendelser: sporing + tallene — flyttet hit fra Hjem. */}
+              <details className={sectionShell} open>
+                <summary className={sectionSummary}>
+                  <div className="flex items-center gap-3">
+                    <SectionTitle>Henvendelser</SectionTitle>
+                  </div>
+                </summary>
+                <div className="px-4 sm:px-6 pb-5">
+                  {(() => {
+                    const hasLeads = (leadStats?.total ?? 0) > 0;
+                    // Ukes-trend (4 bøtter à 7 dager, eldst først) + sidene som skaper henvendelser.
+                    const weekBuckets = [0, 0, 0, 0];
+                    for (const r of leadRows) {
+                      const age = Date.now() - new Date(r.occurred_at).getTime();
+                      if (!Number.isFinite(age) || age < 0) continue;
+                      const idx = 3 - Math.min(3, Math.floor(age / (7 * 24 * 60 * 60 * 1000)));
+                      weekBuckets[idx] += 1;
+                    }
+                    const topPaths = (() => {
+                      const counts = new Map<string, number>();
+                      for (const r of leadRows) {
+                        const p = (r.path || '/').split('?')[0] || '/';
+                        counts.set(p, (counts.get(p) || 0) + 1);
+                      }
+                      return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+                    })();
+                    return (
+                      <>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-1 text-[color:var(--muted)]">Siste 30 dager</p>
+                        {hasLeads ? (
+                          <>
+                          <div className="flex items-end gap-6 flex-wrap">
+                            <span className="text-5xl font-semibold tracking-[-0.03em] text-[color:var(--ink)] tabular-nums">{leadStats!.total}</span>
+                            <p className="text-sm text-[color:var(--muted)] pb-1.5">
+                              {leadStats!.tel > 0 && <span className="mr-3">{leadStats!.tel} telefon-klikk</span>}
+                              {leadStats!.form > 0 && <span className="mr-3">{leadStats!.form} skjema</span>}
+                              {leadStats!.mailto > 0 && <span>{leadStats!.mailto} e-post-klikk</span>}
+                            </p>
+                          </div>
+                          {Number(clientData?.leadValueNok) > 0 && (
+                            <p className="text-sm mt-2 text-[color:var(--muted)]">
+                              ≈ <span className="font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{(leadStats!.total * Number(clientData.leadValueNok)).toLocaleString('nb-NO')} kr</span> i anslått verdi — regnet med ditt eget tall ({Number(clientData.leadValueNok).toLocaleString('nb-NO')} kr per henvendelse, endres under Profil).
+                            </p>
+                          )}
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-[11px] font-medium mb-1.5 text-[color:var(--muted)]">Uke for uke</p>
+                              <Sparkline data={weekBuckets} color="#15795A" height={26} />
+                            </div>
+                            {topPaths.length > 0 && (
+                              <div>
+                                <p className="text-[11px] font-medium mb-1.5 text-[color:var(--muted)]">Sidene som skaper henvendelser</p>
+                                <ul className="space-y-1">
+                                  {topPaths.map(([p, n]) => (
+                                    <li key={p} className="flex items-baseline justify-between gap-3 text-[12px]">
+                                      <span className="truncate" style={{ color: 'var(--ink)' }}>{p}</span>
+                                      <span className="tabular-nums shrink-0" style={{ color: 'var(--muted)' }}>{n}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm mb-4 text-[color:var(--muted)] leading-relaxed">
+                              Se hvor mange som ringer, sender skjema eller klikker e-posten din fra nettsiden — uten cookies og uten persondata. Dette er tallet SEO-arbeidet til syvende og sist skal flytte.
+                            </p>
+                            {hostIsFullyConnected ? (
+                              <button
+                                type="button"
+                                disabled={leadTrackingBusy}
+                                onClick={enableLeadTracking}
+                                className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] text-white transition-transform active:scale-[0.97] disabled:opacity-60"
+                                style={{ background: 'var(--btn-bg)' }}
+                              >
+                                {leadTrackingBusy ? 'Aktiverer…' : 'Aktiver sporing'} <ArrowRight size={13} />
+                              </button>
+                            ) : leadToken ? (
+                              <button
+                                type="button"
+                                onClick={() => { navigator.clipboard?.writeText(buildLeadSnippet()); toastSuccess('Sporings-snippet kopiert — lim den inn før </body> på siden din.'); }}
+                                className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-[10px] border border-[color:var(--hair)] text-[color:var(--ink)] transition-transform active:scale-[0.97]"
+                              >
+                                Kopier sporings-snippet
+                              </button>
+                            ) : null}
+                            {hostIsFullyConnected && (
+                              <p className="text-xs mt-2 text-[color:var(--muted)]">Krever Sikt Connector v1.3 — får du feilmelding, last ned pluginen på nytt fra Innstillinger.</p>
+                            )}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </details>
 
               <details className={sectionShell} open>
                 <summary className={sectionSummary}>
@@ -12954,6 +14067,31 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
                         </ul>
                       </div>
                     )}
+                  </div>
+
+                  {/* «La Sikt fikse selv»: opt-in automatikk. Krever full WP-kobling
+                      for å ha effekt — motoren sjekker flagget ved neste kjøring. */}
+                  <div className="mt-4 rounded-[12px] border border-[color:var(--hair)] p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: C.ink }}>La Sikt fikse selv</p>
+                        <p className="text-xs mt-1" style={{ color: C.muted, lineHeight: 1.6 }}>
+                          Trygge fikser (som manglende overskrifter) gjøres fortløpende uten at du må godkjenne hver enkelt.
+                          Alt logges i Sikt-loggen med angre-knapp{hostIsFullyConnected ? '' : ' — krever WordPress-kobling'}.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={toggleAutoApproveFixes}
+                        className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full mt-0.5"
+                        style={{ background: clientData?.autoApproveFixes ? C.green : C.hair, transition: 'background 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                      >
+                        <span
+                          className="inline-block h-4 w-4 rounded-full bg-white"
+                          style={{ transform: clientData?.autoApproveFixes ? 'translateX(24px)' : 'translateX(4px)', transition: 'transform 160ms cubic-bezier(0.23,1,0.32,1)' }}
+                        />
+                      </button>
+                    </div>
                   </div>
 
                   <ul className="mt-1">
@@ -13670,7 +14808,63 @@ const ClientPortal = ({ user, clientData: startData, onLogout, theme, themePref,
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm disabled:cursor-wait"
           />
           <div className="relative w-full max-w-md rounded-2xl border border-[color:var(--hair)] bg-[color:var(--surface)] shadow-2xl p-6 max-h-[90vh] overflow-y-auto font-['Geist','DM_Sans',sans-serif]">
-            {!cancelDone && cancelSaveOfferSeen ? (
+            {!cancelDone && !cancelIntroSeen ? (
+              <>
+                <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>Før du bestemmer deg</h3>
+                {ledger && (ledger.fixes + ledger.articles + ledger.links + ledger.leads + ledger.keywordsImproved + ledger.findings) > 0 && (
+                  <div className="mb-4">
+                    <SiktLedger data={ledger} />
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-[12px] p-3.5" style={{ background: 'var(--subtle)', border: '1px solid var(--hair)' }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--danger)' }}>Dette stopper</p>
+                    <ul className="space-y-1.5 text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+                      <li>Ukentlig skann og fikser</li>
+                      <li>Innholdsplan og artikler</li>
+                      <li>Konkurrent-overvåkning og motangrep</li>
+                      <li>Sporing av henvendelser</li>
+                      <li>Rapporter og varsler</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-[12px] p-3.5" style={{ background: 'var(--subtle)', border: '1px solid var(--hair)' }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--green)' }}>Dette beholder du</p>
+                    <ul className="space-y-1.5 text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+                      <li>Publiserte artikler og fikser — de ligger på din side</li>
+                      <li>Tilgang ut perioden du har betalt for</li>
+                      <li>Historikken din hvis du kommer tilbake</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={closeCancelModal}
+                    className="rounded-full px-4 py-2.5 text-sm text-white border border-[color:var(--ink)] bg-[color:var(--btn-bg)]"
+                  >
+                    Behold abonnementet
+                  </button>
+                  <a
+                    href={`mailto:${companyInfo.supportEmail}?subject=${encodeURIComponent('Sett abonnementet på pause')}&body=${encodeURIComponent(`Hei,\n\nJeg vil sette Sikt-abonnementet mitt på pause i 1-2 måneder.\n\nKonto-e-post: ${user?.email || ''}\nØnsket pauselengde: \n`)}`}
+                    className="rounded-full px-4 py-2.5 text-sm text-center border border-[color:var(--hair)]"
+                    style={{ color: 'var(--ink)', background: 'var(--surface)' }}
+                  >
+                    Sett på pause i 1–2 måneder i stedet
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setCancelIntroSeen(true)}
+                    className="rounded-full px-4 py-2 text-sm"
+                    style={{ color: 'var(--muted)', background: 'transparent', border: 'none' }}
+                  >
+                    Gå videre til oppsigelse
+                  </button>
+                </div>
+                <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--faint)' }}>
+                  Pause: motoren stopper mens du betaler ingenting, og alt du har bygget opp venter på deg. Vi bekrefter innen 24 timer.
+                </p>
+              </>
+            ) : !cancelDone && cancelSaveOfferSeen ? (
               (() => {
                 const downKey: 'BASIC' | 'STANDARD' = activePlanKey === 'PREMIUM' ? 'STANDARD' : 'BASIC';
                 return (

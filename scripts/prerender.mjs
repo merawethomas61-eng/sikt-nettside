@@ -409,7 +409,7 @@ const MARKETING = [
             'Månedlig strategirapport med 10+ seksjoner og 4-timers support på hverdager',
           ],
         },
-        { h2: 'Null binding', p: 'Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du betaler per måned og kan si opp, oppgradere eller nedgradere når du vil.' },
+        { h2: 'Null binding', p: 'Ingen bindingstid, ingen oppsigelsestid, ingen skjulte gebyrer. Du kan si opp, oppgradere eller nedgradere når du vil.' },
         // Synlig FAQ — matcher FAQPage-schemaet over (samme spørsmål/svar).
         ...priserFaqs.map((f) => ({ h2: f.q, p: f.a })),
       ],

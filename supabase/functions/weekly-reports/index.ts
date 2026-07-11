@@ -41,6 +41,10 @@ type NotifPrefs = {
   weeklyReport?: boolean
   criticalAlerts?: boolean
   rankChanges?: boolean
+  // Henvendelses-varsling (runde 5): instant skjema-varsel bor i track-lead;
+  // leadDigest styrer den daglige oppsummeringen kl 17 her.
+  leadAlerts?: boolean
+  leadDigest?: boolean
   // Kunde-styrt rapport-timeplan:
   reportFrequency?: string   // 'off'|'weekly'|'biweekly'|'monthly'|'twice_week'|'thrice_week'
   reportHour?: number        // 6–22, Oslo lokal time
@@ -63,6 +67,8 @@ type Client = {
   created_at: string | null
   // Kunde-styrt rapport-timeplan: dedup + datavindu + kadens.
   last_report_sent_at: string | null
+  // Henvendelses-digest (runde 5): 20-timers guard mot dobbel digest.
+  last_lead_digest_at: string | null
 }
 
 type Opportunity = {
@@ -157,12 +163,20 @@ Deno.serve(async (req) => {
     return new Response('Unauthorized', { status: 401 })
   }
 
+  // Valgfritt test-flagg (bak CRON_SECRET): {"force_lead_digest":true} kjører
+  // henvendelses-digesten utenom kl 17 — 20-timers-guarden gjelder fortsatt.
+  let forceLeadDigest = false
+  try {
+    const bodyText = await req.text()
+    if (bodyText) forceLeadDigest = JSON.parse(bodyText)?.force_lead_digest === true
+  } catch { /* tom/ugyldig body er normalen fra pg_cron */ }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
   // Hent alle betalende kunder med e-post
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
-    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences, subscription_status, last_active_at, last_reengagement_at, created_at, last_report_sent_at')
+    .select('user_id, email, company_name, contact_person, package_name, website_url, notification_preferences, subscription_status, last_active_at, last_reengagement_at, created_at, last_report_sent_at, last_lead_digest_at')
     .not('package_name', 'is', null)
     .not('email', 'is', null)
 
@@ -179,6 +193,76 @@ Deno.serve(async (req) => {
   let errorCount = 0
   let reengagedCount = 0
   const reengagedUserIds: string[] = []
+
+  // -----------------------------------------------------------------
+  // Runde 5: daglig henvendelses-digest kl 17 norsk tid. Samler alt
+  // track-lead IKKE instant-varslet siste døgn (tel/mailto-klikk +
+  // skjema utenfor 07–21-vinduet eller over dagstaket) i ÉN e-post.
+  // Ingen henvendelser = ingen e-post. 20-timers guard mot dobbel.
+  // -----------------------------------------------------------------
+  let leadDigestsSent = 0
+  if (oslo.hour === 17 || forceLeadDigest) {
+    for (const client of clients as Client[]) {
+      try {
+        if (!client.email || !client.package_name) continue
+        if (client.notification_preferences?.leadDigest === false) continue
+        const lastDigestMs = client.last_lead_digest_at ? new Date(client.last_lead_digest_at).getTime() : null
+        if (lastDigestMs !== null && (Date.now() - lastDigestMs) < 20 * HOUR_MS) continue
+
+        const dayAgo = new Date(Date.now() - DAY_MS).toISOString()
+        const { data: leadRows } = await supabase
+          .from('sikt_leads')
+          .select('id, kind, page_path, occurred_at')
+          .eq('user_id', client.user_id)
+          .eq('notified', false)
+          .gte('occurred_at', dayAgo)
+          .order('occurred_at', { ascending: true })
+          .limit(400)
+        const leads = leadRows ?? []
+        if (leads.length === 0) continue
+
+        // Kollaps gjentak av samme kind+path innen 10 min til én rad med
+        // antall — display-nivå demping av dobbeltklikk/bot-rester.
+        type DigestEntry = { kind: string; path: string | null; firstAt: string; lastMs: number; count: number }
+        const entries: DigestEntry[] = []
+        const lastByKey = new Map<string, DigestEntry>()
+        for (const l of leads) {
+          const key = `${l.kind}|${l.page_path ?? ''}`
+          const ms = new Date(l.occurred_at).getTime()
+          const prev = lastByKey.get(key)
+          if (prev && (ms - prev.lastMs) <= 10 * 60 * 1000) {
+            prev.count++
+            prev.lastMs = ms
+          } else {
+            const entry: DigestEntry = { kind: l.kind, path: l.page_path ?? null, firstAt: l.occurred_at, lastMs: ms, count: 1 }
+            entries.push(entry)
+            lastByKey.set(key, entry)
+          }
+        }
+
+        const n = entries.length
+        const html = buildLeadDigestHtml(entries)
+        const result = await sendEmail({
+          to: client.email,
+          subject: n === 1 ? '1 henvendelse fra nettsiden i dag' : `${n} henvendelser fra nettsiden i dag`,
+          html,
+        })
+        if (result.ok) {
+          leadDigestsSent++
+          const ids = leads.map(l => l.id)
+          await supabase.from('sikt_leads').update({ notified: true }).in('id', ids)
+          await supabase.from('clients')
+            .update({ last_lead_digest_at: new Date().toISOString() })
+            .eq('user_id', client.user_id)
+        } else {
+          errorCount++
+          console.error(`Feil ved henvendelses-digest til ${client.email}:`, await result.text())
+        }
+      } catch (e) {
+        console.error('Feil i henvendelses-digest:', e)
+      }
+    }
+  }
 
   for (const client of clients as Client[]) {
     if (!client.email || !client.package_name) continue
@@ -547,12 +631,55 @@ Deno.serve(async (req) => {
     console.error('Feil ved bygging av eier-digest:', e)
   }
 
-  console.log(`✅ Ukesrapport: ${sentCount} sendt, ${reengagedCount} gjenoppvekket, ${errorCount} feil, digest=${digestSent}`)
+  console.log(`✅ Ukesrapport: ${sentCount} sendt, ${reengagedCount} gjenoppvekket, ${leadDigestsSent} henvendelses-digester, ${errorCount} feil, digest=${digestSent}`)
   return new Response(
-    JSON.stringify({ sent: sentCount, reengaged: reengagedCount, reengagedUserIds, errors: errorCount, digestSent }),
+    JSON.stringify({ sent: sentCount, reengaged: reengagedCount, reengagedUserIds, errors: errorCount, digestSent, leadDigests: leadDigestsSent }),
     { headers: { 'Content-Type': 'application/json' } }
   )
 })
+
+// =====================================================================
+// Runde 5: daglig henvendelses-digest («N henvendelser fra nettsiden i dag»)
+// =====================================================================
+function buildLeadDigestHtml(entries: Array<{ kind: string; path: string | null; firstAt: string; count: number }>): string {
+  const kindLabel: Record<string, string> = {
+    tel: 'Telefon-klikk',
+    mailto: 'E-post-klikk',
+    form: 'Skjema sendt',
+  }
+  const timeFmt = new Intl.DateTimeFormat('nb-NO', {
+    timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit',
+  })
+  const items = entries.slice(0, 30).map(e => ({
+    title: kindLabel[e.kind] ?? e.kind,
+    body: `${e.path || 'nettsiden'} · kl ${timeFmt.format(new Date(e.firstAt))}${e.count > 1 ? ` · ${e.count} klikk` : ''}`,
+  }))
+  const n = entries.length
+
+  return renderEmail({
+    brand: 'sikt',
+    kicker: 'Henvendelser',
+    preheader: 'Dette skjedde på nettsiden din i dag.',
+    heading: n === 1
+      ? 'Nettsiden din ga deg en henvendelse i dag.'
+      : 'Nettsiden din ga deg henvendelser i dag.',
+    blocks: [
+      statement({
+        value: String(n),
+        label: n === 1 ? 'henvendelse siste døgn' : 'henvendelser siste døgn',
+      }),
+      defList(items),
+      note(
+        'Telefon- og e-post-klikk er klikk på knappen — ikke verifiserte samtaler. ' +
+        'Sikt sporer uten cookies og uten persondata.',
+      ),
+    ],
+    cta: { label: 'Se henvendelsene i portalen', url: PORTAL_URL },
+    footer:
+      'Du får denne oppsummeringen de dagene nettsiden gir deg henvendelser. ' +
+      'Du kan slå den av under Innstillinger → Varsler i portalen.',
+  })
+}
 
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   return fetch('https://api.resend.com/emails', {
