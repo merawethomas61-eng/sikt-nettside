@@ -1862,7 +1862,7 @@ const OnboardingPage = ({ onComplete, user }: { onComplete: () => void, user: an
     } catch (error: any) {
       const rawMsg = error?.message || String(error);
       const friendlyMsg = /abort/i.test(rawMsg)
-        ? "Tidsavbrudd (20s) — Supabase svarte ikke. Sjekk nettverkstilkobling og RLS-policy på clients-tabellen."
+        ? "Tidsavbrudd (15 s) — Supabase svarte ikke. Sjekk nettverkstilkobling og RLS-policy på clients-tabellen."
         : rawMsg;
       console.error("[Onboarding] Feil ved lagring:", { message: rawMsg, details: error?.details, code: error?.code, hint: error?.hint });
       toastError("Noe gikk galt under lagring: " + friendlyMsg);
@@ -3870,7 +3870,7 @@ function App() {
         let client = await fetchClientRow();
         if (justPaid && client?.subscription_status !== 'active') {
           const pollIntervalMs = 2000;
-          const pollMaxMs = 10000;
+          const pollMaxMs = 20000;
           let waitedMs = 0;
           while (client?.subscription_status !== 'active' && waitedMs < pollMaxMs) {
             await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
@@ -3881,6 +3881,14 @@ function App() {
         }
 
         if (!isMounted) return;
+
+        // Betalingen er gjennomført (payment_success-redirect eller aktiv
+        // subscription) → fjern den lagrede planen. Uten dette ville REGEL 1a
+        // under sende en kunde med treg webhook TILBAKE til Stripe-checkouten
+        // ved neste refresh — altså be en betalende kunde betale på nytt.
+        if (savedPlan && (justPaid || client?.subscription_status === 'active')) {
+          try { localStorage.removeItem('sikt_pending_plan'); } catch { /* ignore */ }
+        }
 
         if (justPaid && client?.subscription_status !== 'active') {
           setHasAccess(false);
